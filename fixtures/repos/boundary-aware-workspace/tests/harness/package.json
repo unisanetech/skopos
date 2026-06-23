@@ -1,0 +1,5 @@
+{
+  "name": "@boundary/test-harness",
+  "private": true,
+  "description": "Test harness package that must stay out of the active workspace model."
+}

@@ -1,0 +1,9 @@
+{
+  "name": "@fixture-mixed/web",
+  "private": true,
+  "scripts": {
+    "dev": "echo dev web",
+    "build": "echo build web",
+    "lint": "echo lint web"
+  }
+}

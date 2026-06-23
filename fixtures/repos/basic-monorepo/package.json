@@ -1,0 +1,12 @@
+{
+  "name": "basic-skopos-fixture",
+  "private": true,
+  "packageManager": "pnpm@10.26.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @fixture/* dev",
+    "build": "pnpm --recursive --filter @fixture/* build",
+    "test": "pnpm --recursive --filter @fixture/* test",
+    "typecheck": "pnpm --recursive --filter @fixture/* typecheck",
+    "lint": "pnpm --recursive --filter @fixture/* lint"
+  }
+}

@@ -1,0 +1,44 @@
+schemaVersion: 1
+project:
+  name: self-hosted-tooling-workspace
+  archetype: library
+  repoMode: monorepo
+  scopeStrategy: package
+commands:
+  dev: pnpm dev
+  build: pnpm build
+  test: pnpm test
+  typecheck: pnpm typecheck
+workspace:
+  ignore:
+    - fixtures
+    - internal
+    - tests
+    - docs/generated
+docs:
+  root: docs
+  usePerDomainArchive: true
+  strictMetadata: true
+  strictLinking: true
+agents:
+  canonicalInstructions: AGENTS.md
+  syncMirrors:
+    - CLAUDE.md
+    - .cursor/rules/project.mdc
+    - .github/copilot-instructions.md
+  mcp: true
+trust:
+  mode: balanced
+  requireDocsSync: true
+  requireProofForDone: true
+decisions:
+  mode: balanced
+  askFor:
+    - architecture-shift
+    - public-api-change
+    - destructive-migration
+    - vendor-choice
+    - security-privacy-change
+security:
+  privacyMode: local-only
+  redactSecrets: true

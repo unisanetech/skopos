@@ -1,0 +1,13 @@
+{
+  "name": "library-structure-drift-workspace",
+  "private": true,
+  "scripts": {
+    "dev": "node ./scripts/dev.mjs",
+    "build": "node ./scripts/build.mjs",
+    "test": "node ./scripts/test.mjs",
+    "typecheck": "node ./scripts/typecheck.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,115 @@
+# Decision Escalation Model
+
+Skopos should force agents to ask humans when a choice should not be guessed.
+
+## Metadata
+
+- Doc ID: `SKOPOS-ARCH-DECISION-ESCALATION-MODEL`
+- Status: `active`
+- Owner: `skopos-core`
+- Scope: `skopos/architecture`
+- Canonical: `yes`
+- Last Updated: `2026-04-12`
+- Review Cycle: `per workpack`
+- Related Docs:
+  - `trust-and-closure-model.md`
+  - `config-model.md`
+  - `../project/positioning.md`
+
+## Changelog
+
+- `2026-04-12`: Updated the decision-escalation model after `skopos next` landed, so unresolved human choices are now refreshed through a real ongoing-work router instead of staying only in the planned control-plane contract.
+- `2026-04-11`: Expanded the decision model into the planned workflow-router contract, so unresolved human choices are no longer treated as temporary chat prompts only: the next system slice should persist them in `.skopos/questions.json` and resolve them through `skopos decide`.
+- `2026-04-09`: Updated the decision model to reflect that `skopos plan` now emits scope-aware implementation ask-back questions based on goal text and configured decision categories.
+- `2026-04-09`: Updated the decision model to reflect that `init` now emits recommended bootstrap questions with one preferred option first.
+- `2026-04-09`: Added the first decision-escalation baseline so agents know when to defer to humans instead of improvising.
+
+## Escalation Classes
+
+1. `delegable`
+2. `recommend-and-ask`
+3. `must-ask`
+4. `forbidden-without-approval`
+
+## Ask-Back Rules
+
+1. explain why the decision matters
+2. recommend one option first
+3. explain tradeoffs for alternatives
+4. state what the agent will do after the user answers
+5. ask only when the runtime question surface says the choice is still unresolved
+
+## Router Fit
+
+The workflow-router baseline now makes decision escalation runtime-owned instead of prompt-owned.
+
+The intended command flow is:
+
+1. `skopos start` emits initial questions and recommendations for new work
+2. `skopos next` refreshes unresolved questions during ongoing work
+3. `skopos decide` records the chosen option and clears the blocker
+
+Questions should not live only in chat output. They should become durable workflow state under `.skopos/questions.json`.
+
+## Question Contract
+
+Each question should include:
+
+1. the question text
+2. escalation class
+3. whether it blocks implementation or closure
+4. one recommended option first
+5. bounded alternative options
+6. why the decision matters
+7. what Skopos will do after the answer
+8. linked plan or mission ids
+
+## Recommendation Contract
+
+Not every turn should become an ask-back.
+
+When the next step is deterministic, Skopos should emit a recommendation instead of another question.
+
+Recommendations should:
+
+1. stay bounded
+2. point to a concrete next action or command
+3. explain the reason compactly
+4. remain grounded in compiled state rather than generic assistant wording
+
+## Mandatory Human Decisions
+
+1. architecture shifts
+2. public API changes
+3. destructive migrations
+4. vendor or provider choices
+5. security, privacy, and cost-sensitive tradeoffs
+
+## Bootstrap Application
+
+The current bootstrap slice uses this model to emit:
+
+1. project archetype confirmation
+2. docs-root confirmation
+3. instruction-source confirmation when `AGENTS.md` is missing
+4. command-surface confirmation when no canonical root commands are detected
+
+## Planning Application
+
+The current planning slice also uses this model to emit:
+
+1. scope confirmation when a plan is too broad
+2. public API confirmation when a goal implies contract changes
+3. migration confirmation when a goal implies destructive change
+4. provider confirmation when a goal implies vendor or integration choice
+5. security confirmation when a goal touches auth, privacy, or permission behavior
+
+## Current Execution Application
+
+The current workflow-router baseline extends this model beyond bootstrap and planning:
+
+1. active mission questions
+2. duplicate and contradiction resolution questions
+3. contract-change confirmation during `start`
+4. ongoing blocking-question refresh during `next`
+5. future closure blockers during `eval` and `done`

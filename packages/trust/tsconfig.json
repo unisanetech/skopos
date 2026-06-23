@@ -1,0 +1,45 @@
+{
+  "extends": "../../typescript-config/base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "baseUrl": "../..",
+    "module": "ESNext",
+    "target": "ES2022",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@skopos/config": [
+        "../config/src/index.ts"
+      ],
+      "@skopos/indexer": [
+        "../indexer/src/index.ts"
+      ],
+      "@skopos/instructions": [
+        "../instructions/src/index.ts"
+      ],
+      "@skopos/model": [
+        "../model/src/index.ts"
+      ],
+      "@skopos/planner": [
+        "../planner/src/index.ts"
+      ],
+      "@skopos/query": [
+        "../query/src/index.ts"
+      ],
+      "@skopos/*": [
+        "./packages/*/src"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/__tests__/**",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts"
+  ]
+}

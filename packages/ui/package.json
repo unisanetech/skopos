@@ -1,0 +1,52 @@
+{
+  "name": "@skopos/ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local docs and trust UI for the Skopos SDK",
+  "skopos": {
+    "surface": "internal-product",
+    "releaseTarget": "internal-only",
+    "publishPhase": "incubation"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean --external vite",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "app:build": "vite build --config vite.config.ts",
+    "app:dev": "vite --config vite.config.ts",
+    "app:preview": "vite preview --config vite.config.ts",
+    "check-types": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@skopos/model": "workspace:*",
+    "@skopos/runtime": "workspace:*",
+    "@tanstack/react-router": "^1.168.10",
+    "clsx": "^2.1.1",
+    "mermaid": "^11.14.0",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-markdown": "^10.1.0",
+    "react-syntax-highlighter": "^15.6.1",
+    "remark-gfm": "^4.0.1",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@vitejs/plugin-react": "^5.1.2",
+    "tailwindcss": "^4.1.18",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.2",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.17"
+  }
+}

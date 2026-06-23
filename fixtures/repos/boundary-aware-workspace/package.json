@@ -1,0 +1,10 @@
+{
+  "name": "@boundary/workspace",
+  "private": true,
+  "scripts": {
+    "dev": "echo dev",
+    "build": "echo build",
+    "test": "echo test",
+    "typecheck": "echo typecheck"
+  }
+}

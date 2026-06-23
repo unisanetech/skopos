@@ -1,0 +1,12 @@
+{
+  "name": "large-skopos-fixture",
+  "private": true,
+  "packageManager": "pnpm@10.26.0",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @large/* dev",
+    "build": "pnpm --recursive --filter @large/* build",
+    "test": "pnpm --recursive --filter @large/* test",
+    "typecheck": "pnpm --recursive --filter @large/* typecheck",
+    "lint": "pnpm --recursive --filter @large/* lint"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@fixture/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "API package fixture for Skopos scope resolution.",
+  "dependencies": {
+    "@fixture/shared": "workspace:*",
+    "express": "^5.1.0"
+  }
+}

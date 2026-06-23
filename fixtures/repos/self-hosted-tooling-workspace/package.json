@@ -1,0 +1,18 @@
+{
+  "name": "@selfhost/workspace",
+  "private": true,
+  "description": "Self-hosted tooling workspace fixture for Skopos proof coverage.",
+  "scripts": {
+    "dev": "echo dev",
+    "build": "echo build",
+    "test": "echo test",
+    "typecheck": "echo typecheck",
+    "proof": "echo proof",
+    "instructions:sync": "echo instructions sync",
+    "skopos:init": "echo skopos init",
+    "skopos:scan": "echo skopos scan",
+    "skopos:trust": "echo skopos trust",
+    "skopos:ui": "echo skopos ui",
+    "skopos:ui:app": "echo skopos ui app"
+  }
+}

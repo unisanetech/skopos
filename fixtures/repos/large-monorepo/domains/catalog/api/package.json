@@ -1,0 +1,16 @@
+{
+  "name": "@large/catalog-api",
+  "private": true,
+  "description": "Catalog service package outside the billing slice",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@large/shared-types": "workspace:*",
+    "express": "^5.1.0"
+  }
+}

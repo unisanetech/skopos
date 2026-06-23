@@ -1,0 +1,8 @@
+{
+  "name": "@fixture-mixed/shared",
+  "private": true,
+  "scripts": {
+    "build": "echo build shared",
+    "test": "echo test shared"
+  }
+}

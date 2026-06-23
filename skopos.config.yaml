@@ -1,0 +1,49 @@
+schemaVersion: 1
+project:
+  name: skopos
+  archetype: library
+  repoMode: monorepo
+  scopeStrategy: package
+commands:
+  dev: pnpm dev
+  build: pnpm build
+  test: pnpm test
+  typecheck: pnpm typecheck
+workspace:
+  ignore:
+    - policy-packs
+    - stack-packs
+    - gate-packs
+    - workflow-packs
+    - fixtures
+    - internal
+    - tests
+    - docs/generated
+docs:
+  root: docs
+  startHerePath: docs/00-start-here.md
+  usePerDomainArchive: true
+  strictMetadata: true
+  strictLinking: true
+agents:
+  canonicalInstructions: AGENTS.md
+  syncMirrors:
+    - CLAUDE.md
+    - .cursor/rules/project.mdc
+    - .github/copilot-instructions.md
+  mcp: true
+trust:
+  mode: balanced
+  requireDocsSync: true
+  requireProofForDone: true
+decisions:
+  mode: balanced
+  askFor:
+    - architecture-shift
+    - public-api-change
+    - destructive-migration
+    - vendor-choice
+    - security-privacy-change
+security:
+  privacyMode: local-only
+  redactSecrets: true

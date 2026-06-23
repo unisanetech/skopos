@@ -1,0 +1,5 @@
+{
+  "name": "@selfhost/example-fixture",
+  "private": true,
+  "description": "Internal proof fixture that must stay out of the active workspace model."
+}

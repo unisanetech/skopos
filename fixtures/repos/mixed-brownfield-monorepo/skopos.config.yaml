@@ -1,0 +1,39 @@
+schemaVersion: 1
+project:
+  name: mixed-brownfield-monorepo
+  archetype: monorepo-platform
+  repoMode: monorepo
+  scopeStrategy: hybrid
+commands:
+  dev: pnpm --filter @fixture-mixed/web dev
+  build: pnpm -r build
+  test: pnpm -r test
+workspace:
+  ignore: []
+docs:
+  root: docs
+  usePerDomainArchive: true
+  strictMetadata: true
+  strictLinking: true
+agents:
+  canonicalInstructions: AGENTS.md
+  syncMirrors:
+    - CLAUDE.md
+    - .cursor/rules/project.mdc
+    - .github/copilot-instructions.md
+  mcp: true
+trust:
+  mode: balanced
+  requireDocsSync: true
+  requireProofForDone: true
+decisions:
+  mode: balanced
+  askFor:
+    - architecture-shift
+    - public-api-change
+    - destructive-migration
+    - vendor-choice
+    - security-privacy-change
+security:
+  privacyMode: local-only
+  redactSecrets: true

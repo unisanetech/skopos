@@ -1,0 +1,9 @@
+{
+  "name": "@fixture-mixed/api",
+  "private": true,
+  "scripts": {
+    "build": "echo build api",
+    "test": "echo test api",
+    "typecheck": "echo typecheck api"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "@large/billing-web",
+  "private": true,
+  "description": "Billing web package for subtree benchmark coverage",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@large/shared-ui": "workspace:*",
+    "next": "^15.0.0",
+    "react": "^19.0.0"
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "id": "proof-phase-baseline-v1",
+  "definitionSetId": "proof-phase-benchmarks",
+  "requiredStatus": "pass",
+  "benchmarkCount": 20,
+  "minimumWeightedPassRate": 1,
+  "benchmarks": [
+    {
+      "id": "clean-existing-repo-change",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "messy-repo-change",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "legacy-structure-drift",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "mixed-command-surface-stabilization",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "brownfield-stabilization-delta",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "partial-library-structure-drift",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "stale-docs-trust",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "override-canonicalization",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "knowledge-index-log",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "hot-path-performance",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "compiled-state-invalidation",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "workflow-sensitive-change",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "approval-sensitive-workflow",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "brownfield-architecture-interpretation",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "large-repo-subtree-slice",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "workspace-boundary-purity",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "self-hosted-dogfooding",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "tool-native-enforcement",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "multi-actor-mission-coordination",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "batch-mission-slicing",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    }
+  ],
+  "categories": [
+    {
+      "category": "batch-execution",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "architecture-interpretation",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "brownfield-clean",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "brownfield-mixed",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "brownfield-comparison",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "brownfield-messy",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "docs-trust",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "override-canonicalization",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "knowledge-index-log",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "hot-path-performance",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "compiled-state-invalidation",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "large-repo-slice",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "workspace-boundary",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "self-hosting-dogfood",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "tool-native-enforcement",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "multi-actor-runtime",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "workflow-closure",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
+    {
+      "category": "workflow-approval",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    }
+  ]
+}

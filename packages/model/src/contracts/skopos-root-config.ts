@@ -1,0 +1,60 @@
+export type SkoposProjectArchetype =
+  | 'saas'
+  | 'api'
+  | 'library'
+  | 'monorepo-platform'
+  | 'internal-tool'
+  | 'custom';
+
+export type SkoposRepoMode = 'single' | 'multi-package' | 'monorepo';
+
+export type SkoposScopeStrategy = 'package' | 'domain' | 'service' | 'hybrid';
+
+export type SkoposTrustMode = 'fast' | 'balanced' | 'strict' | 'stabilize';
+
+export type SkoposDecisionMode = 'fast' | 'balanced' | 'strict';
+
+export type SkoposPrivacyMode = 'local-only' | 'metadata-sync' | 'enterprise';
+
+export type SkoposCommandName = 'dev' | 'build' | 'test' | 'typecheck' | 'lint';
+
+export type SkoposCommandMap = Partial<Record<SkoposCommandName, string>>;
+
+export interface SkoposRootConfig {
+  schemaVersion: 1;
+  project: {
+    name: string;
+    archetype: SkoposProjectArchetype;
+    repoMode: SkoposRepoMode;
+    scopeStrategy: SkoposScopeStrategy;
+  };
+  commands: SkoposCommandMap;
+  workspace: {
+    ignore: string[];
+  };
+  docs: {
+    root: string;
+    startHerePath?: string;
+    usePerDomainArchive: boolean;
+    strictMetadata: boolean;
+    strictLinking: boolean;
+  };
+  agents: {
+    canonicalInstructions: string;
+    syncMirrors: string[];
+    mcp: boolean;
+  };
+  trust: {
+    mode: SkoposTrustMode;
+    requireDocsSync: boolean;
+    requireProofForDone: boolean;
+  };
+  decisions: {
+    mode: SkoposDecisionMode;
+    askFor: string[];
+  };
+  security: {
+    privacyMode: SkoposPrivacyMode;
+    redactSecrets: boolean;
+  };
+}

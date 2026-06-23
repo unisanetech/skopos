@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.architecture.mid-app.drift-rules",
+  "packId": "architecture.mid-app",
+  "updatedAt": "2026-06-24",
+  "rules": [
+    {
+      "id": "architecture.mid-app.runtime-wiring-outside-features",
+      "severity": "must",
+      "target": "source imports and constructors",
+      "strategy": "heuristic-now ast-later",
+      "evidence": [
+        "feature files instantiate runtime clients",
+        "feature files read process/env directly",
+        "UI components configure providers"
+      ],
+      "remediation": "Move provider selection and runtime client setup to app or platform boundaries; inject or import stable platform functions from features."
+    },
+    {
+      "id": "architecture.mid-app.business-logic-in-shared-helper",
+      "severity": "must",
+      "target": "shared/support/helper files",
+      "strategy": "heuristic-now semantic-later",
+      "evidence": [
+        "generic helper file contains feature nouns",
+        "shared function changes one product workflow only",
+        "helper imports feature-specific types"
+      ],
+      "remediation": "Move product behavior to the owning feature and keep support code domain-neutral."
+    },
+    {
+      "id": "architecture.mid-app.generic-helper-bucket",
+      "severity": "must",
+      "target": "shared utility folders",
+      "strategy": "filesystem-heuristic",
+      "evidence": [
+        "utils/misc files",
+        "shared/helpers with unrelated exports",
+        "large barrel exporting unrelated helpers"
+      ],
+      "remediation": "Split helpers by stable responsibility or move feature-specific code back to its feature."
+    },
+    {
+      "id": "architecture.mid-app.cross-feature-private-import",
+      "severity": "must",
+      "target": "imports",
+      "strategy": "ast-later",
+      "evidence": [
+        "feature A imports feature B internal path",
+        "component from one feature is used directly by another feature"
+      ],
+      "remediation": "Expose an intentional public surface or move shared behavior to a neutral layer after proving reuse."
+    },
+    {
+      "id": "architecture.mid-app.reverse-platform-import",
+      "severity": "must",
+      "target": "imports",
+      "strategy": "ast-later",
+      "evidence": [
+        "platform imports feature service",
+        "support imports app or feature code"
+      ],
+      "remediation": "Invert the dependency: app composes features and platform, while platform/support remain feature-agnostic."
+    },
+    {
+      "id": "architecture.mid-app.deep-feature-import",
+      "severity": "should",
+      "target": "imports",
+      "strategy": "ast-later",
+      "evidence": [
+        "callers import from feature internal folders",
+        "barrel exports every internal module"
+      ],
+      "remediation": "Create or use an intentional feature public surface and keep internal files private."
+    },
+    {
+      "id": "architecture.mid-app.unvalidated-boundary-input",
+      "severity": "must",
+      "target": "boundary handlers",
+      "strategy": "manual-now ast-later",
+      "evidence": [
+        "external input passed directly to feature service",
+        "feature internals repeatedly coerce unknown values"
+      ],
+      "remediation": "Parse and normalize input at transport, persistence, job, or integration boundary."
+    },
+    {
+      "id": "architecture.mid-app.missing-validation-lanes",
+      "severity": "should",
+      "target": "project docs and scripts",
+      "strategy": "metadata-scan",
+      "evidence": [
+        "no fast local check documented",
+        "no targeted feature proof path",
+        "only broad CI is discoverable"
+      ],
+      "remediation": "Declare fast, targeted, and release validation lanes in project instructions or Skopos workflows."
+    },
+    {
+      "id": "architecture.mid-app.generated-owner-missing",
+      "severity": "must",
+      "target": "generated artifact folders",
+      "strategy": "filesystem-and-doc-scan",
+      "evidence": [
+        "generated path has no owning command",
+        "generated file is edited without source regeneration",
+        "AGENTS.md lacks generated artifact rule"
+      ],
+      "remediation": "Document source owner and regeneration command; edit source/generator first, then regenerate."
+    }
+  ]
+}

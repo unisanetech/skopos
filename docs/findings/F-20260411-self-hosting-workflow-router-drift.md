@@ -1,0 +1,92 @@
+# F-20260411-self-hosting-workflow-router-drift: Self-Hosted Feature Work Can Still Drift Outside Skopos Mission State
+
+## Metadata
+
+- Doc ID: `SKOPOS-F-20260411-SELF-HOSTING-WORKFLOW-ROUTER-DRIFT`
+- Status: `active`
+- Owner: `skopos-core`
+- Scope: `skopos/findings`
+- Canonical: `yes`
+- Last Updated: `2026-04-12`
+- Review Cycle: `per workpack`
+- Related Docs:
+  - `registry.md`
+  - `../00-start-here.md`
+  - `../runbooks/local-development.md`
+  - `../decisions/018-self-hosting-workflow-contract.md`
+  - `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
+
+## Changelog
+
+- `2026-04-17`: Narrowed the finding again after `skopos trust` began surfacing workflow-router adapter coverage directly from `.skopos/enforcement.json`, making it explicit that Claude Code and Codex have full generated session-start and stop-boundary automation while broader hosts still remain manual until they adopt the shared adapter contract.
+- `2026-04-16`: Narrowed the finding again after the generated Claude Code and Codex adapter session-start paths began merging `skopos program next` into compact resume context, the Claude stop hook began blocking on the router's explicit next command before falling back to `done`, and the Codex wrapper gained the same stop-time router enforcement through an explicit `stop` event, so the remaining gap is broader host adoption rather than the primary self-hosted adapter lanes still bypassing the workflow router.
+- `2026-04-16`: Narrowed the finding again after routed `overview`, `mission detail`, and `trust` began consuming the program router's closure-ready recommended action from `.skopos/program/state.json`, so the remaining gap is now adapter-path enforcement and broader happy-path adoption rather than missing UI visibility for explicit mission completion.
+- `2026-04-16`: Narrowed the finding again after the program router began recommending explicit `skopos mission complete` handoff once the current mission already has complete eval evidence, so the remaining gap is broader adapter and UI adoption rather than the happy path still reading as “continue current mission” after closure-ready work.
+- `2026-04-12`: Narrowed the finding again after trust-and-done closure integration landed: unresolved blocking workflow questions and missing or incomplete mission eval artifacts now gate closure directly, so the remaining gap is adapter plus UI adoption rather than missing closure enforcement.
+- `2026-04-12`: Narrowed the finding again after the eval-to-closure handoff fix landed: successful mission evaluation now reconciles remaining non-decision checklist drift and recommends explicit mission completion, so the remaining gap is trust-plus-done enforcement for unresolved questions and required eval outputs.
+- `2026-04-12`: Narrowed the finding again after `skopos eval` landed: the router now covers post-discussion start, decisions, ongoing next-step routing, and mission-level evaluation, so the remaining gap is trust-plus-done enforcement for unresolved questions and required eval outputs rather than the absence of an eval lane.
+- `2026-04-12`: Narrowed the finding again after `skopos next` landed: ongoing mission routing is now durable runtime state, so the remaining gap is the missing eval lane and the final trust-plus-done closure integration rather than the absence of a follow-on router after `start`.
+- `2026-04-11`: Narrowed the finding again after `skopos decide` landed: blocking workflow questions can now be resolved durably with actor attribution and linked mission checklist updates, so the remaining gap is the missing ongoing router, eval lane, and closure integration rather than unresolved decision recording itself.
+- `2026-04-11`: Narrowed the finding after the first workflow-router slice landed: `skopos start` now exists and writes durable `questions` and `recommendations` artifacts, so the remaining gap is the missing ongoing router, decision recording, eval lane, and closure integration rather than the total absence of a post-discussion entrypoint.
+- `2026-04-11`: Expanded the finding again after comparing the stronger Unisane workflow spine to current Skopos behavior: Skopos still lacks a first-class post-discussion router plus durable question, recommendation, and eval artifacts, so too much workflow behavior still depends on agent memory or user coaching even when plan and mission state exist.
+- `2026-04-11`: Expanded the finding after the compiled-reference-layer batch was correctly routed through plan and mission state but still started code before the durable decision doc existed, proving the remaining drift is now docs-first contract enforcement rather than missing runtime mission state.
+- `2026-04-11`: Added an active-mission trust check plus closure coverage, so local source or workflow changes without an active claimed mission now surface directly in `skopos trust` and `skopos done` instead of only through secondary workflow drift symptoms.
+- `2026-04-11`: Opened after self-hosted UI work continued through chat and docs updates without a fresh Skopos mission, while the current self-hosting docs still described hybrid governance and the trust surface was simultaneously warning about instruction-mirror drift.
+
+## Summary
+
+- Severity: `SHOULD`
+- Status: `in-progress`
+- Owner: `skopos-core`
+- Target Pack: `self-hosting workflow contract`
+- Current State: partially fixed. The self-hosting docs now make Skopos-native execution explicit, trust plus closure warn when tracked local work lacks an active claimed mission, `skopos start` exists as a real post-discussion entrypoint with durable question and recommendation artifacts, `skopos decide` now records bounded answers durably with linked mission updates, `skopos next` now keeps the ongoing execution path synchronized with current mission state, `skopos eval` now writes durable mission-level evaluation artifacts while reconciling remaining non-decision checklist drift before handing off to `skopos mission complete`, the program router now recommends explicit mission completion once the current mission already has complete eval evidence, the routed UI now surfaces that closure-ready recommendation through `overview`, `mission detail`, and `trust`, the generated Claude Code and Codex session-start adapters now inject compact workflow-router guidance from `skopos program next`, both the Claude stop hook and the Codex wrapper `stop` event now block on the router's explicit next command before falling back to `done`, and `skopos trust` now exposes that this full automation currently ships only for Claude Code and Codex. The remaining gap is broader host adoption and stronger wrapper-path uptake rather than hidden uncertainty about the primary self-hosted adapter lanes.
+
+## Symptom
+
+1. Self-hosted Skopos feature work can still continue after planning discussion without a newly created or claimed Skopos mission.
+2. `00-start-here.md` and `runbooks/local-development.md` still described hybrid or outer-governance behavior instead of making Skopos-native execution the primary contract.
+3. Trust warnings such as instruction-mirror drift can appear as downstream symptoms while the execution-state gap itself remains under-specified.
+4. Even when a real plan and claimed mission exist, a new artifact family or core contract change can still begin in code before the durable decision doc exists.
+5. There is now a single runtime command for new work after a discussion, a durable ongoing-work router during implementation, and an explicit eval lane between implementation and closure.
+6. Recommended actions and unresolved human choices are now durable `.skopos/` workflow state for `start`, `next`, and `decide`, and trust plus `done` now consume required eval outputs and blocking workflow questions directly.
+7. The remaining drift is now that broader host coverage still does not force the happy path strongly enough everywhere, even though the primary Claude Code and Codex-generated adapter paths now consult the workflow router automatically.
+
+## Impact
+
+1. Skopos does not always build itself through its own workflow artifacts.
+2. Dogfooding produces less durable execution memory than the product intends.
+3. Workflow failures are easier to explain away in chat instead of being recorded as Skopos findings or mission state.
+4. Structural design rationale can still lag behind code even while runtime mission state looks correct.
+5. Users still spend too much effort coaching the agent after the initial router steps because broader host adoption of that control plane is not strong enough yet.
+
+## Fix Plan
+
+1. Canonicalize the self-hosting workflow contract around Skopos-native plan and mission execution.
+2. Remove stale hybrid-governance wording from the Skopos start router and local-development runbook.
+3. Create and claim the next real mission before continuing with the search dock batch.
+4. Keep this finding active until the workflow gap is not only documented but also obvious in normal self-hosted operation.
+5. Tighten the self-hosting docs so structural artifact-family work requires the decision doc before broad code edits.
+6. Finish the remaining adoption layer:
+   - make tool adapters call the workflow router automatically
+   - keep the strongest routed surfaces on the compiled workflow path
+   - keep closure explanations clear for missing decision, workflow, or eval evidence
+
+## Verification
+
+1. The Skopos start router and local-development runbook describe Skopos-native execution as the primary self-hosting path.
+2. The next feature batch has a durable Skopos plan and claimed mission.
+3. The current instruction-mirror trust warning is repaired through the Skopos workflow surface instead of a one-off manual fix.
+4. `skopos trust` warns when tracked local source or workflow work exists without an active claimed mission.
+5. `skopos done` inherits that warning through workspace trust instead of silently treating missionless work as closure-complete.
+6. New structural artifact-family batches write their decision doc before broad code edits instead of relying on mission artifacts alone.
+7. The first implementation slice defines `skopos start` plus durable question and recommendation artifacts as runtime state instead of more prompt-only guidance.
+8. The next implementation slices make adapters and the remaining happy-path entry surfaces consume the implemented `start`, `next`, `decide`, `eval`, trust, and `done` router steps by default.
+
+## Linked Docs
+
+1. `registry.md`
+2. `../00-start-here.md`
+3. `../runbooks/local-development.md`
+4. `../decisions/018-self-hosting-workflow-contract.md`
+5. `../decisions/019-compiled-reference-layer-and-agent-memory-baseline.md`
+6. `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`

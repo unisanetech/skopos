@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.architecture.mid-app",
+  "type": "policy-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Architecture policy for product applications that have outgrown single-folder simplicity but do not need platform-grade ceremony.",
+  "updatedAt": "2026-06-24",
+  "packId": "architecture.mid-app",
+  "family": "architecture",
+  "variant": "mid-app",
+  "version": "0.1.0",
+  "displayName": "Mid-App Architecture",
+  "description": "A portable architecture pack for small-to-mid product applications with multiple features, user workflows, runtime integrations, and enough shared behavior to need explicit boundaries.",
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield"
+  ],
+  "appliesWhen": [
+    {
+      "id": "signal.multiple-product-features",
+      "summary": "The project has several feature areas or user workflows that change independently.",
+      "confidence": "high",
+      "evidence": [
+        "Multiple feature, route, or domain directories",
+        "Repeated UI/data/service patterns across screens",
+        "More than one owner-facing workflow"
+      ]
+    },
+    {
+      "id": "signal.shared-runtime-boundaries",
+      "summary": "The project has shared API, persistence, auth, job, storage, or integration code that many features consume.",
+      "confidence": "high",
+      "evidence": [
+        "Shared client or server adapters",
+        "Common runtime configuration",
+        "Cross-feature imports into helpers or service wrappers"
+      ]
+    },
+    {
+      "id": "signal.validation-needs-lanes",
+      "summary": "The project needs more than one validation lane but does not need a large-platform governance program.",
+      "confidence": "medium",
+      "evidence": [
+        "Unit and typecheck commands exist",
+        "UI or integration smoke tests are present or planned",
+        "Release checks are slower than daily local checks"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.single-script-or-prototype",
+      "summary": "A one-off script, spike, or throwaway prototype should not inherit mid-app structure.",
+      "confidence": "high",
+      "evidence": [
+        "One executable file",
+        "No durable release surface",
+        "No recurring product workflow"
+      ]
+    },
+    {
+      "id": "anti.public-library-first",
+      "summary": "A library package with public API compatibility as its main concern should use a library architecture pack instead.",
+      "confidence": "high",
+      "evidence": [
+        "Package exports are the product",
+        "No app composition root",
+        "Semver migration policy dominates feature layout"
+      ]
+    },
+    {
+      "id": "anti.large-platform-runtime",
+      "summary": "A modular platform with strict package boundaries, generated routes, DI, and multi-team ownership needs a large-platform pack.",
+      "confidence": "medium",
+      "evidence": [
+        "Many workspace packages",
+        "Generated contracts or routes",
+        "Formal module ownership docs",
+        "Multiple deployable starters"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "architecture.mid-app.composition-root-owns-wiring",
+      "title": "Composition root owns runtime wiring",
+      "severity": "must",
+      "summary": "App startup, route registration, dependency assembly, provider selection, and environment interpretation must live in a composition root or platform layer, not inside feature internals.",
+      "rationale": "Feature code stays testable and portable when runtime choices are assembled at the edge.",
+      "appliesTo": [
+        "app entrypoints",
+        "server bootstrap",
+        "router setup",
+        "provider/adaptor setup"
+      ],
+      "examples": [
+        "src/app/** wires providers and routes",
+        "src/platform/** exposes stable runtime adapters consumed by features"
+      ],
+      "antiPatterns": [
+        "Feature service imports environment variables directly",
+        "UI component creates database/cache/job clients",
+        "Route handlers select providers ad hoc"
+      ],
+      "checkIds": [
+        "architecture.mid-app.runtime-wiring-outside-features"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.feature-owns-product-behavior",
+      "title": "Feature owns product behavior",
+      "severity": "must",
+      "summary": "A feature should own its user workflow, domain service, screen-level UI, validation, and local tests unless the behavior is genuinely cross-feature infrastructure.",
+      "rationale": "Agents can make coherent changes when the behavior they need is locally discoverable.",
+      "appliesTo": [
+        "features",
+        "screens",
+        "domain services",
+        "feature tests"
+      ],
+      "examples": [
+        "src/features/orders/service.ts",
+        "src/features/orders/components/order-list.tsx",
+        "src/features/orders/__tests__/**"
+      ],
+      "antiPatterns": [
+        "Business decisions hidden in shared helpers",
+        "Feature UI spread across unrelated global component folders",
+        "Tests only at a distant app level"
+      ],
+      "checkIds": [
+        "architecture.mid-app.business-logic-in-shared-helper"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.shared-is-earned",
+      "title": "Shared code is earned",
+      "severity": "must",
+      "summary": "Shared modules must represent stable cross-feature primitives, platform adapters, or design-system components. Do not create shared buckets for speculative reuse.",
+      "rationale": "Premature shared folders make agents choose generic placement and create second patterns.",
+      "appliesTo": [
+        "shared modules",
+        "support folders",
+        "component libraries",
+        "utility functions"
+      ],
+      "examples": [
+        "src/support/formatting/money.ts after two or more features need identical money formatting",
+        "src/platform/api/client.ts as a single API boundary"
+      ],
+      "antiPatterns": [
+        "src/utils/misc.ts",
+        "src/shared/helpers.ts",
+        "One feature imports another feature's private helper"
+      ],
+      "checkIds": [
+        "architecture.mid-app.generic-helper-bucket",
+        "architecture.mid-app.cross-feature-private-import"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.import-direction-is-one-way",
+      "title": "Import direction is one-way",
+      "severity": "must",
+      "summary": "Feature internals may depend on platform/support primitives, but platform/support code must not depend on feature internals, and features must not import private internals from sibling features.",
+      "rationale": "Acyclic direction keeps refactors bounded and makes ownership clear.",
+      "appliesTo": [
+        "imports",
+        "module boundaries",
+        "feature internals",
+        "support code"
+      ],
+      "examples": [
+        "features/orders imports platform/api/client",
+        "support/formatting has no feature imports"
+      ],
+      "antiPatterns": [
+        "platform imports features/orders/service",
+        "features/billing imports features/orders/components/private-row"
+      ],
+      "checkIds": [
+        "architecture.mid-app.reverse-platform-import",
+        "architecture.mid-app.cross-feature-private-import"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.public-surface-is-explicit",
+      "title": "Public surface is explicit",
+      "severity": "should",
+      "summary": "Feature entrypoints, route handlers, app APIs, and reusable components should expose intentional public files instead of encouraging deep imports.",
+      "rationale": "Explicit surfaces let agents and humans change internals without breaking unrelated callers.",
+      "appliesTo": [
+        "feature indexes",
+        "route handlers",
+        "component exports",
+        "API modules"
+      ],
+      "examples": [
+        "src/features/orders/index.ts exports supported feature API",
+        "Deep component internals stay unexported"
+      ],
+      "antiPatterns": [
+        "Imports from src/features/orders/components/internal/**",
+        "Exporting every file through a barrel by default"
+      ],
+      "checkIds": [
+        "architecture.mid-app.deep-feature-import"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.boundary-data-is-validated",
+      "title": "Boundary data is validated",
+      "severity": "must",
+      "summary": "External input should be parsed at transport, persistence, job, and integration boundaries before it reaches feature logic.",
+      "rationale": "Feature code should work with known shapes; uncertainty belongs at the edge.",
+      "appliesTo": [
+        "HTTP handlers",
+        "forms",
+        "database reads",
+        "webhooks",
+        "jobs",
+        "third-party APIs"
+      ],
+      "examples": [
+        "Route parses request body before calling feature service",
+        "Webhook adapter normalizes provider payload"
+      ],
+      "antiPatterns": [
+        "Repeated unknown coercion inside domain logic",
+        "Components defensively handle every possible server shape"
+      ],
+      "checkIds": [
+        "architecture.mid-app.unvalidated-boundary-input"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.validation-lanes-are-declared",
+      "title": "Validation lanes are declared",
+      "severity": "should",
+      "summary": "Projects should declare fast local checks, targeted feature checks, and slower release checks so agents know what proof is proportional to a change.",
+      "rationale": "Without lanes, agents either over-run expensive checks or under-prove risky work.",
+      "appliesTo": [
+        "package scripts",
+        "Skopos workflows",
+        "AGENTS.md",
+        "CI docs"
+      ],
+      "examples": [
+        "typecheck and unit test as fast lane",
+        "E2E and build as release lane",
+        "Feature-specific commands listed in project docs"
+      ],
+      "antiPatterns": [
+        "Only one broad CI command is documented",
+        "Agent must guess which test proves a UI or API change"
+      ],
+      "checkIds": [
+        "architecture.mid-app.missing-validation-lanes"
+      ]
+    },
+    {
+      "id": "architecture.mid-app.generated-artifacts-have-owners",
+      "title": "Generated artifacts have owners",
+      "severity": "must",
+      "summary": "Generated files must name their source or generator and should not be hand-edited as a shortcut.",
+      "rationale": "Generated drift is one of the fastest ways for agents to create confusing false truth.",
+      "appliesTo": [
+        "generated SDKs",
+        "schemas",
+        "routes",
+        "docs indexes",
+        "build outputs"
+      ],
+      "examples": [
+        "Generated docs point to the source command",
+        "AGENTS.md names generated paths and regeneration command"
+      ],
+      "antiPatterns": [
+        "Patch generated output directly",
+        "Generated folder has no ownership or refresh command"
+      ],
+      "checkIds": [
+        "architecture.mid-app.generated-owner-missing"
+      ]
+    }
+  ],
+  "requiredDocs": [
+    "policies/overview.md",
+    "policies/boundaries.md",
+    "policies/brownfield.md",
+    "policies/greenfield.md",
+    "policies/examples.md"
+  ],
+  "generatedArtifacts": [
+    ".skopos/policies/resolved.json",
+    ".skopos/drift/report.json",
+    ".skopos/agent/brief.json"
+  ],
+  "driftCheckIds": [
+    "architecture.mid-app.runtime-wiring-outside-features",
+    "architecture.mid-app.business-logic-in-shared-helper",
+    "architecture.mid-app.generic-helper-bucket",
+    "architecture.mid-app.cross-feature-private-import",
+    "architecture.mid-app.reverse-platform-import",
+    "architecture.mid-app.deep-feature-import",
+    "architecture.mid-app.unvalidated-boundary-input",
+    "architecture.mid-app.missing-validation-lanes",
+    "architecture.mid-app.generated-owner-missing"
+  ],
+  "proofFixtureIds": [
+    "architecture.mid-app.good-product-app",
+    "architecture.mid-app.drift-cross-feature-and-shared-bucket"
+  ]
+}

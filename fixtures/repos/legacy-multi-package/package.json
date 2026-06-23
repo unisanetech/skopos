@@ -1,0 +1,14 @@
+{
+  "name": "legacy-multi-package-fixture",
+  "private": true,
+  "scripts": {
+    "dev": "echo legacy-dev",
+    "build": "echo legacy-build",
+    "test": "echo legacy-test",
+    "typecheck": "echo legacy-typecheck",
+    "lint": "echo legacy-lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

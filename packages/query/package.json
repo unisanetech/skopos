@@ -1,0 +1,32 @@
+{
+  "name": "@skopos/query",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Scope resolution and compact context assembly for the Skopos SDK",
+  "skopos": {
+    "surface": "public-sdk-core",
+    "releaseTarget": "candidate",
+    "publishPhase": "incubation"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@skopos/config": "workspace:*",
+    "@skopos/indexer": "workspace:*",
+    "@skopos/model": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.2"
+  }
+}

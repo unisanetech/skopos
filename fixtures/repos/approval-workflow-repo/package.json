@@ -1,0 +1,14 @@
+{
+  "name": "approval-workflow-fixture",
+  "private": true,
+  "scripts": {
+    "dev": "echo approval-dev",
+    "build": "echo approval-build",
+    "test": "echo approval-test",
+    "typecheck": "echo approval-typecheck",
+    "lint": "echo approval-lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
+  }
+}

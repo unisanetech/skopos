@@ -1,0 +1,8 @@
+{
+  "name": "@boundary/sdk-cli",
+  "private": true,
+  "description": "CLI package for the boundary-aware fixture.",
+  "dependencies": {
+    "@boundary/sdk-core": "workspace:*"
+  }
+}

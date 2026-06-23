@@ -1,0 +1,5 @@
+{
+  "name": "@selfhost/internal-prototype",
+  "private": true,
+  "description": "Internal prototype package that must stay out of the active workspace model."
+}

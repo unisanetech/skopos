@@ -1,0 +1,12 @@
+{
+  "name": "@messy/api",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "@large/shared-types",
+  "private": true,
+  "description": "Shared types package for large-repo slice coverage",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "typescript": "^5.9.2"
+  }
+}

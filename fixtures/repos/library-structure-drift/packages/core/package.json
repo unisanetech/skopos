@@ -1,0 +1,8 @@
+{
+  "name": "@library-drift/core",
+  "private": true,
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.4.0"
+  }
+}

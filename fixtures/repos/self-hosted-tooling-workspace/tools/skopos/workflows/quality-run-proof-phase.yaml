@@ -1,0 +1,23 @@
+id: quality.run-proof-phase
+title: Run proof-phase scorecard
+description: Execute the canonical proof-phase harness so self-hosted changes are measured against the current brownfield scorecard.
+category: quality-check
+scope:
+  - workspace
+command: pnpm proof
+cwd: .
+inputs:
+  - packages
+  - docs
+  - fixtures
+  - internal/evals
+outputs: []
+affects: []
+safety: read-only
+requiresApproval: false
+whenToUse: Run after changing runtime behavior, proof fixtures, scorecard contracts, or other reliability-critical surfaces.
+requiredForDone: false
+recommendedAfter:
+  - typecheck
+  - test
+owner: skopos-core

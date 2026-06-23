@@ -1,0 +1,46 @@
+export const SKOPOS_CLI_HELP = `Skopos CLI
+
+Usage:
+  skopos init [target] [--mode existing|greenfield] [--subtree <path>] [--actor <id>] [--dry-run] [--force] [--no-scaffold-instructions] [--force-instructions] [--json]
+  skopos scan [target] [--subtree <path>] [--actor <id>] [--json]
+  skopos start <goal> [target] [--scope <scope>] [--actor <id>] [--dry-run] [--json]
+  skopos decide <question-id> <option-id> [target] [--actor <id>] [--dry-run] [--json]
+  skopos discuss append-turn [target] [--thread <id>] [--session-id <id>] [--role <user|assistant|system>] [--source-event <event>] [--transcript-path <path>] [--message <text>|--message-stdin] [--dry-run] [--json]
+  skopos discuss checkpoint [target] [--dry-run] [--json]
+  skopos discuss handoff [target] [--dry-run] [--json]
+  skopos discuss recent [target] [--json]
+  skopos next [target] [--mission <id>] [--actor <id>] [--dry-run] [--json]
+  skopos eval [target] [--mission <id>] [--actor <id>] [--dry-run] [--background] [--compact] [--summary] [--fields <names>] [--json]
+  skopos program sync [target] [--actor <id>] [--dry-run] [--compact] [--summary] [--fields <names>] [--json]
+  skopos program next [target] [--actor <id>] [--dry-run] [--compact] [--summary] [--fields <names>] [--json]
+  skopos resolve [scope] [target] [--json]
+  skopos context [scope] [target] [--json]
+  skopos plan <goal> [target] [--scope <scope>] [--actor <id>] [--dry-run] [--json]
+  skopos overrides show [target] [--json]
+  skopos policies list [target] [--json]
+  skopos policies show <pack> [target] [--json]
+  skopos overrides set <key> <value> [target] [--reason <text>] [--actor <id>] [--force] [--json]
+  skopos workflows list [target] [--json]
+  skopos workflows show <workflow> [target] [--json]
+  skopos workflows run <workflow> [target] [--dry-run] [--approve] [--actor <id>] [--json]
+  skopos mission show <mission> [target] [--json]
+  skopos mission slice <mission> <goal> [target] [--scope <scope>] [--actor <id>] [--claim] [--force] [--json]
+  skopos mission claim <mission> [target] [--actor <id>] [--force] [--json]
+  skopos mission release <mission> [target] [--actor <id>] [--force] [--json]
+  skopos mission complete <mission> [target] [--actor <id>] [--force] [--json]
+  skopos jobs show <job-id> [target] [--compact] [--summary] [--fields <names>] [--json]
+  skopos jobs list [target] [--json]
+  skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--json]
+  skopos done [changed-path...] [--mission <mission>] [--actor <id>] [--cwd <target>] [--compact] [--summary] [--fields <names>] [--json]
+  skopos instructions scaffold [target] [--mode existing|greenfield] [--force] [--dry-run] [--actor <id>] [--json]
+  skopos instructions sync [target] [--dry-run] [--actor <id>] [--json]
+  skopos trust [target] [--actor <id>] [--compact] [--summary] [--fields <names>] [--json]
+  skopos ui render [target] [--output <path>] [--dry-run] [--json]
+  skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]
+  skopos ui dev [target] [--host <host>] [--port <port>] [--json]
+  skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]
+`;
+
+export const printHelp = (): void => {
+  process.stdout.write(SKOPOS_CLI_HELP);
+};

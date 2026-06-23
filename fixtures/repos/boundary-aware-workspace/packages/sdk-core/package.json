@@ -1,0 +1,5 @@
+{
+  "name": "@boundary/sdk-core",
+  "private": true,
+  "description": "Core public SDK package for the boundary-aware fixture."
+}

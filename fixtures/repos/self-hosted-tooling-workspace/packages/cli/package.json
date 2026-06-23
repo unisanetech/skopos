@@ -1,0 +1,9 @@
+{
+  "name": "@selfhost/cli",
+  "private": true,
+  "description": "CLI package for the self-hosted tooling fixture.",
+  "dependencies": {
+    "@selfhost/core": "workspace:*",
+    "@selfhost/ui": "workspace:*"
+  }
+}

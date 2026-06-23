@@ -1,0 +1,15 @@
+{
+  "name": "@large/shared-ui",
+  "private": true,
+  "description": "Shared UI package for large-repo slice coverage",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "typescript": "^5.9.2"
+  }
+}

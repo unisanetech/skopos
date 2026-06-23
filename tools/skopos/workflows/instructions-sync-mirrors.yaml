@@ -1,0 +1,27 @@
+id: instructions.sync-mirrors
+title: Sync self-hosted instruction mirrors
+description: Regenerate CLAUDE, Cursor, and Copilot instruction mirrors from the Skopos subtree AGENTS.md source.
+category: docs-generator
+scope:
+  - workspace
+  - instructions:agents
+command: pnpm instructions:sync
+cwd: .
+inputs:
+  - AGENTS.md
+outputs:
+  - CLAUDE.md
+  - .cursor/rules/project.mdc
+  - .github/copilot-instructions.md
+affects:
+  - CLAUDE.md
+  - .cursor/rules/project.mdc
+  - .github/copilot-instructions.md
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing AGENTS.md or instruction-routing guidance inside the Skopos subtree.
+requiredForDone: true
+recommendedAfter:
+  - plan
+  - impact
+owner: skopos-core

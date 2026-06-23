@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 2,
+  "id": "proof-phase-benchmarks",
+  "benchmarks": [
+    {
+      "id": "clean-existing-repo-change",
+      "fixture": "clean-service",
+      "goal": "add internal health endpoint",
+      "scope": "workspace",
+      "category": "brownfield-clean",
+      "priority": "must-win"
+    },
+    {
+      "id": "messy-repo-change",
+      "fixture": "messy-monorepo",
+      "goal": "add billing endpoint",
+      "scope": "workspace",
+      "category": "brownfield-messy",
+      "priority": "must-win"
+    },
+    {
+      "id": "legacy-structure-drift",
+      "fixture": "legacy-multi-package",
+      "goal": "stabilize package boundaries",
+      "scope": "workspace",
+      "category": "brownfield-messy",
+      "priority": "must-win"
+    },
+    {
+      "id": "mixed-command-surface-stabilization",
+      "fixture": "mixed-brownfield-monorepo",
+      "goal": "stabilize the shared root command surface without treating the repo as high-conflict",
+      "scope": "workspace",
+      "category": "brownfield-mixed",
+      "priority": "must-win"
+    },
+    {
+      "id": "brownfield-stabilization-delta",
+      "fixture": "brownfield-stabilization-delta",
+      "goal": "compare a realistic brownfield repo before and after stabilization to prove the delta is visible",
+      "scope": "workspace",
+      "category": "brownfield-comparison",
+      "priority": "must-win"
+    },
+    {
+      "id": "partial-library-structure-drift",
+      "fixture": "library-structure-drift",
+      "goal": "stabilize library package boundaries without overcalling full architecture divergence",
+      "scope": "workspace",
+      "category": "architecture-interpretation",
+      "priority": "must-win"
+    },
+    {
+      "id": "stale-docs-trust",
+      "fixture": "stale-docs-repo",
+      "goal": "stabilize stale docs guidance before relying on the repo knowledge",
+      "scope": "workspace",
+      "category": "docs-trust",
+      "priority": "must-win"
+    },
+    {
+      "id": "override-canonicalization",
+      "fixture": "canonical-override-repo",
+      "goal": "declare the canonical docs root and project archetype when inference is wrong",
+      "scope": "workspace",
+      "category": "override-canonicalization",
+      "priority": "must-win"
+    },
+    {
+      "id": "knowledge-index-log",
+      "fixture": "basic-monorepo",
+      "goal": "compile a compact knowledge index and operational log across a normal workspace lifecycle",
+      "scope": "@fixture/api",
+      "category": "knowledge-index-log",
+      "priority": "must-win"
+    },
+    {
+      "id": "hot-path-performance",
+      "fixture": "basic-monorepo",
+      "goal": "keep resolve, context, plan, trust, and impact fast on compiled-state hot paths",
+      "scope": "@fixture/api",
+      "category": "hot-path-performance",
+      "priority": "must-win"
+    },
+    {
+      "id": "compiled-state-invalidation",
+      "fixture": "basic-monorepo",
+      "goal": "refresh compiled scope state when a new package appears after bootstrap",
+      "scope": "@fixture/ops",
+      "category": "compiled-state-invalidation",
+      "priority": "must-win"
+    },
+    {
+      "id": "workflow-sensitive-change",
+      "fixture": "basic-monorepo",
+      "goal": "refresh api reference for billing summaries",
+      "scope": "@fixture/api",
+      "category": "workflow-closure",
+      "priority": "must-win"
+    },
+    {
+      "id": "approval-sensitive-workflow",
+      "fixture": "approval-workflow-repo",
+      "goal": "run destructive cleanup only with explicit approval",
+      "scope": "workspace",
+      "category": "workflow-approval",
+      "priority": "must-win"
+    },
+    {
+      "id": "brownfield-architecture-interpretation",
+      "fixture": "messy-monorepo",
+      "goal": "stabilize workspace architecture",
+      "scope": "workspace",
+      "category": "architecture-interpretation",
+      "priority": "must-win"
+    },
+    {
+      "id": "large-repo-subtree-slice",
+      "fixture": "large-monorepo",
+      "goal": "stabilize billing slice",
+      "scope": "workspace",
+      "category": "large-repo-slice",
+      "priority": "must-win"
+    },
+    {
+      "id": "workspace-boundary-purity",
+      "fixture": "boundary-aware-workspace",
+      "goal": "keep internal and proof-only roots out of the active sdk workspace model",
+      "scope": "workspace",
+      "category": "workspace-boundary",
+      "priority": "must-win"
+    },
+    {
+      "id": "self-hosted-dogfooding",
+      "fixture": "self-hosted-tooling-workspace",
+      "goal": "refresh self-hosted proof portal and knowledge coverage",
+      "scope": "@selfhost/cli",
+      "category": "self-hosting-dogfood",
+      "priority": "must-win"
+    },
+    {
+      "id": "tool-native-enforcement",
+      "fixture": "basic-monorepo",
+      "goal": "enforce closure through Claude Code hooks",
+      "scope": "workspace",
+      "category": "tool-native-enforcement",
+      "priority": "must-win"
+    },
+    {
+      "id": "multi-actor-mission-coordination",
+      "fixture": "basic-monorepo",
+      "goal": "coordinate mission ownership between multiple agents without silent takeover",
+      "scope": "@fixture/shared",
+      "category": "multi-actor-runtime",
+      "priority": "must-win"
+    },
+    {
+      "id": "batch-mission-slicing",
+      "fixture": "basic-monorepo",
+      "goal": "execute proof batch across the workspace",
+      "scope": "@fixture/api",
+      "category": "batch-execution",
+      "priority": "must-win"
+    }
+  ]
+}

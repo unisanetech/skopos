@@ -1,0 +1,40 @@
+schemaVersion: 1
+project:
+  name: library-structure-drift
+  archetype: library
+  repoMode: multi-package
+  scopeStrategy: hybrid
+commands:
+  dev: node ./scripts/dev.mjs
+  build: node ./scripts/build.mjs
+  test: node ./scripts/test.mjs
+  typecheck: node ./scripts/typecheck.mjs
+workspace:
+  ignore: []
+docs:
+  root: docs
+  usePerDomainArchive: true
+  strictMetadata: true
+  strictLinking: true
+agents:
+  canonicalInstructions: AGENTS.md
+  syncMirrors:
+    - CLAUDE.md
+    - .cursor/rules/project.mdc
+    - .github/copilot-instructions.md
+  mcp: true
+trust:
+  mode: stabilize
+  requireDocsSync: true
+  requireProofForDone: true
+decisions:
+  mode: balanced
+  askFor:
+    - architecture-shift
+    - public-api-change
+    - destructive-migration
+    - vendor-choice
+    - security-privacy-change
+security:
+  privacyMode: local-only
+  redactSecrets: true

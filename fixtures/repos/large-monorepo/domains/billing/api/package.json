@@ -1,0 +1,16 @@
+{
+  "name": "@large/billing-api",
+  "private": true,
+  "description": "Billing service package for subtree benchmark coverage",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsup src/index.ts --format esm",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --ext .ts"
+  },
+  "dependencies": {
+    "@large/shared-types": "workspace:*",
+    "express": "^5.1.0"
+  }
+}

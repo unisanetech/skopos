@@ -1,0 +1,5 @@
+{
+  "name": "@selfhost/core",
+  "private": true,
+  "description": "Core public SDK package for the self-hosted tooling fixture."
+}

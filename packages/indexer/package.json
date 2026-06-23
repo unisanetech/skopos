@@ -1,0 +1,33 @@
+{
+  "name": "@skopos/indexer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Project scanning and artifact indexing for the Skopos SDK",
+  "skopos": {
+    "surface": "public-sdk-core",
+    "releaseTarget": "candidate",
+    "publishPhase": "incubation"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --clean",
+    "dev": "tsup src/index.ts --format esm --dts --watch",
+    "check-types": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@skopos/config": "workspace:*",
+    "@skopos/model": "workspace:*",
+    "typescript": "^5.9.2",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0"
+  }
+}

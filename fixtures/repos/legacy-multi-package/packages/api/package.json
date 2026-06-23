@@ -1,0 +1,10 @@
+{
+  "name": "@legacy/api",
+  "private": true,
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "scripts": {
+    "dev": "echo api-dev"
+  }
+}

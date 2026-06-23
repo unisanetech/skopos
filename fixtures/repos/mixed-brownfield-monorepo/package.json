@@ -1,0 +1,11 @@
+{
+  "name": "@fixture-mixed/workspace",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm --filter @fixture-mixed/web dev",
+    "build": "pnpm -r build"
+  }
+}

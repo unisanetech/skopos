@@ -1,0 +1,24 @@
+{
+  "name": "@skopos/workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.26.0",
+  "description": "Self-hosting workspace root for the Skopos SDK subtree",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"@skopos/*\" dev",
+    "build": "pnpm -r --filter \"@skopos/*\" build",
+    "test": "pnpm -r --filter \"@skopos/*\" --if-present test",
+    "typecheck": "pnpm --filter \"@skopos/*\" check-types",
+    "release:check": "pnpm --filter @skopos/cli exec -- vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts",
+    "proof": "pnpm --filter @skopos/cli proof",
+    "instructions:sync": "pnpm exec node --import tsx packages/cli/src/cli.ts instructions sync . --json",
+    "skopos:init": "pnpm exec node --import tsx packages/cli/src/cli.ts init . --json",
+    "skopos:scan": "pnpm exec node --import tsx packages/cli/src/cli.ts scan . --json",
+    "skopos:trust": "pnpm exec node --import tsx packages/cli/src/cli.ts trust . --json",
+    "skopos:ui": "pnpm exec node --import tsx packages/cli/src/cli.ts ui render . --json",
+    "skopos:ui:app": "pnpm exec node --import tsx packages/cli/src/cli.ts ui build .",
+    "skopos:ui:dev": "pnpm exec node --import tsx packages/cli/src/cli.ts ui dev .",
+    "skopos:ui:serve": "pnpm exec node --import tsx packages/cli/src/cli.ts ui serve ."
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "brownfield-stabilization-delta-before",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --recursive --parallel dev",
+    "build": "pnpm --recursive build"
+  }
+}

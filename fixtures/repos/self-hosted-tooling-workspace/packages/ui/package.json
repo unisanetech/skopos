@@ -1,0 +1,8 @@
+{
+  "name": "@selfhost/ui",
+  "private": true,
+  "description": "UI package for the self-hosted tooling fixture.",
+  "dependencies": {
+    "@selfhost/core": "workspace:*"
+  }
+}
