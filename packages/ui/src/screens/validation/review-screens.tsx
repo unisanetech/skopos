@@ -308,7 +308,7 @@ export function PackDetailView({
       >
         <EmptyMessage
           title="Unknown pack"
-          description="Return to Rules and choose one of the accepted packs currently recorded for this project."
+          description="Return to Rules and choose one of the available or accepted packs currently visible to this project."
         />
       </ReviewPage>
     );

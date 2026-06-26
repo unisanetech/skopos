@@ -288,6 +288,9 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
   const manifestByPackId = new Map(
     (state.policyReview?.packManifests ?? []).map((view) => [view.manifest.packId, view]),
   );
+  const acceptedPackById = new Map(
+    (resolvedPolicy?.acceptedPacks ?? []).map((pack) => [pack.packId, pack]),
+  );
   const localOverrides =
     state.policyReview?.overrides?.overrides.overrides ?? resolvedPolicy?.overrides ?? [];
   const activeRules = resolvedPolicy?.activeRules ?? [];
@@ -320,20 +323,46 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
     resolvedPolicy,
     driftReport,
     acceptedPacks,
-    packDetails: acceptedPacks.map((pack) => {
-      const recommendation = recommendationByPackId.get(pack.packId);
-      const manifestView = manifestByPackId.get(pack.packId);
+    packDetails: Array.from(
+      new Set([...manifestByPackId.keys(), ...acceptedPacks.map((pack) => pack.packId)]),
+    )
+      .sort((left, right) => left.localeCompare(right))
+      .map((packId) => {
+      const acceptedPack = acceptedPackById.get(packId);
+      const acceptedSummary = acceptedPacks.find((pack) => pack.packId === packId);
+      const recommendation = recommendationByPackId.get(packId);
+      const manifestView = manifestByPackId.get(packId);
       const manifest = manifestView?.manifest;
-      const rules = activeRules.filter((rule) => rule.id.startsWith(`${pack.packId}.`));
+      const rules = acceptedPack
+        ? activeRules.filter((rule) => rule.id.startsWith(`${packId}.`))
+        : manifest?.rules ?? [];
       const roleMappings =
-        state.policyReview?.roleMapping?.mapping.mappings.filter((mapping) => mapping.packId === pack.packId) ?? [];
+        state.policyReview?.roleMapping?.mapping.mappings.filter((mapping) => mapping.packId === packId) ?? [];
 
       return {
-        ...pack,
+        packId,
+        displayName:
+          manifest?.displayName ??
+          acceptedSummary?.displayName ??
+          recommendation?.displayName ??
+          humanize(packId),
+        summary:
+          manifest?.plainLanguageSummary ??
+          acceptedSummary?.summary ??
+          recommendation?.plainLanguageSummary ??
+          recommendation?.reason ??
+          manifest?.summary ??
+          'Available project rule pack.',
+        reason: acceptedPack?.reason ?? recommendation?.reason ?? 'Available to review before applying.',
+        source: acceptedPack ? humanize(acceptedPack.source) : 'Available',
+        acceptedBy: acceptedPack?.acceptedBy,
+        acceptedAt: acceptedPack?.acceptedAt ?? '',
+        family: humanize(manifest?.family ?? recommendation?.family ?? ''),
+        variant: humanize(manifest?.variant ?? recommendation?.variant ?? ''),
         description:
           manifest?.description ??
           recommendation?.reason ??
-          'This accepted pack contributes project guidance for agents and developers.',
+          'This pack contributes project guidance for agents and developers.',
         bestFor: manifest?.bestFor ?? [],
         notFor: manifest?.notFor ?? [],
         userQuestions: manifest?.userQuestions ?? [],
@@ -374,7 +403,7 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
         generatedArtifacts: manifest?.generatedArtifacts ?? [],
         driftCheckIds: manifest?.driftCheckIds ?? [],
         proofFixtureIds: manifest?.proofFixtureIds ?? [],
-        sourcePath: recommendation?.sourcePath,
+        sourcePath: recommendation?.sourcePath ?? manifestView?.artifactPath,
         manifestPath: manifestView?.artifactPath,
       };
     }),
