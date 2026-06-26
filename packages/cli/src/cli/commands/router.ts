@@ -94,6 +94,10 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     lines.push(...buildGuidedWorkflowQuestionLines(result.blockingQuestions));
   }
 
+  if (hasWorkflowRecordingPlanStep(result.plan.implementationSteps)) {
+    lines.push(...buildWorkflowRecordingGuidanceLines());
+  }
+
   lines.push(
     '',
     'Details:',
@@ -225,6 +229,10 @@ export const runNextCommand = async (args: string[]): Promise<void> => {
     for (const question of result.blockingQuestions) {
       lines.push(`  - ${question.question}`);
     }
+  }
+
+  if (result.nextItem?.id === 'step-record-workflow-lane') {
+    lines.push(...buildWorkflowRecordingGuidanceLines());
   }
 
   writeLines(lines);
@@ -378,6 +386,10 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
     lines.push(...buildGuidedDecisionQuestionLines(result.decisionQuestions));
   }
 
+  if (hasWorkflowRecordingPlanStep(result.implementationSteps)) {
+    lines.push(...buildWorkflowRecordingGuidanceLines());
+  }
+
   lines.push(
     '',
     'Details:',
@@ -405,6 +417,18 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
 
   writeLines(lines);
 };
+
+const hasWorkflowRecordingPlanStep = (steps: Array<{ id: string }>): boolean =>
+  steps.some((step) => step.id === 'record-workflow-lane');
+
+const buildWorkflowRecordingGuidanceLines = (): string[] => [
+  '',
+  'Workflow recording:',
+  '- Confirm the lane before editing: light, normal, or workpack.',
+  '- Keep the mission and plan current for normal or workpack work.',
+  '- Add a decision when a durable product or architecture choice is made.',
+  '- Add or update a finding when a structural gap is discovered.',
+];
 
 const parsePlanArgs = (args: string[]): ParsedPlanArgs => {
   let cwd = process.cwd();

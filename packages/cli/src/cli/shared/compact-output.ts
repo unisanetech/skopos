@@ -202,6 +202,10 @@ const buildProgramNextStep = (result: SkoposProgramNextRunResult): string => {
     return result.nextCommand;
   }
 
+  if (isWorkflowRecordingProgramItem(result.recommendedItem)) {
+    return 'Confirm the workflow lane, then keep mission, decision, and finding records current while editing.';
+  }
+
   if (result.recommendedItem) {
     return `Work on: ${result.recommendedItem.title}.`;
   }
@@ -261,11 +265,21 @@ const buildNextStep = (result: SkoposNextRunResult): string => {
   }
 
   if (result.nextItem) {
+    if (result.nextItem.id === 'step-record-workflow-lane') {
+      return 'Confirm the workflow lane, then keep mission, decision, and finding records current while editing.';
+    }
+
     return `Work on: ${result.nextItem.title}.`;
   }
 
   return 'No next item is available. Review the mission state before continuing.';
 };
+
+const isWorkflowRecordingProgramItem = (
+  item: SkoposProgramNextRunResult['recommendedItem'],
+): boolean =>
+  item?.id.includes('recommendation.step-record-workflow-lane') === true ||
+  item?.title === 'Record the workflow lane before editing';
 
 const summarizeMissionProgress = (
   mission: SkoposMissionArtifact,

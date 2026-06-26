@@ -9,6 +9,7 @@ import {
   PlanListGuidanceCard,
   PlanListCard,
   PlansInspectorAside,
+  PlanWorkflowRecordingCard,
   PlanWorkPlanCard,
 } from '../../features/knowledge/plans/index.js';
 import { ListPage } from '../../patterns/pages/list-page.js';
@@ -130,6 +131,7 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
       aside={<PlanDetailInspectorAside planView={planView} relatedMission={relatedMission} />}
     >
       <PlanDetailGuidanceCard planView={planView} relatedMission={relatedMission} />
+      <PlanWorkflowRecordingCard planView={planView} />
       <PlanFrameCard planView={planView} />
       <PlanWorkPlanCard
         implementationSteps={planView.plan.implementationSteps}

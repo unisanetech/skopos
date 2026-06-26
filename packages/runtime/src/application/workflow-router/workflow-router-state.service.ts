@@ -461,7 +461,10 @@ const buildNextMissionRecommendation = ({
     title: nextItem.title,
     summary: nextItem.detail,
     priority: nextItem.kind === 'implementation' ? 'high' : 'medium',
-    reason: 'This is the first pending mission item in the current execution checklist.',
+    reason:
+      nextItem.id === 'step-record-workflow-lane'
+        ? 'This work is broad or risky enough that Skopos should confirm the lane and keep mission, decision, and finding records current before implementation continues.'
+        : 'This is the first pending mission item in the current execution checklist.',
     actionKind: toRecommendationActionKind(nextItem),
     command: buildMissionItemCommand({
       workspaceRoot,

@@ -12,8 +12,11 @@ import {
   ReviewRow,
   SidebarCard,
   SidebarList,
+  StatusPill,
 } from '../../../patterns/sections/inspector-primitives.js';
 import { formatDateTime } from '../../../support/formatting/console-formatting.js';
+
+const WORKFLOW_RECORDING_STEP_ID = 'record-workflow-lane';
 
 export function PlanDetailInspectorAside({
   planView,
@@ -95,6 +98,66 @@ export function PlanDetailInspectorAside({
         />
       </SidebarCard>
     </>
+  );
+}
+
+export function PlanWorkflowRecordingCard({
+  planView,
+}: {
+  planView: SkoposUiConsolePlanView;
+}): React.JSX.Element | null {
+  const workflowStep = planView.plan.implementationSteps.find(
+    (step) => step.id === WORKFLOW_RECORDING_STEP_ID,
+  );
+
+  if (!workflowStep) {
+    return null;
+  }
+
+  return (
+    <Card
+      title="Why this plan needs tracking"
+      description="Skopos added this guard because the plan has enough scope or risk to need a clear work record."
+    >
+      <div className="border-y border-[var(--line)]">
+        <WorkflowRecordingRow
+          label="Lane"
+          value="Use a light path for small edits, a normal path for coordinated changes, and a workpack for broad or risky work."
+        />
+        <WorkflowRecordingRow
+          label="Record while working"
+          value="Keep mission progress and plan direction current instead of leaving the next developer to reconstruct the story."
+        />
+        <WorkflowRecordingRow
+          label="Save durable truth"
+          value="Write a decision for lasting product or architecture choices. Write a finding when you discover a structural problem."
+        />
+        <div className="border-t border-[var(--line)] px-3 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="skopos-metric-label">Guard step</p>
+            <StatusPill value="workflow" tone="info" />
+          </div>
+          <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">
+            {workflowStep.detail}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function WorkflowRecordingRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] px-3 py-3 first:border-t-0">
+      <p className="skopos-metric-label">{label}</p>
+      <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">{value}</p>
+    </div>
   );
 }
 

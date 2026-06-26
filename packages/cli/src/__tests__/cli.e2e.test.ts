@@ -3791,6 +3791,9 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(planText).toContain('Recommended:');
     expect(planText).toContain('Why this matters:');
     expect(planText).toContain('Options:');
+    expect(planText).toContain('Workflow recording:');
+    expect(planText).toContain('Confirm the lane before editing: light, normal, or workpack.');
+    expect(planText).toContain('Add or update a finding when a structural gap is discovered.');
     expect(planText).toContain('Details:');
 
     const persistedPlan = JSON.parse(await readFile(plan.planPath, 'utf8')) as {

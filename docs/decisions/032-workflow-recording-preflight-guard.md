@@ -17,6 +17,7 @@
 ## Changelog
 
 - `2026-06-27`: Accepted the preflight workflow-recording guard after a cross-cutting Pack Gates V1 change was implemented through normal agent planning but without a Skopos mission, decision, or finding record.
+- `2026-06-27`: Added UI and CLI visibility requirements so the guard is readable in plan detail, mission detail, `skopos plan`, `skopos start`, and next-step output.
 
 ## Context
 
@@ -45,7 +46,7 @@ Generated plans and missions must include an explicit workflow-recording step wh
 
 1. Agents get a concrete checklist item before coding starts.
 2. Cross-cutting work is less likely to disappear into chat history.
-3. The UI can show why a mission, decision, or finding was expected.
+3. The UI and CLI explain why a mission, decision, or finding was expected.
 4. Small tasks can still avoid heavy ceremony.
 
 ### Tradeoffs
@@ -56,4 +57,4 @@ Generated plans and missions must include an explicit workflow-recording step wh
 
 ## Proof
 
-The CLI e2e plan coverage must prove that high-impact work includes a `record-workflow-lane` implementation step and a `step-record-workflow-lane` mission item classified as workflow work.
+The CLI e2e plan coverage must prove that high-impact work includes a `record-workflow-lane` implementation step, a `step-record-workflow-lane` mission item classified as workflow work, and human-readable workflow-recording guidance in text output.

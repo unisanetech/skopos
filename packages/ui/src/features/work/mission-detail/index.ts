@@ -4,4 +4,5 @@ export {
   MissionFrameCard,
   MissionGuidanceCard,
   MissionLinkedWorkCard,
+  MissionWorkflowRecordingCard,
 } from './content.js';

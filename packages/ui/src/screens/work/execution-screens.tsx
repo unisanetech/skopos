@@ -11,6 +11,7 @@ import {
   MissionFrameCard,
   MissionGuidanceCard,
   MissionLinkedWorkCard,
+  MissionWorkflowRecordingCard,
   MissionListGuidanceCard,
   MissionListInspectorAside,
   MissionQueueCard,
@@ -392,6 +393,7 @@ export function ExecutionMissionDetailView({
     >
       <PageSectionStack>
         {guidance ? <MissionGuidanceCard guidance={guidance} /> : null}
+        <MissionWorkflowRecordingCard missionView={missionView} />
         <MissionFrameCard missionView={missionView} />
         <MissionProgramContextCard
           state={state}

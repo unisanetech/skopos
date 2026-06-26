@@ -22,4 +22,5 @@ export {
   MissionFrameCard,
   MissionGuidanceCard,
   MissionLinkedWorkCard,
+  MissionWorkflowRecordingCard,
 } from './mission-detail/index.js';

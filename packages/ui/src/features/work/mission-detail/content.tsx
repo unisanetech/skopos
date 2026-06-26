@@ -10,6 +10,8 @@ import {
 } from '../../../patterns/sections/inspector-primitives.js';
 import { toneForMissionState } from '../../../support/ui/tone-helpers.js';
 
+const WORKFLOW_RECORDING_ITEM_ID = 'step-record-workflow-lane';
+
 export function MissionGuidanceCard({
   guidance,
 }: {
@@ -124,6 +126,69 @@ function GuidanceRow({
 }): React.JSX.Element {
   return (
     <div className="border-t border-[var(--line)] px-3 py-3">
+      <p className="skopos-metric-label">{label}</p>
+      <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">{value}</p>
+    </div>
+  );
+}
+
+export function MissionWorkflowRecordingCard({
+  missionView,
+}: {
+  missionView: SkoposUiConsoleMissionView;
+}): React.JSX.Element | null {
+  const workflowItem = missionView.mission.items.find(
+    (item) => item.id === WORKFLOW_RECORDING_ITEM_ID,
+  );
+
+  if (!workflowItem) {
+    return null;
+  }
+
+  return (
+    <Card
+      title="Why this mission needs tracking"
+      description="Skopos added this because the work looks broader or riskier than a tiny edit."
+    >
+      <div className="border-y border-[var(--line)]">
+        <WorkflowRecordingRow
+          label="Before coding"
+          value="Confirm the lane: light, normal, or workpack. This keeps the work proportional."
+        />
+        <WorkflowRecordingRow
+          label="While working"
+          value="Keep the mission and plan current so another agent or developer can continue without guessing."
+        />
+        <WorkflowRecordingRow
+          label="When project truth changes"
+          value="Add a decision for durable product or architecture choices. Add a finding for structural gaps."
+        />
+        <div className="border-t border-[var(--line)] px-3 py-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="skopos-metric-label">Current tracking step</p>
+            <StatusPill
+              value={workflowItem.status}
+              tone={workflowItem.status === 'complete' ? 'positive' : 'warning'}
+            />
+          </div>
+          <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">
+            {workflowItem.detail}
+          </p>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+function WorkflowRecordingRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] px-3 py-3 first:border-t-0">
       <p className="skopos-metric-label">{label}</p>
       <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">{value}</p>
     </div>

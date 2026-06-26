@@ -662,6 +662,21 @@ describe('compact output projections', () => {
       'Next step:',
       'skopos next /workspace --mission mission-1',
     ]);
+
+    const workflowRecordingNext = {
+      ...next,
+      nextCommand: undefined,
+      recommendedItem: {
+        ...sync.doNextItem,
+        id: 'program-item.workflow-recommendation.recommendation.step-record-workflow-lane',
+        title: 'Record the workflow lane before editing',
+        sourceKind: 'workflow-recommendation',
+      },
+    } as SkoposProgramNextRunResult;
+
+    expect(buildCompactProgramNextLines(workflowRecordingNext)).toContain(
+      'Confirm the workflow lane, then keep mission, decision, and finding records current while editing.',
+    );
   });
 
   it('formats decision and workflow questions with clear guidance', () => {
