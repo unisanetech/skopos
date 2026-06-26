@@ -9,7 +9,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -19,6 +19,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `proof-phase-plan.md`
   - `system-ui-plan.md`
   - `policy-pack-and-stack-intelligence-plan.md`
+  - `human-guidance-and-developer-experience-plan.md`
   - `roadmap.md`
   - `../architecture/00-architecture.md`
   - `../architecture/package-boundaries.md`
@@ -31,6 +32,26 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
 
 ## Changelog
 
+- `2026-06-27`: Added first-release version policy: keep package versions aligned at `0.1.0`, publish only `@skopos/cli@0.1.0` on `next`, and hold `latest` until real registry smoke passes.
+- `2026-06-26`: Added Apache-2.0 license metadata and package license inclusion to the bundled CLI release contract.
+- `2026-06-26`: Added the bundled CLI release contract with clean package files, public `@skopos/cli` metadata, and release smoke coverage for installed binary, npm-exec/npx-style use, and pnpm-dlx use.
+- `2026-06-24`: Added a human review card for saved local role mappings on pack detail pages, so inferred folder-to-role evidence is visible and explainable in the console.
+- `2026-06-24`: Added `skopos policies mappings` and role-mapping decision persistence, so users can confirm, ignore, remove, or manually path local role mappings without editing generated JSON.
+- `2026-06-24`: Added persisted local role mapping to accepted policy application, policy briefs, and the Rules UI, so agents can reuse verified folder-to-role evidence across sessions.
+- `2026-06-24`: Added brownfield-safe role mapping to pack review, so Skopos records checked aliases and matched aliases and can prove that different existing folder names still satisfy architecture roles.
+- `2026-06-24`: Made the seeded architecture pack more project-agnostic by rendering composition-root, feature, infrastructure, shared, UI, generated, and docs roles first while keeping local folder names as aliases for codebase matching.
+- `2026-06-24`: Implemented dedicated rule-pack detail pages with structure-tree matching, architecture contract fields, gates, prompts, search entries, and focused UI coverage for the seeded architecture pack.
+- `2026-06-24`: Expanded the routed Rules review surface with pack-detail cards that expose fit guidance, codebase verification signals, questions, quality bars, rule previews, and source paths from full pack manifests.
+- `2026-06-24`: Added the routed Rules review surface so accepted packs, active rules, drift, local exceptions, and lane guidance are visible in the human console.
+- `2026-06-24`: Added local accepted-policy override management and `done` closure blocking for open accepted `must` drift, so intentional exceptions are explicit and unresolved blocking drift cannot close silently.
+- `2026-06-24`: Expanded Pack System V1 with richer human-readable pack metadata, composable accepted policies, the `stack.async-work` pack, and the `gates.progressive-validation` pack.
+- `2026-06-24`: Implemented the decisions/findings progress and guided-question CLI slice, so mission progress now includes decision and finding summaries while `start`, `plan`, and `decide` present questions with recommendations, tradeoffs, and next-step guidance.
+- `2026-06-24`: Implemented the first mission-backed progress-summary slice, so `next`, `eval`, and `done` output now show progress, current phase, done, doing-now, blockers, and proof-needed guidance from existing mission truth.
+- `2026-06-24`: Implemented the second human-output CLI slice for workflow commands, so `next`, `program sync`, `program next`, `done`, and `eval` now lead with plain-language status and next-step guidance.
+- `2026-06-24`: Implemented the first human-output CLI slice for trust and policy commands, so default text output now leads with plain-language status, attention items, and next steps while JSON output remains stable.
+- `2026-06-24`: Added the human guidance and developer experience implementation slice so Skopos now treats plain-language output, guided questions, workpack progress, and next-step visibility as required product behavior rather than optional copy polish.
+- `2026-06-24`: Added the first accepted-policy drift detection slice with `skopos policies drift`, `.skopos/drift/report.json`, heuristic `architecture.mid-app` checks, policy-drift operational events, and trust integration for missing, stale, warning, and blocking drift reports.
+- `2026-06-24`: Implemented the first policy recommendation and acceptance loop: `skopos policies recommend`, `skopos policies apply`, resolved-policy persistence, policy brief generation, AGENTS.md policy section updates, prompt-layer integration, and trust checks that stay progressive unless policy packs are present.
 - `2026-06-24`: Added the first policy-pack catalog runtime and CLI command surface so built-in pack manifests are schema-validated and discoverable before recommendation or acceptance workflows land.
 - `2026-06-24`: Seeded the first real `architecture.mid-app` policy pack source with manifest, rules, policy docs, drift checks, and proof fixtures so pack work starts from product-grade source material instead of placeholder prompts.
 - `2026-06-24`: Clarified that policy-pack implementation must preserve Skopos as a project-agnostic LLM coding-agent memory layer, with freshness and drift protection for project knowledge rather than Unisane-only doctrine.
@@ -193,6 +214,7 @@ Before adding a new Skopos feature, artifact, command, or routed UI surface, ans
 5. What hot-path token or runtime cost does it add?
 6. What is the removal or archival rule if it proves redundant?
 7. Does it stay inside the declared v1 support lane?
+8. Can a beginner or mid-level developer understand the default output and next step without reading raw JSON?
 
 If those answers are weak, narrow the change, fold it into an existing layer, or defer it.
 
@@ -227,22 +249,35 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
    - active versus durable versus historical docs filtering
    - smallest-sufficient validation lanes
    - compact-polled heavy jobs and stable prompt layering
-4. Add the policy-pack, stack-intelligence, and durable-memory foundation before creating a broad catalog:
+4. Add the human guidance layer before widening policy, stack, and workflow surfaces:
+   - default CLI output explains status, risk, blocker, user question, proof, and next step in simple English; implemented for `trust`, `policies recommend/apply/drift`, `start`, `plan`, `decide`, `next`, `program sync`, `program next`, `done`, and `eval`
+   - `--json` remains the strict machine contract
+   - guided questions include a recommended option, alternatives, tradeoffs, and what happens after the answer; first CLI slice implemented for `start`, `plan`, `decide`, and `next`
+   - workpack summaries show current phase, approximate progress, done, doing, next, blockers, decisions, findings, and proof needed; the first mission-backed CLI slice now covers progress, phase, done, doing-now, blockers, decisions, findings, and proof-needed guidance
+   - routed UI surfaces lead with human status and next action, not raw ids or artifact handles
+   - agent briefs include answer-style guidance without turning the hot path into a wall of policy text
+5. Add the policy-pack, stack-intelligence, and durable-memory foundation before creating a broad catalog:
    - pack manifest, resolved-policy, stack recommendation, memory freshness, and drift schemas
-   - first realistic internal architecture pack source now seeded at `policy-packs/architecture/mid-app`, and catalog loading is implemented through `skopos policies list/show`; next work is recommendation, acceptance, resolved policy generation, drift evaluation, and agent-brief integration
-   - accepted policy and stack decision artifacts
-   - compact project memory and agent-brief integration for current architecture, policies, gates, stack decisions, and known drift
-   - trust, eval, done, and agent-brief integration for policy and memory posture
+   - first realistic internal architecture pack source now seeded at `policy-packs/architecture/mid-app`; catalog loading, recommendation, acceptance, resolved policy generation, AGENTS.md policy projection, policy agent brief generation, and policy trust checks are implemented through `skopos policies list/show/recommend/apply`
+   - first stack policy source now seeded at `policy-packs/stack/async-work`, covering inline work, cron, queues, durable workflows, Redis, retries, idempotency, and worker ownership
+   - first gate policy source now seeded at `policy-packs/gates/progressive-validation`, covering light, normal, and workpack-level validation lanes
+   - pack manifests now carry plain-language summary, best-fit guidance, user questions, quality bar, and agent-use notes so packs are useful to both agents and human developers
+   - accepted policy application now composes multiple accepted packs instead of replacing the previous accepted pack
+   - drift evaluation against accepted policy is implemented through `skopos policies drift`; local override handling is implemented through `skopos policies overrides`
+   - routed UI review for accepted packs, pack details, codebase verification signals, active rules, drift, overrides, and execution lanes is implemented through the `Rules` route
+   - accepted stack decision artifacts remain pending
+   - compact project memory and agent-brief integration now includes accepted policy and progressive lane guidance; dedicated stack-decision artifacts and eval blocking for known drift remain pending
+   - trust and agent-brief integration for accepted policy posture is implemented; trust now reports policy drift posture; `done` blocks open accepted `must` drift after overrides are applied
    - proof fixtures that block placeholder-only packs and catch stale project-knowledge drift
    - portability checks that prove the layer works outside Unisane-style projects
-5. Add the program router above the now-implemented mission router:
+6. Add the program router above the now-implemented mission router:
    - extend the first implemented `.skopos/program/state.json` slice beyond active mission plus active findings
    - keep `skopos program sync` and `skopos program next` stable while new sources are added
    - keep typed docs and UI obligations compact and deterministic
-6. Feed promoted discussion checkpoints into that program state instead of leaving accepted work only in chat or local memory.
-7. Reflect the implemented workflow and program state in `overview`, `mission detail`, `trust`, and the `search dock`.
-8. Keep the mission router, trust, done, and the first program-router slice stable while that higher control-plane layer expands.
-9. Reflect the implemented discussion-memory state in `overview`, `mission detail`, and the `search dock` before considering a dedicated `Discussion` route or sidebar entry.
+7. Feed promoted discussion checkpoints into that program state instead of leaving accepted work only in chat or local memory.
+8. Reflect the implemented workflow and program state in `overview`, `mission detail`, `trust`, and the `search dock`.
+9. Keep the mission router, trust, done, and the first program-router slice stable while that higher control-plane layer expands.
+10. Reflect the implemented discussion-memory state in `overview`, `mission detail`, and the `search dock` before considering a dedicated `Discussion` route or sidebar entry.
 
 ## Current Completed Slices
 
@@ -309,6 +344,9 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
 - The routed mission, trust, and proof views now expose denser review surfaces for ownership, workspace signals, must-win benchmark pressure, and baseline comparison readability.
 - The routed console now applies the information-hierarchy contract beyond the first batch, so mission detail, proof, scopes, and knowledge detail routes keep primary review content in the center lane and move supporting context into the right inspector.
 - The routed console now applies the same product-shaped list-review contract to `missions`, `plans`, `decisions`, and `findings`, so those routes lead with readable queues and curated lists rather than summary-heavy or mixed-document surfaces.
+- The first human-output CLI slice now makes `skopos trust`, `skopos policies recommend`, `skopos policies apply`, and `skopos policies drift` lead with plain-language status, attention, and next-step guidance while keeping JSON output stable.
+- The second human-output CLI slice now makes `skopos next`, `skopos program sync`, `skopos program next`, `skopos done`, and `skopos eval` lead with plain-language status and next-step guidance while keeping JSON output stable.
+- The first mission-backed progress-summary slice now projects progress, phase, done, doing-now, blockers, and proof-needed guidance into `skopos next`, `skopos eval`, and `skopos done` from existing mission truth.
 - The routed console now keeps `missions`, `plans`, `decisions`, and `findings` filters in route state, so queue and knowledge-list views can be linked and refreshed without losing route-local review mode.
 - The routed console now uses a consistent inspector pattern across execution, review, structure, and knowledge routes, so right-rail panels lead with `At a glance`, keep source affordances compact, and stop promoting raw ids as primary visible context.
 - The routed console now uses wider support inspectors on `overview`, `trust`, `activity`, `mission detail`, and `plan detail`, so metric strips, validation posture, and recent side context no longer compete with the primary reading surface in the center lane.
@@ -344,8 +382,11 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
 - The routed console now uses `application/build-console-state/document-projections.ts` for docs-link discovery, document loading, and markdown section classification instead of keeping that projection logic inside `build-console-state.service.ts`.
 - The routed console now splits reader support into `support/knowledge/document-reader-{entries,scroll}.ts`, so document outline entry construction and active-section scroll behavior no longer share one mixed helper file.
 - The routed console now collapses repeated identical activity events into grouped timeline entries, surfaces readiness as the real trust outcome on the activity route, and suppresses repeated missing-actor noise instead of rendering raw operational-log spam one row at a time.
-- The first real built-in policy pack source now exists at `policy-packs/architecture/mid-app`, with a typed manifest, operational policy docs, drift rule definitions, and good/drift fixtures.
-- The first policy-pack catalog runtime now validates `policy-packs/**/pack.json` and exposes `skopos policies list` plus `skopos policies show` for agent and human inspection.
+- The first real built-in policy pack sources now exist at `policy-packs/architecture/mid-app`, `policy-packs/stack/async-work`, and `policy-packs/gates/progressive-validation`, with typed manifests, operational policy docs, drift rule definitions, and good/drift fixtures.
+- The policy-pack catalog runtime now validates `policy-packs/**/pack.json`, exposes `skopos policies list/show` for agent and human inspection, and supports composable accepted policies through `skopos policies apply`.
+- Local accepted-policy exceptions now live in `.skopos/policies/overrides.json`, are managed through `skopos policies overrides`, suppress or downgrade matching drift findings, and sync into resolved policy for visibility.
+- Closure now has an explicit accepted-policy gate: `skopos done` blocks when open accepted `must` drift remains after overrides are applied.
+- The routed console now has a `Rules` page that projects accepted policy, full pack details, codebase verification signals, active rules, drift, local exceptions, and execution-lane guidance from `.skopos/policies/**`, `policy-packs/**/pack.json`, and `.skopos/drift/report.json`.
 
 ## Decision Gate
 
@@ -551,7 +592,13 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
   - declare `skopos.surface`
   - declare `skopos.releaseTarget`
   - declare `skopos.publishPhase`
-  - keep all packages `private: true` until release hardening explicitly changes the incubation contract
+  - keep `@skopos/cli` as the first public bundled CLI candidate
+  - keep first-release package versions aligned at `0.1.0`
+  - publish first as `@skopos/cli@0.1.0` with npm tag `next`
+  - do not promote to `latest` until registry install smoke passes
+  - publish the CLI under Apache-2.0 and include `LICENSE` in the package tarball
+  - keep non-CLI packages `private: true` until each has a separate release contract
+  - keep the CLI tarball free from private `@skopos/*` runtime dependencies
 - Keep `fixtures/`, `internal/`, `tests/`, and generated roots out of the active package model unless a repo explicitly declares them as real scopes.
 - Avoid package cycles.
 - Avoid dumping shared logic into `runtime`.

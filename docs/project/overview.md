@@ -9,16 +9,18 @@ Skopos is a local-first SDK that turns a repo into an agent-safe working environ
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-24`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `vision.md`
   - `positioning.md`
   - `roadmap.md`
+  - `human-guidance-and-developer-experience-plan.md`
   - `../architecture/00-architecture.md`
 
 ## Changelog
 
+- `2026-06-24`: Added the human guidance direction so Skopos is explicitly responsible for explaining project state, agent progress, decisions, blockers, and next steps in simple language while keeping strict machine artifacts on disk.
 - `2026-04-12`: Added the token-control and compact-agent-transport doctrine to the overview, so retrieval, runtime output, and continuity now share one explicit rule: keep full truth on disk but keep the default agent path compact and progressive.
 - `2026-04-12`: Added the supervision-cost and workflow-weight discipline to the overview, so future control-plane work is now explicitly judged by whether it removes more user supervision than the extra process weight it adds.
 - `2026-04-12`: Extended the overview with the program-router direction, so Skopos is now explicitly expected to sequence accepted work and derive docs plus UI obligations through compiled state above the mission router instead of leaving that order in user memory.
@@ -56,6 +58,8 @@ The next control-plane increment should make that promise survive reprioritizati
 
 The next transport increment should keep canonical truth rich on disk while making the default agent path compact and progressive, so Skopos stops spending context on full artifact payloads, replayed validation state, and historical docs that are not needed for the current step.
 
+The next human-guidance increment should make Skopos clear to the developer supervising the work. CLI output, UI surfaces, workpack summaries, and agent answers should explain status, risk, blockers, questions, proof, and next steps in simple English while raw machine artifacts remain available on demand.
+
 Those increments only belong if they reduce supervision cost more than they add workflow weight. Skopos should not solve supervision problems by turning itself into a heavier process system than the one it is replacing.
 
 ## Product Discipline
@@ -71,6 +75,7 @@ That rule is the restraint layer on top of the roadmap:
 3. prefer attention-shaped UI over dashboard sprawl
 4. reject layers that mainly add ceremony, duplication, or another manual ritual
 5. reject retrieval or transport paths that replay raw state when a compact projection would do
+6. reject user-facing output that reports machine status without explaining what it means and what to do next
 
 ## Core Operating Model
 
@@ -82,6 +87,7 @@ That rule is the restraint layer on top of the roadmap:
 6. file useful outputs back into the knowledgebase so project understanding compounds over time
 7. preserve recent accepted direction across chat compaction through compact discussion memory instead of raw transcript replay
 8. keep default command transport and retrieval compact enough that normal self-hosted workflow does not burn context windows on operational replay
+9. present the compiled truth in human language before asking users to inspect raw artifacts
 
 ## Operating Loop Diagram
 
@@ -110,3 +116,4 @@ flowchart LR
 8. lower coordination overhead when accepted work changes priority or interrupts the current queue
 9. lower workflow ceremony by keeping new control-plane surfaces proportionate to the supervision burden they remove
 10. lower token waste through compact briefs, progressive retrieval, and smallest-sufficient validation lanes
+11. better developer experience through plain-language status, guided questions, visible progress, and clear next steps

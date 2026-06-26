@@ -47,7 +47,7 @@ export function OperationTimeline({
   ) : (
     <EmptyMessage
       title="No operational events"
-      description="The current snapshot does not include lifecycle events."
+      description="No recent events are available here right now."
     />
   );
 }

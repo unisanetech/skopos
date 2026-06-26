@@ -9,7 +9,7 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `00-architecture.md`
@@ -18,6 +18,8 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
 
 ## Changelog
 
+- `2026-06-27`: Added the first-release versioning rule that all packages stay version-aligned at `0.1.0` while only `@skopos/cli@0.1.0` publishes on the `next` dist tag.
+- `2026-06-26`: Updated the release boundary contract so `@skopos/cli` is the first public bundled CLI candidate with Apache-2.0 license metadata while internal SDK and product packages remain private.
 - `2026-06-24`: Classified authored policy, stack, gate, and workflow pack roots as non-package product source roots so built-in intelligence packs do not leak into SDK package discovery.
 - `2026-06-24`: Removed the repo-specific Unisane adapter package from the active package family after moving Skopos to its standalone workspace.
 - `2026-04-10`: Updated the package-boundary contract to require machine-readable package surface metadata and a release-readiness check while all Skopos packages remain private during incubation.
@@ -71,11 +73,16 @@ Every package manifest must declare:
 2. `skopos.releaseTarget`
 3. `skopos.publishPhase`
 
-Current incubation defaults are:
+Current release defaults are:
 
 1. public SDK core and tool surfaces use `releaseTarget: candidate`
 2. internal product surfaces use `releaseTarget: internal-only`
-3. all packages remain `private: true` until release hardening explicitly changes that contract
+3. `@skopos/cli` is the first public bundled CLI candidate and must not publish with `@skopos/*` runtime dependencies
+4. all non-CLI packages remain `private: true` until they receive a separate SDK/package release contract
+5. public CLI package metadata must include Apache-2.0 license metadata, a package license file, a `files` whitelist, package README, binary mapping, and `publishConfig` tag/access policy
+6. the first release keeps all package versions aligned at `0.1.0`
+7. the first public CLI package publishes as `@skopos/cli@0.1.0` with npm dist tag `next`
+8. `latest` is reserved until the registry-published `next` package passes real install smoke
 
 The release-readiness gate must verify this metadata rather than relying on naming or memory alone.
 
@@ -103,6 +110,6 @@ These support building, proving, and shipping Skopos intelligence, but they are 
 6. `ui` and `docs-engine` may exist as product surfaces during incubation, but they are not the core SDK contract by default
 7. proof, fixture, generated, authored pack, and internal roots must be excluded from package discovery when they are not real SDK scopes
 8. public SDK core packages must not depend on `ui` or `docs-engine`
-9. tool surfaces may depend on internal product surfaces when needed, but that must not back-propagate into the public SDK core graph
+9. tool source may use internal product surfaces when needed, but the publishable CLI manifest must install as one bundled product without private Skopos workspace dependencies
 10. boundary classification should be enforced by automated package-manifest checks, not by memory alone
 11. release-candidate packages must be machine-readable through manifest metadata and checked through the workspace `release:check` lane

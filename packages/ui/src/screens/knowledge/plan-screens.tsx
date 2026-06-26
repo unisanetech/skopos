@@ -3,8 +3,10 @@ import { Link } from '@tanstack/react-router';
 
 import {
   PlanDecisionPressureCard,
+  PlanDetailGuidanceCard,
   PlanDetailInspectorAside,
   PlanFrameCard,
+  PlanListGuidanceCard,
   PlanListCard,
   PlansInspectorAside,
   PlanWorkPlanCard,
@@ -31,9 +33,9 @@ export function PlansView({
 
   return (
     <ListPage
-      kicker="Work knowledge"
+      kicker="Plans"
       title="Plans"
-      description="Plans shaping active work and the retained plan inventory."
+      description="Plans are saved when work is large, risky, or needs a clear path before editing."
       aside={
         <PlansInspectorAside
           currentCount={activePlans.length}
@@ -62,6 +64,10 @@ export function PlansView({
       }
     >
       <PageSectionStack>
+        <PlanListGuidanceCard
+          currentCount={activePlans.length}
+          libraryCount={libraryPlans.length}
+        />
         {showCurrentPlans ? (
           <PlanListCard
             title="Current plan queue"
@@ -69,7 +75,7 @@ export function PlansView({
             plans={activePlans}
             linkedMissionByPlanId={linkedMissionByPlanId}
             emptyTitle="No active plans"
-            emptyDescription="No unfinished mission is currently anchored to a persisted plan."
+            emptyDescription="No active work is using a saved plan. Small tasks can stay lightweight; larger work should create or link a plan before editing."
           />
         ) : null}
         {showLibraryPlans ? (
@@ -79,7 +85,7 @@ export function PlansView({
             plans={libraryPlans}
             compact
             emptyTitle="No library plans"
-            emptyDescription="All persisted plans in this snapshot are currently tied to active work."
+            emptyDescription="Older or reusable plans will appear here after they are saved outside the active work queue."
           />
         ) : null}
       </PageSectionStack>
@@ -100,7 +106,7 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
       >
         <EmptyMessage
           title="Unknown plan"
-          description="Refresh the app after rebuilding Skopos state if plan artifacts changed."
+          description="Refresh the app after rebuilding Skopos state if plans changed."
         />
       </DetailPage>
     );
@@ -123,6 +129,7 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
       ]}
       aside={<PlanDetailInspectorAside planView={planView} relatedMission={relatedMission} />}
     >
+      <PlanDetailGuidanceCard planView={planView} relatedMission={relatedMission} />
       <PlanFrameCard planView={planView} />
       <PlanWorkPlanCard
         implementationSteps={planView.plan.implementationSteps}

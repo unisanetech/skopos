@@ -8,6 +8,7 @@ export type SkoposContentIndexEntryKind =
   | 'agent-brief-artifact'
   | 'discussion-artifact'
   | 'telemetry-artifact'
+  | 'understanding-artifact'
   | 'reference-artifact'
   | 'override-artifact'
   | 'graph-artifact'
@@ -78,6 +79,8 @@ export type SkoposOperationalLogEventKind =
   | 'eval'
   | 'instructions-scaffold'
   | 'instructions-sync'
+  | 'policy'
+  | 'policy-drift'
   | 'plan'
   | 'mission-slice'
   | 'mission-claim'
@@ -87,7 +90,8 @@ export type SkoposOperationalLogEventKind =
   | 'impact'
   | 'done'
   | 'trust'
-  | 'override-set';
+  | 'override-set'
+  | 'understanding';
 
 export type SkoposOperationalLogStatus = 'succeeded' | 'failed' | 'dry-run';
 

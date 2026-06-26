@@ -1,14 +1,30 @@
 import * as React from 'react';
 
 import {
+  ActivityGuidanceCard,
   ActivityInspectorAside,
   ActivityTimelineCard,
+  AcceptedPacksCard,
+  ActiveRulesCard,
+  LocalExceptionsCard,
+  PackArchitectureContractCard,
+  PackDetailInspectorAside,
+  PackOverviewCard,
+  PackRoleMappingReviewCard,
+  PackRulesCard,
+  PackStructureTreeCard,
   ProofCategoryWatchCard,
+  ProofGuidanceCard,
   ProofInspectorAside,
   ProofMustWinCard,
   ProofPostureCard,
   ProofRegressedBenchmarksCard,
+  RuleDriftCard,
+  RulesGuidanceCard,
+  RulesInspectorAside,
+  RulesSummaryCard,
   TrustAttentionCard,
+  TrustGuidanceCard,
   TrustInspectorAside,
 } from '../../features/validation/review-sections.js';
 import { ProgramPressureCard } from '../../features/program/program-sections.js';
@@ -26,6 +42,7 @@ import { requireConsoleState } from '../../platform/console-state/access.js';
 import { getTrustProgramContext } from '../../platform/console-state/program-selectors.js';
 import {
   getActivityViewContext,
+  getPolicyViewContext,
   getProofViewContext,
   getTrustViewContext,
 } from '../../platform/console-state/validation-selectors.js';
@@ -56,9 +73,14 @@ export function TrustView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Trust surface"
-      title="Readiness and evidence"
-      description={state.trustReport.summary}
+      kicker="Readiness"
+      title="Can this work continue?"
+      description={buildReadinessSentence({
+        readiness: state.trustReport.readiness,
+        passCount: passChecks.length,
+        warningCount: warningChecks.length,
+        failureCount: failureChecks.length,
+      })}
       badges={[
         <StatusPill
           key="trust"
@@ -85,6 +107,11 @@ export function TrustView(): React.JSX.Element {
         />
       }
     >
+      <TrustGuidanceCard
+        failureCount={failureChecks.length}
+        warningCount={warningChecks.length}
+        findingCount={state.trustReport.findings.length}
+      />
       <TrustAttentionCard
         failureChecks={failureChecks}
         warningChecks={warningChecks}
@@ -102,20 +129,33 @@ export function TrustView(): React.JSX.Element {
       />
       <Card
         title="Supporting checks"
-        description="Passing checks that help explain the current trust posture."
+        description="Passing checks that explain why Skopos is comfortable with the current state."
       >
         {passChecks.length > 0 ? (
           <TrustCheckGroup title="Passing checks" checks={passChecks} tone="positive" />
         ) : (
           <EmptyMessage
             title="No passing checks"
-            description="This snapshot did not record passing trust checks."
+            description="This snapshot did not record passing readiness checks."
           />
         )}
       </Card>
     </ReviewPage>
   );
 }
+
+const buildReadinessSentence = ({
+  readiness,
+  passCount,
+  warningCount,
+  failureCount,
+}: {
+  readiness: string;
+  passCount: number;
+  warningCount: number;
+  failureCount: number;
+}): string =>
+  `Readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
 
 export function ProofView(): React.JSX.Element {
   const state = requireConsoleState();
@@ -132,9 +172,9 @@ export function ProofView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Proof posture"
-      title="Reliability scorecard"
-      description="Latest benchmark posture across pass rate, must-win coverage, and baseline drift."
+      kicker="Evidence"
+      title="What proves the work is safe?"
+      description="Tests, benchmarks, and comparison results that help decide whether work can be closed."
       badges={
         proofReport
           ? [
@@ -162,14 +202,16 @@ export function ProofView(): React.JSX.Element {
           />
         ) : (
         <EmptyMessage
-          title="No proof report"
-          description="Run proof to populate the reliability scorecard."
+          title="No evidence report"
+          description="Run the evidence/proof command when a task needs test or benchmark proof before closure."
         />
         )
       }
     >
-      {proofReport ? (
-        <PageSectionStack>
+      <PageSectionStack>
+        <ProofGuidanceCard proofReport={proofReport} />
+        {proofReport ? (
+          <>
           <ProofPostureCard proofReport={proofReport} />
           <ProofCategoryWatchCard
             categories={visibleCategoryWatch}
@@ -177,13 +219,122 @@ export function ProofView(): React.JSX.Element {
           />
           <ProofMustWinCard benchmarks={mustWinBenchmarks} />
           <ProofRegressedBenchmarksCard benchmarks={regressedBenchmarks} />
-        </PageSectionStack>
-      ) : (
-        <EmptyMessage
-          title="No proof report available"
-          description="This snapshot does not include a proof report."
+          </>
+        ) : (
+          <EmptyMessage
+            title="No evidence report available"
+            description="This snapshot does not include test or benchmark evidence yet."
+          />
+        )}
+      </PageSectionStack>
+    </ReviewPage>
+  );
+}
+
+export function RulesView(): React.JSX.Element {
+  const state = requireConsoleState();
+  const context = getPolicyViewContext(state);
+  const openDriftCount = context.openDriftFindings.length;
+
+  return (
+    <ReviewPage
+      kicker="Rules"
+      title="Which project rules are active?"
+      description={buildRulesSentence({
+        packCount: context.acceptedPacks.length,
+        ruleCount:
+          context.mustRules.length + context.shouldRules.length + context.advisoryRules.length,
+        openDriftCount,
+        overrideCount: context.localOverrides.length,
+      })}
+      badges={[
+        <StatusPill
+          key="packs"
+          value={`${context.acceptedPacks.length} packs`}
+          tone={context.acceptedPacks.length > 0 ? 'positive' : 'warning'}
+        />,
+        <StatusPill
+          key="drift"
+          value={openDriftCount > 0 ? `${openDriftCount} open drift` : 'no open drift'}
+          tone={openDriftCount > 0 ? 'danger' : 'positive'}
+        />,
+      ]}
+      aside={
+        <RulesInspectorAside
+          context={context}
+          generatedAt={state.generatedAt}
         />
-      )}
+      }
+    >
+      <RulesGuidanceCard context={context} />
+      <RulesSummaryCard context={context} />
+      <AcceptedPacksCard packs={context.acceptedPacks} />
+      <RuleDriftCard context={context} />
+      <LocalExceptionsCard context={context} />
+      <ActiveRulesCard context={context} />
+    </ReviewPage>
+  );
+}
+
+const buildRulesSentence = ({
+  packCount,
+  ruleCount,
+  openDriftCount,
+  overrideCount,
+}: {
+  packCount: number;
+  ruleCount: number;
+  openDriftCount: number;
+  overrideCount: number;
+}): string =>
+  `${packCount} ${packCount === 1 ? 'pack is' : 'packs are'} accepted with ${ruleCount} active ${ruleCount === 1 ? 'rule' : 'rules'}, ${openDriftCount} open drift ${openDriftCount === 1 ? 'item' : 'items'}, and ${overrideCount} local ${overrideCount === 1 ? 'exception' : 'exceptions'}.`;
+
+export function PackDetailView({
+  packId,
+}: {
+  packId: string;
+}): React.JSX.Element {
+  const state = requireConsoleState();
+  const context = getPolicyViewContext(state);
+  const decodedPackId = decodeURIComponent(packId);
+  const pack = context.packDetails.find((entry) => entry.packId === decodedPackId);
+
+  if (!pack) {
+    return (
+      <ReviewPage
+        kicker="Rules"
+        title="Pack not found"
+        description="The requested rule pack is not present in the current policy snapshot."
+      >
+        <EmptyMessage
+          title="Unknown pack"
+          description="Return to Rules and choose one of the accepted packs currently recorded for this project."
+        />
+      </ReviewPage>
+    );
+  }
+
+  return (
+    <ReviewPage
+      kicker="Rule pack"
+      title={pack.displayName}
+      description={pack.summary}
+      badges={[
+        <StatusPill key="family" value={pack.family ?? 'policy'} tone="info" />,
+        <StatusPill key="rules" value={`${pack.rules.length} rules`} tone="neutral" />,
+        <StatusPill
+          key="structure"
+          value={pack.structureMatch ? 'structure tree' : 'no structure tree'}
+          tone={pack.structureMatch ? 'positive' : 'warning'}
+        />,
+      ]}
+      aside={<PackDetailInspectorAside pack={pack} />}
+    >
+      <PackOverviewCard pack={pack} />
+      <PackStructureTreeCard pack={pack} />
+      <PackRoleMappingReviewCard pack={pack} />
+      <PackArchitectureContractCard pack={pack} />
+      <PackRulesCard pack={pack} />
     </ReviewPage>
   );
 }
@@ -194,9 +345,9 @@ export function ActivityView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Operational history"
-      title="Activity and provenance"
-      description="Recent operational changes across trust, plans, missions, and workflow evidence."
+      kicker="Activity"
+      title="What changed recently?"
+      description="Recent work, readiness, evidence, and workflow changes recorded by Skopos."
       aside={
         <ActivityInspectorAside
           postureItems={postureItems}
@@ -204,6 +355,10 @@ export function ActivityView(): React.JSX.Element {
         />
       }
     >
+      <ActivityGuidanceCard
+        latestEntry={latestEntry}
+        eventGroupCount={feedGroups.length}
+      />
       <ActivityTimelineCard feedGroups={feedGroups} />
     </ReviewPage>
   );

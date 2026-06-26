@@ -12,9 +12,6 @@ export interface BuildSkoposUiConsoleAppOptions {
   dryRun?: boolean;
 }
 
-const packageRoot = resolveUiPackageRoot(import.meta.url);
-const viteConfigPath = join(packageRoot, 'vite.config.ts');
-
 export const buildSkoposUiConsoleApp = async ({
   cwd,
   outputDirectory,
@@ -34,6 +31,8 @@ export const buildSkoposUiConsoleApp = async ({
   const searchIndexPath = join(resolvedOutputDirectory, 'search-index.json');
 
   if (!dryRun) {
+    const packageRoot = resolveUiPackageRoot(import.meta.url);
+    const viteConfigPath = join(packageRoot, 'vite.config.ts');
     const { build: buildVite } = await import('vite');
     await buildVite({
       configFile: viteConfigPath,

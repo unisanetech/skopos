@@ -1,16 +1,26 @@
 {
   "name": "@skopos/cli",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "description": "CLI entrypoint for the Skopos SDK",
+  "license": "Apache-2.0",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "skopos": {
     "surface": "tool-surface",
     "releaseTarget": "candidate",
-    "publishPhase": "incubation"
+    "publishPhase": "bundled-cli-candidate"
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "next"
   },
   "bin": {
-    "skopos": "./dist/cli.js"
+    "skopos": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -19,16 +29,17 @@
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/cli.ts --format esm --dts --clean",
-    "dev": "tsup src/index.ts src/cli.ts --format esm --dts --watch",
+    "build": "tsup",
+    "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/compact-output.test.ts src/__tests__/cli.e2e.test.ts",
-    "proof": "vitest run src/__tests__/proof-phase.e2e.test.ts"
+    "proof": "vitest run src/__tests__/proof-phase.e2e.test.ts",
+    "release:smoke": "vitest run src/__tests__/release-install-smoke.test.ts"
   },
   "dependencies": {
-    "@skopos/model": "workspace:*",
-    "@skopos/runtime": "workspace:*",
-    "@skopos/ui": "workspace:*"
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

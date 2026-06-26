@@ -62,9 +62,10 @@ export const runProgramCommand = async (args: string[]): Promise<void> => {
     }
 
     const lines = [
-      'Skopos program sync',
+      ...buildCompactProgramSyncLines(result),
+      '',
+      'Details:',
       `- actor: ${result.actorId ?? '(none)'}`,
-      `- summary: ${result.summary}`,
       `- state: ${result.statePath} (${result.stateWrite})`,
       `- items: ${result.state.items.length}`,
       `- open obligations: ${result.state.obligations.filter((entry) => entry.status === 'open').length}`,
@@ -114,9 +115,10 @@ export const runProgramCommand = async (args: string[]): Promise<void> => {
     }
 
     const lines = [
-      'Skopos program next',
+      ...buildCompactProgramNextLines(result),
+      '',
+      'Details:',
       `- actor: ${result.actorId ?? '(none)'}`,
-      `- summary: ${result.summary}`,
       `- disposition: ${result.currentDisposition}`,
       `- current mission: ${result.currentMissionId ?? '(none)'}`,
       `- state: ${result.statePath} (${result.stateWrite})`,

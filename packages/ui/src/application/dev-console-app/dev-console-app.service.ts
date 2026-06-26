@@ -20,8 +20,6 @@ export interface DevSkoposUiConsoleAppOptions {
   createViteDevServer?: (config: InlineConfig) => Promise<ViteDevServer>;
 }
 
-const packageRoot = resolveUiPackageRoot(import.meta.url);
-
 export const devSkoposUiConsoleApp = async ({
   cwd,
   host = '127.0.0.1',
@@ -29,6 +27,7 @@ export const devSkoposUiConsoleApp = async ({
   createViteDevServer,
 }: DevSkoposUiConsoleAppOptions): Promise<SkoposUiConsoleDevResult> => {
   const workspaceRoot = resolve(cwd);
+  const packageRoot = resolveUiPackageRoot(import.meta.url);
   const ignoredWatchTargets = watchIgnoredTargets(workspaceRoot);
   let currentState = await buildCurrentState(workspaceRoot);
   let debounceHandle: ReturnType<typeof setTimeout> | undefined;

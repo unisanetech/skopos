@@ -45,14 +45,14 @@ export function TrustInspectorAside({
             { label: 'Checks', value: String(checkCount) },
             { label: 'Warnings', value: String(warningCount) },
             { label: 'Failures', value: String(failureCount) },
-            { label: 'Findings', value: String(findingCount) },
+            { label: 'Issues', value: String(findingCount) },
             { label: 'Updated', value: formatDateTime(generatedAt) },
           ]}
         />
       </SidebarCard>
       {docsPostureItems.length > 0 ? (
         <SidebarCard
-          title="Docs posture"
+          title="Docs health"
           badge={String(docsPostureItems.length)}
           collapsible
           defaultOpen={false}
@@ -72,7 +72,7 @@ export function TrustInspectorAside({
       ) : null}
       {allChecks.length > 0 ? (
         <SidebarCard
-          title="Check inventory"
+          title="All checks"
           badge={String(allChecks.length)}
           collapsible
           defaultOpen={false}
@@ -101,7 +101,7 @@ export function TrustInspectorAside({
               </>
             )}
           emptyTitle="No checks"
-          emptyDescription="No trust checks are available right now."
+          emptyDescription="No readiness checks are available right now."
         />
         </SidebarCard>
       ) : null}
@@ -123,6 +123,48 @@ export function TrustInspectorAside({
   );
 }
 
+export function TrustGuidanceCard({
+  failureCount,
+  warningCount,
+  findingCount,
+}: {
+  failureCount: number;
+  warningCount: number;
+  findingCount: number;
+}): React.JSX.Element {
+  const hasAttention = failureCount > 0 || warningCount > 0 || findingCount > 0;
+
+  return (
+    <Card
+      title="How to use this page"
+      description="Readiness tells you whether Skopos sees anything that should block or slow down the current work."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Start here"
+          text={
+            hasAttention
+              ? 'Review the warning or failure items before closing work.'
+              : 'No blocking readiness items are active right now.'
+          }
+        />
+        <GuidancePoint
+          label="Use when"
+          text="You need to know if project state, docs, policy, and workflow checks are safe enough to continue."
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            hasAttention
+              ? 'Fix the listed items, refresh Skopos state, then check this page again.'
+              : 'Continue the active mission and use Evidence when closure needs test proof.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function TrustAttentionCard({
   failureChecks,
   warningChecks,
@@ -136,8 +178,8 @@ export function TrustAttentionCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Attention lanes"
-      description="Blocking checks, warnings, findings, and unresolved assumptions stay visible here."
+      title="Items that need attention"
+      description="Fix failures first, then review warnings, tracked issues, and unresolved assumptions."
     >
       <div className="grid gap-5">
         {failureChecks.length > 0 ? (
@@ -148,7 +190,7 @@ export function TrustAttentionCard({
         ) : null}
         {findings.length > 0 ? (
           <section className="grid gap-3">
-            <p className="text-[13px] font-semibold tracking-[-0.02em]">Findings</p>
+            <p className="text-[13px] font-semibold tracking-[-0.02em]">Issues</p>
             <ul className="border-y border-[var(--line)]">
               {findings.map((finding, index) => (
                 <li
@@ -190,10 +232,29 @@ export function TrustAttentionCard({
         unresolvedAssumptions.length === 0 ? (
           <EmptyMessage
             title="No blockers or warnings"
-            description="No failure, warning, or unresolved-assumption pressure is active right now."
+            description="Skopos is not reporting readiness problems that need attention before continuing."
           />
         ) : null}
       </div>
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }

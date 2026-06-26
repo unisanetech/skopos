@@ -2,19 +2,23 @@ import * as React from 'react';
 import { Link } from '@tanstack/react-router';
 
 import {
+  DiscussionGuidanceCard,
   DiscussionHistoryCard,
   MissionChecklistCard,
   MissionDiscussionContextCard,
   MissionDetailInspectorAside,
   MissionFocusCard,
   MissionFrameCard,
+  MissionGuidanceCard,
   MissionLinkedWorkCard,
+  MissionListGuidanceCard,
   MissionListInspectorAside,
   MissionQueueCard,
   OverviewAdapterSupportCard,
   OverviewInspectorAside,
   OverviewRecentDiscussionCard,
   OverviewRecentPlansCard,
+  OverviewUnderstandingCard,
 } from '../../features/work/mission-sections.js';
 import {
   MissionProgramContextCard,
@@ -63,6 +67,7 @@ export function ExecutionOverviewView(): React.JSX.Element {
   const {
     doNowItem,
     doNextItem,
+    currentActiveItem,
     currentItemObligations,
     openProgramQuestionCount,
     interruptRecommendation,
@@ -71,13 +76,18 @@ export function ExecutionOverviewView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Workspace overview"
+      kicker="Current work"
       title={state.workspaceLabel}
-      description={state.trustReport.summary}
+      description={buildReadinessSentence({
+        readiness: state.trustReport.readiness,
+        passCount: state.trustReport.checks.filter((check) => check.status === 'pass').length,
+        warningCount: warningChecks.length,
+        failureCount: state.trustReport.checks.filter((check) => check.status === 'fail').length,
+      })}
       badges={[
         <StatusPill
           key="trust"
-          value={`trust ${state.trustReport.trustLevel}`}
+          value={`confidence ${state.trustReport.trustLevel}`}
           tone={toneForTrust(state.trustReport.trustLevel)}
         />,
         <StatusPill
@@ -88,7 +98,7 @@ export function ExecutionOverviewView(): React.JSX.Element {
         state.proofReport ? (
           <StatusPill
             key="proof"
-            value={`proof ${state.proofReport.scorecard.status}`}
+            value={`evidence ${state.proofReport.scorecard.status}`}
             tone={state.proofReport.scorecard.status === 'pass' ? 'positive' : 'danger'}
           />
         ) : null,
@@ -109,11 +119,13 @@ export function ExecutionOverviewView(): React.JSX.Element {
       }
     >
       <PageSectionStack>
+        <OverviewUnderstandingCard understanding={state.understanding} />
         <MissionFocusCard missions={activeMissions} />
         <ProgramAttentionCard
           state={state}
           doNowItem={doNowItem}
           doNextItem={doNextItem}
+          currentActiveItem={currentActiveItem}
           currentItemObligations={currentItemObligations}
           openProgramQuestionCount={openProgramQuestionCount}
           interruptRecommendation={interruptRecommendation}
@@ -149,7 +161,7 @@ export function ExecutionOverviewView(): React.JSX.Element {
           ) : (
             <EmptyMessage
               title="Nothing urgent"
-              description="Trust checks are currently not surfacing blockers or warning-level attention."
+              description="Readiness checks are currently not surfacing blockers or warning-level attention."
             />
           )}
         </Card>
@@ -158,6 +170,19 @@ export function ExecutionOverviewView(): React.JSX.Element {
     </ReviewPage>
   );
 }
+
+const buildReadinessSentence = ({
+  readiness,
+  passCount,
+  warningCount,
+  failureCount,
+}: {
+  readiness: string;
+  passCount: number;
+  warningCount: number;
+  failureCount: number;
+}): string =>
+  `Readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
 
 export function ExecutionMissionsView({
   search,
@@ -179,9 +204,9 @@ export function ExecutionMissionsView({
 
   return (
     <ListPage
-      kicker="Execution surfaces"
-      title="Mission list"
-      description="Open, blocked, claimed, and completed mission queues."
+      kicker="Missions"
+      title="Tracked work sessions"
+      description="A mission is the active container Skopos uses to track work, decisions, progress, and closure evidence."
       aside={
         <MissionListInspectorAside
           openCount={openMissions.length}
@@ -212,12 +237,17 @@ export function ExecutionMissionsView({
       }
     >
       <PageSectionStack className="gap-5">
+        <MissionListGuidanceCard
+          openCount={openMissions.length}
+          blockedCount={blockedMissionCount}
+          claimedCount={claimedMissionCount}
+        />
         <MissionQueueCard
           title={primaryTitle}
           description={primaryDescription}
           missions={primaryMissions}
           emptyTitle={`No ${search.view} missions`}
-          emptyDescription="This queue is empty right now."
+          emptyDescription="No mission matches this view. Start or claim a mission when work should be tracked across files, decisions, and checks."
           compact={search.view === 'complete'}
         />
         {search.view !== 'complete' ? (
@@ -226,7 +256,7 @@ export function ExecutionMissionsView({
             description="Completed slices stay visible without competing with the live queue."
             missions={completedMissions}
             emptyTitle="No completed missions"
-            emptyDescription="Completed execution slices will appear here once the runtime has them."
+            emptyDescription="Completed missions will appear here after Skopos records a closed work session."
             compact
           />
         ) : null}
@@ -246,9 +276,9 @@ export function ExecutionDiscussionView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Discussion memory"
-      title="Discussion"
-      description="Search-first route for the latest workflow handoff and checkpoint history without promoting discussion into the sidebar yet."
+      kicker="Discussion"
+      title="What did we agree in chat?"
+      description="Handoffs and checkpoints that preserve accepted direction, open questions, and resume context."
       badges={[
         <StatusPill
           key="handoff"
@@ -279,6 +309,11 @@ export function ExecutionDiscussionView(): React.JSX.Element {
       }
     >
       <PageSectionStack>
+        <DiscussionGuidanceCard
+          latestDiscussionHandoff={state.latestDiscussionHandoff}
+          checkpointCount={state.discussionCheckpoints.length}
+          activeMissionCount={activeMissionCount}
+        />
         <DiscussionHistoryCard
           latestDiscussionHandoff={state.latestDiscussionHandoff}
           checkpoints={state.discussionCheckpoints}
@@ -295,7 +330,7 @@ export function ExecutionMissionDetailView({
   missionId: string;
 }): React.JSX.Element {
   const state = requireConsoleState();
-  const { missionView, missionWorkflows, linkedMissionViews } = getMissionDetailContext(
+  const { missionView, missionWorkflows, linkedMissionViews, guidance } = getMissionDetailContext(
     state,
     missionId,
   );
@@ -356,6 +391,7 @@ export function ExecutionMissionDetailView({
       }
     >
       <PageSectionStack>
+        {guidance ? <MissionGuidanceCard guidance={guidance} /> : null}
         <MissionFrameCard missionView={missionView} />
         <MissionProgramContextCard
           state={state}

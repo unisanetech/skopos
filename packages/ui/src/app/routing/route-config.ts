@@ -9,8 +9,8 @@ export type KnowledgeListView = 'entries' | 'reference' | 'all';
 
 const appRouteMeta = {
   overview: {
-    title: 'Overview',
-    description: 'Workspace health, execution focus, and the current Skopos posture.',
+    title: 'Current Work',
+    description: 'What is happening now, what needs attention, and the next useful action.',
   },
   missions: {
     title: 'Missions',
@@ -25,16 +25,20 @@ const appRouteMeta = {
     description: 'Latest workflow handoff, checkpoint history, and accepted direction across threads.',
   },
   trust: {
-    title: 'Trust',
-    description: 'Readiness, checks, blockers, assumptions, and closure confidence.',
+    title: 'Readiness',
+    description: 'Checks, warnings, blockers, assumptions, and whether the project is ready to continue.',
+  },
+  rules: {
+    title: 'Rules',
+    description: 'Accepted project rules, policy drift, local exceptions, and the right validation lane.',
   },
   proof: {
-    title: 'Proof',
-    description: 'Benchmark posture, scorecard categories, and before-versus-after deltas.',
+    title: 'Evidence',
+    description: 'Tests, benchmarks, checks, and other evidence that prove work is safe to close.',
   },
   scopes: {
-    title: 'Scopes',
-    description: 'Workspace packages, docs roots, and instruction surfaces Skopos understands.',
+    title: 'Project Map',
+    description: 'Packages, docs roots, and instruction surfaces Skopos understands.',
   },
   docs: {
     title: 'Docs',
@@ -45,8 +49,8 @@ const appRouteMeta = {
     description: 'Accepted product and architecture decisions that guide the system.',
   },
   findings: {
-    title: 'Findings',
-    description: 'Active findings, registry context, and durable product friction notes.',
+    title: 'Issues',
+    description: 'Active product and engineering issues Skopos is tracking over time.',
   },
   activity: {
     title: 'Activity',
@@ -57,8 +61,8 @@ const appRouteMeta = {
 
 export const navSections = [
   {
-    label: 'Overview',
-    items: [{ to: '/overview', label: 'Overview' }],
+    label: 'Now',
+    items: [{ to: '/overview', label: 'Current Work' }],
   },
   {
     label: 'Work',
@@ -70,10 +74,11 @@ export const navSections = [
     ],
   },
   {
-    label: 'Validation',
+    label: 'Quality',
     items: [
-      { to: '/trust', label: 'Trust' },
-      { to: '/proof', label: 'Proof' },
+      { to: '/trust', label: 'Readiness' },
+      { to: '/rules', label: 'Rules' },
+      { to: '/proof', label: 'Evidence' },
     ],
   },
   {
@@ -81,12 +86,12 @@ export const navSections = [
     items: [
       { to: '/docs', label: 'Docs' },
       { to: '/decisions', label: 'Decisions' },
-      { to: '/findings', label: 'Findings' },
+      { to: '/findings', label: 'Issues' },
     ],
   },
   {
-    label: 'Structure',
-    items: [{ to: '/scopes', label: 'Scopes' }],
+    label: 'Project',
+    items: [{ to: '/scopes', label: 'Project Map' }],
   },
 ] as const;
 
@@ -102,6 +107,9 @@ export const resolveRouteMeta = (pathname: string): RouteMeta => {
   }
   if (pathname.startsWith('/trust')) {
     return appRouteMeta.trust;
+  }
+  if (pathname.startsWith('/rules')) {
+    return appRouteMeta.rules;
   }
   if (pathname.startsWith('/proof')) {
     return appRouteMeta.proof;

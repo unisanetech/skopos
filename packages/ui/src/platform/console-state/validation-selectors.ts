@@ -30,6 +30,118 @@ export interface ProofViewContext {
   sourceLinks: SkoposUiConsoleState['docsLinks'];
 }
 
+export interface PolicyPackSummary {
+  packId: string;
+  displayName: string;
+  summary: string;
+  reason: string;
+  source: string;
+  acceptedBy?: string;
+  acceptedAt: string;
+  family?: string;
+  variant?: string;
+}
+
+export interface PolicyPackDetail extends PolicyPackSummary {
+  description: string;
+  bestFor: string[];
+  notFor: string[];
+  userQuestions: string[];
+  qualityBar: string[];
+  agentUse: string[];
+  projectLifecycles: string[];
+  appliesWhen: Array<{
+    id: string;
+    summary: string;
+    confidence: string;
+    evidence: string[];
+  }>;
+  avoidWhen: Array<{
+    id: string;
+    summary: string;
+    confidence: string;
+    evidence: string[];
+  }>;
+  structureMatch?: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['packManifests'][number]['structureMatch']
+  >;
+  roleMappingArtifactPath?: string;
+  roleMappings: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['roleMapping']
+  >['mapping']['mappings'];
+  recommendedLayers: string[];
+  dependencyDirection: Array<{
+    layer: string;
+    mayImport: string[];
+  }>;
+  forbiddenImports: Array<{
+    from: string;
+    to: string[];
+  }>;
+  gates?: {
+    required: string[];
+    recommended: string[];
+  };
+  agentPrompts?: {
+    beforeEditing: string[];
+    beforeDone: string[];
+  };
+  rules: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['activeRules'];
+  ruleCounts: {
+    must: number;
+    should: number;
+    advisory: number;
+  };
+  generatedArtifacts: string[];
+  driftCheckIds: string[];
+  proofFixtureIds: string[];
+  sourcePath?: string;
+  manifestPath?: string;
+}
+
+export interface PolicyViewContext {
+  resolvedPolicy: SkoposUiConsoleState['policyReview'] extends infer T
+    ? T extends { resolvedPolicy?: infer U }
+      ? U extends { policy: infer P }
+        ? P
+        : undefined
+      : undefined
+    : undefined;
+  driftReport: SkoposUiConsoleState['policyReview'] extends infer T
+    ? T extends { driftReport?: infer U }
+      ? U extends { report: infer P }
+        ? P
+        : undefined
+      : undefined
+    : undefined;
+  acceptedPacks: PolicyPackSummary[];
+  packDetails: PolicyPackDetail[];
+  localOverrides: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['overrides'];
+  mustRules: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['activeRules'];
+  shouldRules: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['activeRules'];
+  advisoryRules: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['activeRules'];
+  openDriftFindings: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['driftReport']
+  >['report']['findings'];
+  suppressedDriftFindings: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['driftReport']
+  >['report']['findings'];
+  executionLanes: NonNullable<
+    NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
+  >['policy']['recommendedExecutionLanes'];
+  sourceItems: InspectorItem[];
+}
+
 export interface ActivityViewContext {
   latestEntry?: ActivityFeedEntry;
   postureItems: InspectorItem[];
@@ -162,6 +274,134 @@ export const getProofViewContext = (state: SkoposUiConsoleState): ProofViewConte
     improvedCategorySet: new Set(improvedCategories.map((comparison) => comparison.category)),
     visibleCategoryWatch: categoryWatch,
     sourceLinks: state.docsLinks.filter((link) => ['report', 'portal'].includes(link.kind)),
+  };
+};
+
+export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewContext => {
+  const resolvedPolicy = state.policyReview?.resolvedPolicy?.policy;
+  const driftReport = state.policyReview?.driftReport?.report;
+  const recommendationByPackId = new Map(
+    (state.policyReview?.recommendations?.recommendations.recommendations ?? []).map(
+      (recommendation) => [recommendation.packId, recommendation],
+    ),
+  );
+  const manifestByPackId = new Map(
+    (state.policyReview?.packManifests ?? []).map((view) => [view.manifest.packId, view]),
+  );
+  const localOverrides =
+    state.policyReview?.overrides?.overrides.overrides ?? resolvedPolicy?.overrides ?? [];
+  const activeRules = resolvedPolicy?.activeRules ?? [];
+  const findings = driftReport?.findings ?? [];
+  const acceptedPacks =
+    resolvedPolicy?.acceptedPacks.map((pack) => {
+      const recommendation = recommendationByPackId.get(pack.packId);
+      const manifestView = manifestByPackId.get(pack.packId);
+      const manifest = manifestView?.manifest;
+
+      return {
+        packId: pack.packId,
+        displayName: manifest?.displayName ?? recommendation?.displayName ?? humanize(pack.packId),
+        summary:
+          manifest?.plainLanguageSummary ??
+          recommendation?.plainLanguageSummary ??
+          recommendation?.reason ??
+          manifest?.summary ??
+          'Accepted project rule pack.',
+        reason: pack.reason,
+        source: humanize(pack.source),
+        acceptedBy: pack.acceptedBy,
+        acceptedAt: pack.acceptedAt,
+        family: humanize(manifest?.family ?? recommendation?.family ?? ''),
+        variant: humanize(manifest?.variant ?? recommendation?.variant ?? ''),
+      };
+    }) ?? [];
+
+  return {
+    resolvedPolicy,
+    driftReport,
+    acceptedPacks,
+    packDetails: acceptedPacks.map((pack) => {
+      const recommendation = recommendationByPackId.get(pack.packId);
+      const manifestView = manifestByPackId.get(pack.packId);
+      const manifest = manifestView?.manifest;
+      const rules = activeRules.filter((rule) => rule.id.startsWith(`${pack.packId}.`));
+      const roleMappings =
+        state.policyReview?.roleMapping?.mapping.mappings.filter((mapping) => mapping.packId === pack.packId) ?? [];
+
+      return {
+        ...pack,
+        description:
+          manifest?.description ??
+          recommendation?.reason ??
+          'This accepted pack contributes project guidance for agents and developers.',
+        bestFor: manifest?.bestFor ?? [],
+        notFor: manifest?.notFor ?? [],
+        userQuestions: manifest?.userQuestions ?? [],
+        qualityBar: recommendation?.qualityBar ?? manifest?.qualityBar ?? [],
+        agentUse: manifest?.agentUse ?? [],
+        projectLifecycles: (manifest?.projectLifecycles ?? []).map(humanize),
+        appliesWhen: (manifest?.appliesWhen ?? recommendation?.signals ?? []).map((signal) => ({
+          id: signal.id,
+          summary: signal.summary,
+          confidence: humanize(signal.confidence),
+          evidence: signal.evidence,
+        })),
+        avoidWhen: (manifest?.avoidWhen ?? recommendation?.antiSignals ?? []).map((signal) => ({
+          id: signal.id,
+          summary: signal.summary,
+          confidence: humanize(signal.confidence),
+          evidence: signal.evidence,
+        })),
+        structureMatch: manifestView?.structureMatch,
+        roleMappingArtifactPath: state.policyReview?.roleMapping?.artifactPath,
+        roleMappings,
+        recommendedLayers: manifest?.recommendedLayers ?? [],
+        dependencyDirection: Object.entries(manifest?.dependencyDirection ?? {}).map(
+          ([layer, direction]) => ({
+            layer,
+            mayImport: direction.mayImport,
+          }),
+        ),
+        forbiddenImports: manifest?.forbiddenImports ?? [],
+        gates: manifest?.gates,
+        agentPrompts: manifest?.agentPrompts,
+        rules,
+        ruleCounts: {
+          must: rules.filter((rule) => rule.severity === 'must').length,
+          should: rules.filter((rule) => rule.severity === 'should').length,
+          advisory: rules.filter((rule) => rule.severity === 'advisory').length,
+        },
+        generatedArtifacts: manifest?.generatedArtifacts ?? [],
+        driftCheckIds: manifest?.driftCheckIds ?? [],
+        proofFixtureIds: manifest?.proofFixtureIds ?? [],
+        sourcePath: recommendation?.sourcePath,
+        manifestPath: manifestView?.artifactPath,
+      };
+    }),
+    localOverrides,
+    mustRules: activeRules.filter((rule) => rule.severity === 'must'),
+    shouldRules: activeRules.filter((rule) => rule.severity === 'should'),
+    advisoryRules: activeRules.filter((rule) => rule.severity === 'advisory'),
+    openDriftFindings: findings.filter((finding) => finding.status === 'open'),
+    suppressedDriftFindings: findings.filter((finding) => finding.status === 'suppressed'),
+    executionLanes: resolvedPolicy?.recommendedExecutionLanes ?? [],
+    sourceItems: [
+      ...(state.policyReview?.resolvedPolicy
+        ? [{ label: 'Accepted rules', value: state.policyReview.resolvedPolicy.artifactPath }]
+        : []),
+      ...(state.policyReview?.recommendations
+        ? [{ label: 'Suggestions', value: state.policyReview.recommendations.artifactPath }]
+        : []),
+      ...(state.policyReview?.driftReport
+        ? [{ label: 'Rule drift', value: state.policyReview.driftReport.artifactPath }]
+        : []),
+      ...(state.policyReview?.roleMapping
+        ? [{ label: 'Role mapping', value: state.policyReview.roleMapping.artifactPath }]
+        : []),
+      ...(state.policyReview?.overrides
+        ? [{ label: 'Local exceptions', value: state.policyReview.overrides.artifactPath }]
+        : []),
+    ],
   };
 };
 

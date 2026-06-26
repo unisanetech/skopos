@@ -1,3 +1,6 @@
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { printHelp } from './help.js';
 import { skoposCliCommandRegistry } from './registry.js';
 
@@ -19,7 +22,19 @@ export const runSkoposCli = async (argv: string[] = process.argv.slice(2)): Prom
   await handler(rest);
 };
 
-export const isEntrypoint = (): boolean => {
+export const isEntrypoint = (moduleUrl?: string): boolean => {
   const entry = process.argv[1];
-  return typeof entry === 'string' && (entry.endsWith('/cli.js') || entry.endsWith('/cli.ts'));
+  if (typeof entry !== 'string') {
+    return false;
+  }
+
+  if (!moduleUrl) {
+    return entry.endsWith('/cli.js') || entry.endsWith('/cli.ts');
+  }
+
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(moduleUrl));
+  } catch {
+    return entry.endsWith('/cli.js') || entry.endsWith('/cli.ts');
+  }
 };

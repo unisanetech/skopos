@@ -48,7 +48,7 @@ import {
   PlanDetailView,
   PlansView,
 } from '../screens/knowledge/knowledge-screens.js';
-import { ActivityView, ProofView, TrustView } from '../screens/validation/review-screens.js';
+import { ActivityView, PackDetailView, ProofView, RulesView, TrustView } from '../screens/validation/review-screens.js';
 import { ScopeDetailView, ScopesView } from '../screens/structure/structure-screens.js';
 import { getSkoposUiConsoleState } from './state.js';
 
@@ -110,6 +110,18 @@ const trustRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/trust',
   component: TrustView,
+});
+
+const rulesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rules',
+  component: RulesView,
+});
+
+const rulePackDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rules/packs/$packId',
+  component: RulePackDetailRouteView,
 });
 
 const proofRoute = createRoute({
@@ -187,6 +199,8 @@ const routeTree = rootRoute.addChildren([
   planDetailRoute,
   discussionRoute,
   trustRoute,
+  rulesRoute,
+  rulePackDetailRoute,
   proofRoute,
   scopesRoute,
   scopeDetailRoute,
@@ -235,7 +249,7 @@ function RootShell(): React.JSX.Element {
                 <p className="skopos-sidebar-brand-title">
                   {state?.workspaceLabel ?? 'Skopos'}
                 </p>
-                <p className="skopos-sidebar-brand-subtitle">system ui</p>
+                <p className="skopos-sidebar-brand-subtitle">project guide</p>
                 <p className="skopos-sidebar-workspace-note">self-hosted workspace</p>
               </div>
             </div>
@@ -287,7 +301,7 @@ function RootShell(): React.JSX.Element {
                     />
                   </div>
                   <div className="skopos-sidebar-status-row">
-                    <span className="skopos-sidebar-status-label">Trust</span>
+                    <span className="skopos-sidebar-status-label">Confidence</span>
                     <StatusPill
                       value={state?.trustReport.trustLevel ?? 'unknown'}
                       tone={toneForTrust(state?.trustReport.trustLevel)}
@@ -356,6 +370,12 @@ function PlansRouteView(): React.JSX.Element {
 
 function DiscussionRouteView(): React.JSX.Element {
   return <ExecutionDiscussionView />;
+}
+
+function RulePackDetailRouteView(): React.JSX.Element {
+  const { packId } = rulePackDetailRoute.useParams();
+
+  return <PackDetailView packId={packId} />;
 }
 
 function PlanDetailRouteView(): React.JSX.Element {

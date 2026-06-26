@@ -139,17 +139,18 @@ const buildDiscussionSearchEntries = (
 
 const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
   const aliasesByPath: Record<string, string[]> = {
-    '/overview': ['home', 'workspace overview', 'workspace health'],
+    '/overview': ['home', 'current work', 'workspace status'],
     '/missions': ['execution', 'work queue', 'open missions'],
     '/plans': ['plan library', 'current plans', 'work plans'],
     '/discussion': ['discussion history', 'workflow handoff', 'checkpoint history'],
     '/activity': ['timeline', 'provenance', 'history'],
-    '/trust': ['readiness', 'evidence', 'closure trust'],
-    '/proof': ['scorecard', 'benchmarks', 'validation proof'],
+    '/trust': ['readiness', 'quality', 'closure checks'],
+    '/rules': ['policy', 'packs', 'accepted rules', 'drift', 'local exceptions'],
+    '/proof': ['evidence', 'scorecard', 'benchmarks', 'validation proof'],
     '/docs': ['knowledge docs', 'documentation'],
     '/decisions': ['decision log', 'architecture decisions'],
-    '/findings': ['finding registry', 'active findings'],
-    '/scopes': ['packages', 'structure', 'workspace scopes'],
+    '/findings': ['issues', 'issue registry', 'active issues'],
+    '/scopes': ['project map', 'packages', 'structure', 'workspace areas'],
   };
   const defaultRanksByPath: Record<string, number> = {
     '/overview': 200,
@@ -158,6 +159,7 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
     '/discussion': 191,
     '/docs': 190,
     '/trust': 188,
+    '/rules': 187,
     '/proof': 186,
     '/activity': 184,
     '/decisions': 182,
@@ -433,11 +435,11 @@ const buildValidationSearchEntries = (
       id: 'validation-trust',
       group: 'validation',
       kind: 'report',
-      title: 'Trust readiness',
+      title: 'Readiness',
       summary: state.trustReport.summary,
       meta: `${state.trustReport.trustLevel} · ${state.trustReport.readiness}`,
       href: '#/trust',
-      aliases: ['trust', 'readiness', 'evidence', 'closure'],
+      aliases: ['trust', 'readiness', 'quality', 'closure'],
       keywords: [
         state.trustReport.trustLevel,
         state.trustReport.readiness,
@@ -460,11 +462,11 @@ const buildValidationSearchEntries = (
       id: 'validation-proof',
       group: 'validation',
       kind: 'report',
-      title: 'Proof scorecard',
+      title: 'Evidence scorecard',
       summary: `Benchmark posture with ${scorecard.passedBenchmarks}/${scorecard.benchmarkCount} passing benchmarks and ${scorecard.failedBenchmarks} failures.`,
       meta: `${scorecard.status} · ${scorecard.weightedPassRate}% pass`,
       href: '#/proof',
-      aliases: ['proof', 'scorecard', 'benchmark report'],
+      aliases: ['proof', 'evidence', 'scorecard', 'benchmark report'],
       keywords: [
         scorecard.status,
         ...scorecard.categorySummaries.map((category) => category.category),
@@ -475,6 +477,58 @@ const buildValidationSearchEntries = (
       stale: false,
       updatedAt: state.proofReport.updatedAt,
       defaultRank: 184,
+    });
+  }
+
+  for (const packView of state.policyReview?.packManifests ?? []) {
+    const manifest = packView.manifest;
+    entries.push({
+      id: `policy-pack-${manifest.packId}`,
+      group: 'validation',
+      kind: 'report',
+      title: manifest.displayName,
+      summary: manifest.plainLanguageSummary ?? manifest.description,
+      meta: [manifest.family, manifest.variant].join(' · '),
+      href: `#/rules/packs/${encodeURIComponent(manifest.packId)}`,
+      aliases: [
+        'policy pack',
+        'rule pack',
+        'pack details',
+        'structure tree',
+        manifest.packId,
+        manifest.displayName,
+      ],
+      keywords: [
+        manifest.packId,
+        manifest.summary,
+        manifest.description,
+        manifest.plainLanguageSummary,
+        ...(manifest.bestFor ?? []),
+        ...(manifest.notFor ?? []),
+        ...(manifest.userQuestions ?? []),
+        ...(manifest.recommendedLayers ?? []),
+        ...(manifest.structureTree?.nodes.flatMap((node) => [
+          node.path,
+          node.label,
+          node.responsibility,
+          ...(node.matchPaths ?? []),
+        ]) ?? []),
+        ...manifest.rules.flatMap((rule) => [
+          rule.id,
+          rule.title,
+          rule.summary,
+          ...(rule.examples ?? []),
+          ...(rule.antiPatterns ?? []),
+        ]),
+      ].filter((value): value is string => Boolean(value)),
+      canonical: true,
+      active: state.policyReview?.resolvedPolicy?.policy.acceptedPacks.some(
+        (pack) => pack.packId === manifest.packId,
+      ) ?? false,
+      historical: false,
+      stale: false,
+      updatedAt: manifest.updatedAt ?? state.generatedAt,
+      defaultRank: 183,
     });
   }
 

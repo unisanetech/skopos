@@ -3,11 +3,11 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260412-PROGRAM-ROUTER-AND-OBLIGATION-GAP`
-- Status: `active`
+- Status: `historical`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `registry.md`
@@ -23,6 +23,7 @@
 
 ## Changelog
 
+- `2026-06-25`: Closed after blocking workflow recommendations became promoted program-router items with preserved commands, linked mission/plan context, explicit open question IDs, and regression coverage proving `program sync` points at blocking question resolution before implementation continues.
 - `2026-04-12`: Narrowed the finding again after the first routed UI adoption slice landed, so the remaining gap is no longer “program state is invisible to humans”; it is now broader source promotion plus richer question/recommendation and discussion-memory adoption on top of the compact program-control lane.
 - `2026-04-12`: Narrowed the finding after the first low-noise program-router slice landed: `.skopos/program/state.json`, `skopos program sync`, and `skopos program next` now exist with active-mission plus active-finding inputs and typed obligations, so the remaining gap is broader source promotion plus routed UI adoption rather than the total absence of a program-control lane.
 - `2026-04-12`: Updated the finding with the supervision-cost and workflow-weight guardrail, so the remaining program-router implementation work now has an explicit requirement to stay low-noise and avoid replacing user memory with heavier ceremony.
@@ -31,10 +32,10 @@
 ## Summary
 
 - Severity: `SHOULD`
-- Status: `in-progress`
+- Status: `done`
 - Owner: `skopos-core`
 - Target Pack: `program router lane`
-- Current State: partially fixed. Skopos now has a first compact program-control artifact, public `program sync` and `program next` commands, and the first routed UI adoption in `overview`, `mission detail`, `trust`, and the search dock, but it still needs broader source promotion and richer question/recommendation plus discussion-memory adoption before program-level sequencing stops depending too much on user memory.
+- Current State: done. Skopos now has a compact program-control artifact, public `program sync` and `program next` commands, routed UI adoption in `overview`, `mission detail`, `trust`, and the search dock, discussion checkpoint promotion into compact handoff state, and blocking workflow recommendations promoted into program-router items with preserved commands. Program-level sequencing no longer depends on the user remembering that blocking questions must come before implementation.
 
 ## Symptom
 

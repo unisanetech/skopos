@@ -69,6 +69,40 @@ export function ActivityInspectorAside({
   );
 }
 
+export function ActivityGuidanceCard({
+  latestEntry,
+  eventGroupCount,
+}: {
+  latestEntry?: ActivityFeedEntry;
+  eventGroupCount: number;
+}): React.JSX.Element {
+  return (
+    <Card
+      title="How to use this page"
+      description="Activity shows what Skopos recently recorded, so you can understand why the current state changed."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Latest change"
+          text={latestEntry?.headline ?? 'No recent activity has been recorded yet.'}
+        />
+        <GuidancePoint
+          label="Use when"
+          text="You need to trace when missions, plans, readiness, evidence, or workflow state changed."
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            eventGroupCount > 0
+              ? 'Open a linked mission or plan when an event needs more context.'
+              : 'Start or refresh Skopos workflow state to populate activity.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function ActivityTimelineCard({
   feedGroups,
 }: {
@@ -76,8 +110,8 @@ export function ActivityTimelineCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Recent activity"
-      description="A mixed feed of operational events, mission movement, plan updates, and workflow evidence."
+      title="Recent changes"
+      description="Grouped events from work sessions, plans, readiness checks, and evidence runs."
     >
       {feedGroups.length > 0 ? (
         <div className="space-y-6">
@@ -109,11 +143,30 @@ export function ActivityTimelineCard({
         </div>
       ) : (
         <EmptyMessage
-          title="No operational events"
-          description="No lifecycle events are available right now."
+          title="No recent changes"
+          description="No Skopos activity has been recorded yet. Start or claim a mission to connect work with history."
         />
       )}
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }
 

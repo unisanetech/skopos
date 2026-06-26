@@ -254,6 +254,52 @@ export function MissionDiscussionContextCard({
   );
 }
 
+export function DiscussionGuidanceCard({
+  latestDiscussionHandoff,
+  checkpointCount,
+  activeMissionCount,
+}: {
+  latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
+  checkpointCount: number;
+  activeMissionCount: number;
+}): React.JSX.Element {
+  const openQuestionCount = latestDiscussionHandoff?.handoff.openQuestions.length ?? 0;
+
+  return (
+    <Card
+      title="How to use this page"
+      description="Discussion keeps the useful parts of agent conversations: accepted direction, open questions, next commands, and checkpoints."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Start here"
+          text={
+            openQuestionCount > 0
+              ? 'Answer the open discussion questions before asking the agent to continue.'
+              : latestDiscussionHandoff
+                ? 'Read the latest handoff to understand the current direction.'
+                : 'No latest handoff is available yet.'
+          }
+        />
+        <GuidancePoint
+          label="Use when"
+          text="You need to resume context, understand what was agreed, or see why the agent is continuing a certain way."
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            activeMissionCount > 0
+              ? 'Open the linked mission when the discussion belongs to active work.'
+              : checkpointCount > 0
+                ? 'Review checkpoints when you need older reasoning history.'
+                : 'Generate a handoff or checkpoint during active work to populate this page.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function DiscussionHistoryCard({
   latestDiscussionHandoff,
   checkpoints,
@@ -265,8 +311,8 @@ export function DiscussionHistoryCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Discussion history"
-      description="Browse the latest workflow handoff and full checkpoint sequence as the canonical discussion-memory layer."
+      title="Saved discussion context"
+      description="The latest handoff appears first, followed by checkpoints that explain how the work direction changed over time."
     >
       {latestDiscussionHandoff || checkpoints.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -368,9 +414,28 @@ export function DiscussionHistoryCard({
       ) : (
         <EmptyMessage
           title="No discussion history yet"
-          description="A dedicated discussion route exists now, but it only becomes useful once the runtime generates handoffs or checkpoints."
+          description="Discussion context will appear here after Skopos records a handoff or checkpoint during active work."
         />
       )}
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }

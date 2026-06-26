@@ -364,6 +364,76 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     );
   });
 
+  it('generates compact repo understanding artifacts after bootstrap', async () => {
+    const workspaceDir = await createTempWorkspace(messyFixtureRepoRoot);
+    runCliJson(['init', workspaceDir, '--actor', 'agent-bootstrap', '--json']);
+
+    const result = runCliJson<{
+      summaryWrite: string;
+      featureInventoryWrite: string;
+      hotspotsWrite: string;
+      indexWrite: string;
+      summaryPath: string;
+      featureInventoryPath: string;
+      hotspotsPath: string;
+      summary: {
+        purpose: string;
+        mainAreas: Array<{ title: string; path: string; confidence: string }>;
+      };
+      featureInventory: {
+        features: Array<{ title: string; ownerPath: string; confidence: string }>;
+      };
+      hotspots: {
+        hotspots: Array<{ title: string; path: string; reason: string }>;
+      };
+    }>(['understand', workspaceDir, '--actor', 'agent-understanding', '--json']);
+
+    expect(result.summaryWrite).toBe('written');
+    expect(result.featureInventoryWrite).toBe('written');
+    expect(result.hotspotsWrite).toBe('written');
+    expect(result.indexWrite).toBe('written');
+    expect(result.summary.purpose).toContain('workspace');
+    expect(result.summary.mainAreas.length).toBeGreaterThan(0);
+    expect(result.featureInventory.features.length).toBeGreaterThan(0);
+    expect(result.hotspots.hotspots.length).toBeGreaterThan(0);
+
+    const summary = JSON.parse(await readFile(result.summaryPath, 'utf8')) as {
+      type: string;
+      authority: string;
+      purpose: string;
+    };
+    expect(summary.type).toBe('repo-understanding-summary');
+    expect(summary.authority).toBe('inferred');
+    expect(summary.purpose).toBe(result.summary.purpose);
+
+    const featureInventory = JSON.parse(await readFile(result.featureInventoryPath, 'utf8')) as {
+      type: string;
+      features: unknown[];
+    };
+    expect(featureInventory.type).toBe('feature-inventory');
+    expect(featureInventory.features.length).toBeGreaterThan(0);
+
+    const hotspots = JSON.parse(await readFile(result.hotspotsPath, 'utf8')) as {
+      type: string;
+      hotspots: unknown[];
+    };
+    expect(hotspots.type).toBe('implementation-hotspots');
+    expect(hotspots.hotspots.length).toBeGreaterThan(0);
+
+    const index = JSON.parse(await readFile(join(workspaceDir, '.skopos', 'index.json'), 'utf8')) as {
+      entries: Array<{ id: string; kind: string; path: string }>;
+    };
+    expect(index.entries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'understanding-repo-summary',
+          kind: 'understanding-artifact',
+          path: '.skopos/understanding/repo-summary.json',
+        }),
+      ]),
+    );
+  });
+
   it('scaffolds project instructions during init when the canonical source is missing', async () => {
     const workspaceDir = await createTempWorkspace();
     await rm(join(workspaceDir, 'AGENTS.md'), { force: true });
@@ -1324,6 +1394,115 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(next.recommendedAction?.summary).toContain('current do-now item');
     expect(next.obligations.some((entry) => entry.kind === 'ui')).toBe(true);
     expect(next.state.sequence.interruptRecommendation.decision).toBe('continue-current');
+
+    const nextText = runCliText(['program', 'next', workspaceDir, '--actor', 'agent-program']);
+    expect(nextText).toContain('Skopos program next');
+    expect(nextText).toContain('Status: Ready for next action');
+    expect(nextText).toContain('Next step:');
+    expect(nextText).toContain(`--mission ${started.missionId}`);
+  });
+
+  it('promotes blocking workflow recommendations into program do-now guidance', async () => {
+    const workspaceDir = await createTempWorkspace(selfHostedFixtureRepoRoot);
+    runCliJson(['init', workspaceDir, '--json']);
+
+    const started = runCliJson<{
+      missionId: string;
+      questions: {
+        entries: Array<{ id: string; recommendedOptionId: string; status: string; blocking: boolean }>;
+      };
+    }>([
+      'start',
+      'change a public API and update the UI workflow',
+      workspaceDir,
+      '--actor',
+      'agent-program',
+      '--json',
+    ]);
+    const blockingQuestion = started.questions.entries.find(
+      (entry) => entry.status === 'open' && entry.blocking,
+    );
+
+    expect(blockingQuestion).toBeDefined();
+
+    const synced = runCliJson<{
+      recommendedAction?: { kind: string; command?: string; linkedItemId?: string };
+      state: {
+        items: Array<{
+          id: string;
+          sourceKind: string;
+          recommendedDisposition: string;
+          recommendedCommand?: string;
+          linkedMissionId?: string;
+        }>;
+        sequence: {
+          currentActiveItemId?: string;
+          doNow?: string;
+          doNext?: string;
+          openProgramQuestions: string[];
+          interruptRecommendation: { decision: string };
+        };
+      };
+    }>(['program', 'sync', workspaceDir, '--actor', 'agent-program', '--json']);
+    const promotedItem = synced.state.items.find(
+      (item) => item.sourceKind === 'workflow-recommendation',
+    );
+
+    expect(promotedItem).toEqual(
+      expect.objectContaining({
+        recommendedDisposition: 'interrupt-current',
+        linkedMissionId: started.missionId,
+        recommendedCommand: expect.stringContaining(`decide ${blockingQuestion?.id}`),
+      }),
+    );
+    expect(synced.state.sequence.currentActiveItemId).toBe(
+      `program-item.mission.${started.missionId}`,
+    );
+    expect(synced.state.sequence.doNow).toBe(promotedItem?.id);
+    expect(synced.state.sequence.doNext).toBe(`program-item.mission.${started.missionId}`);
+    expect(synced.state.sequence.openProgramQuestions).toContain(blockingQuestion?.id);
+    expect(synced.state.sequence.interruptRecommendation.decision).toBe('interrupt-current');
+    expect(synced.recommendedAction).toEqual(
+      expect.objectContaining({
+        kind: 'run-workflow-recommendation',
+        command: expect.stringContaining(`decide ${blockingQuestion?.id}`),
+        linkedItemId: promotedItem?.id,
+      }),
+    );
+  });
+
+  it('orders queued program findings by severity instead of registry position', async () => {
+    const workspaceDir = await createTempWorkspace(selfHostedFixtureRepoRoot);
+    runCliJson(['init', workspaceDir, '--json']);
+    await writePriorityFindingFixture(workspaceDir);
+
+    const synced = runCliJson<{
+      doNowItem?: { id: string; priority: string };
+      doNextItem?: { id: string; priority: string };
+      state: {
+        sequence: {
+          doNow?: string;
+          doNext?: string;
+          interruptRecommendation: { decision: string };
+        };
+      };
+    }>(['program', 'sync', workspaceDir, '--actor', 'agent-program', '--json']);
+
+    expect(synced.state.sequence.interruptRecommendation.decision).toBe('start-do-now');
+    expect(synced.state.sequence.doNow).toBe('program-item.finding.F-critical-token-transport');
+    expect(synced.state.sequence.doNext).toBe('program-item.finding.F-high-stale-advisory');
+    expect(synced.doNowItem).toEqual(
+      expect.objectContaining({
+        id: 'program-item.finding.F-critical-token-transport',
+        priority: 'critical',
+      }),
+    );
+    expect(synced.doNextItem).toEqual(
+      expect.objectContaining({
+        id: 'program-item.finding.F-high-stale-advisory',
+        priority: 'high',
+      }),
+    );
   });
 
   it('ignores active missions superseded by a later complete duplicate during program sync', async () => {
@@ -2049,6 +2228,42 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     ]);
   });
 
+  it('does not promote a new discussion checkpoint for actor-only command changes', async () => {
+    const workspaceDir = await createTempWorkspace(selfHostedFixtureRepoRoot);
+    runCliJson(['init', workspaceDir, '--json']);
+
+    runCliJson([
+      'start',
+      'keep discussion checkpoint history semantic',
+      workspaceDir,
+      '--actor',
+      'agent-one',
+      '--json',
+    ]);
+    const initialDiscussionIndex = JSON.parse(
+      await readFile(join(workspaceDir, '.skopos', 'discussions', 'index.json'), 'utf8'),
+    ) as {
+      latestCheckpointId: string;
+      checkpointCount: number;
+    };
+
+    runCliJson(['next', workspaceDir, '--actor', 'agent-two', '--json']);
+    const checkpoint = runCliJson<{
+      checkpointWrite: string;
+      indexWrite: string;
+    }>(['discuss', 'checkpoint', workspaceDir, '--json']);
+    const finalDiscussionIndex = JSON.parse(
+      await readFile(join(workspaceDir, '.skopos', 'discussions', 'index.json'), 'utf8'),
+    ) as {
+      latestCheckpointId: string;
+      checkpointCount: number;
+    };
+
+    expect(checkpoint.checkpointWrite).toBe('unchanged');
+    expect(finalDiscussionIndex.latestCheckpointId).toBe(initialDiscussionIndex.latestCheckpointId);
+    expect(finalDiscussionIndex.checkpointCount).toBe(initialDiscussionIndex.checkpointCount);
+  });
+
   it('imports raw discussion turns from the latest matching local Codex session log', async () => {
     const workspaceDir = await createTempWorkspace(selfHostedFixtureRepoRoot);
     const codexHome = await mkdtemp(join(tmpdir(), 'skopos-codex-home-'));
@@ -2760,6 +2975,43 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(stopDecision.reason).toContain('skopos next');
   });
 
+  it('generates a manual host adapter guide for unsupported coding agents', async () => {
+    const workspaceDir = await createTempWorkspace();
+    runCliJson(['init', workspaceDir, '--json']);
+
+    const guidePath = join(workspaceDir, '.skopos', 'tooling', 'manual-hosts', 'README.md');
+    const enforcementPath = join(workspaceDir, '.skopos', 'enforcement.json');
+    const guide = await readFile(guidePath, 'utf8');
+    const enforcement = JSON.parse(await readFile(enforcementPath, 'utf8')) as {
+      toolAdapters: Array<{
+        toolId: string;
+        supportTier: string;
+        supportStatus: string;
+        path: string;
+        workflowRouterCoverage: {
+          sessionStart: boolean;
+          stopBoundary: boolean;
+        };
+      }>;
+    };
+    const adapter = enforcement.toolAdapters.find((entry) => entry.toolId === 'manual-hosts');
+
+    expect(guide).toContain('Manual Host Adapter');
+    expect(guide).toContain('skopos program next <project-root> --compact --json');
+    expect(guide).toContain('skopos done --cwd <project-root> --json');
+    expect(adapter).toEqual(
+      expect.objectContaining({
+        supportTier: 'manual-fallback',
+        supportStatus: 'manual-only',
+        path: '.skopos/tooling/manual-hosts/README.md',
+        workflowRouterCoverage: {
+          sessionStart: true,
+          stopBoundary: true,
+        },
+      }),
+    );
+  });
+
   it('blocks Claude stop with the workflow-router command when the next Skopos step is explicit', async () => {
     const workspaceDir = await createTempWorkspace();
     runCliJson(['init', workspaceDir, '--json']);
@@ -2817,7 +3069,8 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     const stopDecision = JSON.parse(stopOutput) as { decision: string; reason: string };
 
     expect(stopDecision.decision).toBe('block');
-    expect(stopDecision.reason).toContain('skopos next');
+    expect(stopDecision.reason).toContain('skopos decide plan.public-api-change');
+    expect(stopDecision.reason).toContain('before stopping');
   });
 
   it('diagnoses a messy repo and suggests remediation missions', async () => {
@@ -3511,6 +3764,24 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(plan.mission.items.some((item) => item.kind === 'validation')).toBe(true);
     expect(plan.mission.items.some((item) => item.kind === 'workflow')).toBe(true);
 
+    const planText = runCliText([
+      'plan',
+      'add public api endpoint for billing summaries',
+      workspaceDir,
+      '--scope',
+      '@fixture/api',
+      '--actor',
+      'agent-plan',
+      '--dry-run',
+    ]);
+    expect(planText).toContain('Skopos plan');
+    expect(planText).toContain('Status: Decision needed');
+    expect(planText).toContain('Questions:');
+    expect(planText).toContain('Recommended:');
+    expect(planText).toContain('Why this matters:');
+    expect(planText).toContain('Options:');
+    expect(planText).toContain('Details:');
+
     const persistedPlan = JSON.parse(await readFile(plan.planPath, 'utf8')) as {
       id: string;
       missionId: string;
@@ -3636,6 +3907,25 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
   it('starts work by creating workflow question and recommendation artifacts', async () => {
     const workspaceDir = await createTempWorkspace();
     runCliJson(['init', workspaceDir, '--json']);
+
+    const startText = runCliText([
+      'start',
+      'add public api endpoint for billing summaries',
+      workspaceDir,
+      '--scope',
+      '@fixture/api',
+      '--actor',
+      'agent-router',
+      '--dry-run',
+    ]);
+    expect(startText).toContain('Skopos start');
+    expect(startText).toContain('Status: Decision needed');
+    expect(startText).toContain('Next step:');
+    expect(startText).toContain('Questions:');
+    expect(startText).toContain('Recommended:');
+    expect(startText).toContain('Why this matters:');
+    expect(startText).toContain('After you answer:');
+    expect(startText).toContain('Details:');
 
     const start = runCliJson<{
       actorId?: string;
@@ -3805,6 +4095,24 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
 
     expect(publicApiQuestion?.recommendedOptionId).toBeDefined();
     expect(vendorQuestion?.recommendedOptionId).toBeDefined();
+
+    const decideText = runCliText([
+      'decide',
+      'plan.public-api-change',
+      publicApiQuestion?.recommendedOptionId ?? 'confirm-contract-first',
+      workspaceDir,
+      '--actor',
+      'agent-router',
+      '--dry-run',
+    ]);
+    expect(decideText).toContain('Skopos decide');
+    expect(decideText).toContain('Status: More decisions needed');
+    expect(decideText).toContain('Answered:');
+    expect(decideText).toContain('Selected:');
+    expect(decideText).toContain('Next step:');
+    expect(decideText).toContain('Questions:');
+    expect(decideText).toContain('Recommended:');
+    expect(decideText).toContain('Details:');
 
     const firstDecision = runCliJson<{
       actorId?: string;
@@ -4039,6 +4347,15 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(next.nextItem).toBeUndefined();
     expect(next.trust.trustLevel).toBe('medium');
     expect(next.trust.readiness).toBe('needs-review');
+
+    const nextText = runCliText(['next', workspaceDir, '--actor', 'agent-router']);
+    expect(nextText).toContain('Skopos next');
+    expect(nextText).toContain('Status: Blocked');
+    expect(nextText).toContain('Progress:');
+    expect(nextText).toContain('Current phase:');
+    expect(nextText).toContain('Questions:');
+    expect(nextText).toContain('Next step:');
+    expect(nextText).toContain('skopos decide plan.public-api-change confirm-contract-first');
   });
 
   it('returns the first pending mission item as the next bounded action after blockers are cleared', async () => {
@@ -4729,7 +5046,42 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
           version: '0.1.0',
           displayName: 'Mid-App Architecture',
           description: 'Fixture policy pack for a multi-feature product application.',
-          projectLifecycles: ['greenfield', 'early-product'],
+          structureTree: {
+            title: 'Mid-app structure tree',
+            summary: 'A clear app shape for runtime wiring, product behavior, infrastructure, and UI roles. These are roles, not required folder names.',
+            rootLabel: 'source root',
+            nodes: [
+              {
+                path: 'app / composition root',
+                label: 'App shell and composition root',
+                responsibility: 'Owns route setup and dependency assembly.',
+                required: true,
+                matchPaths: ['src/app', 'src/routes'],
+              },
+              {
+                path: 'features / modules / domains',
+                label: 'Product features',
+                responsibility: 'Owns user workflows and local UI.',
+                required: true,
+                matchPaths: ['src/features', 'src/use-cases'],
+              },
+              {
+                path: 'infrastructure / adapters',
+                label: 'Infrastructure and adapters',
+                responsibility: 'Owns external service and vendor boundaries.',
+                required: true,
+                matchPaths: ['src/infrastructure', 'src/gateways'],
+              },
+              {
+                path: 'ui / components / design system',
+                label: 'Reusable UI primitives',
+                responsibility: 'Owns reusable UI and presentation primitives.',
+                required: false,
+                matchPaths: ['src/ui', 'src/presenters'],
+              },
+            ],
+          },
+          projectLifecycles: ['greenfield', 'early-product', 'established-brownfield'],
           appliesWhen: [
             {
               id: 'signal.multiple-features',
@@ -4758,6 +5110,28 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
               antiPatterns: ['src/shared/helpers.ts owns order decisions'],
               checkIds: ['architecture.mid-app.business-logic-in-shared-helper'],
             },
+            {
+              id: 'architecture.mid-app.shared-is-earned',
+              title: 'Shared code is earned',
+              severity: 'must',
+              summary: 'Shared modules must represent stable cross-feature primitives.',
+              rationale: 'Generic helper buckets make ownership unclear.',
+              appliesTo: ['shared modules', 'support folders'],
+              examples: ['src/support/formatting/money.ts'],
+              antiPatterns: ['src/shared/helpers.ts'],
+              checkIds: ['architecture.mid-app.generic-helper-bucket'],
+            },
+            {
+              id: 'architecture.mid-app.import-direction-is-one-way',
+              title: 'Import direction is one-way',
+              severity: 'must',
+              summary: 'Features must not import private internals from sibling features.',
+              rationale: 'One-way imports keep ownership clear.',
+              appliesTo: ['imports', 'feature internals'],
+              examples: ['features/orders imports platform/api/client'],
+              antiPatterns: ['features/billing imports features/orders/components/internal-row'],
+              checkIds: ['architecture.mid-app.cross-feature-private-import'],
+            },
           ],
           requiredDocs: ['policies/overview.md'],
           generatedArtifacts: ['.skopos/policies/resolved.json'],
@@ -4769,18 +5143,86 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       ),
       'utf8',
     );
+    const gatePackDir = join(workspaceDir, 'policy-packs', 'gates', 'progressive-validation');
+    await mkdir(gatePackDir, { recursive: true });
+    await writeFile(
+      join(gatePackDir, 'pack.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'policy-pack.gates.progressive-validation',
+          type: 'policy-pack',
+          status: 'active',
+          authority: 'canonical',
+          summary: 'Fixture gate policy pack.',
+          updatedAt: '2026-06-24',
+          packId: 'gates.progressive-validation',
+          family: 'gates',
+          variant: 'progressive-validation',
+          version: '0.1.0',
+          displayName: 'Progressive Validation Gates',
+          description: 'Fixture gate pack for proportional validation.',
+          plainLanguageSummary: 'Use this to keep small tasks light and risky tasks well proven.',
+          bestFor: ['Projects with multiple validation commands'],
+          notFor: ['Throwaway spikes'],
+          userQuestions: ['Is this light, normal, or workpack risk?'],
+          qualityBar: ['Small work stays light.', 'Risky work records proof.'],
+          agentUse: ['Choose proportional gates before closure.'],
+          projectLifecycles: ['greenfield', 'early-product', 'established-brownfield'],
+          appliesWhen: [
+            {
+              id: 'signal.validation-lanes',
+              summary: 'The project has more than one validation command.',
+              confidence: 'high',
+              evidence: ['typecheck', 'test', 'build'],
+            },
+          ],
+          avoidWhen: [
+            {
+              id: 'anti.no-durable-project',
+              summary: 'No durable project exists.',
+              confidence: 'high',
+              evidence: ['no package.json'],
+            },
+          ],
+          rules: [
+            {
+              id: 'gates.progressive-validation.closure-records-proof',
+              title: 'Closure records proof',
+              severity: 'must',
+              summary: 'Closure should record commands and outcomes.',
+              rationale: 'Future agents need proof history.',
+              appliesTo: ['mission closure'],
+              examples: ['Done report lists typecheck and tests'],
+              antiPatterns: ['Done message omits validation'],
+              checkIds: ['gates.progressive-validation.closure-proof-missing'],
+            },
+          ],
+          requiredDocs: ['policies/overview.md'],
+          generatedArtifacts: ['.skopos/policies/resolved.json'],
+          driftCheckIds: ['gates.progressive-validation.closure-proof-missing'],
+          proofFixtureIds: ['gates.progressive-validation.good-proportional-proof'],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await mkdir(join(workspaceDir, 'src', 'features'), { recursive: true });
+    await mkdir(join(workspaceDir, 'src', 'gateways'), { recursive: true });
 
     const listed = runCliJson<
       Array<{
         packId: string;
         family: string;
         variant: string;
+        plainLanguageSummary?: string;
         rules: Array<{ id: string }>;
         sourcePath: string;
       }>
     >(['policies', 'list', workspaceDir, '--json']);
 
-    expect(listed).toHaveLength(1);
+    expect(listed).toHaveLength(2);
     expect(listed[0]).toEqual(
       expect.objectContaining({
         packId: 'architecture.mid-app',
@@ -4789,8 +5231,19 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         sourcePath: 'policy-packs/architecture/mid-app/pack.json',
       }),
     );
+    expect(listed[1]).toEqual(
+      expect.objectContaining({
+        packId: 'gates.progressive-validation',
+        family: 'gates',
+        variant: 'progressive-validation',
+        plainLanguageSummary: 'Use this to keep small tasks light and risky tasks well proven.',
+        sourcePath: 'policy-packs/gates/progressive-validation/pack.json',
+      }),
+    );
     expect(listed[0]?.rules.map((rule) => rule.id)).toEqual([
       'architecture.mid-app.feature-owns-product-behavior',
+      'architecture.mid-app.shared-is-earned',
+      'architecture.mid-app.import-direction-is-one-way',
     ]);
 
     const shown = runCliJson<{
@@ -4806,6 +5259,579 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       'architecture.mid-app.business-logic-in-shared-helper',
     ]);
     expect(shown.proofFixtureIds).toEqual(['architecture.mid-app.good-product-app']);
+
+    runCliJson(['init', workspaceDir, '--json']);
+
+    const recommendations = runCliJson<{
+      projectLifecycle: string;
+      defaultExecutionLane: string;
+      recommendations: Array<{
+        packId: string;
+        family: string;
+        displayName: string;
+        accepted: boolean;
+        recommendation: string;
+        confidence: string;
+        reason: string;
+      }>;
+    }>(['policies', 'recommend', workspaceDir, '--json']);
+
+    expect(recommendations.projectLifecycle).toBe('established-brownfield');
+    expect(recommendations.defaultExecutionLane).toBe('normal');
+    expect(recommendations.recommendations).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        packId: 'architecture.mid-app',
+        family: 'architecture',
+        displayName: 'Mid-App Architecture',
+        accepted: false,
+        recommendation: 'apply',
+        confidence: 'high',
+      }),
+      expect.objectContaining({
+        packId: 'gates.progressive-validation',
+        family: 'gates',
+        displayName: 'Progressive Validation Gates',
+        accepted: false,
+        recommendation: 'apply',
+        confidence: 'high',
+      }),
+    ]));
+
+    const recommendationText = runCliText(['policies', 'recommend', workspaceDir]);
+    expect(recommendationText).toContain('Status: Recommendation ready');
+    expect(recommendationText).toContain('Next step:');
+    expect(recommendationText).toContain('skopos policies apply architecture.mid-app .');
+
+    const applied = runCliJson<{
+      policyWrite: string;
+      roleMappingWrite: string;
+      policyBriefWrite: string;
+      agentsWrite: string;
+      actorId?: string;
+      roleMapping: {
+        type: string;
+        mappings: Array<{
+          packId: string;
+          role: string;
+          status: string;
+          matchedPaths: string[];
+        }>;
+      };
+      policy: {
+        defaultExecutionLane: string;
+        acceptedPacks: Array<{ packId: string; acceptedBy?: string; reason: string }>;
+        recommendedExecutionLanes: Array<{ lane: string; triggers: string[] }>;
+      };
+    }>([
+      'policies',
+      'apply',
+      'architecture.mid-app',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--reason',
+      'Fixture acceptance for policy loop coverage.',
+      '--json',
+    ]);
+
+    expect(applied.policyWrite).toBe('written');
+    expect(applied.roleMappingWrite).toBe('written');
+    expect(applied.policyBriefWrite).toBe('written');
+    expect(applied.agentsWrite).toBe('written');
+    expect(applied.actorId).toBe('agent-policy');
+    expect(applied.roleMapping).toEqual(
+      expect.objectContaining({
+        type: 'policy-role-mapping',
+        mappings: expect.arrayContaining([
+          expect.objectContaining({
+            packId: 'architecture.mid-app',
+            role: 'features / modules / domains',
+            status: 'inferred',
+          }),
+        ]),
+      }),
+    );
+    expect(applied.policy.defaultExecutionLane).toBe('normal');
+    expect(applied.policy.acceptedPacks).toEqual([
+      expect.objectContaining({
+        packId: 'architecture.mid-app',
+        acceptedBy: 'agent-policy',
+        reason: 'Fixture acceptance for policy loop coverage.',
+      }),
+    ]);
+    expect(applied.policy.recommendedExecutionLanes.map((entry) => entry.lane)).toEqual([
+      'light',
+      'normal',
+      'workpack',
+    ]);
+    const appliedGate = runCliJson<{
+      policy: {
+        acceptedPacks: Array<{ packId: string }>;
+        activeRules: Array<{ id: string }>;
+      };
+    }>([
+      'policies',
+      'apply',
+      'gates.progressive-validation',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--reason',
+      'Fixture acceptance for gate composition coverage.',
+      '--json',
+    ]);
+    expect(appliedGate.policy.acceptedPacks.map((entry) => entry.packId)).toEqual([
+      'architecture.mid-app',
+      'gates.progressive-validation',
+    ]);
+    expect(appliedGate.policy.activeRules.map((entry) => entry.id)).toEqual(
+      expect.arrayContaining([
+        'architecture.mid-app.feature-owns-product-behavior',
+        'gates.progressive-validation.closure-records-proof',
+      ]),
+    );
+
+    const appliedText = runCliText([
+      'policies',
+      'apply',
+      'architecture.mid-app',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--reason',
+      'Fixture acceptance for policy text coverage.',
+      '--dry-run',
+    ]);
+    expect(appliedText).toContain('Status: Preview only');
+    expect(appliedText).toContain('Next step:');
+    expect(appliedText).toContain('without `--dry-run`');
+
+    const policyBrief = JSON.parse(
+      await readFile(join(workspaceDir, '.skopos', 'agent', 'policy-brief.json'), 'utf8'),
+    ) as {
+      briefKind: string;
+      acceptedPackIds: string[];
+      defaultExecutionLane: string;
+      workpackTriggers: string[];
+      roleMappingPath?: string;
+      mappedRoleCount?: number;
+      missingRequiredRoleCount?: number;
+    };
+    expect(policyBrief).toEqual(
+      expect.objectContaining({
+        briefKind: 'policy',
+        acceptedPackIds: ['architecture.mid-app', 'gates.progressive-validation'],
+        defaultExecutionLane: 'normal',
+      }),
+    );
+    expect(policyBrief.workpackTriggers).toContain('public API or package boundary change');
+    expect(policyBrief.roleMappingPath).toBe('.skopos/policies/role-mapping.json');
+    expect(policyBrief.mappedRoleCount).toBeGreaterThanOrEqual(1);
+    expect(policyBrief.missingRequiredRoleCount).toBeGreaterThanOrEqual(0);
+
+    const roleMapping = JSON.parse(
+      await readFile(join(workspaceDir, '.skopos', 'policies', 'role-mapping.json'), 'utf8'),
+    ) as {
+      type: string;
+      mappings: Array<{ packId: string; role: string; matchedPaths: string[] }>;
+    };
+    expect(roleMapping).toEqual(
+      expect.objectContaining({
+        type: 'policy-role-mapping',
+        mappings: expect.arrayContaining([
+          expect.objectContaining({
+            packId: 'architecture.mid-app',
+            role: 'features / modules / domains',
+            matchedPaths: expect.arrayContaining(['src/features']),
+          }),
+        ]),
+      }),
+    );
+
+    const emptyMappingDecisions = runCliJson<{
+      decisions: Array<{ id: string }>;
+    }>(['policies', 'mappings', 'list', workspaceDir, '--json']);
+    expect(emptyMappingDecisions.decisions).toEqual([]);
+
+    const confirmedMapping = runCliJson<{
+      artifactWrite: string;
+      roleMappingWrite: string;
+      artifact: {
+        decisions: Array<{ id: string; packId: string; role: string; status: string; matchedPaths?: string[] }>;
+      };
+      roleMapping: {
+        mappings: Array<{ role: string; status: string; matchedPaths: string[]; reason: string }>;
+      };
+    }>([
+      'policies',
+      'mappings',
+      'confirm',
+      '--cwd',
+      workspaceDir,
+      '--pack',
+      'architecture.mid-app',
+      '--role',
+      'features / modules / domains',
+      '--path',
+      'src/features',
+      '--reason',
+      'Fixture confirms features are the local product-role folder.',
+      '--owner',
+      'agent-policy',
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(confirmedMapping.artifactWrite).toBe('written');
+    expect(confirmedMapping.roleMappingWrite).toBe('written');
+    expect(confirmedMapping.artifact.decisions).toContainEqual(
+      expect.objectContaining({
+        id: 'role-map-architecture.mid-app-features-modules-domains',
+        packId: 'architecture.mid-app',
+        role: 'features / modules / domains',
+        status: 'confirmed',
+        matchedPaths: ['src/features'],
+      }),
+    );
+    expect(confirmedMapping.roleMapping.mappings).toContainEqual(
+      expect.objectContaining({
+        role: 'features / modules / domains',
+        status: 'confirmed',
+        matchedPaths: ['src/features'],
+        reason: 'Fixture confirms features are the local product-role folder.',
+      }),
+    );
+
+    const ignoredMapping = runCliJson<{
+      artifact: { decisions: Array<{ id: string; status: string; role: string }> };
+      roleMapping: { mappings: Array<{ role: string; status: string; reason: string }> };
+    }>([
+      'policies',
+      'mappings',
+      'ignore',
+      '--cwd',
+      workspaceDir,
+      '--pack',
+      'architecture.mid-app',
+      '--role',
+      'ui / components / design system',
+      '--reason',
+      'Fixture does not have a separate reusable UI role yet.',
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(ignoredMapping.artifact.decisions).toContainEqual(
+      expect.objectContaining({
+        id: 'role-map-architecture.mid-app-ui-components-design-system',
+        role: 'ui / components / design system',
+        status: 'ignored',
+      }),
+    );
+    expect(ignoredMapping.roleMapping.mappings).toContainEqual(
+      expect.objectContaining({
+        role: 'ui / components / design system',
+        status: 'ignored',
+        reason: 'Fixture does not have a separate reusable UI role yet.',
+      }),
+    );
+
+    const mappingText = runCliText(['policies', 'mappings', 'list', workspaceDir]);
+    expect(mappingText).toContain('Status: Decisions active');
+    expect(mappingText).toContain('Fixture confirms features are the local product-role folder.');
+
+    const removedMappingDecision = runCliJson<{
+      artifact: { decisions: Array<{ id: string }> };
+      roleMapping: { mappings: Array<{ role: string; status: string }> };
+    }>([
+      'policies',
+      'mappings',
+      'remove',
+      'role-map-architecture.mid-app-features-modules-domains',
+      '--cwd',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(removedMappingDecision.artifact.decisions).not.toContainEqual(
+      expect.objectContaining({ id: 'role-map-architecture.mid-app-features-modules-domains' }),
+    );
+    expect(removedMappingDecision.roleMapping.mappings).toContainEqual(
+      expect.objectContaining({
+        role: 'features / modules / domains',
+        status: 'inferred',
+      }),
+    );
+
+    const promptBrief = JSON.parse(
+      await readFile(join(workspaceDir, '.skopos', 'agent', 'prompt-brief.json'), 'utf8'),
+    ) as {
+      recommendedLoadSequence: string[];
+      measurements: Array<{ id: string; status: string }>;
+    };
+    expect(promptBrief.recommendedLoadSequence).toContain('stable-project-policy-prefix');
+    expect(promptBrief.measurements).toContainEqual(
+      expect.objectContaining({
+        id: 'policy-brief',
+        status: 'within-budget',
+      }),
+    );
+    expect(JSON.stringify(promptBrief)).toContain('policy-role-mapping');
+
+    const agents = await readFile(join(workspaceDir, 'AGENTS.md'), 'utf8');
+    expect(agents).toContain('## Skopos Accepted Policy');
+    expect(agents).toContain('.skopos/policies/resolved.json');
+    expect(agents).toContain('workpack for public API, architecture, stack, security, migration, multi-package, or long-running changes');
+
+    const trust = runCliJson<{
+      checks: Array<{ id: string; status: string; summary: string }>;
+    }>(['trust', workspaceDir, '--json']);
+    expect(trust.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'accepted-policy',
+        status: 'pass',
+      }),
+    );
+    expect(trust.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'policy-brief',
+        status: 'pass',
+      }),
+    );
+    expect(trust.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'policy-source-freshness',
+        status: 'pass',
+      }),
+    );
+
+    const cleanDrift = runCliJson<{
+      reportWrite: string;
+      report: {
+        counts: { openMustCount: number; openShouldCount: number };
+        findings: Array<{ ruleId?: string; sourcePath?: string }>;
+      };
+    }>(['policies', 'drift', workspaceDir, '--actor', 'agent-policy', '--json']);
+    expect(cleanDrift.reportWrite).toBe('written');
+    expect(cleanDrift.report.counts.openMustCount).toBe(0);
+    expect(cleanDrift.report.counts.openShouldCount).toBe(0);
+    expect(cleanDrift.report.findings).toEqual([]);
+
+    const cleanDriftText = runCliText([
+      'policies',
+      'drift',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--dry-run',
+    ]);
+    expect(cleanDriftText).toContain('Status: Looks good');
+    expect(cleanDriftText).toContain('Next step:');
+    expect(cleanDriftText).toContain('No policy drift needs action right now.');
+
+    const cleanTrust = runCliJson<{
+      checks: Array<{ id: string; status: string; summary: string }>;
+    }>(['trust', workspaceDir, '--json']);
+    expect(cleanTrust.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'policy-drift',
+        status: 'pass',
+      }),
+    );
+
+    await mkdir(join(workspaceDir, 'src', 'shared'), { recursive: true });
+    await mkdir(join(workspaceDir, 'src', 'features', 'billing'), { recursive: true });
+    await writeFile(
+      join(workspaceDir, 'src', 'shared', 'helpers.ts'),
+      [
+        'export function orderTotalLabel(totalCents: number): string {',
+        "  return `Order total: $${(totalCents / 100).toFixed(2)}`;",
+        '}',
+        '',
+        'export function randomId(): string {',
+        '  return Math.random().toString(36).slice(2);',
+        '}',
+      ].join('\n'),
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceDir, 'src', 'features', 'billing', 'service.ts'),
+      [
+        "import { OrderList } from '../orders/components/order-list.js';",
+        '',
+        'export async function renderBillingPreview() {',
+        '  return OrderList();',
+        '}',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const drift = runCliJson<{
+      report: {
+        counts: { openMustCount: number };
+        findings: Array<{ ruleId?: string; sourcePath?: string; severity: string }>;
+      };
+    }>(['policies', 'drift', workspaceDir, '--actor', 'agent-policy', '--json']);
+    expect(drift.report.counts.openMustCount).toBeGreaterThanOrEqual(3);
+    expect(drift.report.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          ruleId: 'architecture.mid-app.shared-is-earned',
+          sourcePath: 'src/shared/helpers.ts',
+          severity: 'must',
+        }),
+        expect.objectContaining({
+          ruleId: 'architecture.mid-app.feature-owns-product-behavior',
+          sourcePath: 'src/shared/helpers.ts',
+          severity: 'must',
+        }),
+        expect.objectContaining({
+          ruleId: 'architecture.mid-app.import-direction-is-one-way',
+          sourcePath: 'src/features/billing/service.ts',
+          severity: 'must',
+        }),
+      ]),
+    );
+
+    const driftText = runCliText([
+      'policies',
+      'drift',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--dry-run',
+    ]);
+    expect(driftText).toContain('Status: Fix before closing');
+    expect(driftText).toContain('Attention:');
+    expect(driftText).toContain('Next step:');
+    expect(driftText).toContain('Then run `skopos policies drift .` again.');
+
+    const driftTrust = runCliJson<{
+      checks: Array<{ id: string; status: string; summary: string }>;
+    }>(['trust', workspaceDir, '--json']);
+    expect(driftTrust.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'policy-drift',
+        status: 'fail',
+      }),
+    );
+
+    const driftTrustText = runCliText(['trust', workspaceDir]);
+    expect(driftTrustText).toContain('Status: Fix before closing');
+    expect(driftTrustText).toContain('Attention:');
+    expect(driftTrustText).toContain('Next step:');
+    expect(driftTrustText).toContain('Fix `policy-drift`, then run `skopos trust` again.');
+
+    const blockedDone = runCliJson<{
+      closureStatus: string;
+      checks: Array<{ id: string; status: string; summary: string }>;
+      requiredActions: string[];
+    }>([
+      'done',
+      'src/shared/helpers.ts',
+      '--cwd',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(blockedDone.closureStatus).toBe('blocked');
+    expect(blockedDone.checks).toContainEqual(
+      expect.objectContaining({
+        id: 'accepted-must-policy-drift',
+        status: 'fail',
+      }),
+    );
+    expect(blockedDone.requiredActions).toContain(
+      'Fix open accepted `must` policy drift or add a clear local policy override, then run `skopos policies drift .` before closure.',
+    );
+
+    const emptyOverrides = runCliJson<{
+      overrides: Array<{ id: string }>;
+    }>(['policies', 'overrides', 'list', workspaceDir, '--json']);
+    expect(emptyOverrides.overrides).toEqual([]);
+
+    const overrideResult = runCliJson<{
+      artifactWrite: string;
+      resolvedPolicyWrite: string;
+      artifact: {
+        overrides: Array<{
+          id: string;
+          ruleId?: string;
+          sourcePath?: string;
+          reason: string;
+          owner?: string;
+        }>;
+      };
+    }>([
+      'policies',
+      'overrides',
+      'add',
+      '--cwd',
+      workspaceDir,
+      '--rule',
+      'architecture.mid-app.shared-is-earned',
+      '--source-path',
+      'src/shared/helpers.ts',
+      '--reason',
+      'Fixture intentionally keeps this shared helper while migration is pending.',
+      '--owner',
+      'agent-policy',
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(overrideResult.artifactWrite).toBe('written');
+    expect(overrideResult.resolvedPolicyWrite).toBe('written');
+    expect(overrideResult.artifact.overrides).toEqual([
+      expect.objectContaining({
+        id: 'override-architecture.mid-app.shared-is-earned-src-shared-helpers.ts',
+        ruleId: 'architecture.mid-app.shared-is-earned',
+        sourcePath: 'src/shared/helpers.ts',
+        reason: 'Fixture intentionally keeps this shared helper while migration is pending.',
+        owner: 'agent-policy',
+      }),
+    ]);
+
+    const overrideText = runCliText(['policies', 'overrides', 'list', workspaceDir]);
+    expect(overrideText).toContain('Status: Overrides active');
+    expect(overrideText).toContain('Fixture intentionally keeps this shared helper while migration is pending.');
+    expect(overrideText).toContain('Run `skopos policies drift .`');
+
+    const suppressedDrift = runCliJson<{
+      report: {
+        counts: { openMustCount: number; suppressedCount: number };
+        findings: Array<{ ruleId?: string; status: string; overrideId?: string; sourcePath?: string }>;
+      };
+    }>(['policies', 'drift', workspaceDir, '--actor', 'agent-policy', '--json']);
+    expect(suppressedDrift.report.counts.openMustCount).toBe(drift.report.counts.openMustCount - 1);
+    expect(suppressedDrift.report.counts.suppressedCount).toBe(1);
+    expect(suppressedDrift.report.findings).toContainEqual(
+      expect.objectContaining({
+        ruleId: 'architecture.mid-app.shared-is-earned',
+        sourcePath: 'src/shared/helpers.ts',
+        status: 'suppressed',
+        overrideId: 'override-architecture.mid-app.shared-is-earned-src-shared-helpers.ts',
+      }),
+    );
+
+    const removedOverride = runCliJson<{
+      resolvedPolicyWrite: string;
+      artifact: { overrides: Array<{ id: string }> };
+    }>([
+      'policies',
+      'overrides',
+      'remove',
+      'override-architecture.mid-app.shared-is-earned-src-shared-helpers.ts',
+      '--cwd',
+      workspaceDir,
+      '--actor',
+      'agent-policy',
+      '--json',
+    ]);
+    expect(removedOverride.resolvedPolicyWrite).toBe('written');
+    expect(removedOverride.artifact.overrides).toEqual([]);
   });
 
   it('discovers and runs registered project workflows with run evidence', async () => {
@@ -5611,6 +6637,21 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(doneBefore.missionEval?.missionId).toBe(start.missionId);
     expect(doneBefore.missionEval?.evaluationStatus).toBeUndefined();
 
+    const doneBeforeText = runCliText([
+      'done',
+      '--mission',
+      start.missionId,
+      '--actor',
+      'agent-router',
+      '--cwd',
+      workspaceDir,
+    ]);
+    expect(doneBeforeText).toContain('Skopos done');
+    expect(doneBeforeText).toContain('Status: Blocked');
+    expect(doneBeforeText).toContain('Progress:');
+    expect(doneBeforeText).toContain('Next step:');
+    expect(doneBeforeText).toContain(`Complete mission ${start.missionId}`);
+
     const completedMission = runCliJson<{
       id: string;
       state: string;
@@ -5684,6 +6725,21 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       'agent-router',
       '--json',
     ]);
+
+    const evalText = runCliText([
+      'eval',
+      workspaceDir,
+      '--mission',
+      start.missionId,
+      '--actor',
+      'agent-router',
+    ]);
+    expect(evalText).toContain('Skopos eval');
+    expect(evalText).toContain('Status: Looks good');
+    expect(evalText).toContain('Progress:');
+    expect(evalText).toContain('Current phase:');
+    expect(evalText).toContain('Next step:');
+    expect(evalText).toContain('skopos done');
 
     const doneAfterEval = runCliJson<{
       closureStatus: string;
@@ -6451,6 +7507,13 @@ const runCliJson = <T>(args: string[]): T => {
   return JSON.parse(output) as T;
 };
 
+const runCliText = (args: string[]): string =>
+  execFileSync('node', ['--import', 'tsx', cliEntrypoint, ...args], {
+    cwd: cliPackageRoot,
+    encoding: 'utf8',
+    env: process.env,
+  });
+
 const runCliFailure = (args: string[]): { message: string; stdout?: string; stderr?: string } => {
   try {
     execFileSync('node', ['--import', 'tsx', cliEntrypoint, ...args], {
@@ -6566,6 +7629,60 @@ const writeActiveFindingFixture = async (workspaceDir: string): Promise<void> =>
 - Owner: \`skopos-core\`
 - Target Pack: \`discussion memory lane\`
 - Current State: open. Accepted direction still needs compact checkpoints and handoff memory instead of relying on raw live chat recall.
+`,
+    'utf8',
+  );
+};
+
+const writePriorityFindingFixture = async (workspaceDir: string): Promise<void> => {
+  const findingsDir = join(workspaceDir, 'docs', 'findings');
+  await mkdir(findingsDir, { recursive: true });
+  await writeFile(
+    join(findingsDir, 'registry.md'),
+    `# Skopos Findings Registry
+
+## Active Findings
+
+1. \`F-high-stale-advisory\`
+   - Severity: \`SHOULD\`
+   - Status: \`in-progress\`
+   - Owner: \`skopos-core\`
+   - Target Pack: \`eval reconciliation\`
+   - Detail: \`F-high-stale-advisory.md\`
+2. \`F-critical-token-transport\`
+   - Severity: \`MUST\`
+   - Status: \`in-progress\`
+   - Owner: \`skopos-core\`
+   - Target Pack: \`token transport\`
+   - Detail: \`F-critical-token-transport.md\`
+`,
+    'utf8',
+  );
+  await writeFile(
+    join(findingsDir, 'F-high-stale-advisory.md'),
+    `# F-high-stale-advisory: Stale Advisory Follow-Up
+
+## Summary
+
+- Severity: \`SHOULD\`
+- Status: \`in-progress\`
+- Owner: \`skopos-core\`
+- Target Pack: \`eval reconciliation\`
+- Current State: open. Advisory cleanup remains useful but is not critical.
+`,
+    'utf8',
+  );
+  await writeFile(
+    join(findingsDir, 'F-critical-token-transport.md'),
+    `# F-critical-token-transport: Token Transport Is Critical
+
+## Summary
+
+- Severity: \`MUST\`
+- Status: \`in-progress\`
+- Owner: \`skopos-core\`
+- Target Pack: \`token transport\`
+- Current State: open. Agent transport must be reduced before broader workflow expansion.
 `,
     'utf8',
   );

@@ -20,9 +20,9 @@ export function ScopesView(): React.JSX.Element {
 
   return (
     <ListPage
-      kicker="Scope explorer"
-      title="Workspace scopes"
-      description="Workspace scopes, docs roots, and the work currently attached to them."
+      kicker="Project map"
+      title="Project areas"
+      description="Packages, docs roots, and instruction files Skopos understands."
       aside={
         <ScopesInspectorAside
           scopeCount={state.scopes.length}
@@ -49,13 +49,13 @@ export function ScopeDetailView({
   if (!scopeView) {
     return (
       <DetailPage
-        kicker="Scope detail"
-        title="Scope not found"
-        description="The requested scope is not present in this snapshot."
+        kicker="Project map"
+        title="Project area not found"
+        description="The requested project area is not present in this snapshot."
       >
         <EmptyMessage
-          title="Unknown scope"
-          description="Refresh the app after rebuilding Skopos state if the scope changed."
+          title="Unknown project area"
+          description="Refresh the app after rebuilding Skopos state if the project map changed."
         />
       </DetailPage>
     );
@@ -78,7 +78,7 @@ export function ScopeDetailView({
 
   return (
     <DetailPage
-      kicker="Scope detail"
+      kicker="Project area"
       title={scopeView.scope.title}
       description={scopeView.scope.summary}
       badges={[

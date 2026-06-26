@@ -15,6 +15,9 @@ import {
   buildCompactBackgroundEvalOutput,
   buildCompactEvalLines,
   buildCompactEvalOutput,
+  buildCompactNextLines,
+  buildGuidedDecisionQuestionLines,
+  buildGuidedWorkflowQuestionLines,
 } from '../shared/compact-output.js';
 import {
   buildSummaryLines,
@@ -79,10 +82,22 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
 
   const lines = [
     'Skopos start',
-    `- goal: ${result.goal}`,
-    `- scope: ${result.scope.scope.id}`,
+    `Status: ${result.codeAllowed ? 'Ready to implement' : 'Decision needed'}`,
+    `Summary: ${result.summary}`,
+    `Goal: ${result.goal}`,
+    `Scope: ${result.scope.scope.id}`,
+    'Next step:',
+    result.nextCommand ?? result.recommendedAction?.command ?? 'Review the questions below before editing code.',
+  ];
+
+  if (result.blockingQuestions.length > 0) {
+    lines.push(...buildGuidedWorkflowQuestionLines(result.blockingQuestions));
+  }
+
+  lines.push(
+    '',
+    'Details:',
     `- actor: ${result.actorId ?? '(none)'}`,
-    `- summary: ${result.summary}`,
     `- code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `- execution surface: ${result.executionSurface.kind}`,
     `  reason: ${result.executionSurface.reason}`,
@@ -90,24 +105,13 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `- mission: ${result.missionPath} [${result.missionState}]`,
     `- questions: ${result.questionsPath} (${result.questionsWrite})`,
     `- recommendations: ${result.recommendationsPath} (${result.recommendationsWrite})`,
-  ];
+  );
 
   if (result.recommendedAction) {
     lines.push(`- next: ${result.recommendedAction.title}`);
     lines.push(`  summary: ${result.recommendedAction.summary}`);
     if (result.recommendedAction.command) {
       lines.push(`  command: ${result.recommendedAction.command}`);
-    }
-  }
-
-  if (result.blockingQuestions.length > 0) {
-    lines.push('- blocking questions:');
-    for (const question of result.blockingQuestions) {
-      const recommendedOption = question.options.find(
-        (option) => option.id === question.recommendedOptionId,
-      );
-      lines.push(`  - ${question.question}`);
-      lines.push(`    recommended: ${recommendedOption?.label ?? question.recommendedOptionId}`);
     }
   }
 
@@ -129,18 +133,36 @@ export const runDecideCommand = async (args: string[]): Promise<void> => {
     return;
   }
 
+  const selectedOption = result.resolvedQuestion.options.find(
+    (option) => option.id === result.selectedOptionId,
+  );
+  const openQuestions = result.questions.entries.filter((question) => question.status === 'open');
   const lines = [
     'Skopos decide',
+    `Status: ${result.codeAllowed ? 'Decision recorded' : 'More decisions needed'}`,
+    `Summary: ${result.summary}`,
+    `Answered: ${result.resolvedQuestion.question}`,
+    `Selected: ${selectedOption?.label ?? result.selectedOptionId}`,
+    'Next step:',
+    result.nextCommand ?? result.recommendedAction?.command ?? 'Run `skopos next` to continue.',
+  ];
+
+  if (openQuestions.length > 0) {
+    lines.push(...buildGuidedWorkflowQuestionLines(openQuestions));
+  }
+
+  lines.push(
+    '',
+    'Details:',
     `- question: ${result.questionId}`,
     `- selected option: ${result.selectedOptionId}`,
     `- actor: ${result.actorId ?? '(none)'}`,
-    `- summary: ${result.summary}`,
     `- code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `- execution surface: ${result.executionSurface.kind}`,
     `  reason: ${result.executionSurface.reason}`,
     `- questions: ${result.questionsPath} (${result.questionsWrite})`,
     `- recommendations: ${result.recommendationsPath} (${result.recommendationsWrite})`,
-  ];
+  );
 
   if (result.missionPath && result.missionWrite) {
     lines.push(`- mission: ${result.missionPath} (${result.missionWrite})`);
@@ -172,10 +194,11 @@ export const runNextCommand = async (args: string[]): Promise<void> => {
   }
 
   const lines = [
-    'Skopos next',
+    ...buildCompactNextLines(result),
+    '',
+    'Details:',
     `- mission: ${result.missionId}`,
     `- actor: ${result.actorId ?? '(none)'}`,
-    `- summary: ${result.summary}`,
     `- code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `- execution surface: ${result.executionSurface.kind}`,
     `  reason: ${result.executionSurface.reason}`,
@@ -243,14 +266,14 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
     }
 
     const lines = [
-      'Skopos eval',
+      ...buildCompactBackgroundEvalLines(result),
+      '',
+      'Details:',
       '- mode: background',
       `- mission: ${result.missionId}`,
       `- actor: ${result.actorId ?? '(none)'}`,
-      `- summary: ${result.summary}`,
       `- job: ${result.jobId} (${result.jobState})`,
       `- job path: ${result.jobPath}`,
-      `- next: ${result.nextCommand}`,
     ];
 
     writeLines(lines);
@@ -286,10 +309,11 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
   }
 
   const lines = [
-    'Skopos eval',
+    ...buildCompactEvalLines(result),
+    '',
+    'Details:',
     `- mission: ${result.missionId}`,
     `- actor: ${result.actorId ?? '(none)'}`,
-    `- summary: ${result.summary}`,
     `- execution surface: ${result.executionSurface.kind}`,
     `  reason: ${result.executionSurface.reason}`,
     `- mission path: ${result.missionPath} (${result.missionWrite})`,
@@ -341,17 +365,29 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
 
   const lines = [
     'Skopos plan',
-    `- goal: ${result.goal}`,
-    `- scope: ${result.scope.scope.id}`,
-    `- confidence: ${result.confidence}`,
+    `Status: ${result.decisionQuestions.length > 0 ? 'Decision needed' : 'Plan ready'}`,
+    `Summary: ${result.summary}`,
+    `Goal: ${result.goal}`,
+    `Scope: ${result.scope.scope.id}`,
+    `Confidence: ${result.confidence}`,
+    'Next step:',
+    result.nextSteps[0] ?? `Run \`skopos start "${result.goal}"\` when you are ready to begin.`,
+  ];
+
+  if (result.decisionQuestions.length > 0) {
+    lines.push(...buildGuidedDecisionQuestionLines(result.decisionQuestions));
+  }
+
+  lines.push(
+    '',
+    'Details:',
     `- actor: ${result.actorId ?? result.mission.coordination.lastUpdatedBy ?? '(none)'}`,
-    `- summary: ${result.summary}`,
     `- plan: ${result.planPath} (${result.planWrite})`,
     `- mission: ${result.missionPath} (${result.missionWrite})`,
     `- graph: ${result.graphPath} (${result.graphWrite})`,
     '- implementation steps:',
     ...result.implementationSteps.map((step) => `  - ${step.title}: ${step.detail}`),
-  ];
+  );
 
   if (result.recommendedChecks.length > 0) {
     lines.push('- recommended checks:');
@@ -364,17 +400,6 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
     lines.push('- recommended workflows:');
     for (const workflow of result.recommendedWorkflows) {
       lines.push(`  - ${workflow.id}: ${workflow.reason}`);
-    }
-  }
-
-  if (result.decisionQuestions.length > 0) {
-    lines.push('- decision questions:');
-    for (const question of result.decisionQuestions) {
-      const recommendedOption = question.options.find(
-        (option) => option.id === question.recommendedOptionId,
-      );
-      lines.push(`  - ${question.question}`);
-      lines.push(`    recommended: ${recommendedOption?.label ?? question.recommendedOptionId}`);
     }
   }
 

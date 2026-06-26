@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.stack.async-work",
+  "type": "policy-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Stack policy for deciding when async work, Redis, queues, schedulers, durable workflows, and worker processes are actually needed.",
+  "updatedAt": "2026-06-24",
+  "packId": "stack.async-work",
+  "family": "stack",
+  "variant": "async-work",
+  "version": "0.1.0",
+  "displayName": "Async Work And Queue Stack",
+  "description": "A portable stack-decision pack that helps agents choose simple in-process work, cron, queue workers, Redis-backed queues, durable workflow engines, or managed jobs based on real product signals.",
+  "plainLanguageSummary": "Use this when a project is about to add background jobs, queues, cron, Redis, Inngest-like workflows, workers, or retry-heavy async behavior.",
+  "bestFor": [
+    "Apps adding email sending, imports, exports, webhooks, notifications, billing sync, or AI processing",
+    "Brownfield projects where background work already exists but ownership and proof are unclear",
+    "Greenfield projects where agents may over-add Redis or queues too early"
+  ],
+  "notFor": [
+    "A synchronous request that finishes quickly and does not need retry or scheduling",
+    "A one-off script where operational runtime is not durable product behavior",
+    "A project that already has an accepted local stack decision for the same capability"
+  ],
+  "userQuestions": [
+    "Does this work need retries, backpressure, scheduling, cancellation, or progress visibility?",
+    "Can the task safely run inside the request, or does it need a worker boundary?",
+    "Who owns local development, production monitoring, and failure recovery for this async path?"
+  ],
+  "qualityBar": [
+    "The agent must explain why a queue, Redis, cron, or durable workflow is needed before adding it.",
+    "Every new async stack dependency needs local-dev notes, production notes, failure handling, and validation gates.",
+    "The simplest reliable option wins; do not add infrastructure because it is fashionable."
+  ],
+  "agentUse": [
+    "Load this pack before adding Redis, BullMQ, Inngest, cron jobs, worker processes, durable workflows, or async retries.",
+    "Ask a guided stack question when signals are mixed instead of silently choosing infrastructure.",
+    "Record the accepted stack decision in project memory before broad implementation."
+  ],
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "appliesWhen": [
+    {
+      "id": "signal.async-workflow",
+      "summary": "The project needs work to run outside the request path or after a user action completes.",
+      "confidence": "high",
+      "evidence": [
+        "Email, notification, import, export, billing sync, webhook, or AI job",
+        "Long-running operation that should not block a web request",
+        "Worker, jobs, queue, schedule, cron, or workflow language in code or docs"
+      ]
+    },
+    {
+      "id": "signal.retry-or-backpressure",
+      "summary": "The work needs retry, rate limiting, idempotency, backpressure, or failure recovery.",
+      "confidence": "high",
+      "evidence": [
+        "Third-party API calls can fail or throttle",
+        "User-visible work needs retry after process restart",
+        "Multiple jobs may arrive faster than they can be processed"
+      ]
+    },
+    {
+      "id": "signal.recurring-work",
+      "summary": "The project needs recurring, scheduled, or delayed work with a clear owner.",
+      "confidence": "medium",
+      "evidence": [
+        "Daily sync",
+        "Subscription lifecycle check",
+        "Cleanup, reminder, or report generation schedule"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.quick-synchronous-work",
+      "summary": "Do not add queue infrastructure for quick deterministic work that can finish safely in the request.",
+      "confidence": "high",
+      "evidence": [
+        "No retry needed",
+        "No external side effect",
+        "No scheduling or progress tracking"
+      ]
+    },
+    {
+      "id": "anti.no-operational-owner",
+      "summary": "Do not add a worker or Redis dependency without an owner for local dev, deployment, monitoring, and recovery.",
+      "confidence": "high",
+      "evidence": [
+        "No deployment target for workers",
+        "No local-dev command",
+        "No monitoring or failure recovery plan"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "stack.async-work.simple-first",
+      "title": "Start with the simplest reliable async shape",
+      "severity": "should",
+      "summary": "Use synchronous code, framework-native jobs, or a small scheduled command when the work does not need queue durability, backpressure, or cross-process retry.",
+      "rationale": "Infrastructure adds real operational cost. Skopos should help agents avoid Redis or queue systems until product signals justify them.",
+      "appliesTo": [
+        "background jobs",
+        "cron jobs",
+        "async side effects",
+        "worker setup"
+      ],
+      "examples": [
+        "Use a framework task or hosted scheduler for one daily cleanup job",
+        "Keep a quick internal status recalculation in the request when it is deterministic and cheap"
+      ],
+      "antiPatterns": [
+        "Adding Redis because a job might exist later",
+        "Creating a queue for a fast local-only operation with no retry need"
+      ],
+      "checkIds": [
+        "stack.async-work.unjustified-queue-dependency"
+      ]
+    },
+    {
+      "id": "stack.async-work.queue-when-durability-is-needed",
+      "title": "Use a queue when durability and backpressure matter",
+      "severity": "must",
+      "summary": "Choose a queue or durable workflow when work needs retries, process isolation, rate limiting, failure recovery, idempotency, or progress tracking.",
+      "rationale": "Important async work should not disappear on process restart or overload the request path.",
+      "appliesTo": [
+        "imports and exports",
+        "webhooks",
+        "billing sync",
+        "email and notifications",
+        "AI processing",
+        "third-party integrations"
+      ],
+      "examples": [
+        "Use a queue for bulk CSV import with retries and progress",
+        "Use a durable workflow engine for multi-step billing or onboarding flows"
+      ],
+      "antiPatterns": [
+        "Firing unrecoverable promises from request handlers",
+        "Running third-party retry loops inside UI actions"
+      ],
+      "checkIds": [
+        "stack.async-work.missing-retry-or-idempotency"
+      ]
+    },
+    {
+      "id": "stack.async-work.operational-contract-required",
+      "title": "Async stack changes need an operational contract",
+      "severity": "must",
+      "summary": "Any new queue, scheduler, worker, Redis, or durable workflow dependency must document local development, production ownership, failure handling, and validation gates.",
+      "rationale": "Agents can add infrastructure quickly, but teams live with deployment, monitoring, and recovery costs.",
+      "appliesTo": [
+        "Redis",
+        "queues",
+        "workers",
+        "cron",
+        "durable workflow engines",
+        "managed job platforms"
+      ],
+      "examples": [
+        "Document worker dev command, retry policy, dead-letter behavior, and production alerting",
+        "Record why Inngest, BullMQ, Temporal, a hosted scheduler, or framework jobs were chosen"
+      ],
+      "antiPatterns": [
+        "Adding a Redis dependency without local setup notes",
+        "Shipping worker code with no proof command or failure-mode test"
+      ],
+      "checkIds": [
+        "stack.async-work.operational-contract-missing"
+      ]
+    }
+  ],
+  "requiredDocs": [
+    "policies/overview.md",
+    "policies/decision-guide.md",
+    "policies/operations.md"
+  ],
+  "generatedArtifacts": [
+    ".skopos/policies/resolved.json",
+    ".skopos/agent/policy-brief.json",
+    ".skopos/stack/recommendations.json"
+  ],
+  "driftCheckIds": [
+    "stack.async-work.unjustified-queue-dependency",
+    "stack.async-work.missing-retry-or-idempotency",
+    "stack.async-work.operational-contract-missing"
+  ],
+  "proofFixtureIds": [
+    "stack.async-work.good-owned-worker",
+    "stack.async-work.drift-unowned-redis-queue"
+  ]
+}

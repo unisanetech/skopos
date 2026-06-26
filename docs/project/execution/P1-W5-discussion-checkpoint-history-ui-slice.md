@@ -20,7 +20,7 @@ Temporary execution workpack for the second implementation slice under the discu
   - `../../scopes/ui.md`
   - `../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
   - `../../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md`
-  - `../../findings/F-20260412-discussion-memory-compaction-gap.md`
+  - `../../findings/archive/F-20260412-discussion-memory-compaction-gap.md`
 
 ## Changelog
 

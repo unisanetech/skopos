@@ -1,0 +1,81 @@
+# Decision: Bundled CLI Release Contract
+
+## Metadata
+
+- Doc ID: `SKOPOS-DECISION-031`
+- Status: `accepted`
+- Date: `2026-06-26`
+- Owner: `skopos-core`
+- Scope: `skopos/decisions`
+- Canonical: `yes`
+- Last Updated: `2026-06-26`
+- Related Docs:
+  - `../architecture/package-boundaries.md`
+  - `../project/implementation-checklist.md`
+  - `../../packages/cli/README.md`
+
+## Changelog
+
+- `2026-06-27`: Added the first-release version policy: publish `@skopos/cli@0.1.0` with the `next` dist tag while internal packages remain private and version-aligned.
+- `2026-06-26`: Set the public bundled CLI release license to Apache-2.0 and required the npm package to include a license file.
+- `2026-06-26`: Accepted the bundled CLI release contract so Skopos can install through `npx`, `npm exec`, and `pnpm dlx` without publishing the internal package graph.
+
+## Context
+
+Skopos is developed as a package family, but the first user-facing product is the CLI. A user installing Skopos should not need to understand or install internal packages like `@skopos/runtime`, `@skopos/model`, `@skopos/query`, or `@skopos/ui`.
+
+The release audit showed that publishing `@skopos/cli` with private `@skopos/*` runtime dependencies breaks fresh installs. It also showed that package tarballs need a strict file whitelist and a smoke test that runs outside the monorepo.
+
+## Decision
+
+Skopos will release `@skopos/cli` first as a bundled CLI package.
+
+The CLI package is the only public package in the first release lane. Internal Skopos packages remain private until each receives a separate SDK release contract.
+
+The first public CLI release version is `0.1.0` and must publish with the `next` dist tag, not `latest`.
+
+## Rules
+
+1. `@skopos/cli` must install as one product package for normal users.
+2. The published CLI manifest must not contain runtime dependencies on private `@skopos/*` packages.
+3. Skopos-owned workspace code may stay split internally, but release packaging must bundle it into the CLI output.
+4. Third-party packages that are unsafe or too large to bundle may remain normal CLI dependencies.
+5. The package tarball must use a `files` whitelist and avoid source tests, `.turbo` logs, and development config noise.
+6. The public CLI package must declare `license: Apache-2.0` and include the Apache-2.0 `LICENSE` file.
+7. The first public CLI release must be `@skopos/cli@0.1.0`.
+8. The first public CLI release must publish with `publishConfig.tag: next`.
+9. The package family should stay version-aligned at `0.1.0` for the first release while non-CLI packages remain private.
+10. Do not publish `latest` until the registry-published `next` package passes real install smoke from npm.
+11. The binary name is `skopos`.
+12. Supported first-run commands are:
+   - `npx @skopos/cli init .`
+   - `npm exec --package @skopos/cli -- skopos init .`
+   - `pnpm dlx @skopos/cli init .`
+13. Release smoke must prove the packed CLI works from a fresh project outside the monorepo.
+
+## Consequences
+
+### Positive
+
+1. Install UX is simple for beginner and mid-level developers.
+2. Users do not need to understand the internal package graph.
+3. `npx`, `npm exec`, and `pnpm dlx` can use the same package.
+4. Internal package boundaries can keep improving without forcing multi-package public versioning.
+5. `next` gives the first real users a safe install path without implying stable `1.0` behavior.
+
+### Tradeoffs
+
+1. The CLI bundle can grow if too much product UI/runtime code is imported eagerly.
+2. Package exports need to keep bin entrypoints separate from importable API entrypoints.
+3. Some third-party dependencies still need to be external runtime dependencies when bundling would break ESM execution.
+4. Pre-1.0 releases can still change behavior, so breaking changes must be documented in release notes even when semver allows them.
+
+## Proof
+
+The release smoke test must pack `@skopos/cli`, install it into a fresh project, and run:
+
+1. installed `skopos --help`
+2. installed `skopos init .`
+3. installed `skopos trust . --compact`
+4. `npm exec --package <packed-cli> -- skopos init <target>`
+5. `pnpm dlx <packed-cli> init <target>`

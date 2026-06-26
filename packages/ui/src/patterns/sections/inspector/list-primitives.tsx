@@ -87,7 +87,7 @@ export function ExternalLinkList({
   ) : (
     <EmptyMessage
       title="No links available"
-      description="This surface does not currently expose external links."
+      description="No related links are available here right now."
     />
   );
 }
@@ -120,7 +120,7 @@ export function SimplePlanList({
   ) : (
     <EmptyMessage
       title="No plans available"
-      description="The current snapshot does not include plan artifacts."
+      description="No plans are available here right now."
     />
   );
 }

@@ -6,6 +6,7 @@ import { writeJsonArtifact } from './write-json-artifact.js';
 import {
   DONE_BRIEF_ARTIFACT_PATH,
   LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH,
+  POLICY_BRIEF_ARTIFACT_PATH,
   PROGRAM_BRIEF_ARTIFACT_PATH,
   PROMPT_BRIEF_ARTIFACT_PATH,
   TOKEN_BUDGETS,
@@ -32,7 +33,15 @@ export const refreshSkoposTokenTelemetry = async ({
   const promptBrief = await readJsonIfExists<SkoposAgentPromptBriefArtifact>(
     join(workspaceRoot, PROMPT_BRIEF_ARTIFACT_PATH),
   );
+  const policyMeasurement = await buildMeasurement(workspaceRoot, {
+    id: 'policy-brief',
+    title: 'Policy brief',
+    surfaceKind: 'agent-brief',
+    path: POLICY_BRIEF_ARTIFACT_PATH,
+    budgetTokens: TOKEN_BUDGETS.policyBrief,
+  });
   const measurements = [
+    ...(policyMeasurement.status === 'missing' ? [] : [policyMeasurement]),
     await buildMeasurement(workspaceRoot, {
       id: 'trust-brief',
       title: 'Trust brief',

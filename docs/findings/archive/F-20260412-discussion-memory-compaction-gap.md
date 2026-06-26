@@ -3,11 +3,11 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260412-DISCUSSION-MEMORY-COMPACTION-GAP`
-- Status: `active`
+- Status: `historical`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-06-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `registry.md`
@@ -19,6 +19,7 @@
 
 ## Changelog
 
+- `2026-06-25`: Closed the finding after unsupported coding agents gained an explicit generated manual-host adapter guide and discussion checkpoint promotion began normalizing volatile next-command decoration such as the workspace path and `--actor` before deciding whether a new checkpoint is meaningful.
 - `2026-04-13`: Simplified the shipped discussion product surface again. Raw journals and Codex session backfill remain available as local support, but the routed app no longer auto-syncs Codex during UI build or renders raw transcripts as a default product surface. That cuts workflow weight while preserving compiled continuity.
 - `2026-04-13`: Narrowed the gap again after explicit checkpoint paths were switched to semantic promotion kinds, so linked-artifact churn or other derived-output-only drift no longer creates fresh checkpoints; the remaining work is broader host coverage and tuning the explicit promotion heuristics further if product usage shows noise.
 - `2026-04-13`: Narrowed the gap again after checkpoint promotion was split from handoff-only refresh, so `next`, `program sync`, and `discuss handoff` no longer broaden the checkpoint lane when they only need updated resume context; the remaining work is broader host coverage and smarter promotion heuristics inside explicit checkpoint paths.
@@ -33,10 +34,10 @@
 ## Summary
 
 - Severity: `SHOULD`
-- Status: `in-progress`
+- Status: `done`
 - Owner: `skopos-core`
 - Target Pack: `discussion memory lane`
-- Current State: open but narrower. Skopos now has generated checkpoints, a discussion index, a compact handoff, routed checkpoint history in `overview`, `mission detail`, the search dock, and the dedicated `Discussion` route, plus local raw journals, generated Claude Code lifecycle hooks, Codex wrapper support, Codex Desktop local-session backfill with parent-session workspace segmentation, and a product-visible adapter support matrix. Checkpoint promotion is now limited to explicit lifecycle paths and keyed off semantic deltas instead of every resume refresh or linked-artifact churn. Raw transcripts remain local support, not default UI workflow state. The remaining gap is broader host coverage and smarter promotion heuristics.
+- Current State: done. Skopos now has generated checkpoints, a discussion index, a compact handoff, routed checkpoint history in `overview`, `mission detail`, the search dock, and the dedicated `Discussion` route, plus local raw journals, generated Claude Code lifecycle hooks, Codex wrapper support, Codex Desktop local-session backfill with parent-session workspace segmentation, a product-visible adapter support matrix, and a generated manual fallback guide for unsupported hosts. Checkpoint promotion is limited to explicit lifecycle paths and meaningful semantic deltas; volatile command decoration such as workspace path or `--actor` no longer creates a new checkpoint by itself. Raw transcripts remain local support, not default UI workflow state.
 
 ## Symptom
 
@@ -50,13 +51,13 @@
 1. Long-running agent work still costs more user supervision than intended.
 2. Accepted direction can drift even when workflow state is otherwise healthy.
 3. Cross-chat continuity is weaker than the product vision promises.
-4. The latest handoff and checkpoint history are now surfaced where users work, and both Claude Code and Codex can now map into the shared continuity lane, but other agent surfaces still need equivalent lifecycle coverage and the current checkpoint promotion path is still broader than ideal.
+4. The latest handoff and checkpoint history are surfaced where users work, Claude Code and Codex map into the shared continuity lane, unsupported hosts have a generated manual fallback contract, and checkpoint promotion avoids actor/path-only command churn.
 
 ## Fix Plan
 
-1. Extend lifecycle coverage beyond Claude Code and Codex Desktop so the discussion lane is not adapter-specific.
+1. Keep future automated host integrations on the shared adapter contract instead of creating separate discussion-memory paths.
 2. Keep raw turn journals local-only and non-default for retrieval.
-3. Keep tightening checkpoint promotion so explicit checkpoint paths use meaningful-state heuristics instead of broad or noisy promotion.
+3. Keep checkpoint promotion based on meaningful workflow-state changes instead of volatile command decoration.
 4. Continue using compact handoff generation before compaction, thread close, or new-thread continuation.
 5. Keep Codex Desktop local-session import aligned with the shared `skopos discuss` runtime instead of allowing a separate memory path to emerge.
 6. Keep the parent-session segmentation contract evidence-based and reconciled so nested workspaces never import unrelated repo-root discussion wholesale or retain stale false-positive imports after the heuristic tightens.
@@ -68,7 +69,7 @@
 3. Resume context stays compact instead of growing with transcript length.
 4. Workflow router state and discussion-memory state stay aligned for current missions.
 5. The routed console surfaces recent discussion context without loading raw chat into default prompt context.
-6. The remaining gap is now broader host coverage and smarter promotion heuristics rather than missing raw journals, missing Codex integration, missing routed checkpoint visibility, or handoff-only refresh noise.
+6. The original gap is closed: raw journals, Codex integration, routed checkpoint visibility, handoff refresh discipline, manual-host fallback, and semantic checkpoint promotion are all in place.
 
 ## Linked Docs
 

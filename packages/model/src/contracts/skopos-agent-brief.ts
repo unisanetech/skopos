@@ -3,13 +3,24 @@ import type { SkoposClosureStatus } from './skopos-done-report.js';
 import type { SkoposEvalStatus, SkoposEvalProofStatus } from './skopos-eval.js';
 import type { SkoposMissionArtifact } from './skopos-plan.js';
 import type {
+  SkoposExecutionLane,
+  SkoposResolvedPolicyArtifact,
+} from './skopos-policy-pack.js';
+import type {
   SkoposProgramRecommendedActionKind,
   SkoposProgramRoutingDecision,
 } from './skopos-program.js';
 import type { SkoposReadiness, SkoposTrustCheckStatus, SkoposTrustLevel } from './skopos-trust-report.js';
 import type { SkoposWorkflowRecommendationEntry } from './skopos-workflow-recommendation.js';
 
-export type SkoposAgentBriefKind = 'trust' | 'done' | 'program' | 'eval' | 'mission' | 'prompt';
+export type SkoposAgentBriefKind =
+  | 'trust'
+  | 'done'
+  | 'program'
+  | 'eval'
+  | 'mission'
+  | 'prompt'
+  | 'policy';
 
 interface SkoposAgentBriefBase<K extends SkoposAgentBriefKind>
   extends SkoposArtifactEnvelope<'agent-brief'> {
@@ -33,6 +44,7 @@ export interface SkoposAgentBriefAttentionCheck {
 export type SkoposAgentPromptLayerKind =
   | 'stable-system-tool-prefix'
   | 'stable-workspace-doctrine-prefix'
+  | 'stable-project-policy-prefix'
   | 'dynamic-execution-tail';
 
 export interface SkoposAgentPromptLayerReference {
@@ -127,6 +139,19 @@ export interface SkoposAgentMissionBriefArtifact extends SkoposAgentBriefBase<'m
   nextItemTitle?: string;
 }
 
+export interface SkoposAgentPolicyBriefArtifact extends SkoposAgentBriefBase<'policy'> {
+  projectLifecycle: SkoposResolvedPolicyArtifact['projectLifecycle'];
+  acceptedPackIds: string[];
+  activeRuleCount: number;
+  mustRuleCount: number;
+  defaultExecutionLane: SkoposExecutionLane;
+  workpackTriggers: string[];
+  sourcePaths: string[];
+  roleMappingPath?: string;
+  mappedRoleCount?: number;
+  missingRequiredRoleCount?: number;
+}
+
 export interface SkoposAgentPromptBriefArtifact extends SkoposAgentBriefBase<'prompt'> {
   activeMissionId?: string;
   latestHandoffPath?: string;
@@ -146,4 +171,5 @@ export type SkoposAgentBriefArtifact =
   | SkoposAgentProgramBriefArtifact
   | SkoposAgentEvalBriefArtifact
   | SkoposAgentMissionBriefArtifact
+  | SkoposAgentPolicyBriefArtifact
   | SkoposAgentPromptBriefArtifact;

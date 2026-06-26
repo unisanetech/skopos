@@ -5,6 +5,7 @@ import type {
   SkoposAgentDoneBriefArtifact,
   SkoposAgentEvalBriefArtifact,
   SkoposAgentMissionBriefArtifact,
+  SkoposAgentPolicyBriefArtifact,
   SkoposAgentPromptBriefArtifact,
   SkoposAgentPromptBudgetMeasurement,
   SkoposAgentPromptLayer,
@@ -16,6 +17,7 @@ import type {
   SkoposMissionArtifact,
   SkoposMissionItem,
   SkoposProgramSyncRunResult,
+  SkoposResolvedPolicyArtifact,
   SkoposTrustCheckStatus,
   SkoposTrustReport,
   SkoposWorkflowQuestionArtifact,
@@ -30,10 +32,13 @@ import {
   BOOTSTRAP_ARTIFACT_PATH,
   CONFIG_ARTIFACT_PATH,
   DONE_BRIEF_ARTIFACT_PATH,
+  POLICY_BRIEF_ARTIFACT_PATH,
+  POLICY_ROLE_MAPPING_ARTIFACT_PATH,
   PROGRAM_BRIEF_ARTIFACT_PATH,
   PROMPT_BRIEF_ARTIFACT_PATH,
   QUESTIONS_ARTIFACT_PATH,
   RECOMMENDATIONS_ARTIFACT_PATH,
+  RESOLVED_POLICY_ARTIFACT_PATH,
   TOKEN_BUDGETS,
   TRUST_BRIEF_ARTIFACT_PATH,
 } from './token-control-constants.js';
@@ -230,6 +235,45 @@ export const buildSkoposAgentMissionBrief = ({
   };
 };
 
+export const buildSkoposAgentPolicyBrief = ({
+  workspaceRoot,
+  policy,
+  roleMappingPath,
+  mappedRoleCount,
+  missingRequiredRoleCount,
+}: {
+  workspaceRoot: string;
+  policy: SkoposResolvedPolicyArtifact;
+  roleMappingPath?: string;
+  mappedRoleCount?: number;
+  missingRequiredRoleCount?: number;
+}): SkoposAgentPolicyBriefArtifact => {
+  const workpackRule = policy.recommendedExecutionLanes.find((entry) => entry.lane === 'workpack');
+
+  return {
+    schemaVersion: 1,
+    id: 'agent-brief-policy',
+    type: 'agent-brief',
+    status: 'generated',
+    authority: 'generated',
+    summary: `Accepted policy includes ${policy.acceptedPacks.length} pack${policy.acceptedPacks.length === 1 ? '' : 's'} and ${policy.activeRules.length} active rule${policy.activeRules.length === 1 ? '' : 's'} for ${policy.projectLifecycle}.`,
+    updatedAt: new Date().toISOString(),
+    generatedAt: new Date().toISOString(),
+    workspaceRoot,
+    briefKind: 'policy',
+    projectLifecycle: policy.projectLifecycle,
+    acceptedPackIds: policy.acceptedPacks.map((entry) => entry.packId),
+    activeRuleCount: policy.activeRules.length,
+    mustRuleCount: policy.activeRules.filter((entry) => entry.severity === 'must').length,
+    defaultExecutionLane: policy.defaultExecutionLane,
+    workpackTriggers: workpackRule?.triggers ?? [],
+    sourcePaths: policy.sourcePaths,
+    roleMappingPath,
+    mappedRoleCount,
+    missingRequiredRoleCount,
+  };
+};
+
 export const buildSkoposAgentPromptBrief = ({
   workspaceRoot,
   activeMissionId,
@@ -320,6 +364,33 @@ export const refreshSkoposAgentPromptBrief = async ({
   const activeMissionId = await resolveActiveMissionId(workspaceRoot);
   const latestHandoffPath = await resolveLatestHandoffPath(workspaceRoot);
   const doctrineReferences = await buildWorkspaceDoctrineReferences(workspaceRoot);
+  const policyReferences = [
+    await buildPromptLayerReference(workspaceRoot, {
+      id: 'policy-brief',
+      title: 'Policy brief',
+      role: 'accepted-project-policy',
+      path: POLICY_BRIEF_ARTIFACT_PATH,
+      defaultIncluded: true,
+      optional: true,
+    }),
+    await buildPromptLayerReference(workspaceRoot, {
+      id: 'resolved-policy',
+      title: 'Resolved policy',
+      role: 'accepted-policy-source-of-truth',
+      path: RESOLVED_POLICY_ARTIFACT_PATH,
+      defaultIncluded: false,
+      optional: true,
+    }),
+    await buildPromptLayerReference(workspaceRoot, {
+      id: 'policy-role-mapping',
+      title: 'Policy role mapping',
+      role: 'accepted-local-role-map',
+      path: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
+      defaultIncluded: true,
+      optional: true,
+    }),
+  ];
+  const policyLayerReferences = policyReferences.filter((reference) => reference.available);
   const dynamicReferences = (
     await Promise.all([
       buildPromptLayerReference(workspaceRoot, {
@@ -407,6 +478,18 @@ export const refreshSkoposAgentPromptBrief = async ({
       estimatedTokens: sumEstimatedTokens(doctrineReferences, true),
       references: doctrineReferences,
     },
+    ...(policyLayerReferences.length > 0
+      ? [
+          {
+            id: 'stable-project-policy-prefix',
+            kind: 'stable-project-policy-prefix' as const,
+            summary:
+              'Load accepted project policy and lane guidance when present, without expanding full policy-pack docs on the hot path.',
+            estimatedTokens: sumEstimatedTokens(policyReferences, true),
+            references: policyReferences,
+          },
+        ]
+      : []),
     {
       id: 'dynamic-execution-tail',
       kind: 'dynamic-execution-tail',
@@ -419,6 +502,7 @@ export const refreshSkoposAgentPromptBrief = async ({
   ];
 
   const measurements: SkoposAgentPromptBudgetMeasurement[] = [
+    buildBudgetMeasurement(policyReferences, 'policy-brief', 'Policy brief', TOKEN_BUDGETS.policyBrief),
     buildBudgetMeasurement(dynamicReferences, 'trust-brief', 'Trust brief', TOKEN_BUDGETS.trustBrief),
     buildBudgetMeasurement(dynamicReferences, 'done-brief', 'Done brief', TOKEN_BUDGETS.doneBrief),
     buildBudgetMeasurement(dynamicReferences, 'program-brief', 'Program brief', TOKEN_BUDGETS.programBrief),

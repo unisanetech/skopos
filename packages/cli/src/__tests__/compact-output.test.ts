@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   SkoposDoneReport,
   SkoposEvalRunResult,
+  SkoposNextRunResult,
   SkoposProgramNextRunResult,
   SkoposProgramSyncRunResult,
 } from '@skopos/model';
@@ -12,12 +13,16 @@ import {
   buildCompactDoneOutput,
   buildCompactEvalLines,
   buildCompactEvalOutput,
+  buildCompactNextLines,
   buildCompactProgramNextLines,
   buildCompactProgramNextOutput,
   buildCompactProgramSyncLines,
   buildCompactProgramSyncOutput,
+  buildCompactTransportBudget,
   buildCompactTrustLines,
   buildCompactTrustOutput,
+  buildGuidedDecisionQuestionLines,
+  buildGuidedWorkflowQuestionLines,
 } from '../cli/shared/compact-output.js';
 import { buildSummaryLines, parseFieldList, projectJsonOutput } from '../cli/shared/output.js';
 
@@ -44,7 +49,7 @@ describe('compact output projections', () => {
       },
     } as const;
 
-    expect(buildCompactTrustOutput(report)).toEqual({
+    expect(buildCompactTrustOutput(report)).toMatchObject({
       workspaceRoot: '/workspace',
       actorId: 'agent-core',
       trustLevel: 'medium',
@@ -60,15 +65,22 @@ describe('compact output projections', () => {
       ],
       unresolvedAssumptions: ['Assume docs sync is still pending.'],
       findings: ['F-1'],
+      transportBudget: {
+        surfaceKind: 'compact-command-response',
+        title: 'Skopos trust compact output',
+        status: 'within-budget',
+      },
     });
 
     expect(buildCompactTrustLines(report)).toEqual([
       'Skopos trust',
-      '- trust: medium / needs-review',
-      '- summary: One warning remains.',
-      '- checks: 1 pass, 1 warn, 0 fail',
-      '- attention:',
-      '  - [warn] mirror: Instruction mirror drift.',
+      'Status: Review needed',
+      'Summary: One warning remains.',
+      'Checks: 1 pass, 1 review, 0 fix',
+      'Attention:',
+      '- Review this: mirror - Instruction mirror drift.',
+      'Next step:',
+      'Review `mirror`, then run `skopos trust` again before closing the work.',
     ]);
 
     expect(projectJsonOutput(buildCompactTrustOutput(report), { summary: true })).toEqual({
@@ -198,14 +210,16 @@ describe('compact output projections', () => {
 
     expect(buildCompactDoneLines(report)).toEqual([
       'Skopos done',
-      '- closure: needs-review',
-      '- summary: A workflow still needs to run.',
-      '- trust: high / agent-ready',
-      '- checks: 1 pass, 1 warn, 0 fail',
-      '- required actions: 1',
-      '- attention:',
-      '  - [warn] workflow-eval: Eval artifact missing.',
-      '- next action: Run skopos eval before closure.',
+      'Status: Review needed',
+      'Summary: A workflow still needs to run.',
+      'Trust: high / agent-ready',
+      'Checks: 1 pass, 1 review, 0 fix',
+      'Required actions: 1',
+      'Progress: 1 mission checklist item still pending.',
+      'Attention:',
+      '- Review this: workflow-eval - Eval artifact missing.',
+      'Next step:',
+      'Run skopos eval before closure.',
     ]);
   });
 
@@ -225,7 +239,22 @@ describe('compact output projections', () => {
         state: 'active',
         scope: { id: 'scope:@skopos/cli', title: '@skopos/cli', kind: 'package', path: 'packages/cli' },
         coordination: { lastUpdatedAt: '2026-04-12T00:00:00.000Z' },
-        items: [],
+        items: [
+          {
+            id: 'step-update-output',
+            kind: 'implementation',
+            title: 'Update command output',
+            detail: 'Make command output easier to read.',
+            status: 'complete',
+          },
+          {
+            id: 'step-run-proof',
+            kind: 'validation',
+            title: 'Run proof checks',
+            detail: 'Verify the command output contract.',
+            status: 'pending',
+          },
+        ],
         blockers: [],
         recommendedChecks: [],
         recommendedWorkflows: [],
@@ -325,20 +354,136 @@ describe('compact output projections', () => {
       failedChecks: [{ command: 'pnpm proof', summary: 'Proof comparison regressed.' }],
       workflowFailures: [{ id: 'quality.run-proof-phase', summary: 'Proof workflow is stale.' }],
       proof: { status: 'fail', weightedPassRate: 0.75, regressedBenchmarkCount: 2 },
+      progress: {
+        total: 2,
+        completed: 1,
+        pending: 1,
+        percent: 50,
+        phase: 'verification',
+        completedItemTitles: ['Update command output'],
+        pendingItemTitles: ['Run proof checks'],
+      },
       nextCommand: 'skopos done --mission mission-1',
     });
 
     expect(buildCompactEvalLines(result)).toEqual([
       'Skopos eval',
-      '- mission: mission-1',
-      '- status: needs-review',
-      '- summary: Evaluation still needs proof.',
-      '- checks: 1 pass, 1 fail, 0 skipped',
-      '- proof: fail',
-      '- trust: high / agent-ready',
-      '- failing checks:',
-      '  - pnpm proof: Proof comparison regressed.',
-      '- next: skopos done --mission mission-1',
+      'Status: Review needed',
+      'Mission: mission-1',
+      'Summary: Evaluation still needs proof.',
+      'Checks: 1 pass, 1 fix, 0 skipped',
+      'Proof: fail',
+      'Trust: high / agent-ready',
+      'Progress: 1 of 2 checklist items complete (about 50%).',
+      'Current phase: verification',
+      'Done: Update command output',
+      'Doing now: Run proof checks',
+      'Decisions: No decision items are tracked for this mission.',
+      'Findings: No active findings or follow-up slices are linked here.',
+      'Blockers: None.',
+      'Proof needed: skopos done --mission mission-1',
+      'Attention:',
+      '- Fix before closing: pnpm proof - Proof comparison regressed.',
+      'Next step:',
+      'skopos done --mission mission-1',
+    ]);
+  });
+
+  it('projects next output to current item, status, and next step', () => {
+    const result = {
+      workspaceRoot: '/workspace',
+      actorId: 'agent-core',
+      summary: 'Continue the current mission.',
+      codeAllowed: true,
+      missionId: 'mission-1',
+      missionPath: '/workspace/.skopos/missions/mission-1.json',
+      mission: {
+        id: 'mission-1',
+        planId: 'plan-1',
+        title: 'Human output',
+        goal: 'make output readable',
+        state: 'active',
+        scope: { id: 'scope:@skopos/cli', title: '@skopos/cli', kind: 'package', path: 'packages/cli' },
+        coordination: { lastUpdatedAt: '2026-06-24T00:00:00.000Z' },
+        items: [
+          {
+            id: 'item-0',
+            kind: 'implementation',
+            title: 'Plan output contract',
+            detail: 'Decide what should be shown first.',
+            status: 'complete',
+          },
+          {
+            id: 'item-1',
+            kind: 'implementation',
+            title: 'Update command output',
+            detail: 'Make the next command human-readable.',
+            status: 'pending',
+          },
+        ],
+        blockers: [],
+        recommendedChecks: [],
+        recommendedWorkflows: [],
+      },
+      questionsPath: '/workspace/.skopos/questions.json',
+      questions: { kind: 'questions', schemaVersion: 1, generatedAt: '2026-06-24T00:00:00.000Z', workspaceRoot: '/workspace', entries: [] },
+      blockingQuestions: [],
+      recommendationsPath: '/workspace/.skopos/recommendations.json',
+      recommendationsWrite: 'written',
+      executionSurface: {
+        kind: 'artifact-only',
+        summary: 'Use mission artifacts.',
+        reason: 'Scope is bounded.',
+        signals: [],
+      },
+      recommendations: {
+        kind: 'recommendations',
+        schemaVersion: 1,
+        generatedAt: '2026-06-24T00:00:00.000Z',
+        workspaceRoot: '/workspace',
+        executionSurface: {
+          kind: 'artifact-only',
+          summary: 'Use mission artifacts.',
+          reason: 'Scope is bounded.',
+          signals: [],
+        },
+        entries: [],
+      },
+      nextCommand: 'skopos eval --mission mission-1',
+      nextItem: {
+        id: 'item-1',
+        title: 'Update command output',
+        detail: 'Make the next command human-readable.',
+        status: 'todo',
+      },
+      pendingItems: [],
+      trust: {
+        trustLevel: 'high',
+        readiness: 'agent-ready',
+        summary: 'Trust is high.',
+        checks: [],
+      },
+    } as SkoposNextRunResult;
+
+    expect(buildCompactNextLines(result)).toEqual([
+      'Skopos next',
+      'Status: Ready for next action',
+      'Mission: mission-1',
+      'Summary: Continue the current mission.',
+      'Code allowed: yes',
+      'Trust: high / agent-ready',
+      'Progress: 1 of 2 checklist items complete (about 50%).',
+      'Current phase: implementation',
+      'Done: Plan output contract',
+      'Doing now: Update command output',
+      'Decisions: No decision items are tracked for this mission.',
+      'Findings: No active findings or follow-up slices are linked here.',
+      'Blockers: None.',
+      'Proof needed: skopos eval --mission mission-1',
+      'Current item:',
+      '- Update command output: Make the next command human-readable.',
+      'Next step:',
+      'skopos eval --mission mission-1',
     ]);
   });
 
@@ -495,23 +640,123 @@ describe('compact output projections', () => {
 
     expect(buildCompactProgramSyncLines(sync)).toEqual([
       'Skopos program sync',
-      '- summary: Current mission should continue.',
-      '- items: 1',
-      '- open obligations: 1',
-      '- do now: Compact transport',
-      '- do next: Token-control gap',
-      '- next: skopos next /workspace --mission mission-1',
+      'Status: Program state refreshed',
+      'Summary: Current mission should continue.',
+      'Items: 1',
+      'Findings: 0 active finding items',
+      'Open obligations: 1',
+      'Do now: Compact transport',
+      'Do next: Token-control gap',
+      'Next step:',
+      'skopos next /workspace --mission mission-1',
     ]);
 
     expect(buildCompactProgramNextLines(next)).toEqual([
       'Skopos program next',
-      '- disposition: continue-current',
-      '- summary: Current mission should continue.',
-      '- current mission: mission-1',
-      '- recommended item: Compact transport',
-      '- open obligations: 1',
-      '- next: skopos next /workspace --mission mission-1',
+      'Status: Ready for next action',
+      'Summary: Current mission should continue.',
+      'Current mission: mission-1',
+      'Recommended item: Compact transport',
+      'Findings: 0 active finding items',
+      'Open obligations: 1',
+      'Next step:',
+      'skopos next /workspace --mission mission-1',
     ]);
+  });
+
+  it('formats decision and workflow questions with clear guidance', () => {
+    expect(
+      buildGuidedDecisionQuestionLines([
+        {
+          id: 'plan.public-api-change',
+          category: 'architecture',
+          escalation: 'must-ask',
+          question: 'Should this change alter the public API?',
+          whyItMatters: 'Public API changes can break users and need a clear migration path.',
+          recommendedOptionId: 'keep-compatible',
+          options: [
+            {
+              id: 'keep-compatible',
+              label: 'Keep it compatible',
+              rationale: 'Use the existing public contract and avoid a breaking release.',
+            },
+            {
+              id: 'break-api',
+              label: 'Allow a breaking change',
+              rationale: 'Only use this when the product owner accepts migration work.',
+            },
+          ],
+        },
+      ]),
+    ).toEqual([
+      'Questions:',
+      'Question: Should this change alter the public API?',
+      'Recommended: Keep it compatible',
+      'Why this matters: Public API changes can break users and need a clear migration path.',
+      'Options:',
+      '- Keep it compatible (recommended): Use the existing public contract and avoid a breaking release.',
+      '- Allow a breaking change: Only use this when the product owner accepts migration work.',
+    ]);
+
+    expect(
+      buildGuidedWorkflowQuestionLines([
+        {
+          id: 'plan.vendor-choice',
+          title: 'Choose vendor',
+          question: 'Which vendor should this integration use?',
+          category: 'stack',
+          escalation: 'recommend-and-ask',
+          blocking: true,
+          recommendedOptionId: 'existing-vendor',
+          options: [
+            {
+              id: 'existing-vendor',
+              label: 'Use the existing vendor',
+              rationale: 'This keeps operations simple and avoids extra credentials.',
+            },
+            {
+              id: 'new-vendor',
+              label: 'Add a new vendor',
+              rationale: 'This is useful only if the existing vendor cannot meet the requirement.',
+            },
+          ],
+          whyItMatters: 'Vendor choices affect setup, cost, secrets, and support.',
+          whatHappensAfterAnswer: 'Skopos updates the mission and tells the agent whether code can start.',
+          linkedPlanId: 'plan-1',
+          linkedMissionId: 'mission-1',
+          evidenceRefs: [],
+          status: 'open',
+        },
+      ]),
+    ).toEqual([
+      'Questions:',
+      'Question: Which vendor should this integration use?',
+      'Recommended: Use the existing vendor',
+      'Why this matters: Vendor choices affect setup, cost, secrets, and support.',
+      'Options:',
+      '- Use the existing vendor (recommended): This keeps operations simple and avoids extra credentials.',
+      '- Add a new vendor: This is useful only if the existing vendor cannot meet the requirement.',
+      'After you answer: Skopos updates the mission and tells the agent whether code can start.',
+    ]);
+  });
+
+  it('reports compact transport budget pressure without hiding the response', () => {
+    expect(
+      buildCompactTransportBudget({
+        title: 'Large compact response',
+        surfaceKind: 'compact-command-response',
+        value: { payload: 'x'.repeat(120) },
+        budgetTokens: 10,
+      }),
+    ).toEqual({
+      surfaceKind: 'compact-command-response',
+      title: 'Large compact response',
+      estimatedTokens: 34,
+      budgetTokens: 10,
+      status: 'over-budget',
+      summary:
+        'Large compact response is over the compact response budget. Ask for specific fields or summary output before loading it into agent context.',
+    });
   });
 
   it('parses field lists and rejects unknown field paths', () => {

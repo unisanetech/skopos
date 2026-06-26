@@ -6,6 +6,7 @@ import {
   syncClaudeCodeHookAdapter,
   syncCodexWrapperAdapter,
   syncInstructionMirrors,
+  syncManualHostAdapter,
   type SyncInstructionMirrorsResult,
 } from '@skopos/instructions';
 import { loadSkoposWorkflowManifests } from '@skopos/indexer';
@@ -36,7 +37,7 @@ export const syncSkoposInstructions = async ({
   const existingConfig = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
   const instructionSourcePath =
     existingConfig?.agents.canonicalInstructions ?? 'AGENTS.md';
-  const [workflows, result, claudeAdapter, codexAdapter] = await Promise.all([
+  const [workflows, result, claudeAdapter, codexAdapter, manualHostAdapter] = await Promise.all([
     loadSkoposWorkflowManifests({
       cwd: workspaceRoot,
     }),
@@ -50,6 +51,10 @@ export const syncSkoposInstructions = async ({
       dryRun,
     }),
     syncCodexWrapperAdapter({
+      cwd: workspaceRoot,
+      dryRun,
+    }),
+    syncManualHostAdapter({
       cwd: workspaceRoot,
       dryRun,
     }),
@@ -68,6 +73,7 @@ export const syncSkoposInstructions = async ({
     ...result.writes,
     ...claudeAdapter.writes,
     ...codexAdapter.writes,
+    ...manualHostAdapter.writes,
     {
       path: enforcementPath,
       status: dryRun ? 'dry-run' : 'written',

@@ -12,7 +12,7 @@ import {
 import { ListPage } from '../../patterns/pages/list-page.js';
 import { ReaderPage } from '../../patterns/pages/reader-page.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
-import { RouteFilterBar } from '../../patterns/sections/content-primitives.js';
+import { Card, RouteFilterBar } from '../../patterns/sections/content-primitives.js';
 import {
   getKnowledgeDocumentCollections,
   getKnowledgeDocumentDetailContext,
@@ -25,9 +25,9 @@ export function DocsView(): React.JSX.Element {
   return (
     <DocumentListView
       category="docs"
-      kicker="Knowledge routes"
-      title="Canonical docs"
-      description="Project docs, config references, and generated knowledge surfaces."
+      kicker="Docs"
+      title="Project handbook"
+      description="The main documents that explain how this project is meant to work."
     />
   );
 }
@@ -65,9 +65,9 @@ export function DecisionsView({
     <DocumentListView
       category="decisions"
       view={search.view}
-      kicker="Decision log"
-      title="Architecture and product decisions"
-      description="Accepted and active decisions for this workspace."
+      kicker="Decisions"
+      title="Why the project works this way"
+      description="Important choices the team or agent should keep following."
     />
   );
 }
@@ -81,9 +81,9 @@ export function FindingsView({
     <DocumentListView
       category="findings"
       view={search.view}
-      kicker="Findings"
-      title="Active findings and registry"
-      description="High-impact findings and the current findings registry."
+      kicker="Issues"
+      title="Tracked project issues"
+      description="Problems, risks, and repeated friction that should not be forgotten."
     />
   );
 }
@@ -93,9 +93,9 @@ export function FindingDetailView({ findingId }: { findingId: string }): React.J
     <DocumentDetailView
       docId={findingId}
       category="findings"
-      kicker="Finding detail"
-      emptyTitle="Unknown finding"
-      emptyDescription="Refresh the app after rebuilding Skopos state if the findings catalog changed."
+      kicker="Issue detail"
+      emptyTitle="Unknown issue"
+      emptyDescription="Refresh the app after rebuilding Skopos state if the issues catalog changed."
     />
   );
 }
@@ -118,18 +118,7 @@ function DocumentListView({
     getKnowledgeDocumentCollections(state, category);
   const visiblePrimaryDocuments = view === 'reference' ? [] : primaryDocuments;
   const visibleReferenceDocuments = view === 'entries' ? [] : referenceDocuments;
-  const listTitle =
-    category === 'docs'
-      ? 'Document list'
-      : category === 'decisions'
-        ? 'Decision list'
-        : 'Finding list';
-  const listDescription =
-    category === 'docs'
-      ? 'Primary project docs in the current knowledge catalog.'
-      : category === 'decisions'
-        ? 'Decision records in the current knowledge catalog.'
-        : 'Active findings in the current knowledge catalog.';
+  const guidance = getKnowledgeGuidance(category);
 
   return (
     <ListPage
@@ -166,28 +155,109 @@ function DocumentListView({
         ) : null
       }
     >
+      <KnowledgeRouteGuidanceCard guidance={guidance} />
       <KnowledgeDocumentListCard
-        title={listTitle}
-        description={listDescription}
+        title={guidance.listTitle}
+        description={guidance.listDescription}
         documents={visiblePrimaryDocuments}
         category={category}
-        emptyTitle="No documents available"
-        emptyDescription="No routed knowledge documents are available in this category right now."
+        emptyTitle={guidance.emptyTitle}
+        emptyDescription={guidance.emptyDescription}
       />
       {visibleReferenceDocuments.length > 0 ? (
         <KnowledgeDocumentListCard
-          title="Reference docs"
-          description="Collection indexes and routers."
+          title="Supporting references"
+          description="Indexes and router documents that help Skopos organize this memory surface."
           documents={visibleReferenceDocuments}
           category={category}
           compact
-          emptyTitle="No reference docs"
-          emptyDescription="No reference knowledge documents are available right now."
+          emptyTitle="No supporting references"
+          emptyDescription="No supporting reference documents are available right now."
         />
       ) : null}
     </ListPage>
   );
 }
+
+function KnowledgeRouteGuidanceCard({
+  guidance,
+}: {
+  guidance: KnowledgeRouteGuidance;
+}): React.JSX.Element {
+  return (
+    <Card title="How to use this page" description={guidance.useCase}>
+      <div className="grid gap-3 md:grid-cols-3">
+        {guidance.points.map((point) => (
+          <div key={point.label} className="border-t border-[var(--line)] pt-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+              {point.label}
+            </p>
+            <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+              {point.text}
+            </p>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+type KnowledgeRouteGuidance = {
+  useCase: string;
+  listTitle: string;
+  listDescription: string;
+  emptyTitle: string;
+  emptyDescription: string;
+  points: Array<{ label: string; text: string }>;
+};
+
+const getKnowledgeGuidance = (category: KnowledgeCategory): KnowledgeRouteGuidance => {
+  if (category === 'decisions') {
+    return {
+      useCase: 'Read decisions when you need to understand why a pattern exists before changing it.',
+      listTitle: 'Decision records',
+      listDescription: 'Use these before changing architecture, workflow, policy, or product direction.',
+      emptyTitle: 'No decisions recorded',
+      emptyDescription:
+        'No decision records are available yet. Add one when a choice should guide future work.',
+      points: [
+        { label: 'Use before', text: 'Refactors, architecture changes, new policies, or stack choices.' },
+        { label: 'Look for', text: 'The accepted choice, the reason, and what should not be changed casually.' },
+        { label: 'Update when', text: 'The project makes a new durable choice or replaces an old one.' },
+      ],
+    };
+  }
+
+  if (category === 'findings') {
+    return {
+      useCase: 'Use issues to keep important problems visible until they are fixed or intentionally closed.',
+      listTitle: 'Tracked issues',
+      listDescription: 'These are problems, risks, or repeated friction that can affect future work.',
+      emptyTitle: 'No issues tracked',
+      emptyDescription:
+        'No tracked issues are available yet. Add one when a problem should not be lost in chat.',
+      points: [
+        { label: 'Use before', text: 'Touching risky code, closing work, or deciding what to fix next.' },
+        { label: 'Look for', text: 'What is wrong, why it matters, owner or scope, and current status.' },
+        { label: 'Update when', text: 'A problem is fixed, becomes worse, or changes the plan.' },
+      ],
+    };
+  }
+
+  return {
+    useCase: 'Use docs to understand the project rules, setup, architecture, and operating model.',
+    listTitle: 'Project documents',
+    listDescription: 'Start here when you need the project handbook instead of raw generated state.',
+    emptyTitle: 'No project documents found',
+    emptyDescription:
+      'No project documents are available yet. Build or refresh Skopos state after adding docs.',
+    points: [
+      { label: 'Use before', text: 'Starting work, onboarding to the repo, or checking project rules.' },
+      { label: 'Look for', text: 'The current source of truth, command workflow, and package boundaries.' },
+      { label: 'Update when', text: 'A rule, workflow, architecture decision, or setup step changes.' },
+    ],
+  };
+};
 
 function DocumentDetailView({
   docId,

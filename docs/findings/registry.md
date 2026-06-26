@@ -9,7 +9,7 @@ Track active Skopos structural findings here.
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-17`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `README.md`
@@ -17,6 +17,14 @@ Track active Skopos structural findings here.
 
 ## Changelog
 
+- `2026-06-26`: Closed the token-control and agent-transport gap after shared compact CLI JSON projections began reporting direct response budget telemetry, compact human output began warning only when a response exceeds the compact budget, and compact eval output stopped replaying full mission checklist objects.
+- `2026-06-26`: Closed the initial synthesized repo-understanding gap after `skopos understand` began writing compact repo-summary, feature-inventory, and implementation-hotspot artifacts, indexing them, and surfacing them on the overview UI.
+- `2026-06-26`: Closed the stale advisory-decision eval reconciliation gap after the existing runtime fix and regression coverage were confirmed current, removing the last active self-healing finding from the program queue.
+- `2026-06-25`: Closed the program-router and obligation gap after blocking workflow recommendations began promoting into compiled program state as actionable items with preserved commands, linked mission context, and explicit question IDs.
+- `2026-06-25`: Closed the discussion-memory compaction gap after unsupported coding agents gained a generated manual fallback adapter and checkpoint promotion stopped treating actor/path-only command changes as meaningful new discussion state.
+- `2026-06-25`: Closed the self-hosting workflow-router drift finding after unsupported coding agents gained a generated manual fallback adapter guide and `.skopos/enforcement.json` began recording that path explicitly as `manual-fallback` / `manual-only`.
+- `2026-06-25`: Closed the CLI entrypoint command-ownership drift finding after package-boundary regression coverage began enforcing the thin `cli.ts`, `cli/index.ts`, and `cli/registry.ts` ownership contract.
+- `2026-06-25`: Closed the UI dev watcher generated-churn finding after repeated generated app and tooling churn regression coverage proved ignored output stays quiet while route-owned docs changes still refresh.
 - `2026-04-17`: Added the initial synthesized repo-understanding gap after the first messy external brownfield pilot showed that Skopos can onboard structurally but still leaves users without one compact explanation of repo purpose, major feature areas, and likely implementation hotspots.
 - `2026-04-16`: Grouped the remaining active findings under the bounded self-healing loop, so current Skopos work now runs through three product-hardening tracks: onboarding and trust correctness, validation and transport proportionality, and program/docs-state hygiene.
 - `2026-04-14`: Closed the package-pilot closure-coverage gap after trust and done began treating tracked edits as covered by a claimed mission once that mission and its eval both completed and no newer tracked edits had landed.
@@ -65,62 +73,8 @@ Track active Skopos structural findings here.
 ### Current Hardening Tracks
 
 1. Track A: onboarding, scope, and trust correctness
-   - `F-20260411-self-hosting-workflow-router-drift`
-   - `F-20260412-stale-advisory-decision-eval-reconciliation-gap`
-   - `F-20260417-initial-synthesized-repo-understanding-gap`
+   - No active findings currently routed in this track.
 2. Track B: validation and transport proportionality
-   - `F-20260412-token-control-and-agent-transport-gap`
+   - No active findings currently routed in this track.
 3. Track C: program and docs-state hygiene
-   - `F-20260411-ui-dev-watcher-generated-churn`
-   - `F-20260412-cli-entrypoint-command-ownership-drift`
-   - `F-20260412-program-router-and-obligation-gap`
-   - `F-20260412-discussion-memory-compaction-gap`
-
-4. `F-20260411-ui-dev-watcher-generated-churn`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `ui dev watcher hardening`
-   - Detail: `F-20260411-ui-dev-watcher-generated-churn.md`
-5. `F-20260411-self-hosting-workflow-router-drift`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `self-hosting workflow contract`
-   - Detail: `F-20260411-self-hosting-workflow-router-drift.md`
-6. `F-20260412-cli-entrypoint-command-ownership-drift`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `cli surface decomposition`
-   - Detail: `F-20260412-cli-entrypoint-command-ownership-drift.md`
-7. `F-20260412-discussion-memory-compaction-gap`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `discussion memory lane`
-   - Detail: `F-20260412-discussion-memory-compaction-gap.md`
-8. `F-20260412-program-router-and-obligation-gap`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `program router lane`
-   - Detail: `F-20260412-program-router-and-obligation-gap.md`
-9. `F-20260412-stale-advisory-decision-eval-reconciliation-gap`
-   - Severity: `SHOULD`
-   - Status: `in-progress`
-   - Owner: `skopos-core`
-   - Target Pack: `eval and closure reconciliation`
-   - Detail: `F-20260412-stale-advisory-decision-eval-reconciliation-gap.md`
-10. `F-20260412-token-control-and-agent-transport-gap`
-    - Severity: `MUST`
-    - Status: `in-progress`
-    - Owner: `skopos-core`
-    - Target Pack: `token control and compact transport`
-    - Detail: `F-20260412-token-control-and-agent-transport-gap.md`
-11. `F-20260417-initial-synthesized-repo-understanding-gap`
-    - Severity: `SHOULD`
-    - Status: `in-progress`
-    - Owner: `skopos-core`
-    - Target Pack: `brownfield onboarding understanding layer`
-    - Detail: `F-20260417-initial-synthesized-repo-understanding-gap.md`
+   - No active findings currently routed in this track.

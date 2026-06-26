@@ -17,6 +17,7 @@ import {
 } from './commands/router.js';
 import { runScanCommand } from './commands/scan.js';
 import { runTrustCommand } from './commands/trust.js';
+import { runUnderstandCommand } from './commands/understanding.js';
 import { runUiCommand } from './commands/ui.js';
 import { runWorkflowsCommand } from './commands/workflows.js';
 import type { SkoposCliCommandHandler } from './types.js';
@@ -43,4 +44,5 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   instructions: runInstructionsCommand,
   ui: runUiCommand,
   trust: runTrustCommand,
+  understand: runUnderstandCommand,
 };

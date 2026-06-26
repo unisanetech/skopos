@@ -3,28 +3,29 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260412-CLI-ENTRYPOINT-COMMAND-OWNERSHIP-DRIFT`
-- Status: `active`
+- Status: `done`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-25`
 - Review Cycle: `per workpack`
 - Related Docs:
-  - `registry.md`
-  - `../project/implementation-checklist.md`
-  - `../project/roadmap.md`
+  - `../registry.md`
+  - `../../project/implementation-checklist.md`
+  - `../../project/roadmap.md`
 
 ## Changelog
 
+- `2026-06-25`: Closed after the CLI entrypoint, router, and registry stayed decomposed and `package-boundaries.test.ts` gained regression coverage that keeps `cli.ts`, `cli/index.ts`, and `cli/registry.ts` thin.
 - `2026-04-12`: Opened after the self-hosted `skopos` CLI reached `2288` lines in one file, with top-level routing, help text, subcommand branching, argument parsing, and execution summaries all mixed inside `packages/cli/src/cli.ts`. The first decomposition batch moved the CLI to a thin entrypoint plus command-owned modules under `packages/cli/src/cli/**`.
 
 ## Summary
 
 - Severity: `SHOULD`
-- Status: `in-progress`
+- Status: `done`
 - Owner: `skopos-core`
 - Target Pack: `cli surface decomposition`
-- Current State: partially fixed. `packages/cli/src/cli.ts` is now a thin entrypoint and top-level router logic lives in `packages/cli/src/cli/index.ts` plus `packages/cli/src/cli/registry.ts`, while command parsing and execution moved into command-owned modules under `packages/cli/src/cli/commands/**`. The remaining work is to keep future command additions on that ownership model and avoid rebuilding a single-file bucket through ad hoc growth.
+- Current State: closed. `packages/cli/src/cli.ts` is a thin process entrypoint, top-level router logic lives in `packages/cli/src/cli/index.ts`, command registration lives in `packages/cli/src/cli/registry.ts`, and command parsing/execution lives in command-owned modules under `packages/cli/src/cli/commands/**`. Regression coverage now blocks the entrypoint, router, or registry from becoming a command bucket again.
 
 ## Symptom
 
@@ -46,7 +47,7 @@
 2. Keep top-level dispatch and help in a dedicated `cli/` router layer instead of the bin file.
 3. Keep command parsing and execution in command-owned modules under `packages/cli/src/cli/commands/**`.
 4. Keep future command additions routed through the registry instead of appending new `run*Command` and `parse*Args` buckets back into the entrypoint.
-5. Leave this finding active until the decomposed structure stays stable through the next CLI feature batches.
+5. Keep the boundary regression test active so future command batches do not rebuild the old single-file bucket.
 
 ## Verification
 
@@ -54,9 +55,10 @@
 2. Command registration is explicit in a registry layer rather than in one giant `switch`.
 3. Parsing and execution responsibilities are split into command-owned modules under `packages/cli/src/cli/commands/**`.
 4. CLI release-surface and proof-phase checks still pass after the structural split.
+5. `package-boundaries.test.ts` checks the CLI entrypoint, router, and registry size/ownership contract.
 
 ## Linked Docs
 
 1. `registry.md`
-2. `../project/implementation-checklist.md`
-3. `../project/roadmap.md`
+2. `../../project/implementation-checklist.md`
+3. `../../project/roadmap.md`

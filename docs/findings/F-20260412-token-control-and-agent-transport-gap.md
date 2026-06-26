@@ -3,11 +3,11 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260412-TOKEN-CONTROL-AGENT-TRANSPORT-GAP`
-- Status: `active`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `registry.md`
@@ -18,6 +18,7 @@
 
 ## Changelog
 
+- `2026-06-26`: Closed after compact eval output was tightened back under budget and every shared compact CLI JSON projection began reporting estimated response tokens, the compact budget, and whether the response is over budget; compact human output now warns only when it exceeds the same budget. Future host-cache or retrieval refinements should be tracked as new, narrower findings if they become blocking.
 - `2026-04-17`: Tightened the default search lane so historical docs are now excluded from normal search results unless the query explicitly asks for archive or historical material, reducing one more source of hot-path retrieval noise beyond the first discovered-doc exclusion.
 - `2026-04-13`: Landed runtime-managed handoff and telemetry artifacts, so Skopos now writes `.skopos/discussions/handoffs/latest-workflow.json` as the compact cross-thread resume surface and `.skopos/agent/token-telemetry.json` as a separate diagnosis artifact for budget pressure across the hot-path briefs and combined resume context; the finding remains open for broader command-output telemetry, cache-aware host integration, and more complete lane minimization.
 - `2026-04-12`: Landed the first prompt-layering and token-telemetry slice, so Skopos now generates `.skopos/agent/prompt-brief.json` with stable-prefix versus dynamic-tail guidance and budget measurements for the hot-path briefs plus default resume context; the finding remains open for broader command-output telemetry, handoff artifacts, and cache-aware host integration.
@@ -36,10 +37,10 @@
 ## Summary
 
 - Severity: `MUST`
-- Status: `in-progress`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Target Pack: `token control and compact transport`
-- Current State: open. Skopos already stores good canonical artifacts, but the default agent transport and retrieval path still spends too many tokens on raw JSON, broad logs, stale docs, and repeated full-lane validation output.
+- Current State: fixed. Skopos stores compact canonical artifacts, default retrieval avoids known historical noise paths, validation lanes are more proportional, background eval has a compact polling lane, and every shared compact CLI projection reports direct response budget pressure. The compact eval projection was also tightened so mission progress no longer replays full checklist item objects into the compact JSON response.
 
 ## Symptom
 
@@ -72,6 +73,7 @@ Landed so far:
 4. first package and docs-oriented lane narrowing
 5. first background eval execution path
 6. first standalone telemetry diagnosis artifact
+7. compact command response budget telemetry across shared compact CLI projections
 
 ## Verification
 

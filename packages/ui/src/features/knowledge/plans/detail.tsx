@@ -117,6 +117,47 @@ export function PlanFrameCard({
   );
 }
 
+export function PlanDetailGuidanceCard({
+  planView,
+  relatedMission,
+}: {
+  planView: SkoposUiConsolePlanView;
+  relatedMission?: SkoposUiConsoleMissionView;
+}): React.JSX.Element {
+  const hasDecisionPressure =
+    planView.plan.decisionQuestions.length > 0 || planView.plan.risks.length > 0;
+
+  return (
+    <Card
+      title="How to read this plan"
+      description="Use this plan as the agreed path for the work, then keep mission progress and closure proof in sync with it."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Start here"
+          text="Read the goal and scope first so the implementation does not drift."
+        />
+        <GuidancePoint
+          label="Watch for"
+          text={
+            hasDecisionPressure
+              ? 'Open decisions or risks that may change the implementation path.'
+              : 'No open decision pressure is attached to this plan right now.'
+          }
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            relatedMission
+              ? 'Use the linked mission to track live progress and closure evidence.'
+              : 'Link this plan to a mission when implementation starts.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function PlanWorkPlanCard({
   implementationSteps,
   nextSteps,
@@ -188,6 +229,25 @@ export function PlanWorkPlanCard({
         />
       )}
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }
 

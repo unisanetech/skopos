@@ -3,11 +3,11 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260417-INITIAL-SYNTHESIZED-REPO-UNDERSTANDING-GAP`
-- Status: `active`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-17`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `registry.md`
@@ -20,15 +20,16 @@
 
 ## Changelog
 
+- `2026-06-26`: Closed after `skopos understand` began generating compact repo-summary, feature-inventory, and implementation-hotspot artifacts from existing bootstrap and scope state, indexing those artifacts in the compiled knowledge index, and surfacing the orientation layer on the overview UI.
 - `2026-04-17`: Opened after the external `examon-ai` pilot reached `trust = high / agent-ready` but still left the user asking what Skopos actually understands about the repo, because the first-run product surface exposed raw bootstrap, scope, symbol, graph, and generated UI artifacts without one compact synthesized orientation layer for messy brownfield repos.
 
 ## Summary
 
 - Severity: `SHOULD`
-- Status: `in-progress`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Target Pack: `brownfield onboarding understanding layer`
-- Current State: unresolved. Skopos can bootstrap repo shape, scopes, trust, commands, docs roots, and symbol or graph inventories, but it still lacks one compact synthesized repo-understanding surface that explains the project purpose, main feature areas, and likely implementation hotspots without making the user traverse multiple raw artifact families.
+- Current State: fixed. Skopos can now generate `.skopos/understanding/repo-summary.json`, `.skopos/understanding/feature-inventory.json`, and `.skopos/understanding/hotspots.json` through `skopos understand`. The artifacts are compact, confidence-aware, indexed in `.skopos/index.json`, and surfaced on the overview UI as a human-readable orientation layer above raw scopes, symbols, and graph artifacts.
 
 ## Symptom
 

@@ -226,12 +226,12 @@ export function SearchDock({
           <div className="skopos-search-results-head">
             <p className="skopos-search-results-title">
               {searchContext.query.isEmpty
-                ? 'Jump across compiled workspace knowledge'
+                ? 'Search project knowledge'
                 : `${searchContext.total} result${searchContext.total === 1 ? '' : 's'}`}
             </p>
             <p className="skopos-search-results-copy">
-              Exact matches win. Supports <code>scope:</code>, <code>kind:</code>, <code>route:</code>,{' '}
-              <code>mission:</code>, <code>plan:</code>, and <code>doc:</code>.
+              Search docs, decisions, missions, plans, issues, and project areas. Filters like{' '}
+              <code>mission:</code>, <code>plan:</code>, and <code>doc:</code> also work.
             </p>
           </div>
           {searchContext.groups.length > 0 ? (
@@ -406,7 +406,7 @@ const labelForSearchKind = (kind: SkoposConsoleSearchKind): string => {
     case 'obligation':
       return 'obligation';
     case 'artifact':
-      return 'artifact';
+      return 'source';
     case 'portal':
       return 'portal';
     case 'report':
@@ -422,7 +422,7 @@ const labelForSearchKind = (kind: SkoposConsoleSearchKind): string => {
     case 'event':
       return 'event';
     case 'graph':
-      return 'graph';
+      return 'map';
     default:
       return kind;
   }

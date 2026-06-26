@@ -108,6 +108,7 @@ export const refreshSkoposDiscussionCheckpoints = async ({
     recommendedNextCommand: nextCommand,
   };
   const promotionKinds = derivePromotionKinds({
+    workspaceRoot,
     latestCheckpoint,
     nextShape: nextCheckpointShape,
   });
@@ -231,6 +232,7 @@ const loadLatestCheckpointArtifact = async (
 };
 
 const derivePromotionKinds = ({
+  workspaceRoot,
   latestCheckpoint,
   nextShape: {
     threadId,
@@ -241,6 +243,7 @@ const derivePromotionKinds = ({
     recommendedNextCommand,
   },
 }: {
+  workspaceRoot: string;
   latestCheckpoint?: SkoposDiscussionCheckpointArtifact;
   nextShape: {
     threadId: string;
@@ -272,11 +275,29 @@ const derivePromotionKinds = ({
   if (JSON.stringify(latestCheckpoint.openQuestions) !== JSON.stringify(openQuestions)) {
     promotionKinds.push('open-questions-changed');
   }
-  if (latestCheckpoint.recommendedNextCommand !== recommendedNextCommand) {
+  if (
+    normalizeRecommendedCommandForPromotion(latestCheckpoint.recommendedNextCommand, workspaceRoot) !==
+    normalizeRecommendedCommandForPromotion(recommendedNextCommand, workspaceRoot)
+  ) {
     promotionKinds.push('recommended-next-command-changed');
   }
 
   return promotionKinds;
+};
+
+const normalizeRecommendedCommandForPromotion = (
+  command: string | undefined,
+  workspaceRoot: string,
+): string | undefined => {
+  if (!command) {
+    return undefined;
+  }
+
+  return command
+    .replaceAll(workspaceRoot, '<project-root>')
+    .replace(/\s+--actor\s+(?:"[^"]*"|'[^']*'|\S+)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 const buildDiscussionIndexArtifact = ({

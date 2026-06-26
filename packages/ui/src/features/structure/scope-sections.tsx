@@ -21,6 +21,98 @@ import {
 import { cn } from '../../support/ui/classnames.js';
 import { toneForMissionState } from '../../support/ui/tone-helpers.js';
 
+interface ScopePracticalGuide {
+  owns: string[];
+  doesNotOwn: string[];
+  commonWork: string[];
+  checks: string[];
+}
+
+const packageGuides: Record<string, ScopePracticalGuide> = {
+  '@skopos/cli': {
+    owns: ['Command routing', 'CLI argument handling', 'human-readable terminal output'],
+    doesNotOwn: ['Core planning rules', 'trust engine internals', 'UI rendering'],
+    commonWork: ['Add or improve a command', 'wire a command to an application service', 'improve CLI guidance text'],
+    checks: ['pnpm --filter @skopos/cli check-types', 'pnpm --filter @skopos/cli exec vitest run'],
+  },
+  '@skopos/ui': {
+    owns: ['Console screens', 'sidebar navigation', 'human-readable workspace views'],
+    doesNotOwn: ['Trust scoring rules', 'mission artifact schemas', 'CLI command parsing'],
+    commonWork: ['Improve a page flow', 'add a state-aware empty state', 'render project knowledge more clearly'],
+    checks: ['pnpm --filter @skopos/ui check-types', 'pnpm --filter @skopos/ui app:build'],
+  },
+  '@skopos/trust': {
+    owns: ['Readiness checks', 'risk signals', 'workspace confidence reporting'],
+    doesNotOwn: ['UI labels', 'CLI command routing', 'mission planning policy'],
+    commonWork: ['Add a readiness check', 'improve warning text', 'tighten closure safety rules'],
+    checks: ['pnpm --filter @skopos/trust check-types', 'pnpm skopos:trust'],
+  },
+  '@skopos/model': {
+    owns: ['Shared artifact contracts', 'runtime data shapes', 'cross-package TypeScript types'],
+    doesNotOwn: ['Feature implementation logic', 'screen layout', 'command output formatting'],
+    commonWork: ['Add a contract field', 'tighten artifact typing', 'share a reusable model type'],
+    checks: ['pnpm --filter @skopos/model check-types', 'pnpm -w typecheck'],
+  },
+  '@skopos/runtime': {
+    owns: ['Application orchestration', 'artifact assembly services', 'cross-package workflow behavior'],
+    doesNotOwn: ['React view layout', 'terminal formatting details', 'raw schema definitions'],
+    commonWork: ['Build or load an artifact', 'connect services across packages', 'improve workflow behavior'],
+    checks: ['pnpm --filter @skopos/runtime check-types', 'pnpm skopos:trust'],
+  },
+};
+
+const genericGuides: Record<string, ScopePracticalGuide> = {
+  workspace: {
+    owns: ['Repository-wide direction', 'shared docs', 'cross-package workflow rules'],
+    doesNotOwn: ['Package-specific implementation details', 'temporary execution output', 'generated files by hand'],
+    commonWork: ['Set product direction', 'update project-wide guidance', 'coordinate a multi-package change'],
+    checks: ['pnpm skopos:trust', 'pnpm -w typecheck'],
+  },
+  package: {
+    owns: ['Implementation inside this package', 'package-local tests', 'package-local public surface'],
+    doesNotOwn: ['Unrelated package behavior', 'repo-wide policy unless explicitly linked', 'generated output by hand'],
+    commonWork: ['Change package behavior', 'add focused tests', 'update package-level docs or exports'],
+    checks: ['Run the package typecheck', 'Run focused tests for this package'],
+  },
+  'docs-root': {
+    owns: ['Canonical project documentation', 'human-readable policy', 'developer guidance'],
+    doesNotOwn: ['Runtime behavior by itself', 'test coverage', 'generated reference output by hand'],
+    commonWork: ['Clarify guidance', 'document a decision', 'keep docs aligned with implemented behavior'],
+    checks: ['Run docs or trust checks that cover changed docs', 'Run the relevant package checks for behavior changes'],
+  },
+  'instruction-file': {
+    owns: ['Agent-facing instructions', 'coding workflow rules', 'tool-specific guidance'],
+    doesNotOwn: ['Hidden behavior not backed by code or docs', 'one-off personal notes', 'stale policy copies'],
+    commonWork: ['Update agent rules', 'sync instruction mirrors', 'remove confusing duplicated guidance'],
+    checks: ['Run instruction sync if mirrors exist', 'pnpm skopos:trust'],
+  },
+};
+
+const getScopePracticalGuide = (scopeView: SkoposUiConsoleScopeView): ScopePracticalGuide => {
+  return packageGuides[scopeView.scope.id] ?? genericGuides[scopeView.scope.kind];
+};
+
+function GuideList({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}): React.JSX.Element {
+  return (
+    <section className="py-3.5">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {title}
+      </p>
+      <ul className="mt-2 grid gap-1.5 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 export function ScopesInspectorAside({
   scopeCount,
   packageCount,
@@ -53,8 +145,8 @@ export function ScopeListCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Scope list"
-      description="Workspace scopes and the current work attached to them."
+      title="Project areas"
+      description="Packages, docs, and instruction files Skopos can route work to."
     >
       <div className={skoposListSurfaceClass}>
         {scopes.map((scopeView, index) => (
@@ -94,7 +186,7 @@ export function ScopeListCard({
                     ]
                       .filter(Boolean)
                       .join(' · ')
-                  : 'No current work'}
+                  : 'No active work'}
               </p>
             </div>
           </Link>
@@ -120,8 +212,8 @@ export function ScopeDetailInspectorAside({
       <SidebarCard title="At a glance">
         <KeyValueList
           items={[
-            { label: 'Kind', value: scopeView.scope.kind },
-            { label: 'Confidence', value: scopeView.scope.confidence },
+            { label: 'Type', value: scopeView.scope.kind },
+            { label: 'Match quality', value: scopeView.scope.confidence },
             {
               label: 'Current work',
               value:
@@ -176,9 +268,12 @@ export function ScopeFrameCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Responsibility"
-      description="Explain what this scope owns before the route dives into linked work."
+      title="What belongs here"
+      description="Use this as a quick ownership guide before editing this area."
     >
+      {(() => {
+        const guide = getScopePracticalGuide(scopeView);
+        return (
       <div className="border-y border-[var(--line)]">
         <section className="py-3.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
@@ -188,6 +283,18 @@ export function ScopeFrameCard({
             {scopeView.scope.summary}
           </p>
         </section>
+        <div className="border-t border-[var(--line)]">
+          <GuideList title="Owns" items={guide.owns} />
+        </div>
+        <div className="border-t border-[var(--line)]">
+          <GuideList title="Does not own" items={guide.doesNotOwn} />
+        </div>
+        <div className="border-t border-[var(--line)]">
+          <GuideList title="Common work" items={guide.commonWork} />
+        </div>
+        <div className="border-t border-[var(--line)]">
+          <GuideList title="Useful checks" items={guide.checks} />
+        </div>
         <section className="border-t border-[var(--line)] py-3.5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
             Active work
@@ -204,10 +311,12 @@ export function ScopeFrameCard({
                 ]
                   .filter(Boolean)
                   .join(', ') + '.'
-              : 'No active mission or plan is currently scoped to this surface.'}
+              : 'No active mission or plan is currently tied to this project area.'}
           </p>
         </section>
       </div>
+        );
+      })()}
     </Card>
   );
 }
@@ -222,7 +331,7 @@ export function ScopeCurrentWorkCard({
   return (
     <Card
       title="Current work"
-      description="Plans and missions currently tied to this scope."
+      description="Plans and missions currently tied to this project area."
     >
       {plans.length > 0 || missions.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -253,7 +362,7 @@ export function ScopeCurrentWorkCard({
               </div>
             ) : (
               <p className="mt-2.5 text-[12.5px] leading-[1.45rem] text-[var(--muted)]">
-                No plans are currently scoped to this surface.
+                No plans are currently tied to this project area.
               </p>
             )}
           </section>
@@ -290,7 +399,7 @@ export function ScopeCurrentWorkCard({
               </div>
             ) : (
               <p className="mt-2.5 text-[12.5px] leading-[1.45rem] text-[var(--muted)]">
-                No missions are currently scoped to this surface.
+                No missions are currently tied to this project area.
               </p>
             )}
           </section>
@@ -298,7 +407,7 @@ export function ScopeCurrentWorkCard({
       ) : (
         <EmptyMessage
           title="No related work"
-          description="No plans or missions are currently scoped to this surface."
+          description="No plans or missions are currently tied to this project area."
         />
       )}
     </Card>

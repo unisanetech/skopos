@@ -16,7 +16,7 @@
   - `../architecture/retrieval-and-query-strategy.md`
   - `021-discussion-memory-checkpoints-and-handoff-contract.md`
   - `024-token-control-compact-agent-transport-and-progressive-retrieval.md`
-  - `../findings/F-20260412-discussion-memory-compaction-gap.md`
+  - `../findings/archive/F-20260412-discussion-memory-compaction-gap.md`
 
 ## Changelog
 

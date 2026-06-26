@@ -20,7 +20,7 @@ Temporary execution workpack for the next discussion-memory expansion after the 
   - `../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
   - `../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md`
   - `../../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md`
-  - `../../findings/F-20260412-discussion-memory-compaction-gap.md`
+  - `../../findings/archive/F-20260412-discussion-memory-compaction-gap.md`
 
 ## Changelog
 

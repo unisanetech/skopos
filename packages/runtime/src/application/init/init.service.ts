@@ -19,6 +19,7 @@ import {
   scaffoldProjectInstructions,
   syncClaudeCodeHookAdapter,
   syncCodexWrapperAdapter,
+  syncManualHostAdapter,
 } from '@skopos/instructions';
 import type { SkoposInitMode, SkoposInitResult } from '@skopos/model';
 
@@ -188,6 +189,10 @@ export const initSkoposProject = async ({
     dryRun,
   });
   await syncCodexWrapperAdapter({
+    cwd: workspaceRoot,
+    dryRun,
+  });
+  await syncManualHostAdapter({
     cwd: workspaceRoot,
     dryRun,
   });

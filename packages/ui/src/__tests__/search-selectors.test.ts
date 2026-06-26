@@ -12,7 +12,7 @@ describe('getSkoposConsoleSearchContext', () => {
       currentPath: '/overview',
     });
 
-    expect(context.flatResults[0]?.title).toBe('Proof');
+    expect(context.flatResults[0]?.title).toBe('Evidence');
     expect(context.flatResults[0]?.group).toBe('jump');
     expect(context.flatResults[0]?.kind).toBe('route');
   });
@@ -131,6 +131,16 @@ describe('getSkoposConsoleSearchContext', () => {
     });
 
     expect(context.flatResults.some((entry) => entry.id === 'route--discussion')).toBe(true);
+  });
+
+  it('surfaces the rules route for policy and drift queries', () => {
+    const context = getSkoposConsoleSearchContext({
+      state: createSearchState(),
+      rawQuery: 'policy drift',
+      currentPath: '/overview',
+    });
+
+    expect(context.flatResults.some((entry) => entry.id === 'route--rules')).toBe(true);
   });
 });
 

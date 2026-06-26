@@ -10,25 +10,25 @@
     "esModuleInterop": true,
     "paths": {
       "@skopos/config": [
-        "../config/src/index.ts"
+        "./packages/config/src/index.ts"
       ],
       "@skopos/indexer": [
-        "../indexer/src/index.ts"
+        "./packages/indexer/src/index.ts"
       ],
       "@skopos/instructions": [
-        "../instructions/src/index.ts"
+        "./packages/instructions/src/index.ts"
       ],
       "@skopos/model": [
-        "../model/src/index.ts"
+        "./packages/model/src/index.ts"
       ],
       "@skopos/planner": [
-        "../planner/src/index.ts"
+        "./packages/planner/src/index.ts"
       ],
       "@skopos/query": [
-        "../query/src/index.ts"
+        "./packages/query/src/index.ts"
       ],
       "@skopos/trust": [
-        "../trust/src/index.ts"
+        "./packages/trust/src/index.ts"
       ],
       "@skopos/*": [
         "./packages/*/src"

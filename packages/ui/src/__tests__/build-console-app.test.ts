@@ -30,10 +30,17 @@ describe('buildSkoposUiConsoleApp', () => {
     await mkdir(join(workspaceRoot, '.skopos', 'evals'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'runs'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'proof'), { recursive: true });
+    await mkdir(join(workspaceRoot, '.skopos', 'policies'), { recursive: true });
+    await mkdir(join(workspaceRoot, '.skopos', 'drift'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'program'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'discussions', 'checkpoints'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'discussions', 'handoffs'), { recursive: true });
     await mkdir(join(workspaceRoot, '.skopos', 'discussions', 'raw'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'policy-packs', 'architecture', 'mid-app'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'src', 'routes'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'src', 'use-cases'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'src', 'gateways'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'src', 'presenters'), { recursive: true });
     await mkdir(join(workspaceRoot, 'docs', 'generated', 'skopos'), { recursive: true });
 
     await writeFile(join(workspaceRoot, 'docs', '00-start-here.md'), '# Start here\n', 'utf8');
@@ -547,6 +554,267 @@ security:
       'utf8',
     );
     await writeFile(
+      join(workspaceRoot, '.skopos', 'policies', 'resolved.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'resolved-policy',
+          type: 'resolved-policy',
+          status: 'generated',
+          authority: 'generated',
+          summary: 'Accepted policy resolves 1 pack with 1 active rule.',
+          updatedAt: '2026-04-10T00:15:30.000Z',
+          generatedAt: '2026-04-10T00:15:30.000Z',
+          workspaceRoot,
+          projectLifecycle: 'established-brownfield',
+          defaultExecutionLane: 'normal',
+          recommendedExecutionLanes: [
+            {
+              lane: 'normal',
+              summary: 'Use for ordinary feature and maintenance work.',
+              triggers: ['bounded feature work'],
+              defaultGates: ['typecheck'],
+            },
+          ],
+          acceptedPacks: [
+            {
+              packId: 'architecture.mid-app',
+              version: '0.1.0',
+              acceptedAt: '2026-04-10T00:15:30.000Z',
+              acceptedBy: 'agent-ui',
+              reason: 'Use the mid-app architecture rules for UI fixture work.',
+              source: 'manual',
+            },
+          ],
+          overrides: [],
+          activeRules: [
+            {
+              id: 'architecture.mid-app.feature-owns-product-behavior',
+              title: 'Feature owns product behavior',
+              severity: 'must',
+              summary: 'A feature should own its user workflow and local UI.',
+              appliesTo: ['features', 'screens'],
+            },
+          ],
+          sourcePaths: ['policy-packs/architecture/mid-app/pack.json'],
+          generatedDocPaths: [],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, '.skopos', 'policies', 'recommendations.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'policy-recommendations',
+          type: 'policy-recommendations',
+          status: 'generated',
+          authority: 'generated',
+          summary: '1 policy recommendation is available.',
+          updatedAt: '2026-04-10T00:15:30.000Z',
+          generatedAt: '2026-04-10T00:15:30.000Z',
+          workspaceRoot,
+          projectLifecycle: 'established-brownfield',
+          defaultExecutionLane: 'normal',
+          recommendedExecutionLanes: [],
+          recommendations: [
+            {
+              packId: 'architecture.mid-app',
+              version: '0.1.0',
+              family: 'architecture',
+              variant: 'mid-app',
+              displayName: 'Mid-App Architecture',
+              confidence: 'high',
+              recommendation: 'apply',
+              reason: 'The fixture behaves like a mid-sized app.',
+              plainLanguageSummary: 'Keep app wiring, feature code, and shared utilities easy to understand.',
+              accepted: true,
+              signals: [],
+              antiSignals: [],
+              sourcePath: 'policy-packs/architecture/mid-app/pack.json',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, '.skopos', 'policies', 'role-mapping.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'policy-role-mapping',
+          type: 'policy-role-mapping',
+          status: 'generated',
+          authority: 'generated',
+          summary: 'Mapped accepted policy roles to local project paths.',
+          updatedAt: '2026-04-10T00:15:30.000Z',
+          generatedAt: '2026-04-10T00:15:30.000Z',
+          workspaceRoot,
+          resolvedPolicyPath: '.skopos/policies/resolved.json',
+          mappings: [
+            {
+              packId: 'architecture.mid-app',
+              sourcePath: 'policy-packs/architecture/mid-app/pack.json',
+              role: 'features / modules / domains',
+              label: 'Product features',
+              required: true,
+              status: 'inferred',
+              confidence: 'high',
+              checkedAliases: ['src/features', 'src/use-cases'],
+              matchedAliases: ['src/use-cases'],
+              matchedPaths: ['src/use-cases'],
+              reason: 'Matched Product features through 1 local alias.',
+            },
+          ],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, 'policy-packs', 'architecture', 'mid-app', 'pack.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'policy-pack.architecture.mid-app',
+          type: 'policy-pack',
+          status: 'active',
+          authority: 'canonical',
+          summary: 'Architecture policy for mid-sized product apps.',
+          updatedAt: '2026-04-10T00:00:00.000Z',
+          packId: 'architecture.mid-app',
+          family: 'architecture',
+          variant: 'mid-app',
+          version: '0.1.0',
+          displayName: 'Mid-App Architecture',
+          description: 'Architecture guidance for projects with several features and shared runtime boundaries.',
+          plainLanguageSummary: 'Keep app wiring, feature code, and shared utilities easy to understand.',
+          bestFor: ['Several feature areas', 'Shared API or runtime code'],
+          notFor: ['One-off scripts'],
+          userQuestions: ['Where does each feature own behavior, UI, and tests?'],
+          qualityBar: ['Agents can explain what to do differently before editing code.'],
+          agentUse: ['Check the folder tree before moving feature code.'],
+          structureTree: {
+            title: 'Mid-app structure tree',
+            summary: 'A clear app shape for runtime wiring, product behavior, infrastructure, and UI roles. These are roles, not required folder names.',
+            rootLabel: 'source root',
+            nodes: [
+              {
+                path: 'app / composition root',
+                label: 'App shell and composition root',
+                responsibility: 'Owns route setup and dependency assembly.',
+                required: true,
+                matchPaths: ['src/app', 'src/routes'],
+              },
+              {
+                path: 'features / modules / domains',
+                label: 'Product features',
+                responsibility: 'Owns user workflows and local UI.',
+                required: true,
+                matchPaths: ['src/features', 'src/use-cases'],
+              },
+              {
+                path: 'infrastructure / adapters',
+                label: 'Infrastructure and adapters',
+                responsibility: 'Owns external service and vendor boundaries.',
+                required: true,
+                matchPaths: ['src/infrastructure', 'src/gateways'],
+              },
+              {
+                path: 'ui / components / design system',
+                label: 'Reusable UI primitives',
+                responsibility: 'Owns reusable UI and presentation primitives.',
+                required: false,
+                matchPaths: ['src/ui', 'src/presenters'],
+              },
+            ],
+          },
+          recommendedLayers: ['composition-root', 'features', 'application', 'domain', 'infrastructure', 'shared'],
+          dependencyDirection: {
+            'composition-root': { mayImport: ['features', 'infrastructure', 'shared'] },
+            features: { mayImport: ['application', 'domain', 'infrastructure', 'shared'] },
+            infrastructure: { mayImport: ['application', 'domain', 'shared'] },
+            shared: { mayImport: [] },
+          },
+          forbiddenImports: [
+            {
+              from: 'domain',
+              to: ['composition-root', 'infrastructure', 'ui'],
+            },
+          ],
+          gates: {
+            required: ['pnpm typecheck'],
+            recommended: ['pnpm test', 'pnpm build'],
+          },
+          agentPrompts: {
+            beforeEditing: ['Identify the current architecture layers before adding files.'],
+            beforeDone: ['Confirm no second pattern was introduced.'],
+          },
+          projectLifecycles: ['established-brownfield'],
+          appliesWhen: [
+            {
+              id: 'signal.multiple-product-features',
+              summary: 'The project has several feature areas.',
+              confidence: 'high',
+              evidence: ['Multiple feature, route, or domain directories'],
+            },
+          ],
+          avoidWhen: [],
+          rules: [
+            {
+              id: 'architecture.mid-app.feature-owns-product-behavior',
+              title: 'Feature owns product behavior',
+              severity: 'must',
+              summary: 'A feature should own its user workflow and local UI.',
+              appliesTo: ['features', 'screens'],
+            },
+          ],
+          requiredDocs: [],
+          generatedArtifacts: ['.skopos/policies/resolved.json'],
+          driftCheckIds: ['architecture.mid-app.business-logic-in-shared-helper'],
+          proofFixtureIds: ['architecture.mid-app.good-feature-boundary'],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, '.skopos', 'drift', 'report.json'),
+      JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'drift-report',
+          type: 'drift-report',
+          status: 'generated',
+          authority: 'generated',
+          summary: 'No open accepted-policy drift was detected.',
+          updatedAt: '2026-04-10T00:15:40.000Z',
+          generatedAt: '2026-04-10T00:15:40.000Z',
+          workspaceRoot,
+          resolvedPolicyPath: '.skopos/policies/resolved.json',
+          counts: {
+            openMustCount: 0,
+            openShouldCount: 0,
+            advisoryCount: 0,
+            suppressedCount: 0,
+            resolvedCount: 0,
+          },
+          findings: [],
+        },
+        null,
+        2,
+      ),
+      'utf8',
+    );
+    await writeFile(
       join(workspaceRoot, '.skopos', 'discussions', 'index.json'),
       JSON.stringify(
         {
@@ -785,6 +1053,19 @@ security:
     expect(stateJson).toContain('"workspaceLabel"');
     expect(stateJson).toContain('"workspaceRoot"');
     expect(stateJson).toContain('"proofReport"');
+    expect(stateJson).toContain('"policyReview"');
+    expect(stateJson).toContain('"packManifests"');
+    expect(stateJson).toContain('"roleMapping"');
+    expect(stateJson).toContain('"policy-role-mapping"');
+    expect(stateJson).toContain('"architecture.mid-app"');
+    expect(stateJson).toContain('Multiple feature, route, or domain directories');
+    expect(stateJson).toContain('"structureMatch"');
+    expect(stateJson).toContain('"matchedPaths"');
+    expect(stateJson).toContain('"checkedPatterns"');
+    expect(stateJson).toContain('"matchedPatterns"');
+    expect(stateJson).toContain('src/use-cases');
+    expect(stateJson).toContain('src/gateways');
+    expect(stateJson).toContain('"driftReport"');
     expect(stateJson).toContain('"documents"');
     expect(stateJson).toContain('"latestDiscussionHandoff"');
     expect(stateJson).toContain('"discussionCheckpoints"');
@@ -811,5 +1092,7 @@ security:
     expect(searchIndexJson).toContain('"docs-start"');
     expect(searchIndexJson).toContain('"discussion-handoff-latest-workflow"');
     expect(searchIndexJson).toContain('"discussion-checkpoint-ui"');
+    expect(searchIndexJson).toContain('"#/rules"');
+    expect(searchIndexJson).toContain('"#/rules/packs/architecture.mid-app"');
   }, 120_000);
 });

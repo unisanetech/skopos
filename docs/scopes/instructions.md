@@ -9,13 +9,14 @@ The `instructions` scope owns instruction mirror generation, parity checks, and 
 - Owner: `skopos-core`
 - Scope: `skopos/scopes`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-06-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `../architecture/docs-governance.md`
 
 ## Changelog
 
+- `2026-06-25`: Updated the instructions scope after the generated manual host adapter guide landed, so unsupported coding agents now receive an explicit workflow-router fallback contract under `.skopos/tooling/manual-hosts/`.
 - `2026-04-13`: Updated the instructions scope after the Codex wrapper-mediated adapter landed, so `instructions sync` now refreshes instruction mirrors, generated Claude Code hooks, the generated Codex wrapper adapter, and `.skopos/enforcement.json` together.
 - `2026-04-09`: Updated the instructions scope to reflect the compiled enforcement profile and generated Claude Code hook adapter outputs.
 - `2026-04-09`: Updated the instructions scope to reflect that it now checks mirror parity in addition to generating mirrors.
@@ -35,3 +36,4 @@ The `instructions` package currently owns:
 7. compiling the enforcement profile under `.skopos/enforcement.json`
 8. generating Claude Code hook adapter outputs under `.skopos/tooling/claude-code/`
 9. generating Codex wrapper adapter outputs under `.skopos/tooling/codex/`
+10. generating the manual fallback guide for unsupported coding agents under `.skopos/tooling/manual-hosts/`

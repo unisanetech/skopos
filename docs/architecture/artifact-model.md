@@ -20,6 +20,11 @@ Skopos should produce a stable, versioned local artifact family for both humans 
 
 ## Changelog
 
+- `2026-06-24`: Added the implemented `.skopos/policies/role-mapping.json` artifact so accepted packs can persist local folder-to-role mappings for brownfield projects instead of treating different good structures as drift.
+- `2026-06-24`: Added `.skopos/policies/role-mapping-decisions.json` so users can confirm, ignore, or manually set local role mappings without editing generated mapping output.
+- `2026-06-24`: Added the implemented `.skopos/policies/overrides.json` artifact and `skopos policies overrides` flow for explicit accepted-policy drift exceptions.
+- `2026-06-24`: Added the implemented `.skopos/drift/report.json` artifact for accepted-policy drift detection and trust posture.
+- `2026-06-24`: Added the implemented accepted-policy artifact family: `.skopos/policies/recommendations.json`, `.skopos/policies/resolved.json`, `.skopos/agent/policy-brief.json`, and the bounded AGENTS.md generated policy section.
 - `2026-06-24`: Added authored pack source roots for policy, stack, gate, and workflow intelligence so built-in project guidance is treated as source truth separate from generated `.skopos/**` state and SDK package scopes.
 - `2026-04-13`: Added `.skopos/agent/token-telemetry.json` plus the first runtime-managed workflow handoff artifact at `.skopos/discussions/handoffs/latest-workflow.json`, so budget diagnosis and cross-thread resume state now exist as separate derived runtime artifacts instead of staying implicit in prompt planning alone.
 - `2026-04-12`: Expanded the `.skopos/agent/**` brief family with `.skopos/agent/prompt-brief.json`, so prompt layering and hot-path token budgets now compile into one runtime-managed projection instead of staying implicit in docs and host behavior.
@@ -86,9 +91,16 @@ Skopos should produce a stable, versioned local artifact family for both humans 
 - `.skopos/log.jsonl`
 - `.skopos/overrides.json`
 - `.skopos/proof/latest-report.json`
+- `.skopos/policies/recommendations.json`
+- `.skopos/policies/resolved.json`
+- `.skopos/policies/role-mapping.json`
+- `.skopos/policies/role-mapping-decisions.json`
+- `.skopos/policies/overrides.json`
+- `.skopos/drift/report.json`
 - `.skopos/questions.json`
 - `.skopos/recommendations.json`
 - `.skopos/program/state.json`
+- `.skopos/agent/policy-brief.json`
 - `.skopos/agent/trust-brief.json`
 - `.skopos/agent/done-brief.json`
 - `.skopos/agent/program-brief.json`
@@ -154,6 +166,15 @@ Skopos should produce a stable, versioned local artifact family for both humans 
    - missions may carry linked child slice metadata so wide proof batches can decompose durably
 4. project workflow manifests are repo-authored sources and should be reviewed like normal code
 5. built-in pack sources under `policy-packs/**`, `stack-packs/**`, `gate-packs/**`, and `workflow-packs/**` are authored product intelligence sources; generated resolved policy, recommendations, drift, and agent briefs should point back to them rather than duplicating their content
+   - `.skopos/policies/recommendations.json` is generated assessment state and should be refreshed by `skopos policies recommend`
+   - `.skopos/policies/resolved.json` is runtime-managed accepted project policy and should be updated by `skopos policies apply`, not hand-edited
+   - `.skopos/policies/role-mapping.json` is generated local role-mapping state and should be refreshed by `skopos policies apply`; it records which local paths satisfy accepted pack roles
+   - `.skopos/policies/role-mapping-decisions.json` is runtime-managed local role-mapping decision state and should be updated by `skopos policies mappings`, not hand-edited
+   - `.skopos/policies/overrides.json` is runtime-managed local policy exception state and should be updated by `skopos policies overrides`, not hand-edited
+   - policy overrides must carry a reason and may carry owner, expiry, rule, pack, source path, or finding matchers; they suppress or downgrade matching drift findings but do not change pack source truth
+   - `.skopos/drift/report.json` is generated accepted-policy drift state and should be refreshed by `skopos policies drift`
+   - `.skopos/agent/policy-brief.json` is a compact prompt-layer projection of resolved policy and should not become a second source of truth
+   - the bounded Skopos policy section in `AGENTS.md` is generated from resolved policy so host agents can load current policy without opening full pack docs
 6. workflow run evidence under `.skopos/runs/*.json` is runtime-managed workflow state and should be written by Skopos, not hand-edited
    - mutating workflow runs should carry actor attribution when the evidence is meant to support trust or closure
 7. unresolved workflow questions under `.skopos/questions.json` are runtime-managed decision state and should be rewritten by Skopos rather than hand-edited

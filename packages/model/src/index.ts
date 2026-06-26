@@ -37,6 +37,7 @@ export * from './contracts/skopos-start.js';
 export * from './contracts/skopos-symbol-reference.js';
 export * from './contracts/skopos-token-telemetry.js';
 export * from './contracts/skopos-trust-report.js';
+export * from './contracts/skopos-understanding.js';
 export * from './contracts/skopos-workflow-question.js';
 export * from './contracts/skopos-workflow-recommendation.js';
 export * from './contracts/skopos-workflow.js';

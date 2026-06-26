@@ -96,10 +96,11 @@ export const runDoneCommand = async (args: string[]): Promise<void> => {
   }
 
   const lines = [
-    'Skopos done',
+    ...buildCompactDoneLines(result),
+    '',
+    'Details:',
     `- workspace: ${result.workspaceRoot}`,
     `- closure: ${result.closureStatus}`,
-    `- summary: ${result.summary}`,
     result.impact.graphPath
       ? `- impact graph: ${result.impact.graphPath} (${result.impact.graphWrite ?? 'written'})`
       : undefined,

@@ -28,6 +28,17 @@ Use this plan to turn Skopos from project-state tooling into a stronger project-
 
 ## Changelog
 
+- `2026-06-24`: Added persisted local role mapping through `.skopos/policies/role-mapping.json` and policy-brief integration, so accepted architecture roles carry concrete local path evidence for future agents.
+- `2026-06-24`: Added role-mapping decisions through `skopos policies mappings` and `.skopos/policies/role-mapping-decisions.json`, so inferred mappings can become explicit confirmed or ignored local project truth.
+- `2026-06-24`: Added brownfield-safe role mapping for architecture packs, including checked aliases, matched aliases, and UI copy that treats different good folder structures as local mappings instead of policy drift.
+- `2026-06-24`: Revised the seeded `architecture.mid-app` pack to present generic architecture roles first, with local folder names such as `platform`, `support`, and `patterns` treated as aliases/evidence instead of default Skopos-specific structure.
+- `2026-06-24`: Added first-class pack structure metadata and dedicated pack UI routes so architecture packs can render YAML-like contracts as human-readable trees, dependency rules, gates, prompts, and codebase match evidence.
+- `2026-06-24`: Expanded the routed Rules surface to load full pack manifests and show human pack details, including fit guidance, codebase verification signals, questions, quality bars, rule previews, and source paths.
+- `2026-06-24`: Added the first routed Rules review surface for accepted packs, active rules, drift posture, local overrides, and execution lanes.
+- `2026-06-24`: Added local policy override support and closure blocking for open accepted-policy `must` drift through `skopos policies overrides`, `.skopos/policies/overrides.json`, override-aware drift reports, and `skopos done`.
+- `2026-06-24`: Expanded the first pack-system slice with richer human-readable pack metadata, composable accepted policies, the `stack.async-work` pack, and the `gates.progressive-validation` pack.
+- `2026-06-24`: Added the first accepted-policy drift detection slice with `skopos policies drift`, `.skopos/drift/report.json`, heuristic checks for the seeded `architecture.mid-app` pack, and trust integration for policy drift posture.
+- `2026-06-24`: Implemented the first accepted-policy loop with `skopos policies recommend`, `skopos policies apply`, `.skopos/policies/recommendations.json`, `.skopos/policies/resolved.json`, `.skopos/agent/policy-brief.json`, AGENTS.md policy projection, prompt-layer integration, and progressive trust checks.
 - `2026-06-24`: Added the first policy-pack catalog runtime and CLI surface through `skopos policies list` and `skopos policies show`, backed by schema validation of `policy-packs/**/pack.json`.
 - `2026-06-24`: Seeded `policy-packs/architecture/mid-app` as the first concrete built-in policy pack source, including manifest, operational docs, drift checks, and fixtures.
 - `2026-06-24`: Added the accepted decision contract as the implementation authority for policy-pack, stack-intelligence, durable-memory, and drift-report artifacts.
@@ -161,17 +172,31 @@ Freshness rules:
 
 The memory layer should make this possible: an agent can enter a project months later, ask Skopos for context, and receive the current architecture, policies, gates, stack decisions, known drift, and next required proof without rereading the whole repo or asking the user to repeat history.
 
-## First Seeded Pack
+## Seeded Pack Catalog
 
-The first source pack is `policy-packs/architecture/mid-app`. It exists to prove the quality bar before Skopos grows a large catalog. The pack includes:
+The first built-in source packs exist to prove the quality bar before Skopos grows a large catalog. Current seed packs:
+
+1. `policy-packs/architecture/mid-app`
+   - helps small-to-mid product apps keep route, feature, domain, data, and shared layers clear
+2. `policy-packs/stack/async-work`
+   - helps teams decide when to use inline work, cron, queues, durable workflows, Redis, retries, idempotency, and worker ownership
+3. `policy-packs/gates/progressive-validation`
+   - helps agents choose light, normal, or workpack-level validation based on scope and risk
+
+Each seed pack includes:
 
 1. `pack.json` typed against the policy-pack artifact contract
-2. architecture rules with severity, rationale, examples, anti-patterns, and drift check ids
-3. operational docs for overview, boundaries, brownfield behavior, greenfield behavior, and examples
-4. drift-rule definitions that can later be connected to heuristic, AST, and semantic checks
-5. good and drift fixtures that future proof lanes can use to reject placeholder-only pack work
+2. human-readable summary, best-fit guidance, user questions, quality bar, and agent-use notes
+3. rules with severity, rationale, examples, anti-patterns, and drift check ids
+4. operational docs for overview, boundaries, brownfield behavior, greenfield behavior, decision guidance, and examples
+5. drift-rule definitions that can later be connected to heuristic, AST, and semantic checks
+6. good and drift fixtures that future proof lanes can use to reject placeholder-only pack work
 
-This seed is not the final catalog. The first catalog slice now loads and validates `policy-packs/**/pack.json` through `skopos policies list` and `skopos policies show`. The next implementation step is to recommend packs from project profile signals, let projects accept or override them, generate resolved policy state, and surface memory/drift posture in agent briefs and trust.
+This seed catalog is not the final catalog. The first catalog slice now loads and validates `policy-packs/**/pack.json` through `skopos policies list` and `skopos policies show`. The first acceptance slice now recommends and accepts packs through `skopos policies recommend` and `skopos policies apply`, then writes resolved policy, a compact policy brief, a bounded AGENTS.md policy section, and trust checks. Accepted policy now composes multiple packs instead of replacing the previous accepted pack.
+
+The first drift slice now writes `.skopos/drift/report.json` through `skopos policies drift` and surfaces policy-drift posture in trust. Local exceptions now live in `.skopos/policies/overrides.json` and are managed with `skopos policies overrides`. Overrides can suppress or downgrade matching drift findings only when they are explicit, reasoned, and visible. `skopos done` now blocks closure when open accepted-policy `must` drift remains after overrides are applied.
+
+The next implementation step is dedicated recommendation logic and UX for stack and gate packs, then richer pack comparison and acceptance flows. The first in-route pack-detail review is implemented on the Rules page and should be treated as the baseline for future browse/compare work.
 
 ## System Layers
 
@@ -647,11 +672,11 @@ Policy commands:
 
 1. `skopos policies list [target]` - implemented first catalog read surface
 2. `skopos policies show <pack> [target]` - implemented first pack detail surface
-3. `skopos policies assess .`
-4. `skopos policies recommend .`
-5. `skopos policies apply . --pack architecture.mid-app`
+3. `skopos policies recommend .` - implemented first progressive recommendation artifact surface
+4. `skopos policies apply architecture.mid-app .` - implemented first accepted-policy persistence and agent-brief surface
+5. `skopos policies assess .`
 6. `skopos policies explain architecture.mid-app`
-7. `skopos policies drift .`
+7. `skopos policies drift .` - implemented first accepted-policy drift report surface
 
 Stack commands:
 
@@ -887,19 +912,20 @@ Acceptance:
 
 Deliverables:
 
-1. pack discovery
-2. pack validation
-3. pack recommendation engine
-4. accepted-pack persistence
-5. generated policy docs
-6. project agent brief integration
+1. pack discovery - implemented
+2. pack validation - implemented
+3. pack recommendation engine - first heuristic implementation landed
+4. accepted-pack persistence - implemented through `.skopos/policies/resolved.json`
+5. generated policy docs - pending
+6. project agent brief integration - implemented through `.skopos/agent/policy-brief.json` and prompt-layer references
 
 Acceptance:
 
-1. `skopos policies recommend` works on Skopos and fixtures
+1. `skopos policies recommend` works on fixtures
 2. accepted packs show in trust
 3. installed `AGENTS.md` references accepted policy compactly
 4. stale pack artifacts trigger trust warnings
+5. remaining proof must cover Skopos itself plus a non-Skopos repo before broad catalog claims
 
 ### Phase 2: First Product-Grade Packs
 
@@ -955,11 +981,11 @@ Acceptance:
 
 Deliverables:
 
-1. drift checks for first pack set
-2. trust warnings
-3. eval blockers for `must` drift
-4. done integration
-5. override and expiration support
+1. drift checks for first pack set - first heuristic `architecture.mid-app` checks implemented
+2. trust warnings - implemented for missing/stale drift reports and open drift posture
+3. eval blockers for `must` drift - pending
+4. done integration - implemented through explicit accepted `must` drift closure blocking
+5. override and expiration support - implemented through `.skopos/policies/overrides.json` and `skopos policies overrides`
 
 Acceptance:
 
@@ -1044,15 +1070,14 @@ Acceptance:
 
 ## Immediate Next Slice
 
-The first implementation slice should be design-first, not pack-content-first.
+The next implementation slice should make stack and gate recommendations easier to understand without turning every task into a workpack.
 
 Build order:
 
-1. add a decision doc for policy pack and stack intelligence artifact ownership
-2. define pack manifest, resolved policy, stack recommendation, and drift schemas
-3. add one realistic internal example pack without public claims
-4. add `skopos policies recommend` against Skopos and fixture repos
-5. add trust integration for stale or missing accepted policy artifacts
-6. add proof fixtures before adding more packs
+1. add dedicated recommendation language for stack and gate packs instead of treating every pack as a generic policy
+2. add richer compare, accept, and exception-review flows on top of the Rules route's first pack-detail review
+3. connect blocking `must` drift to `skopos eval`
+4. broaden proof fixtures for greenfield, brownfield, drift, and override cases before adding more packs
+5. keep adding pack families only when each one has rules, docs, checks, fixtures, and clear human guidance
 
-A single high-quality `architecture.mid-app` pack with real checks, examples, brownfield behavior, and proof is more valuable than ten thin placeholder packs.
+A small catalog of high-quality packs with real checks, examples, brownfield behavior, acceptance, drift, overrides, and proof is more valuable than many thin placeholder packs.

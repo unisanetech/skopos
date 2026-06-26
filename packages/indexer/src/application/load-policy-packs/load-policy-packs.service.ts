@@ -25,6 +25,7 @@ const policyFamilySchema = z.enum([
   'security-privacy',
   'release-public-api',
   'generated-artifacts',
+  'stack',
   'gates',
   'workflow',
 ]);
@@ -50,6 +51,68 @@ const policyRuleSchema = z
   })
   .strict();
 
+type PolicyStructureTreeNodeInput = {
+  path: string;
+  label: string;
+  responsibility: string;
+  required?: boolean;
+  matchPaths?: string[];
+  examples?: string[];
+  antiPatterns?: string[];
+  children?: PolicyStructureTreeNodeInput[];
+};
+
+const policyStructureTreeNodeSchema: z.ZodType<PolicyStructureTreeNodeInput> = z.lazy(() =>
+  z
+    .object({
+      path: z.string().min(1),
+      label: z.string().min(1),
+      responsibility: z.string().min(1),
+      required: z.boolean().optional(),
+      matchPaths: z.array(z.string().min(1)).optional(),
+      examples: z.array(z.string().min(1)).optional(),
+      antiPatterns: z.array(z.string().min(1)).optional(),
+      children: z.array(policyStructureTreeNodeSchema).optional(),
+    })
+    .strict(),
+);
+
+const policyStructureTreeSchema = z
+  .object({
+    title: z.string().min(1),
+    summary: z.string().min(1),
+    rootLabel: z.string().min(1),
+    nodes: z.array(policyStructureTreeNodeSchema).min(1),
+  })
+  .strict();
+
+const policyDependencyDirectionSchema = z
+  .object({
+    mayImport: z.array(z.string().min(1)),
+  })
+  .strict();
+
+const policyForbiddenImportSchema = z
+  .object({
+    from: z.string().min(1),
+    to: z.array(z.string().min(1)),
+  })
+  .strict();
+
+const policyGateSetSchema = z
+  .object({
+    required: z.array(z.string().min(1)),
+    recommended: z.array(z.string().min(1)),
+  })
+  .strict();
+
+const policyAgentPromptsSchema = z
+  .object({
+    beforeEditing: z.array(z.string().min(1)),
+    beforeDone: z.array(z.string().min(1)),
+  })
+  .strict();
+
 const policyPackManifestSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -66,6 +129,18 @@ const policyPackManifestSchema = z
     version: z.string().min(1),
     displayName: z.string().min(1),
     description: z.string().min(1),
+    plainLanguageSummary: z.string().min(1).optional(),
+    bestFor: z.array(z.string().min(1)).optional(),
+    notFor: z.array(z.string().min(1)).optional(),
+    userQuestions: z.array(z.string().min(1)).optional(),
+    qualityBar: z.array(z.string().min(1)).optional(),
+    agentUse: z.array(z.string().min(1)).optional(),
+    structureTree: policyStructureTreeSchema.optional(),
+    recommendedLayers: z.array(z.string().min(1)).optional(),
+    dependencyDirection: z.record(z.string().min(1), policyDependencyDirectionSchema).optional(),
+    forbiddenImports: z.array(policyForbiddenImportSchema).optional(),
+    gates: policyGateSetSchema.optional(),
+    agentPrompts: policyAgentPromptsSchema.optional(),
     projectLifecycles: z.array(policyLifecycleSchema).min(1),
     appliesWhen: z.array(policySignalSchema),
     avoidWhen: z.array(policySignalSchema),

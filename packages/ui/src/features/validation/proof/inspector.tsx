@@ -128,7 +128,7 @@ export function ProofInspectorAside({
             </>
           )}
           emptyTitle="No categories"
-          emptyDescription="No category scorecard entries are available in this proof report."
+          emptyDescription="No category scorecard entries are available in this evidence report."
         />
       </SidebarCard>
       <SidebarCard

@@ -1,4 +1,4 @@
-import { readFile, readdir } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 
 import type {
@@ -7,11 +7,21 @@ import type {
   SkoposDiscussionIndexArtifact,
   SkoposDiscussionHandoffArtifact,
   SkoposEnforcementProfileArtifact,
+  SkoposDriftReportArtifact,
   SkoposMissionArtifact,
   SkoposPlanArtifact,
+  SkoposPolicyPackManifest,
+  SkoposPolicyOverrideArtifact,
+  SkoposPolicyRecommendationArtifact,
+  SkoposPolicyRoleMappingArtifact,
+  SkoposRepoUnderstandingSummaryArtifact,
+  SkoposFeatureInventoryArtifact,
+  SkoposImplementationHotspotsArtifact,
+  SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopesLiteArtifact,
+  SkoposWorkflowQuestionArtifact,
 } from '@skopos/model';
 import { buildSkoposProgramSyncRuntime, buildSkoposTrustRuntime } from '@skopos/runtime';
 
@@ -24,6 +34,7 @@ import type {
   SkoposUiConsoleMissionView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleDiscussionCheckpointView,
+  SkoposUiConsolePolicyStructureMatchNode,
   SkoposUiConsoleScopeView,
   SkoposUiConsoleState,
   SkoposUiConsoleDiscussionHandoffView,
@@ -63,7 +74,10 @@ export const buildSkoposUiConsoleState = async ({
     scopesArtifact,
     proofReport,
     programState,
+    workflowQuestions,
     adapterSupport,
+    understanding,
+    policyReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
   ] =
@@ -81,7 +95,12 @@ export const buildSkoposUiConsoleState = async ({
       loadJsonArtifact<SkoposProgramStateArtifact>(
         join(workspaceRoot, '.skopos', 'program', 'state.json'),
       ),
+      loadJsonArtifact<SkoposWorkflowQuestionArtifact>(
+        join(workspaceRoot, '.skopos', 'questions.json'),
+      ),
       loadAdapterSupportView(workspaceRoot),
+      loadUnderstandingView(workspaceRoot),
+      loadPolicyReviewView(workspaceRoot),
       loadDiscussionHandoffView(workspaceRoot),
       loadDiscussionCheckpointViews(workspaceRoot),
     ]);
@@ -111,6 +130,7 @@ export const buildSkoposUiConsoleState = async ({
     artifactCounts,
     trustReport,
     programState,
+    workflowQuestions,
     indexArtifact,
     proofReport,
     activity,
@@ -119,6 +139,8 @@ export const buildSkoposUiConsoleState = async ({
     missions,
     scopes,
     adapterSupport,
+    understanding,
+    policyReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
     docsLinks,
@@ -129,6 +151,239 @@ export const buildSkoposUiConsoleState = async ({
     ...stateWithoutSearch,
     searchIndex: buildSkoposConsoleSearchIndex(stateWithoutSearch),
   };
+};
+
+const loadUnderstandingView = async (
+  workspaceRoot: string,
+): Promise<SkoposUiConsoleState['understanding']> => {
+  const summaryPath = join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json');
+  const featureInventoryPath = join(workspaceRoot, '.skopos', 'understanding', 'feature-inventory.json');
+  const hotspotsPath = join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json');
+  const [summary, featureInventory, hotspots] = await Promise.all([
+    loadJsonArtifact<SkoposRepoUnderstandingSummaryArtifact>(summaryPath),
+    loadJsonArtifact<SkoposFeatureInventoryArtifact>(featureInventoryPath),
+    loadJsonArtifact<SkoposImplementationHotspotsArtifact>(hotspotsPath),
+  ]);
+
+  if (!summary || !featureInventory || !hotspots) {
+    return undefined;
+  }
+
+  return {
+    summaryPath,
+    featureInventoryPath,
+    hotspotsPath,
+    summary,
+    featureInventory,
+    hotspots,
+  };
+};
+
+const loadPolicyReviewView = async (
+  workspaceRoot: string,
+): Promise<SkoposUiConsoleState['policyReview']> => {
+  const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'policies', 'resolved.json');
+  const recommendationsPath = join(workspaceRoot, '.skopos', 'policies', 'recommendations.json');
+  const overridesPath = join(workspaceRoot, '.skopos', 'policies', 'overrides.json');
+  const roleMappingPath = join(workspaceRoot, '.skopos', 'policies', 'role-mapping.json');
+  const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
+  const [resolvedPolicy, recommendations, overrides, roleMapping, driftReport] = await Promise.all([
+    loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath),
+    loadJsonArtifact<SkoposPolicyRecommendationArtifact>(recommendationsPath),
+    loadJsonArtifact<SkoposPolicyOverrideArtifact>(overridesPath),
+    loadJsonArtifact<SkoposPolicyRoleMappingArtifact>(roleMappingPath),
+    loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath),
+  ]);
+  const packManifests = await loadPolicyPackManifestViews({
+    workspaceRoot,
+    resolvedPolicy,
+    recommendations,
+  });
+
+  if (!resolvedPolicy && !recommendations && !overrides && !roleMapping && !driftReport && packManifests.length === 0) {
+    return undefined;
+  }
+
+  return {
+    resolvedPolicy: resolvedPolicy
+      ? {
+          artifactPath: resolvedPolicyPath,
+          policy: resolvedPolicy,
+        }
+      : undefined,
+    recommendations: recommendations
+      ? {
+          artifactPath: recommendationsPath,
+          recommendations,
+        }
+      : undefined,
+    overrides: overrides
+      ? {
+          artifactPath: overridesPath,
+          overrides,
+        }
+      : undefined,
+    roleMapping: roleMapping
+      ? {
+          artifactPath: roleMappingPath,
+          mapping: roleMapping,
+        }
+      : undefined,
+    driftReport: driftReport
+      ? {
+          artifactPath: driftReportPath,
+          report: driftReport,
+        }
+      : undefined,
+    packManifests,
+  };
+};
+
+const loadPolicyPackManifestViews = async ({
+  workspaceRoot,
+  resolvedPolicy,
+  recommendations,
+}: {
+  workspaceRoot: string;
+  resolvedPolicy?: SkoposResolvedPolicyArtifact;
+  recommendations?: SkoposPolicyRecommendationArtifact;
+}): Promise<NonNullable<SkoposUiConsoleState['policyReview']>['packManifests']> => {
+  const candidatePaths = new Set<string>();
+
+  for (const sourcePath of resolvedPolicy?.sourcePaths ?? []) {
+    candidatePaths.add(sourcePath);
+  }
+
+  for (const recommendation of recommendations?.recommendations ?? []) {
+    candidatePaths.add(recommendation.sourcePath);
+  }
+
+  const manifestViews = await Promise.all(
+    [...candidatePaths].map(async (sourcePath) => {
+      const artifactPath = resolve(workspaceRoot, sourcePath);
+      const manifest = await loadJsonArtifact<SkoposPolicyPackManifest>(artifactPath);
+
+      if (!manifest) {
+        return undefined;
+      }
+
+      return {
+        artifactPath,
+        manifest,
+        structureMatch: manifest.structureTree
+          ? {
+              title: manifest.structureTree.title,
+              summary: manifest.structureTree.summary,
+              rootLabel: manifest.structureTree.rootLabel,
+              nodes: await Promise.all(
+                manifest.structureTree.nodes.map((node) =>
+                  buildStructureMatchNode(workspaceRoot, node),
+                ),
+              ),
+            }
+          : undefined,
+      };
+    }),
+  );
+
+  return manifestViews.filter((view): view is NonNullable<typeof view> => Boolean(view));
+};
+
+const buildStructureMatchNode = async (
+  workspaceRoot: string,
+  node: SkoposPolicyPackManifest['structureTree'] extends infer T
+    ? T extends { nodes: Array<infer U> }
+      ? U
+      : never
+    : never,
+): Promise<SkoposUiConsolePolicyStructureMatchNode> => {
+  const matchPatterns = node.matchPaths && node.matchPaths.length > 0 ? node.matchPaths : [node.path];
+  const patternMatches = await Promise.all(
+    matchPatterns.map(async (pattern) => ({
+      pattern,
+      paths: await findExistingRelativePaths(workspaceRoot, pattern),
+    })),
+  );
+  const matchedPaths = patternMatches.flatMap((match) => match.paths).sort((left, right) => left.localeCompare(right));
+  const uniqueMatchedPaths = [...new Set(matchedPaths)];
+  const matchedPatterns = patternMatches
+    .filter((match) => match.paths.length > 0)
+    .map((match) => match.pattern)
+    .sort((left, right) => left.localeCompare(right));
+  const required = node.required ?? false;
+
+  return {
+    path: node.path,
+    label: node.label,
+    responsibility: node.responsibility,
+    required,
+    checkedPatterns: matchPatterns,
+    matchedPatterns,
+    matchedPaths: uniqueMatchedPaths,
+    status: uniqueMatchedPaths.length > 0 ? 'matched' : required ? 'missing' : 'optional',
+    children: await Promise.all(
+      (node.children ?? []).map((child) => buildStructureMatchNode(workspaceRoot, child)),
+    ),
+  };
+};
+
+const findExistingRelativePaths = async (
+  workspaceRoot: string,
+  pattern: string,
+): Promise<string[]> => {
+  const segments = pattern.split(/[\\/]+/).filter(Boolean);
+  const matches = await expandPathPattern(workspaceRoot, segments);
+
+  return matches.map((match) => relativePathFromWorkspace(workspaceRoot, match));
+};
+
+const expandPathPattern = async (
+  basePath: string,
+  segments: string[],
+): Promise<string[]> => {
+  if (segments.length === 0) {
+    return (await pathExists(basePath)) ? [basePath] : [];
+  }
+
+  const [segment, ...remainingSegments] = segments;
+
+  if (segment === '*') {
+    const childDirectories = await readChildDirectoryPaths(basePath);
+    const nestedMatches = await Promise.all(
+      childDirectories.map((childPath) => expandPathPattern(childPath, remainingSegments)),
+    );
+
+    return nestedMatches.flat();
+  }
+
+  return expandPathPattern(join(basePath, segment), remainingSegments);
+};
+
+const readChildDirectoryPaths = async (directoryPath: string): Promise<string[]> => {
+  try {
+    const entries = await readdir(directoryPath, { withFileTypes: true });
+
+    return entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => join(directoryPath, entry.name));
+  } catch {
+    return [];
+  }
+};
+
+const pathExists = async (candidatePath: string): Promise<boolean> => {
+  try {
+    await access(candidatePath);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const relativePathFromWorkspace = (workspaceRoot: string, absolutePath: string): string => {
+  const relativePath = absolutePath.replace(`${workspaceRoot}/`, '');
+
+  return relativePath === absolutePath ? absolutePath : relativePath;
 };
 
 const buildPlanView = (

@@ -17,6 +17,7 @@ export type SkoposPolicyPackFamily =
   | 'security-privacy'
   | 'release-public-api'
   | 'generated-artifacts'
+  | 'stack'
   | 'gates'
   | 'workflow';
 
@@ -27,6 +28,8 @@ export type SkoposProjectLifecycle =
   | 'legacy-stabilization';
 
 export type SkoposPolicySignalConfidence = 'low' | 'medium' | 'high';
+
+export type SkoposExecutionLane = 'light' | 'normal' | 'workpack';
 
 export interface SkoposPolicySignal {
   id: string;
@@ -47,6 +50,43 @@ export interface SkoposPolicyRule {
   checkIds?: string[];
 }
 
+export interface SkoposPolicyStructureTreeNode {
+  path: string;
+  label: string;
+  responsibility: string;
+  required?: boolean;
+  matchPaths?: string[];
+  examples?: string[];
+  antiPatterns?: string[];
+  children?: SkoposPolicyStructureTreeNode[];
+}
+
+export interface SkoposPolicyStructureTree {
+  title: string;
+  summary: string;
+  rootLabel: string;
+  nodes: SkoposPolicyStructureTreeNode[];
+}
+
+export interface SkoposPolicyDependencyDirection {
+  mayImport: string[];
+}
+
+export interface SkoposPolicyForbiddenImport {
+  from: string;
+  to: string[];
+}
+
+export interface SkoposPolicyGateSet {
+  required: string[];
+  recommended: string[];
+}
+
+export interface SkoposPolicyAgentPrompts {
+  beforeEditing: string[];
+  beforeDone: string[];
+}
+
 export interface SkoposPolicyPackManifest extends SkoposArtifactEnvelope<'policy-pack'> {
   packId: string;
   family: SkoposPolicyPackFamily;
@@ -54,6 +94,18 @@ export interface SkoposPolicyPackManifest extends SkoposArtifactEnvelope<'policy
   version: string;
   displayName: string;
   description: string;
+  plainLanguageSummary?: string;
+  bestFor?: string[];
+  notFor?: string[];
+  userQuestions?: string[];
+  qualityBar?: string[];
+  agentUse?: string[];
+  structureTree?: SkoposPolicyStructureTree;
+  recommendedLayers?: string[];
+  dependencyDirection?: Record<string, SkoposPolicyDependencyDirection>;
+  forbiddenImports?: SkoposPolicyForbiddenImport[];
+  gates?: SkoposPolicyGateSet;
+  agentPrompts?: SkoposPolicyAgentPrompts;
   projectLifecycles: SkoposProjectLifecycle[];
   appliesWhen: SkoposPolicySignal[];
   avoidWhen: SkoposPolicySignal[];
@@ -75,18 +127,109 @@ export interface SkoposAcceptedPolicyPack {
 
 export interface SkoposPolicyOverride {
   id: string;
+  findingId?: string;
   ruleId?: string;
   packId?: string;
+  sourcePath?: string;
   severity?: SkoposPolicySeverity;
   reason: string;
   owner?: string;
   expiresAt?: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+}
+
+export interface SkoposPolicyOverrideArtifact extends SkoposArtifactEnvelope<'policy-overrides'> {
+  workspaceRoot: string;
+  overrides: SkoposPolicyOverride[];
+}
+
+export type SkoposPolicyRoleMappingStatus = 'inferred' | 'confirmed' | 'needs-review' | 'missing' | 'ignored';
+
+export type SkoposPolicyRoleMappingConfidence = 'low' | 'medium' | 'high';
+
+export interface SkoposPolicyRoleMapping {
+  packId: string;
+  sourcePath: string;
+  role: string;
+  label: string;
+  required: boolean;
+  status: SkoposPolicyRoleMappingStatus;
+  confidence: SkoposPolicyRoleMappingConfidence;
+  checkedAliases: string[];
+  matchedAliases: string[];
+  matchedPaths: string[];
+  reason: string;
+}
+
+export interface SkoposPolicyRoleMappingArtifact
+  extends SkoposArtifactEnvelope<'policy-role-mapping'> {
+  workspaceRoot: string;
+  resolvedPolicyPath?: string;
+  mappings: SkoposPolicyRoleMapping[];
+}
+
+export type SkoposPolicyRoleMappingDecisionStatus = 'confirmed' | 'ignored';
+
+export interface SkoposPolicyRoleMappingDecision {
+  id: string;
+  packId: string;
+  role: string;
+  status: SkoposPolicyRoleMappingDecisionStatus;
+  matchedPaths?: string[];
+  reason: string;
+  owner?: string;
+  createdAt?: string;
+  createdBy?: string;
+  updatedAt?: string;
+}
+
+export interface SkoposPolicyRoleMappingDecisionArtifact
+  extends SkoposArtifactEnvelope<'policy-role-mapping-decisions'> {
+  workspaceRoot: string;
+  decisions: SkoposPolicyRoleMappingDecision[];
+}
+
+export interface SkoposExecutionLaneRule {
+  lane: SkoposExecutionLane;
+  summary: string;
+  triggers: string[];
+  defaultGates: string[];
+}
+
+export interface SkoposPolicyRecommendationEntry {
+  packId: string;
+  version: string;
+  family: SkoposPolicyPackFamily;
+  variant: string;
+  displayName: string;
+  confidence: SkoposPolicySignalConfidence;
+  recommendation: 'apply' | 'review' | 'avoid';
+  reason: string;
+  plainLanguageSummary?: string;
+  qualityBar?: string[];
+  accepted: boolean;
+  signals: SkoposPolicySignal[];
+  antiSignals: SkoposPolicySignal[];
+  sourcePath: string;
+}
+
+export interface SkoposPolicyRecommendationArtifact
+  extends SkoposArtifactEnvelope<'policy-recommendations'> {
+  workspaceRoot: string;
+  projectLifecycle: SkoposProjectLifecycle;
+  defaultExecutionLane: SkoposExecutionLane;
+  recommendedExecutionLanes: SkoposExecutionLaneRule[];
+  recommendations: SkoposPolicyRecommendationEntry[];
 }
 
 export interface SkoposResolvedPolicyArtifact extends SkoposArtifactEnvelope<'resolved-policy'> {
   workspaceRoot: string;
   profileId?: string;
   projectLifecycle: SkoposProjectLifecycle;
+  defaultExecutionLane: SkoposExecutionLane;
+  recommendedExecutionLanes: SkoposExecutionLaneRule[];
   acceptedPacks: SkoposAcceptedPolicyPack[];
   overrides: SkoposPolicyOverride[];
   activeRules: SkoposPolicyRule[];

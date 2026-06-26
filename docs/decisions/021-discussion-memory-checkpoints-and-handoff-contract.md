@@ -8,7 +8,7 @@
 - Owner: `skopos-core`
 - Scope: `skopos/decisions`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-06-25`
 - Related Docs:
   - `../00-start-here.md`
   - `../project/overview.md`
@@ -24,6 +24,7 @@
 
 ## Changelog
 
+- `2026-06-25`: Tightened semantic checkpoint promotion again so next-command comparison ignores volatile workspace-path and `--actor` decoration before deciding whether `recommended-next-command-changed` is a meaningful checkpoint reason.
 - `2026-04-13`: Simplified the product lane again. Raw journals remain local support and `skopos discuss sync-codex` remains a manual support command, but the routed UI no longer auto-syncs Codex sessions during app build and no longer treats raw transcripts as a default app surface.
 - `2026-04-13`: Tightened parent-session Codex segmentation to use structured workspace evidence only, so nested workspace import now matches on workspace-touching tool cwd/path signals or direct project mention in user/assistant conversation rather than arbitrary text inside large tool-output blobs. `skopos discuss sync-codex` now reconciles the per-session raw journal to the current segmented turn set instead of leaving stale false positives behind.
 - `2026-04-13`: Added Codex Desktop local-session backfill through `skopos discuss sync-codex`, so Skopos can import raw user and assistant turns from `~/.codex/sessions/*.jsonl` without spending model tokens on conversation capture. Exact-workspace sessions import directly; parent repo-root sessions must be segmented by workspace evidence before any turns are written into a nested workspace journal.

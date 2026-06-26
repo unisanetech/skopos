@@ -49,12 +49,13 @@ export const runTrustCommand = async (args: string[]): Promise<void> => {
   }
 
   const lines = [
-    'Skopos trust',
+    ...buildCompactTrustLines(result),
+    '',
+    'Details:',
     `- workspace: ${result.workspaceRoot}`,
     `- actor: ${result.actorId ?? '(none)'}`,
     `- trust: ${result.trustLevel}`,
     `- readiness: ${result.readiness}`,
-    `- summary: ${result.summary}`,
     '- checks:',
     ...result.checks.map((check) => `  - [${check.status}] ${check.id}: ${check.summary}`),
   ];

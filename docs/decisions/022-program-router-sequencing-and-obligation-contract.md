@@ -8,7 +8,7 @@
 - Owner: `skopos-core`
 - Scope: `skopos/decisions`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-25`
 - Related Docs:
   - `../00-start-here.md`
   - `../project/overview.md`
@@ -26,6 +26,7 @@
 
 ## Changelog
 
+- `2026-06-25`: Promoted blocking workflow recommendations into compiled program items, so unresolved blocking questions can become the immediate program `doNow` item with the original command preserved instead of relying on the user to remember question-before-implementation ordering.
 - `2026-04-12`: Implemented the first routed UI adoption slice on top of the runtime contract, so the routed console now consumes `.skopos/program/state.json` in `overview`, `mission detail`, `trust`, and the search dock while the next slices stay focused on broader source promotion and richer questions/recommendations visibility.
 - `2026-04-12`: Implemented the first low-noise runtime slice, so `.skopos/program/state.json`, `skopos program sync`, and `skopos program next` now exist with active-mission plus active-finding inputs, typed obligations, and compact continue-versus-interrupt guidance while later sources and routed UI adoption remain follow-on work.
 - `2026-04-12`: Added the supervision-cost and workflow-weight discipline as a guardrail on the program-router contract, so the higher control-plane layer now stays explicitly justified by reduced supervision rather than defaulting to more queue-management ceremony.
@@ -108,7 +109,8 @@ Each item should include fields such as:
 12. `recommendedDisposition`
 13. `linkedPlanId`
 14. `linkedMissionId`
-15. `obligationIds`
+15. `recommendedCommand`
+16. `obligationIds`
 
 ### Sequence
 
@@ -149,9 +151,10 @@ The program router should compile input from:
 
 1. promoted discussion checkpoints
 2. active findings
-3. trust and proof blockers
-4. explicit roadmap or checklist items
-5. current active mission state
+3. blocking workflow recommendations and open workflow question IDs
+4. trust and proof blockers
+5. explicit roadmap or checklist items
+6. current active mission state
 
 Not every discussion checkpoint should become a program item.
 
@@ -219,15 +222,16 @@ The first runtime slice now exists and intentionally stays narrow:
 
 1. active mission state
 2. active findings from the findings registry
-3. typed obligations derived from the current mission checklist plus the first workflow-state UI targets
-4. one compact routing decision for `continue-current`, `interrupt-current`, `start-do-now`, or `idle`
+3. blocking workflow recommendations from `.skopos/recommendations.json`
+4. open blocking question IDs from `.skopos/questions.json`
+5. typed obligations derived from the current mission checklist plus the first workflow-state UI targets
+6. one compact routing decision for `continue-current`, `interrupt-current`, `start-do-now`, or `idle`
 
 The remaining source expansion is still future work:
 
-1. promoted discussion checkpoints
-2. trust and proof blockers as first-class program items
-3. explicit roadmap or checklist items beyond the active mission and findings lane
-4. broader routed UI adoption on top of the now-implemented runtime artifact
+1. trust and proof blockers as first-class program items
+2. explicit roadmap or checklist items beyond the active mission and findings lane
+3. broader routed UI adoption on top of the now-implemented runtime artifact
 
 ## Agent Sync Contract
 
@@ -290,10 +294,8 @@ Do not build a giant workflow dashboard as the first UI slice.
 
 ## Next Action
 
-Implement the first slice in this order:
+The first slice is implemented. Future slices should stay source-focused:
 
-1. add `.skopos/program/state.json` to the artifact model
-2. implement `skopos program sync`
-3. implement `skopos program next`
-4. make promoted discussion checkpoints feed program items
-5. add the first UI adoption pass in `overview`, `mission detail`, `trust`, and the `search dock`
+1. promote trust and proof blockers as first-class program items only when they block safe closure or implementation
+2. promote explicit roadmap/checklist items only when they are accepted enough to sequence
+3. keep normal mission checklist steps inside the mission router unless they need cross-mission routing

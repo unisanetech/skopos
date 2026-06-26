@@ -20,9 +20,9 @@ Temporary execution workpack for the first explicit Skopos self-healing cycle af
   - `../../decisions/023-supervision-cost-and-workflow-weight-discipline.md`
   - `../../decisions/027-self-healing-product-loop-and-bounded-hardening-contract.md`
   - `../../findings/registry.md`
-  - `../../findings/F-20260411-self-hosting-workflow-router-drift.md`
+  - `../../findings/archive/F-20260411-self-hosting-workflow-router-drift.md`
   - `../../findings/F-20260412-token-control-and-agent-transport-gap.md`
-  - `../../findings/F-20260412-program-router-and-obligation-gap.md`
+  - `../../findings/archive/F-20260412-program-router-and-obligation-gap.md`
   - `../../findings/F-20260411-ui-dev-watcher-generated-churn.md`
 
 ## Changelog

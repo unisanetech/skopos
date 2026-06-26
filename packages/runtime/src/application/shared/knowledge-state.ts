@@ -30,6 +30,9 @@ import type {
   SkoposReadiness,
   SkoposSymbolReferenceArtifact,
   SkoposTokenTelemetryArtifact,
+  SkoposRepoUnderstandingSummaryArtifact,
+  SkoposFeatureInventoryArtifact,
+  SkoposImplementationHotspotsArtifact,
   SkoposWorkflowRunArtifact,
 } from '@skopos/model';
 
@@ -207,6 +210,15 @@ const buildSkoposKnowledgeIndex = async (
   const tokenTelemetry = await loadJsonArtifact<SkoposTokenTelemetryArtifact>(
     join(workspaceRoot, '.skopos', 'agent', 'token-telemetry.json'),
   );
+  const repoSummary = await loadJsonArtifact<SkoposRepoUnderstandingSummaryArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json'),
+  );
+  const featureInventory = await loadJsonArtifact<SkoposFeatureInventoryArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'feature-inventory.json'),
+  );
+  const hotspots = await loadJsonArtifact<SkoposImplementationHotspotsArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json'),
+  );
   const discussionIndex = await loadJsonArtifact<SkoposDiscussionIndexArtifact>(
     join(workspaceRoot, '.skopos', 'discussions', 'index.json'),
   );
@@ -383,6 +395,50 @@ const buildSkoposKnowledgeIndex = async (
         'Compact workflow resume packet for cross-thread continuation.',
         '.skopos/discussions/handoffs/latest-workflow.json',
         latestHandoff.updatedAt,
+      ),
+    );
+  }
+
+  const understandingEntries: Array<
+    [id: string, title: string, summary: string, path: string, artifact: { updatedAt?: string } | null]
+  > = [
+    [
+      'understanding-repo-summary',
+      'Repo understanding',
+      repoSummary?.summary ?? 'Compact synthesized project orientation.',
+      '.skopos/understanding/repo-summary.json',
+      repoSummary,
+    ],
+    [
+      'understanding-feature-inventory',
+      'Feature inventory',
+      featureInventory?.summary ?? 'Compact feature area inventory.',
+      '.skopos/understanding/feature-inventory.json',
+      featureInventory,
+    ],
+    [
+      'understanding-hotspots',
+      'Implementation hotspots',
+      hotspots?.summary ?? 'Compact implementation hotspot inventory.',
+      '.skopos/understanding/hotspots.json',
+      hotspots,
+    ],
+  ];
+
+  for (const [id, title, summary, path, artifact] of understandingEntries) {
+    if (!artifact) {
+      continue;
+    }
+
+    coreEntries.push(
+      buildIndexEntry(
+        workspaceRoot,
+        id,
+        'understanding-artifact',
+        title,
+        summary,
+        path,
+        artifact.updatedAt,
       ),
     );
   }

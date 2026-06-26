@@ -14,7 +14,9 @@ import type {
   SkoposProgramScopeRef,
   SkoposProgramStateArtifact,
   SkoposWorkflowQuestionArtifact,
+  SkoposWorkflowQuestionEntry,
   SkoposWorkflowRecommendationArtifact,
+  SkoposWorkflowRecommendationEntry,
 } from '@skopos/model';
 
 import { resolveMissionPath } from '../mission/mission.service.js';
@@ -87,6 +89,12 @@ export const buildSkoposProgramState = async ({
       currentMission,
     }),
   );
+  const workflowRecommendationItems = buildWorkflowRecommendationProgramItems({
+    workspaceRoot: resolvedWorkspaceRoot,
+    recommendations,
+    questions,
+    currentMission,
+  });
 
   const obligations = currentMissionItem && currentMission
     ? buildMissionProgramObligations({
@@ -95,7 +103,7 @@ export const buildSkoposProgramState = async ({
       })
     : [];
 
-  const items = [currentMissionItem, ...findingItems]
+  const items = [currentMissionItem, ...workflowRecommendationItems, ...findingItems]
     .filter((entry): entry is SkoposProgramItem => Boolean(entry))
     .map((item) =>
       item.id === currentMissionItem?.id
@@ -111,7 +119,8 @@ export const buildSkoposProgramState = async ({
 
   const sequence = buildProgramSequence({
     currentMissionItem,
-    findingItems,
+    queuedItems: [...workflowRecommendationItems, ...findingItems],
+    openProgramQuestions: questions ? getBlockingWorkflowQuestions(questions).map((entry) => entry.id) : [],
   });
   const doNowItem = items.find((item) => item.id === sequence.doNow);
   const doNextItem = items.find((item) => item.id === sequence.doNext);
@@ -297,6 +306,77 @@ const buildFindingProgramItem = ({
   };
 };
 
+const buildWorkflowRecommendationProgramItems = ({
+  workspaceRoot,
+  recommendations,
+  questions,
+  currentMission,
+}: {
+  workspaceRoot: string;
+  recommendations?: SkoposWorkflowRecommendationArtifact;
+  questions?: SkoposWorkflowQuestionArtifact;
+  currentMission?: SkoposMissionArtifact;
+}): SkoposProgramItem[] => {
+  if (!recommendations) {
+    return [];
+  }
+
+  return recommendations.entries
+    .filter((entry) => entry.status === 'open' && entry.blocking)
+    .map((entry) =>
+      buildWorkflowRecommendationProgramItem({
+        workspaceRoot,
+        recommendation: entry,
+        linkedQuestion: questions?.entries.find((question) => question.id === entry.linkedQuestionId),
+        currentMission,
+      }),
+    );
+};
+
+const buildWorkflowRecommendationProgramItem = ({
+  workspaceRoot,
+  recommendation,
+  linkedQuestion,
+  currentMission,
+}: {
+  workspaceRoot: string;
+  recommendation: SkoposWorkflowRecommendationEntry;
+  linkedQuestion?: SkoposWorkflowQuestionEntry;
+  currentMission?: SkoposMissionArtifact;
+}): SkoposProgramItem => {
+  const linkedToCurrentMission =
+    Boolean(currentMission) && recommendation.linkedMissionId === currentMission?.id;
+  const scope = linkedToCurrentMission && currentMission
+    ? toProgramScopeRef(currentMission.scope.scope)
+    : {
+        id: 'workspace',
+        kind: 'workspace',
+        title: 'skopos',
+        path: '.',
+      };
+
+  return {
+    id: `program-item.workflow-recommendation.${recommendation.id}`,
+    title: recommendation.title,
+    summary: recommendation.summary,
+    sourceKind: 'workflow-recommendation',
+    sourceRef: relative(workspaceRoot, join(workspaceRoot, '.skopos', 'recommendations.json')),
+    scope,
+    status: 'ready',
+    priority: toProgramPriority(recommendation.priority),
+    whyNow: linkedQuestion
+      ? `${linkedQuestion.whyItMatters} ${linkedQuestion.whatHappensAfterAnswer}`
+      : recommendation.reason,
+    dependencies: recommendation.linkedQuestionId ? [recommendation.linkedQuestionId] : [],
+    interruptsCurrentMission: linkedToCurrentMission,
+    recommendedDisposition: linkedToCurrentMission ? 'interrupt-current' : 'do-next',
+    linkedPlanId: recommendation.linkedPlanId,
+    linkedMissionId: recommendation.linkedMissionId,
+    recommendedCommand: recommendation.command,
+    obligationIds: [],
+  };
+};
+
 const buildMissionProgramObligations = ({
   mission,
   linkedItemId,
@@ -367,19 +447,22 @@ const buildMissionProgramObligations = ({
 
 const buildProgramSequence = ({
   currentMissionItem,
-  findingItems,
+  queuedItems,
+  openProgramQuestions,
 }: {
   currentMissionItem?: SkoposProgramItem;
-  findingItems: SkoposProgramItem[];
+  queuedItems: SkoposProgramItem[];
+  openProgramQuestions: string[];
 }): SkoposProgramStateArtifact['sequence'] => {
-  const interruptCandidate = findingItems.find(
+  const sortedQueuedItems = [...queuedItems].sort(sortProgramItems);
+  const interruptCandidate = sortedQueuedItems.find(
     (item) => item.recommendedDisposition === 'interrupt-current' && item.status === 'ready',
   );
-  const nextQueuedItem = findingItems.find(
+  const nextQueuedItem = sortedQueuedItems.find(
     (item) => item.recommendedDisposition === 'do-next' && item.status === 'ready',
   );
-  const readyItems = findingItems.filter((item) => item.status === 'ready');
-  const deferred = findingItems
+  const readyItems = sortedQueuedItems.filter((item) => item.status === 'ready');
+  const deferred = sortedQueuedItems
     .filter((item) => item.recommendedDisposition === 'defer' || item.status === 'deferred')
     .map((item) => item.id);
   const interruptRecommendation = buildInterruptRecommendation({
@@ -396,7 +479,7 @@ const buildProgramSequence = ({
       doNext: currentMissionItem.id,
       deferred,
       interruptRecommendation,
-      openProgramQuestions: [],
+      openProgramQuestions,
     };
   }
 
@@ -407,7 +490,7 @@ const buildProgramSequence = ({
       doNext: nextQueuedItem?.id,
       deferred,
       interruptRecommendation,
-      openProgramQuestions: [],
+      openProgramQuestions,
     };
   }
 
@@ -418,7 +501,7 @@ const buildProgramSequence = ({
     doNext: secondFinding?.id,
     deferred,
     interruptRecommendation,
-    openProgramQuestions: [],
+    openProgramQuestions,
   };
 };
 
@@ -525,6 +608,16 @@ const buildProgramRecommendedAction = ({
         actorId,
         goal: doNowItem.title,
       }),
+      linkedItemId: doNowItem.id,
+    };
+  }
+
+  if (doNowItem?.sourceKind === 'workflow-recommendation') {
+    return {
+      kind: 'run-workflow-recommendation',
+      title: doNowItem.title,
+      summary: doNowItem.summary,
+      command: doNowItem.recommendedCommand,
       linkedItemId: doNowItem.id,
     };
   }
@@ -795,6 +888,19 @@ const toProgramObligationKind = (
   }
 
   return 'runtime';
+};
+
+const toProgramPriority = (
+  priority: SkoposWorkflowRecommendationEntry['priority'],
+): SkoposProgramItem['priority'] => {
+  switch (priority) {
+    case 'high':
+      return 'high';
+    case 'medium':
+      return 'medium';
+    default:
+      return 'low';
+  }
 };
 
 const requiresWorkflowUiObligations = (mission: SkoposMissionArtifact): boolean =>

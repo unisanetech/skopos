@@ -5,6 +5,7 @@ import type {
   SkoposUiConsoleAdapterSupportView,
   SkoposUiConsoleMissionView,
   SkoposUiConsolePlanView,
+  SkoposUiConsoleUnderstandingView,
 } from '../../contracts/skopos-ui-console-state.js';
 import { Card } from '../../patterns/sections/content-primitives.js';
 import {
@@ -40,7 +41,7 @@ export function OverviewInspectorAside({
           { label: 'Attention', value: attentionLabel },
           { label: 'Program items', value: String(programItemCount) },
           { label: 'Open obligations', value: String(openObligationCount) },
-          { label: 'Proof pass rate', value: proofPassRate },
+          { label: 'Evidence pass rate', value: proofPassRate },
           { label: 'Generated', value: formatDateTime(generatedAt) },
         ]}
       />
@@ -56,7 +57,7 @@ export function MissionFocusCard({
   return (
     <Card
       title="Current focus"
-      description="Active missions currently driving this workspace."
+      description="The work Skopos is actively tracking right now."
     >
       {missions.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -101,7 +102,74 @@ export function MissionFocusCard({
       ) : (
         <EmptyMessage
           title="No active missions"
-          description="No unfinished mission is currently driving workspace work."
+          description="Skopos is not tracking an active work session yet. If files are changing, start or claim a mission so progress, decisions, and evidence stay connected."
+        />
+      )}
+    </Card>
+  );
+}
+
+export function OverviewUnderstandingCard({
+  understanding,
+}: {
+  understanding?: SkoposUiConsoleUnderstandingView;
+}): React.JSX.Element {
+  return (
+    <Card
+      title="Repo understanding"
+      description="A compact orientation layer for what this project appears to be and where to look first."
+    >
+      {understanding ? (
+        <div className="space-y-4">
+          <div>
+            <div className="flex flex-wrap gap-2">
+              <StatusPill value={understanding.summary.repoMode} tone="neutral" />
+              <StatusPill value={understanding.summary.archetype} tone="info" />
+              <StatusPill
+                value={`${understanding.featureInventory.features.length} areas`}
+                tone="neutral"
+              />
+            </div>
+            <p className="mt-3 text-[13px] leading-[1.5rem] text-[var(--text)]">
+              {understanding.summary.purpose}
+            </p>
+          </div>
+          <div className="border-y border-[var(--line)]">
+            {understanding.summary.mainAreas.slice(0, 5).map((area, index) => (
+              <div
+                key={`${area.title}-${area.path}`}
+                className={`py-3.5 ${index > 0 ? 'border-t border-[var(--line)]' : ''}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium tracking-[-0.01em]">{area.title}</p>
+                    <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
+                      {area.summary}
+                    </p>
+                  </div>
+                  <div className="grid gap-1.5 text-right text-[12px] text-[var(--muted)]">
+                    <span className="font-mono">{area.path}</span>
+                    <span>{area.confidence} confidence</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div>
+            <h3 className="text-[12px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+              First places to look
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {understanding.hotspots.hotspots.slice(0, 6).map((hotspot) => (
+                <StatusPill key={hotspot.id} value={hotspot.path} tone="neutral" />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <EmptyMessage
+          title="No repo understanding yet"
+          description="Run `skopos understand` after bootstrap to generate a compact project summary, feature inventory, and implementation hotspots."
         />
       )}
     </Card>
@@ -116,7 +184,7 @@ export function OverviewRecentPlansCard({
   return (
     <Card
       title="Recent plans"
-      description="Recent plan updates that still affect current work."
+      description="Planning notes for larger or riskier work that needs a clear path before editing."
     >
       {recentPlans.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -142,7 +210,7 @@ export function OverviewRecentPlansCard({
       ) : (
         <EmptyMessage
           title="No recent plans"
-          description="Recent plan updates will appear here once plans are available."
+          description="Small tasks may not need a saved plan. Bigger changes will show here once Skopos creates or links a plan."
         />
       )}
     </Card>
@@ -157,7 +225,7 @@ export function OverviewAdapterSupportCard({
   return (
     <Card
       title="Adapter support"
-      description="Current host coverage for discussion-memory continuity and compact resume context."
+      description="How well connected coding tools can resume Skopos context without losing the thread."
     >
       {adapterSupport && adapterSupport.adapters.length > 0 ? (
         <div className="border-y border-[var(--line)]">

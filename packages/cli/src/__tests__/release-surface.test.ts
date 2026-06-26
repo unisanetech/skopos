@@ -33,6 +33,9 @@ const CANDIDATE_PACKAGES = [
   '@skopos/mcp',
 ] as const;
 
+const PUBLIC_BUNDLED_CLI_PACKAGE = '@skopos/cli';
+const FIRST_PUBLIC_CLI_VERSION = '0.1.0';
+
 describe('skopos release surface contract', () => {
   it('declares machine-readable surface metadata for every package', async () => {
     for (const packageName of PACKAGE_NAMES) {
@@ -42,19 +45,60 @@ describe('skopos release surface contract', () => {
         expect.objectContaining({
           surface: expect.any(String),
           releaseTarget: expect.any(String),
-          publishPhase: 'incubation',
+          publishPhase: expect.any(String),
         }),
       );
     }
   });
 
-  it('keeps all packages private during incubation', async () => {
+  it('keeps only the bundled CLI package public while internal packages remain private', async () => {
     for (const packageName of PACKAGE_NAMES) {
       const packageJson = await loadPackageJson(packageName);
 
-      expect(packageJson.private, `${packageName} must stay private during incubation`).toBe(true);
+      if (packageName === PUBLIC_BUNDLED_CLI_PACKAGE) {
+        expect(packageJson.private, `${packageName} must be publishable for npx/npm exec`).not.toBe(true);
+        expect(packageJson.skopos?.publishPhase).toBe('bundled-cli-candidate');
+        expect(packageJson.publishConfig).toEqual(
+          expect.objectContaining({
+            access: 'public',
+            tag: 'next',
+          }),
+        );
+        expect(packageJson.license).toBe('Apache-2.0');
+        expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
+        continue;
+      }
+
+      expect(packageJson.private, `${packageName} must stay private until separately released`).toBe(true);
       expect(packageJson.skopos?.publishPhase).toBe('incubation');
     }
+  });
+
+  it('uses synchronized 0.1.x package versions for the first bundled CLI candidate', async () => {
+    const rootPackageJson = await loadRootPackageJson();
+
+    expect(rootPackageJson.version).toBe(FIRST_PUBLIC_CLI_VERSION);
+
+    for (const packageName of PACKAGE_NAMES) {
+      const packageJson = await loadPackageJson(packageName);
+
+      expect(packageJson.version, `${packageName} should stay version-aligned for the first release`).toBe(
+        FIRST_PUBLIC_CLI_VERSION,
+      );
+    }
+  });
+
+  it('publishes the first public CLI as next instead of latest', async () => {
+    const cliPackage = await loadPackageJson(PUBLIC_BUNDLED_CLI_PACKAGE);
+
+    expect(cliPackage.version).toBe(FIRST_PUBLIC_CLI_VERSION);
+    expect(cliPackage.version.startsWith('0.')).toBe(true);
+    expect(cliPackage.publishConfig).toEqual(
+      expect.objectContaining({
+        access: 'public',
+        tag: 'next',
+      }),
+    );
   });
 
   it('marks only the intended sdk and tool packages as release candidates', async () => {
@@ -92,7 +136,14 @@ describe('skopos release surface contract', () => {
 
 interface PackageJsonShape {
   name: string;
+  version: string;
+  license?: string;
   private?: boolean;
+  files?: string[];
+  publishConfig?: {
+    access?: string;
+    tag?: string;
+  };
   skopos?: {
     surface?: string;
     releaseTarget?: string;
@@ -104,5 +155,10 @@ const loadPackageJson = async (packageName: string): Promise<PackageJsonShape> =
   const packageDirName = packageName.replace('@skopos/', '');
   const packageJsonPath = `${skoposRoot}/packages/${packageDirName}/package.json`;
   const contents = await readFile(packageJsonPath, 'utf8');
+  return JSON.parse(contents) as PackageJsonShape;
+};
+
+const loadRootPackageJson = async (): Promise<PackageJsonShape> => {
+  const contents = await readFile(`${skoposRoot}/package.json`, 'utf8');
   return JSON.parse(contents) as PackageJsonShape;
 };

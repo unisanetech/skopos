@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.stack.async-work.drift-rules",
+  "packId": "stack.async-work",
+  "updatedAt": "2026-06-24",
+  "rules": [
+    {
+      "id": "stack.async-work.unjustified-queue-dependency",
+      "severity": "should",
+      "target": "package manifests and stack decisions",
+      "strategy": "manifest-and-doc-scan",
+      "evidence": [
+        "queue or Redis dependency appears without a matching stack decision",
+        "background job package exists but no async work owner is documented"
+      ],
+      "remediation": "Record why the queue/cache dependency is needed and which simpler options were rejected."
+    },
+    {
+      "id": "stack.async-work.missing-retry-or-idempotency",
+      "severity": "must",
+      "target": "async job handlers",
+      "strategy": "semantic-later",
+      "evidence": [
+        "retryable external side effect has no idempotency key",
+        "worker catches errors without retry or failed-job behavior"
+      ],
+      "remediation": "Add idempotency, retry, and failure behavior before treating the async path as durable."
+    },
+    {
+      "id": "stack.async-work.operational-contract-missing",
+      "severity": "must",
+      "target": "docs and AGENTS.md",
+      "strategy": "docs-scan",
+      "evidence": [
+        "worker or scheduler exists without local-dev command",
+        "Redis, queue, or workflow dependency lacks production ownership notes"
+      ],
+      "remediation": "Document local development, production ownership, failure handling, and proof gates."
+    }
+  ]
+}

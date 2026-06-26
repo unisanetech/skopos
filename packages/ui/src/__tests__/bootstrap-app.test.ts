@@ -62,10 +62,10 @@ describe('bootstrapSkoposUiApp', () => {
       const { bootstrapSkoposUiApp } = await import('../app/bootstrap.tsx');
       const root = await bootstrapSkoposUiApp(document.getElementById('root')!);
       await vi.waitFor(() => {
-        expect(document.getElementById('root')!.innerHTML).toContain('Workspace overview');
+        expect(document.getElementById('root')!.innerHTML).toContain('Current Work');
       }, { timeout: 10_000 });
 
-      expect(document.getElementById('root')!.innerHTML).toContain('Workspace overview');
+      expect(document.getElementById('root')!.innerHTML).toContain('Current Work');
       expect(document.getElementById('root')!.innerHTML).toContain('Current focus');
       expect(document.getElementById('root')!.innerHTML).toContain(
         'Search docs, scopes, missions, plans...',
@@ -134,10 +134,10 @@ describe('bootstrapSkoposUiApp', () => {
       const { bootstrapSkoposUiApp } = await import('../app/bootstrap.tsx');
       const root = await bootstrapSkoposUiApp(document.getElementById('root')!);
       await vi.waitFor(() => {
-        expect(document.getElementById('root')!.innerHTML).toContain('Workspace overview');
+        expect(document.getElementById('root')!.innerHTML).toContain('Current Work');
       }, { timeout: 10_000 });
 
-      expect(document.getElementById('root')!.innerHTML).toContain('Workspace overview');
+      expect(document.getElementById('root')!.innerHTML).toContain('Current Work');
       expect(document.getElementById('root')!.innerHTML).toContain(
         'Search docs, scopes, missions, plans...',
       );
@@ -200,11 +200,157 @@ describe('bootstrapSkoposUiApp', () => {
       const { bootstrapSkoposUiApp } = await import('../app/bootstrap.tsx');
       const root = await bootstrapSkoposUiApp(document.getElementById('root')!);
       await vi.waitFor(() => {
-        expect(document.getElementById('root')!.innerHTML).toContain('Discussion memory');
+        expect(document.getElementById('root')!.innerHTML).toContain('What did we agree in chat?');
       }, { timeout: 10_000 });
 
-      expect(document.getElementById('root')!.innerHTML).toContain('Discussion history');
+      expect(document.getElementById('root')!.innerHTML).toContain('Saved discussion context');
       expect(window.location.hash).toBe('#/discussion');
+
+      root.unmount();
+      await settleBrowserWork(dom);
+    } finally {
+      dom.window.close();
+      globalThis.window = previousWindow;
+      globalThis.document = previousDocument;
+      globalThis.history = previousHistory;
+      globalThis.location = previousLocation;
+      globalThis.self = previousSelf;
+      Object.defineProperty(globalThis, 'navigator', {
+        value: previousNavigator,
+        configurable: true,
+      });
+    }
+  }, 120_000);
+
+  it('renders the routed rules page when the hash already targets /rules', async () => {
+    const workspaceRoot = await createConsoleWorkspace();
+    const buildResult = await buildSkoposUiConsoleApp({
+      cwd: workspaceRoot,
+    });
+
+    const dom = new JSDOM(
+      '<!doctype html><html><body><div id="root"></div><script id="skopos-ui-state" type="application/json"></script></body></html>',
+      {
+        url: 'http://127.0.0.1:4173/#/rules',
+      },
+    );
+
+    const previousWindow = globalThis.window;
+    const previousDocument = globalThis.document;
+    const previousHistory = globalThis.history;
+    const previousLocation = globalThis.location;
+    const previousSelf = globalThis.self;
+    const previousNavigator = globalThis.navigator;
+
+    globalThis.window = dom.window as typeof globalThis.window;
+    globalThis.document = dom.window.document as typeof globalThis.document;
+    globalThis.history = dom.window.history as typeof globalThis.history;
+    globalThis.location = dom.window.location as typeof globalThis.location;
+    globalThis.self = dom.window as typeof globalThis.self;
+    Object.defineProperty(globalThis, 'navigator', {
+      value: dom.window.navigator,
+      configurable: true,
+    });
+
+    try {
+      dom.window.scrollTo = () => undefined;
+      document.getElementById('skopos-ui-state')!.textContent = await readFile(
+        buildResult.statePath,
+        'utf8',
+      );
+
+      const { bootstrapSkoposUiApp } = await import('../app/bootstrap.tsx');
+      const root = await bootstrapSkoposUiApp(document.getElementById('root')!);
+      await vi.waitFor(() => {
+        expect(document.getElementById('root')!.innerHTML).toContain('Which project rules are active?');
+      }, { timeout: 10_000 });
+
+      expect(document.getElementById('root')!.innerHTML).toContain('Accepted rule packs');
+      expect(document.getElementById('root')!.innerHTML).toContain('Mid-App Architecture');
+      expect(document.getElementById('root')!.innerHTML).toContain('Open details');
+      expect(window.location.hash).toBe('#/rules');
+
+      root.unmount();
+      await settleBrowserWork(dom);
+    } finally {
+      dom.window.close();
+      globalThis.window = previousWindow;
+      globalThis.document = previousDocument;
+      globalThis.history = previousHistory;
+      globalThis.location = previousLocation;
+      globalThis.self = previousSelf;
+      Object.defineProperty(globalThis, 'navigator', {
+        value: previousNavigator,
+        configurable: true,
+      });
+    }
+  }, 120_000);
+
+  it('renders an individual policy pack detail page with structure guidance', async () => {
+    const workspaceRoot = await createConsoleWorkspace();
+    const buildResult = await buildSkoposUiConsoleApp({
+      cwd: workspaceRoot,
+    });
+
+    const dom = new JSDOM(
+      '<!doctype html><html><body><div id="root"></div><script id="skopos-ui-state" type="application/json"></script></body></html>',
+      {
+        url: 'http://127.0.0.1:4173/#/rules/packs/architecture.mid-app',
+      },
+    );
+
+    const previousWindow = globalThis.window;
+    const previousDocument = globalThis.document;
+    const previousHistory = globalThis.history;
+    const previousLocation = globalThis.location;
+    const previousSelf = globalThis.self;
+    const previousNavigator = globalThis.navigator;
+
+    globalThis.window = dom.window as typeof globalThis.window;
+    globalThis.document = dom.window.document as typeof globalThis.document;
+    globalThis.history = dom.window.history as typeof globalThis.history;
+    globalThis.location = dom.window.location as typeof globalThis.location;
+    globalThis.self = dom.window as typeof globalThis.self;
+    Object.defineProperty(globalThis, 'navigator', {
+      value: dom.window.navigator,
+      configurable: true,
+    });
+
+    try {
+      dom.window.scrollTo = () => undefined;
+      document.getElementById('skopos-ui-state')!.textContent = await readFile(
+        buildResult.statePath,
+        'utf8',
+      );
+
+      const { bootstrapSkoposUiApp } = await import('../app/bootstrap.tsx');
+      const root = await bootstrapSkoposUiApp(document.getElementById('root')!);
+      await vi.waitFor(() => {
+        expect(document.getElementById('root')!.innerHTML).toContain('Mid-App Architecture');
+      }, { timeout: 10_000 });
+
+      expect(document.getElementById('root')!.innerHTML).toContain('Structure tree and role mapping');
+      expect(document.getElementById('root')!.innerHTML).toContain('Saved local mapping');
+      expect(document.getElementById('root')!.innerHTML).toContain('.skopos/policies/role-mapping.json');
+      expect(document.getElementById('root')!.innerHTML).toContain('Saved local role mapping');
+      expect(document.getElementById('root')!.innerHTML).toContain('Role mapping decisions');
+      expect(document.getElementById('root')!.innerHTML).toContain('Confirmed and ignored rows are saved project decisions');
+      expect(document.getElementById('root')!.innerHTML).toContain('Decision state');
+      expect(document.getElementById('root')!.innerHTML).toContain('Matched local paths');
+      expect(document.getElementById('root')!.innerHTML).toContain('Mapped roles');
+      expect(document.getElementById('root')!.innerHTML).toContain('Make this explicit');
+      expect(document.getElementById('root')!.innerHTML).toContain('Copy');
+      expect(document.getElementById('root')!.innerHTML).toContain('skopos policies mappings confirm');
+      expect(document.getElementById('root')!.innerHTML).toContain('skopos policies mappings ignore');
+      expect(document.getElementById('root')!.innerHTML).toContain('Architecture contract');
+      expect(document.getElementById('root')!.innerHTML).toContain('features / modules / domains');
+      expect(document.getElementById('root')!.innerHTML).toContain('src/use-cases');
+      expect(document.getElementById('root')!.innerHTML).toContain('src/gateways');
+      expect(document.getElementById('root')!.innerHTML).toContain('Found in this project');
+      expect(document.getElementById('root')!.innerHTML).toContain('Matched aliases');
+      expect(document.getElementById('root')!.innerHTML).toContain('Dependency direction');
+      expect(document.getElementById('root')!.innerHTML).toContain('Before editing');
+      expect(window.location.hash).toBe('#/rules/packs/architecture.mid-app');
 
       root.unmount();
       await settleBrowserWork(dom);
@@ -297,6 +443,13 @@ const createConsoleWorkspace = async (): Promise<string> => {
   await mkdir(join(workspaceRoot, '.skopos', 'missions'), { recursive: true });
   await mkdir(join(workspaceRoot, '.skopos', 'runs'), { recursive: true });
   await mkdir(join(workspaceRoot, '.skopos', 'proof'), { recursive: true });
+  await mkdir(join(workspaceRoot, '.skopos', 'policies'), { recursive: true });
+  await mkdir(join(workspaceRoot, '.skopos', 'drift'), { recursive: true });
+  await mkdir(join(workspaceRoot, 'policy-packs', 'architecture', 'mid-app'), { recursive: true });
+  await mkdir(join(workspaceRoot, 'src', 'routes'), { recursive: true });
+  await mkdir(join(workspaceRoot, 'src', 'use-cases'), { recursive: true });
+  await mkdir(join(workspaceRoot, 'src', 'gateways'), { recursive: true });
+  await mkdir(join(workspaceRoot, 'src', 'presenters'), { recursive: true });
   await mkdir(join(workspaceRoot, 'docs', 'generated', 'skopos'), { recursive: true });
   await mkdir(join(workspaceRoot, '.cursor', 'rules'), { recursive: true });
   await mkdir(join(workspaceRoot, '.github'), { recursive: true });
@@ -533,6 +686,227 @@ security:
       status: 'pass',
       summary: 'Stable.',
     },
+  });
+  await writeJson(workspaceRoot, '.skopos/policies/resolved.json', {
+    schemaVersion: 1,
+    id: 'resolved-policy',
+    type: 'resolved-policy',
+    status: 'generated',
+    authority: 'generated',
+    summary: 'Accepted policy resolves 1 pack with 1 active rule.',
+    updatedAt: '2026-04-10T00:00:00.000Z',
+    generatedAt: '2026-04-10T00:00:00.000Z',
+    workspaceRoot,
+    projectLifecycle: 'established-brownfield',
+    defaultExecutionLane: 'normal',
+    recommendedExecutionLanes: [
+      {
+        lane: 'normal',
+        summary: 'Use for ordinary feature and maintenance work.',
+        triggers: ['bounded feature work'],
+        defaultGates: ['typecheck'],
+      },
+    ],
+    acceptedPacks: [
+      {
+        packId: 'architecture.mid-app',
+        version: '0.1.0',
+        acceptedAt: '2026-04-10T00:00:00.000Z',
+        acceptedBy: 'agent-ui',
+        reason: 'Use readable architecture rules for the UI fixture.',
+        source: 'manual',
+      },
+    ],
+    overrides: [],
+    activeRules: [
+      {
+        id: 'architecture.mid-app.feature-owns-product-behavior',
+        title: 'Feature owns product behavior',
+        severity: 'must',
+        summary: 'A feature should own its user workflow and local UI.',
+        appliesTo: ['features', 'screens'],
+      },
+    ],
+    sourcePaths: ['policy-packs/architecture/mid-app/pack.json'],
+    generatedDocPaths: [],
+  });
+  await writeJson(workspaceRoot, '.skopos/policies/recommendations.json', {
+    schemaVersion: 1,
+    id: 'policy-recommendations',
+    type: 'policy-recommendations',
+    status: 'generated',
+    authority: 'generated',
+    summary: '1 policy recommendation is available.',
+    updatedAt: '2026-04-10T00:00:00.000Z',
+    generatedAt: '2026-04-10T00:00:00.000Z',
+    workspaceRoot,
+    projectLifecycle: 'established-brownfield',
+    defaultExecutionLane: 'normal',
+    recommendedExecutionLanes: [],
+    recommendations: [
+      {
+        packId: 'architecture.mid-app',
+        version: '0.1.0',
+        family: 'architecture',
+        variant: 'mid-app',
+        displayName: 'Mid-App Architecture',
+        confidence: 'high',
+        recommendation: 'apply',
+        reason: 'The fixture behaves like a mid-sized app.',
+        plainLanguageSummary: 'Keep app wiring, feature code, and shared utilities easy to understand.',
+        accepted: true,
+        signals: [],
+        antiSignals: [],
+        sourcePath: 'policy-packs/architecture/mid-app/pack.json',
+      },
+    ],
+  });
+  await writeJson(workspaceRoot, '.skopos/policies/role-mapping.json', {
+    schemaVersion: 1,
+    id: 'policy-role-mapping',
+    type: 'policy-role-mapping',
+    status: 'generated',
+    authority: 'generated',
+    summary: 'Mapped accepted policy roles to local project paths.',
+    updatedAt: '2026-04-10T00:00:00.000Z',
+    generatedAt: '2026-04-10T00:00:00.000Z',
+    workspaceRoot,
+    resolvedPolicyPath: '.skopos/policies/resolved.json',
+    mappings: [
+      {
+        packId: 'architecture.mid-app',
+        sourcePath: 'policy-packs/architecture/mid-app/pack.json',
+        role: 'features / modules / domains',
+        label: 'Product features',
+        required: true,
+        status: 'inferred',
+        confidence: 'high',
+        checkedAliases: ['src/features', 'src/use-cases'],
+        matchedAliases: ['src/use-cases'],
+        matchedPaths: ['src/use-cases'],
+        reason: 'Matched Product features through 1 local alias.',
+      },
+    ],
+  });
+  await writeJson(workspaceRoot, 'policy-packs/architecture/mid-app/pack.json', {
+    schemaVersion: 1,
+    id: 'policy-pack.architecture.mid-app',
+    type: 'policy-pack',
+    status: 'active',
+    authority: 'canonical',
+    summary: 'Architecture policy for mid-sized product apps.',
+    updatedAt: '2026-04-10T00:00:00.000Z',
+    packId: 'architecture.mid-app',
+    family: 'architecture',
+    variant: 'mid-app',
+    version: '0.1.0',
+    displayName: 'Mid-App Architecture',
+    description: 'Architecture guidance for projects with several features and shared runtime boundaries.',
+    plainLanguageSummary: 'Keep app wiring, feature code, and shared utilities easy to understand.',
+    bestFor: ['Several feature areas', 'Shared API or runtime code'],
+    notFor: ['One-off scripts'],
+    userQuestions: ['Where does each feature own behavior, UI, and tests?'],
+    qualityBar: ['Agents can explain what to do differently before editing code.'],
+    agentUse: ['Check the folder tree before moving feature code.'],
+    structureTree: {
+      title: 'Mid-app structure tree',
+      summary: 'A clear app shape for runtime wiring, product behavior, infrastructure, and UI roles. These are roles, not required folder names.',
+      rootLabel: 'source root',
+      nodes: [
+        {
+          path: 'app / composition root',
+          label: 'App shell and composition root',
+          responsibility: 'Owns route setup and dependency assembly.',
+          required: true,
+          matchPaths: ['src/app', 'src/routes'],
+        },
+        {
+          path: 'features / modules / domains',
+          label: 'Product features',
+          responsibility: 'Owns user workflows and local UI.',
+          required: true,
+          matchPaths: ['src/features', 'src/use-cases'],
+        },
+        {
+          path: 'infrastructure / adapters',
+          label: 'Infrastructure and adapters',
+          responsibility: 'Owns external service and vendor boundaries.',
+          required: true,
+          matchPaths: ['src/infrastructure', 'src/gateways'],
+        },
+        {
+          path: 'ui / components / design system',
+          label: 'Reusable UI primitives',
+          responsibility: 'Owns reusable UI and presentation primitives.',
+          required: false,
+          matchPaths: ['src/ui', 'src/presenters'],
+        },
+      ],
+    },
+    recommendedLayers: ['composition-root', 'features', 'application', 'domain', 'infrastructure', 'shared'],
+    dependencyDirection: {
+      'composition-root': { mayImport: ['features', 'infrastructure', 'shared'] },
+      features: { mayImport: ['application', 'domain', 'infrastructure', 'shared'] },
+      infrastructure: { mayImport: ['application', 'domain', 'shared'] },
+      shared: { mayImport: [] },
+    },
+    forbiddenImports: [
+      {
+        from: 'domain',
+        to: ['composition-root', 'infrastructure', 'ui'],
+      },
+    ],
+    gates: {
+      required: ['pnpm typecheck'],
+      recommended: ['pnpm test', 'pnpm build'],
+    },
+    agentPrompts: {
+      beforeEditing: ['Identify the current architecture layers before adding files.'],
+      beforeDone: ['Confirm no second pattern was introduced.'],
+    },
+    projectLifecycles: ['established-brownfield'],
+    appliesWhen: [
+      {
+        id: 'signal.multiple-product-features',
+        summary: 'The project has several feature areas.',
+        confidence: 'high',
+        evidence: ['Multiple feature, route, or domain directories'],
+      },
+    ],
+    avoidWhen: [],
+    rules: [
+      {
+        id: 'architecture.mid-app.feature-owns-product-behavior',
+        title: 'Feature owns product behavior',
+        severity: 'must',
+        summary: 'A feature should own its user workflow and local UI.',
+        appliesTo: ['features', 'screens'],
+      },
+    ],
+    requiredDocs: [],
+    generatedArtifacts: ['.skopos/policies/resolved.json'],
+    driftCheckIds: ['architecture.mid-app.business-logic-in-shared-helper'],
+    proofFixtureIds: ['architecture.mid-app.good-feature-boundary'],
+  });
+  await writeJson(workspaceRoot, '.skopos/drift/report.json', {
+    schemaVersion: 1,
+    id: 'drift-report',
+    type: 'drift-report',
+    status: 'generated',
+    authority: 'generated',
+    summary: 'No open accepted-policy drift was detected.',
+    updatedAt: '2026-04-10T00:00:00.000Z',
+    generatedAt: '2026-04-10T00:00:00.000Z',
+    workspaceRoot,
+    resolvedPolicyPath: '.skopos/policies/resolved.json',
+    counts: {
+      openMustCount: 0,
+      openShouldCount: 0,
+      advisoryCount: 0,
+      suppressedCount: 0,
+      resolvedCount: 0,
+    },
+    findings: [],
   });
   await writeJson(workspaceRoot, '.skopos/plans/plan-ui.json', {
     schemaVersion: 1,

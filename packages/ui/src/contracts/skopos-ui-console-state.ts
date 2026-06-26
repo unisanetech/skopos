@@ -1,15 +1,25 @@
 import type {
   SkoposContentIndexArtifact,
+  SkoposDriftReportArtifact,
   SkoposDiscussionCheckpointArtifact,
   SkoposDiscussionHandoffArtifact,
   SkoposEnforcementProfileArtifact,
   SkoposMissionArtifact,
   SkoposPlanArtifact,
+  SkoposPolicyPackManifest,
+  SkoposPolicyOverrideArtifact,
+  SkoposPolicyRecommendationArtifact,
+  SkoposPolicyRoleMappingArtifact,
+  SkoposRepoUnderstandingSummaryArtifact,
+  SkoposFeatureInventoryArtifact,
+  SkoposImplementationHotspotsArtifact,
+  SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopeLite,
   SkoposToolAdapterSummary,
   SkoposTrustReport,
+  SkoposWorkflowQuestionArtifact,
 } from '@skopos/model';
 
 import type { SkoposUiActivityViewsResult } from './skopos-ui-activity-view.js';
@@ -151,6 +161,62 @@ export interface SkoposUiConsoleAdapterSupportView {
   adapters: SkoposToolAdapterSummary[];
 }
 
+export interface SkoposUiConsolePolicyStructureMatchNode {
+  path: string;
+  label: string;
+  responsibility: string;
+  required: boolean;
+  checkedPatterns: string[];
+  matchedPatterns: string[];
+  matchedPaths: string[];
+  status: 'matched' | 'missing' | 'optional';
+  children: SkoposUiConsolePolicyStructureMatchNode[];
+}
+
+export interface SkoposUiConsolePolicyStructureMatch {
+  title: string;
+  summary: string;
+  rootLabel: string;
+  nodes: SkoposUiConsolePolicyStructureMatchNode[];
+}
+
+export interface SkoposUiConsolePolicyReviewView {
+  resolvedPolicy?: {
+    artifactPath: string;
+    policy: SkoposResolvedPolicyArtifact;
+  };
+  recommendations?: {
+    artifactPath: string;
+    recommendations: SkoposPolicyRecommendationArtifact;
+  };
+  overrides?: {
+    artifactPath: string;
+    overrides: SkoposPolicyOverrideArtifact;
+  };
+  roleMapping?: {
+    artifactPath: string;
+    mapping: SkoposPolicyRoleMappingArtifact;
+  };
+  driftReport?: {
+    artifactPath: string;
+    report: SkoposDriftReportArtifact;
+  };
+  packManifests: Array<{
+    artifactPath: string;
+    manifest: SkoposPolicyPackManifest;
+    structureMatch?: SkoposUiConsolePolicyStructureMatch;
+  }>;
+}
+
+export interface SkoposUiConsoleUnderstandingView {
+  summaryPath: string;
+  featureInventoryPath: string;
+  hotspotsPath: string;
+  summary: SkoposRepoUnderstandingSummaryArtifact;
+  featureInventory: SkoposFeatureInventoryArtifact;
+  hotspots: SkoposImplementationHotspotsArtifact;
+}
+
 export interface SkoposUiConsoleState {
   workspaceRoot: string;
   workspaceLabel: string;
@@ -159,6 +225,7 @@ export interface SkoposUiConsoleState {
   artifactCounts: SkoposUiArtifactCounts;
   trustReport: SkoposTrustReport;
   programState?: SkoposProgramStateArtifact;
+  workflowQuestions?: SkoposWorkflowQuestionArtifact;
   indexArtifact?: SkoposContentIndexArtifact;
   proofReport?: SkoposProofReportArtifact;
   activity: SkoposUiActivityViewsResult;
@@ -167,6 +234,8 @@ export interface SkoposUiConsoleState {
   missions: SkoposUiConsoleMissionView[];
   scopes: SkoposUiConsoleScopeView[];
   adapterSupport?: SkoposUiConsoleAdapterSupportView;
+  policyReview?: SkoposUiConsolePolicyReviewView;
+  understanding?: SkoposUiConsoleUnderstandingView;
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   discussionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
   docsLinks: SkoposUiConsoleLink[];

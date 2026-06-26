@@ -9,7 +9,7 @@ Use this plan to shape the Skopos system UI, with a pilot-grade human console as
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-06-24`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -18,6 +18,7 @@ Use this plan to shape the Skopos system UI, with a pilot-grade human console as
   - `proof-phase-plan.md`
   - `roadmap.md`
   - `implementation-checklist.md`
+  - `human-guidance-and-developer-experience-plan.md`
   - `../decisions/008-system-ui-routed-app-stack.md`
   - `../decisions/009-system-ui-app-shell-and-layout-doctrine.md`
   - `../decisions/010-system-ui-information-hierarchy-and-signal-placement.md`
@@ -31,12 +32,28 @@ Use this plan to shape the Skopos system UI, with a pilot-grade human console as
   - `../decisions/022-program-router-sequencing-and-obligation-contract.md`
   - `../decisions/023-supervision-cost-and-workflow-weight-discipline.md`
   - `../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md`
+  - `../decisions/030-human-guidance-and-developer-experience-contract.md`
   - `../scopes/ui.md`
   - `../architecture/runtime-model.md`
   - `../architecture/trust-and-closure-model.md`
 
 ## Changelog
 
+- `2026-06-24`: Added a saved local role-mapping review card to rule-pack detail pages so users can inspect role status, confidence, matched paths, and next steps without opening raw JSON.
+- `2026-06-24`: Updated rule-pack detail UI to explain brownfield-safe role mapping, including matched role counts, missing-role guidance, and matched aliases for projects with good but different folder names.
+- `2026-06-24`: Added dedicated rule-pack detail routes so each accepted pack can explain its structure tree, matched project paths, dependency direction, forbidden imports, gates, and before-editing/before-done prompts without crowding the Rules dashboard.
+- `2026-06-24`: Expanded the Rules route with full pack-detail cards, including best-fit guidance, not-for guidance, user questions, quality bars, agent-use notes, source paths, and codebase-verification signals such as structure/tree evidence.
+- `2026-06-24`: Added the first Rules review route so accepted rule packs, active policy, drift, local exceptions, and work-lane guidance are visible in plain language instead of only through CLI artifacts.
+- `2026-06-24`: Cleaned up remaining shared support copy across search, readiness, program context, timeline, and inspector empty states so the routed console uses developer-facing language instead of internal system terms.
+- `2026-06-24`: Reworked Discussion route copy and first-card guidance so the page explains handoffs, checkpoints, accepted direction, and open questions in normal developer language.
+- `2026-06-24`: Added first-card guidance to Missions, Plans, and plan detail so work surfaces explain tracked sessions, saved plans, next steps, and links between planning and closure evidence before showing lists.
+- `2026-06-24`: Added human guidance cards to Readiness, Evidence, and Activity so validation pages lead with practical interpretation and next-step advice before diagnostic details.
+- `2026-06-24`: Added route-level guidance to Docs, Decisions, and Issues so each knowledge page explains how a developer should use that memory surface before showing document lists.
+- `2026-06-24`: Reworked the Current Work overview attention area into a plain-language Next Action card that explains the recommended next move, current tracked work, and before-finishing obligations without exposing program-router jargon first.
+- `2026-06-24`: Implemented the human-ready orientation pass for the routed console, so the sidebar now leads with Current Work, Work, Quality, Knowledge, and Project Map while the former Trust, Proof, Findings, and Scopes labels are presented as Readiness, Evidence, Issues, and Project Map in user-facing UI.
+- `2026-06-24`: Reworked Project Map detail copy so package pages explain what belongs there, what does not, common work, useful checks, and tied missions/plans before advanced graph metadata.
+- `2026-06-24`: Implemented the first mission-detail human guidance slice, so the routed console now loads workflow questions into UI state and shows mission progress, phase, current focus, decisions, findings, blockers, proof needed, and guided open questions before raw mission detail.
+- `2026-06-24`: Added the human guidance and developer experience contract to the UI plan so routed surfaces must lead with plain-language status, next action, blockers, questions, progress, and proof instead of raw artifact-first machine state.
 - `2026-04-13`: Simplified the discussion product surface again, so the routed console keeps `Discussion` for compiled handoff plus checkpoint history but no longer auto-syncs Codex sessions during UI build or renders raw conversation journals in the normal app flow.
 - `2026-04-13`: Promoted `Discussion` into the sidebar under `Work`, so the routed console now treats checkpoint and handoff history as a first-class execution surface instead of a search-only route once the embedded overview and mission-detail slices proved useful.
 - `2026-04-13`: Refined the search-first discussion route so checkpoint cards now surface promotion trigger and semantic change-kind badges, making `/discussion` useful for reasoning-history inspection instead of only mirroring the latest handoff summary.
@@ -150,6 +167,23 @@ Reference decision:
 5. Keep `.skopos/**`, checked-in docs, and workflow evidence authoritative; the UI is a projection layer on top.
 6. Treat doc-owned diagrams and compiled graphs as separate layers: diagrams explain, graphs remain canonical structural artifacts.
 7. Add workflow-state UX only when it lowers supervision cost more than it adds product ceremony.
+8. Lead with human guidance: status, risk, current attention, next step, blockers, questions, progress, and proof before raw artifact detail.
+
+## Human Guidance UX Contract
+
+Every primary route should answer the user’s practical questions before showing diagnostic detail:
+
+| Route family | Must answer |
+| --- | --- |
+| `overview` | What needs attention now, why it matters, and what to do next. |
+| `mission detail` | What is being worked on, how far along it is, what is blocked, and what proof remains. |
+| `trust` | Whether the work can be trusted, what needs review, and what blocks closure. |
+| `rules` | Which project rules are active, what each accepted pack means, how to verify pack fit against the real codebase, where accepted policy drift exists, and what local exceptions have been approved. |
+| `proof` | What was checked, what passed, what failed, and what evidence still matters. |
+| `plans` and `workpacks` | Current phase, approximate progress, next action, open questions, decisions, findings, and closure proof. |
+| `docs`, `decisions`, and `findings` | Why the document matters and how it affects current work. |
+
+Raw ids, file handles, JSON snippets, and artifact paths should stay available, but they should not be the first visible explanation for normal users.
 
 ## Next Workflow-State Adoption Batch
 
@@ -722,7 +756,8 @@ Transition in phases:
 6. the second cleanup batch now lands on `mission detail`, `proof`, `scopes`, and routed knowledge detail surfaces, so those routes separate primary review content from inspector-only context
 7. the list-review cleanup batch now lands on `missions`, `plans`, `decisions`, and `findings`, so the remaining work shifts from route cleanup to inspector consistency, filters, and deeper evidence/comparison panels
 8. route-owned filters now exist on the key list routes, so the next work shifts from filter plumbing toward deeper inspector consistency and evidence/comparison panels
-9. keep the static renderer as fallback until the routed console is pilot-ready enough to replace it operationally
+9. mission detail now has the first human-guidance card for progress, current focus, blockers, decisions, findings, proof, and open questions
+10. keep the static renderer as fallback until the routed console is pilot-ready enough to replace it operationally
 
 ## Experience Standard
 

@@ -19,6 +19,8 @@ const CODEX_GENERATED_FILES = [
   '.skopos/tooling/codex/codex-discussion-adapter.mjs',
   '.skopos/tooling/codex/README.md',
 ] as const;
+const MANUAL_HOST_GUIDE_PATH = '.skopos/tooling/manual-hosts/README.md';
+const MANUAL_HOST_GENERATED_FILES = [MANUAL_HOST_GUIDE_PATH] as const;
 const FULL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
   sessionStart: true,
   userTurn: true,
@@ -27,6 +29,17 @@ const FULL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
   preCompact: true,
 };
 const FULL_WORKFLOW_ROUTER_COVERAGE = {
+  sessionStart: true,
+  stopBoundary: true,
+} as const;
+const MANUAL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
+  sessionStart: true,
+  userTurn: true,
+  assistantTurn: true,
+  majorStateChange: true,
+  preCompact: true,
+};
+const MANUAL_WORKFLOW_ROUTER_COVERAGE = {
   sessionStart: true,
   stopBoundary: true,
 } as const;
@@ -55,7 +68,7 @@ export const buildSkoposEnforcementProfile = ({
     status: 'generated',
     authority: 'generated',
     summary:
-      'Compiled enforcement profile for CLI and MCP gates plus generated Claude Code and Codex adapters for continuity, closure, and instruction-sync enforcement.',
+      'Compiled enforcement profile for CLI and MCP gates plus generated Claude Code, Codex, and manual host adapter surfaces for continuity, closure, and instruction-sync enforcement.',
     updatedAt: generatedAt,
     generatedAt,
     workspaceRoot: cwd,
@@ -137,9 +150,24 @@ export const buildSkoposEnforcementProfile = ({
         lifecycleCoverage: FULL_LIFECYCLE_COVERAGE,
         workflowRouterCoverage: FULL_WORKFLOW_ROUTER_COVERAGE,
       },
+      {
+        toolId: 'manual-hosts',
+        displayName: 'Other coding agents',
+        summary:
+          'Generated manual fallback guide that maps unsupported agent hosts into the same workflow-router and discussion-memory command contract.',
+        adapterKind: 'wrapper-manifest',
+        supportTier: 'manual-fallback',
+        supportStatus: 'manual-only',
+        path: MANUAL_HOST_GUIDE_PATH,
+        generatedFiles: [...MANUAL_HOST_GENERATED_FILES],
+        installMode: 'manual-only',
+        lifecycleCoverage: MANUAL_LIFECYCLE_COVERAGE,
+        workflowRouterCoverage: MANUAL_WORKFLOW_ROUTER_COVERAGE,
+      },
     ],
   };
 };
 
 export const skoposClaudeCodeGeneratedFiles = [...CLAUDE_CODE_GENERATED_FILES];
 export const skoposCodexGeneratedFiles = [...CODEX_GENERATED_FILES];
+export const skoposManualHostGeneratedFiles = [...MANUAL_HOST_GENERATED_FILES];

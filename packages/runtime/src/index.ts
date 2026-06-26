@@ -20,6 +20,7 @@ export * from './application/instructions-sync/instructions-sync.service.js';
 export * from './application/instructions-scaffold/instructions-scaffold.service.js';
 export * from './application/start/start.service.js';
 export * from './application/trust/trust.service.js';
+export * from './application/understanding/understanding.service.js';
 export const skoposRuntimeCommands = [
   'init',
   'scan',
@@ -40,4 +41,5 @@ export const skoposRuntimeCommands = [
   'done',
   'eval',
   'trust',
+  'understand',
 ] as const;

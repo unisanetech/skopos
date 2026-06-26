@@ -2,12 +2,15 @@ import { access, readFile, stat } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 
 import { checkInstructionMirrorParity } from '@skopos/instructions';
+import { loadSkoposPolicyPacks } from '@skopos/indexer';
 import { loadSkoposQueryState } from '@skopos/query';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
   SkoposImpactEntry,
   SkoposEnforcementProfileArtifact,
+  SkoposDriftReportArtifact,
+  SkoposResolvedPolicyArtifact,
   SkoposReadiness,
   SkoposTrustCheck,
   SkoposTrustCheckStatus,
@@ -35,10 +38,16 @@ export const buildSkoposTrustReport = async ({
   const scopesLitePath = join(workspaceRoot, '.skopos', 'scopes-lite.json');
   const architecturePath = join(workspaceRoot, '.skopos', 'architecture.json');
   const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
+  const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'policies', 'resolved.json');
+  const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
+  const policyBriefPath = join(workspaceRoot, '.skopos', 'agent', 'policy-brief.json');
   const { bootstrap } = await loadSkoposQueryState({
     cwd: workspaceRoot,
   });
   const enforcement = await loadJsonArtifact<SkoposEnforcementProfileArtifact>(enforcementPath);
+  const resolvedPolicy = await loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath);
+  const driftReport = await loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath);
+  const availablePolicyPacks = await loadPolicyPacksIfAvailable(workspaceRoot);
 
   const docsRoot = bootstrap.recommendedConfig.docs.root;
   const docsStartHerePath =
@@ -75,6 +84,17 @@ export const buildSkoposTrustReport = async ({
     ignoreMissionEvalForMissionId,
   });
   const workflowRouterAdapterCoverage = buildWorkflowRouterAdapterCoverageSummary(enforcement);
+  const acceptedPolicyCoverage = await buildAcceptedPolicyCoverageSummary({
+    workspaceRoot,
+    resolvedPolicy,
+    resolvedPolicyPath,
+    policyBriefPath,
+    availablePolicyPackCount: availablePolicyPacks.length,
+  });
+  const driftCoverage = buildPolicyDriftCoverageSummary({
+    resolvedPolicy,
+    driftReport,
+  });
 
   const checks: SkoposTrustCheck[] = [
     createCheck(
@@ -128,6 +148,10 @@ export const buildSkoposTrustReport = async ({
         ? `Declared canonical overrides are active: ${appliedOverrides.map((entry) => `${entry.key}=${entry.value}`).join(', ')}.`
         : 'No declared canonical overrides are currently active.',
     ),
+    createCheck('accepted-policy', acceptedPolicyCoverage.acceptedPolicy.status, acceptedPolicyCoverage.acceptedPolicy.summary),
+    createCheck('policy-brief', acceptedPolicyCoverage.policyBrief.status, acceptedPolicyCoverage.policyBrief.summary),
+    createCheck('policy-source-freshness', acceptedPolicyCoverage.sourceFreshness.status, acceptedPolicyCoverage.sourceFreshness.summary),
+    createCheck('policy-drift', driftCoverage.status, driftCoverage.summary),
     createCheck('active-mission', activeMissionCoverage.status, activeMissionCoverage.summary),
     createCheck(
       'workflow-questions',
@@ -226,8 +250,11 @@ const buildTrustSummary = (
   const warnCount = checks.filter((check) => check.status === 'warn').length;
   const failCount = checks.filter((check) => check.status === 'fail').length;
 
-  return `Trust ${trustLevel} (${readiness}) with ${passCount} passing checks, ${warnCount} warnings, and ${failCount} failures.`;
+  return `Trust ${trustLevel} (${readiness}) with ${passCount} ${pluralize('passing check', passCount)}, ${warnCount} ${pluralize('warning', warnCount)}, and ${failCount} ${pluralize('failure', failCount)}.`;
 };
+
+const pluralize = (label: string, count: number): string =>
+  count === 1 ? label : `${label}s`;
 
 const pathExists = async (filePath: string): Promise<boolean> => {
   try {
@@ -264,6 +291,187 @@ interface WorkflowRouterAdapterCoverageSummary {
   status: SkoposTrustCheckStatus;
   summary: string;
 }
+
+interface AcceptedPolicyCoverageSummary {
+  acceptedPolicy: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  policyBrief: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  sourceFreshness: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+}
+
+interface PolicyDriftCoverageSummary {
+  status: SkoposTrustCheckStatus;
+  summary: string;
+}
+
+const buildPolicyDriftCoverageSummary = ({
+  resolvedPolicy,
+  driftReport,
+}: {
+  resolvedPolicy: SkoposResolvedPolicyArtifact | null;
+  driftReport: SkoposDriftReportArtifact | null;
+}): PolicyDriftCoverageSummary => {
+  if (!resolvedPolicy || resolvedPolicy.acceptedPacks.length === 0) {
+    return {
+      status: 'pass',
+      summary: 'Policy drift is not required until a policy pack is accepted.',
+    };
+  }
+
+  if (!driftReport) {
+    return {
+      status: 'warn',
+      summary: 'Accepted policy exists, but no drift report is present. Run `skopos policies drift .`.',
+    };
+  }
+
+  const driftUpdatedAt = Date.parse(driftReport.updatedAt ?? driftReport.generatedAt ?? '');
+  const policyUpdatedAt = Date.parse(resolvedPolicy.updatedAt ?? resolvedPolicy.generatedAt ?? '');
+  if (!Number.isNaN(policyUpdatedAt) && (Number.isNaN(driftUpdatedAt) || driftUpdatedAt < policyUpdatedAt)) {
+    return {
+      status: 'warn',
+      summary: 'Policy drift report is older than accepted policy. Re-run `skopos policies drift .`.',
+    };
+  }
+
+  if (driftReport.counts.openMustCount > 0) {
+    return {
+      status: 'fail',
+      summary: `Accepted policy drift has ${driftReport.counts.openMustCount} open must finding${driftReport.counts.openMustCount === 1 ? '' : 's'}.`,
+    };
+  }
+
+  if (driftReport.counts.openShouldCount > 0) {
+    return {
+      status: 'warn',
+      summary: `Accepted policy drift has ${driftReport.counts.openShouldCount} open should finding${driftReport.counts.openShouldCount === 1 ? '' : 's'}.`,
+    };
+  }
+
+  return {
+    status: 'pass',
+    summary: 'No blocking accepted-policy drift is open.',
+  };
+};
+
+const buildAcceptedPolicyCoverageSummary = async ({
+  workspaceRoot,
+  resolvedPolicy,
+  resolvedPolicyPath,
+  policyBriefPath,
+  availablePolicyPackCount,
+}: {
+  workspaceRoot: string;
+  resolvedPolicy: SkoposResolvedPolicyArtifact | null;
+  resolvedPolicyPath: string;
+  policyBriefPath: string;
+  availablePolicyPackCount: number;
+}): Promise<AcceptedPolicyCoverageSummary> => {
+  if (!resolvedPolicy || resolvedPolicy.acceptedPacks.length === 0) {
+    if (availablePolicyPackCount === 0) {
+      return {
+        acceptedPolicy: {
+          status: 'pass',
+          summary:
+            'No policy packs are registered in this workspace, so accepted policy is not required for current trust readiness.',
+        },
+        policyBrief: {
+          status: 'pass',
+          summary: 'Policy brief is not required because no policy packs are registered.',
+        },
+        sourceFreshness: {
+          status: 'pass',
+          summary: 'Policy source freshness is not applicable because no policy packs are registered.',
+        },
+      };
+    }
+
+    return {
+      acceptedPolicy: {
+        status: 'warn',
+        summary:
+          'No accepted policy pack is recorded. Run `skopos policies recommend .` and accept a suitable pack before broad agent work.',
+      },
+      policyBrief: {
+        status: 'warn',
+        summary: 'No policy brief can be trusted until `.skopos/policies/resolved.json` exists.',
+      },
+      sourceFreshness: {
+        status: 'pass',
+        summary: 'Policy source freshness is not applicable until a policy pack is accepted.',
+      },
+    };
+  }
+
+  const policyBriefExists = await pathExists(policyBriefPath);
+  const staleSourcePaths = await findStalePolicySourcePaths({
+    workspaceRoot,
+    resolvedPolicy,
+  });
+
+  return {
+    acceptedPolicy: {
+      status: 'pass',
+      summary: `Accepted policy is recorded at \`${resolvedPolicyPath.replace(`${workspaceRoot}/`, '')}\` with ${resolvedPolicy.acceptedPacks.length} pack${resolvedPolicy.acceptedPacks.length === 1 ? '' : 's'}.`,
+    },
+    policyBrief: {
+      status: policyBriefExists ? 'pass' : 'warn',
+      summary: policyBriefExists
+        ? 'Compact policy brief is available for agent prompt layering.'
+        : 'Accepted policy exists, but `.skopos/agent/policy-brief.json` is missing. Re-apply or refresh policy memory.',
+    },
+    sourceFreshness: {
+      status: staleSourcePaths.length === 0 ? 'pass' : 'warn',
+      summary:
+        staleSourcePaths.length === 0
+          ? 'Accepted policy source files are not newer than the resolved policy artifact.'
+          : `Accepted policy source changed after resolution: ${staleSourcePaths.join(', ')}. Re-run \`skopos policies apply\` to refresh policy memory.`,
+    },
+  };
+};
+
+const findStalePolicySourcePaths = async ({
+  workspaceRoot,
+  resolvedPolicy,
+}: {
+  workspaceRoot: string;
+  resolvedPolicy: SkoposResolvedPolicyArtifact;
+}): Promise<string[]> => {
+  const resolvedUpdatedAt = Date.parse(resolvedPolicy.updatedAt ?? resolvedPolicy.generatedAt ?? '');
+  if (Number.isNaN(resolvedUpdatedAt)) {
+    return resolvedPolicy.sourcePaths;
+  }
+
+  const stalePaths: string[] = [];
+  for (const sourcePath of resolvedPolicy.sourcePaths) {
+    try {
+      const sourceStat = await stat(resolve(workspaceRoot, sourcePath));
+      if (sourceStat.mtimeMs > resolvedUpdatedAt) {
+        stalePaths.push(sourcePath);
+      }
+    } catch {
+      stalePaths.push(sourcePath);
+    }
+  }
+
+  return stalePaths;
+};
+
+const loadPolicyPacksIfAvailable = async (workspaceRoot: string) => {
+  try {
+    return await loadSkoposPolicyPacks({ cwd: workspaceRoot });
+  } catch {
+    return [];
+  }
+};
 
 const buildWorkflowRouterAdapterCoverageSummary = (
   enforcement: SkoposEnforcementProfileArtifact | null,

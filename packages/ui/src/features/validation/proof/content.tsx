@@ -20,8 +20,8 @@ export function ProofPostureCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Current posture"
-      description="Current proof posture across weighted pass rate, must-win coverage, and baseline drift."
+      title="Evidence summary"
+      description="The main pass rate, must-win coverage, and regression status from the latest proof run."
     >
       <div className="grid gap-3">
         <ReviewRow
@@ -49,6 +49,50 @@ export function ProofPostureCard({
   );
 }
 
+export function ProofGuidanceCard({
+  proofReport,
+}: {
+  proofReport?: SkoposUiConsoleState['proofReport'];
+}): React.JSX.Element {
+  const hasRegression = (proofReport?.comparison.regressedBenchmarks.length ?? 0) > 0;
+  const isPassing =
+    proofReport?.scorecard.status === 'pass' && proofReport.comparison.status === 'pass';
+
+  return (
+    <Card
+      title="How to use this page"
+      description="Evidence shows whether tests, benchmarks, or comparison results are strong enough to close risky work."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Start here"
+          text={
+            !proofReport
+              ? 'No proof report is available yet for this workspace snapshot.'
+              : isPassing
+              ? 'The current evidence is passing against the recorded baseline.'
+              : 'Review failed checks or regressions before closing the mission.'
+          }
+        />
+        <GuidancePoint
+          label="Use when"
+          text="The change affects behavior, architecture, policy, generated files, or anything risky enough to need proof."
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            !proofReport
+              ? 'Run the proof command when the current work needs test or benchmark evidence.'
+              : hasRegression
+              ? 'Fix or explain the regressed benchmark, then rerun proof.'
+              : 'Keep this evidence with the mission closure summary if the work is ready.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function ProofCategoryWatchCard({
   categories,
   regressedCategorySet,
@@ -58,8 +102,8 @@ export function ProofCategoryWatchCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Category watch"
-      description="Changed or high-signal categories from the latest proof comparison."
+      title="What changed since baseline"
+      description="Categories that changed or need review compared with the committed proof baseline."
     >
       {categories.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -107,8 +151,8 @@ export function ProofMustWinCard({
 }): React.JSX.Element {
   return (
     <Card
-      title="Must-win lane"
-      description="This route keeps must-win reliability pressure separate from supporting benchmarks."
+      title="Must-pass checks"
+      description="Benchmarks marked as important enough that they should pass before closure."
     >
       {benchmarks.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -191,5 +235,24 @@ export function ProofRegressedBenchmarksCard({
         />
       )}
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }

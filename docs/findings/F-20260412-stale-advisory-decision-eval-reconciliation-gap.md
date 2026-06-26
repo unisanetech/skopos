@@ -3,30 +3,31 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260412-STALE-ADVISORY-DECISION-EVAL-RECONCILIATION-GAP`
-- Status: `active`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-26`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `registry.md`
   - `../architecture/trust-and-closure-model.md`
   - `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-  - `F-20260411-self-hosting-workflow-router-drift.md`
+  - `archive/F-20260411-self-hosting-workflow-router-drift.md`
 
 ## Changelog
 
+- `2026-06-26`: Closed after the existing eval regression coverage and current mission eval runs confirmed stale advisory decision items reconcile to no pending eval items, `done` can close valid work, and program routing no longer needs to keep this as an active finding.
 - `2026-04-12`: Fixed the first runtime slice and added CLI regression coverage, so `skopos eval` now reconciles stale advisory `decision-*` items when no active unresolved workflow question remains for that mission, and the reproduced self-hosted closure path now passes through `skopos done`.
 - `2026-04-12`: Opened after closing an older self-hosted mission exposed that `skopos eval` can keep an advisory decision item pending when the global workflow-question artifact has already rotated to a different mission, which then blocks `skopos done` even though the mission itself is validly complete.
 
 ## Summary
 
 - Severity: `SHOULD`
-- Status: `in-progress`
+- Status: `fixed`
 - Owner: `skopos-core`
 - Target Pack: `eval and closure reconciliation`
-- Current State: partially fixed. `skopos eval` now reconciles stale advisory `decision-*` mission items when their linked workflow question is absent or already resolved for that mission, the reproduced self-hosted closure path now passes through `skopos done`, and the remaining work is broader mission-artifact hygiene so older routed missions do not linger active in the program queue.
+- Current State: fixed. `skopos eval` reconciles stale advisory `decision-*` mission items when their linked workflow question is absent or already resolved for that mission, the reproduced stale-mission closure path passes through `skopos done`, and current program routing no longer needs to keep this finding active.
 
 ## Symptom
 
@@ -57,4 +58,4 @@
 1. `registry.md`
 2. `../architecture/trust-and-closure-model.md`
 3. `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-4. `F-20260411-self-hosting-workflow-router-drift.md`
+4. `archive/F-20260411-self-hosting-workflow-router-drift.md`

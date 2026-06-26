@@ -18,10 +18,31 @@ Skopos should be built in phases so the runtime becomes usable early without ove
   - `proof-phase-plan.md`
   - `system-ui-plan.md`
   - `policy-pack-and-stack-intelligence-plan.md`
+  - `human-guidance-and-developer-experience-plan.md`
   - `../architecture/00-architecture.md`
 
 ## Changelog
 
+- `2026-06-24`: Refined the first architecture pack so it reads as portable Skopos guidance instead of a Skopos/Unisane-shaped folder template, with project-local names now treated as aliases and detected evidence.
+- `2026-06-24`: Added dedicated rule-pack detail pages with structure-tree and architecture-contract rendering, so pack UI can now show what a pack expects and how the current codebase matches it.
+- `2026-06-24`: Expanded the Rules route with full pack-detail review and codebase-verification guidance, so the next policy-pack UI priority moves to stack/gate recommendation clarity and acceptance/compare flows.
+- `2026-06-24`: Added the routed Rules review surface for accepted packs, active rules, drift, local exceptions, and execution-lane guidance.
+- `2026-06-24`: Added accepted-policy override management and `done` closure blocking for open accepted `must` drift, moving the pack roadmap from basic enforcement toward UI review and recommendation clarity.
+- `2026-06-24`: Expanded Pack System V1 with composable accepted policies, richer human-facing pack metadata, and the first stack and gate packs.
+- `2026-06-24`: Implemented the shared UI language cleanup slice, removing the most visible internal terms from search, readiness support panels, program context, and empty states.
+- `2026-06-24`: Implemented the Discussion route guidance slice, so saved chat context now explains agreed direction, open questions, and checkpoints before showing discussion history.
+- `2026-06-24`: Implemented the Work route guidance slice, so Missions and Plans now explain how to use tracked work sessions and saved plans before showing queues or plan internals.
+- `2026-06-24`: Implemented the validation route guidance slice, so Readiness, Evidence, and Activity now explain what to review and what to do next before showing raw checks or history.
+- `2026-06-24`: Implemented the Knowledge route guidance slice, so Docs, Decisions, and Issues now explain their practical use before listing project memory artifacts.
+- `2026-06-24`: Implemented the Current Work next-action UI slice, so the overview now leads with the recommended next move, active tracked work, and before-finishing obligations instead of raw program-router pressure.
+- `2026-06-24`: Implemented the routed UI orientation pass, so the console now uses developer-friendly navigation labels, shows the active Skopos mission on Current Work, improves empty states for missions/plans/evidence, and turns Project Map package detail into practical ownership guidance.
+- `2026-06-24`: Implemented the first routed UI human-guidance slice on mission detail, so active mission pages now lead with progress, current phase, current focus, blockers, decisions, findings, proof needed, and guided open questions from existing Skopos artifacts.
+- `2026-06-24`: Implemented the decisions/findings progress and guided-question CLI slice, so mission progress includes decision and finding summaries and `start`, `plan`, and `decide` now show questions with recommendations, tradeoffs, and next-step guidance.
+- `2026-06-24`: Implemented the first mission-backed workpack progress projection in CLI workflow output, so active work now exposes approximate progress, current phase, done, doing-now, blockers, and proof-needed guidance without duplicating mission truth.
+- `2026-06-24`: Implemented the second human-output CLI slice for workflow commands, proving next-step guidance on `next`, `program next`, `done`, and `eval` through focused e2e coverage.
+- `2026-06-24`: Implemented the first human-output CLI slice for `trust` and policy commands, proving the new guidance contract through focused unit and CLI e2e tests before extending it to workflow and workpack surfaces.
+- `2026-06-24`: Added the human guidance and developer experience direction so the next product-intelligence work must improve plain-language command output, guided questions, workpack progress, UI copy, and agent answer style rather than only adding machine-readable artifacts.
+- `2026-06-24`: Landed the first accepted-policy loop, so the policy-pack roadmap now moves from catalog discovery into drift detection, local override handling, and closure integration for accepted `must` rules.
 - `2026-06-24`: Clarified the policy-pack direction as project-agnostic LLM coding-agent intelligence and memory, using Unisane only as a rigor reference while requiring Skopos to keep installed project knowledge fresh across build, maintenance, and refactor work.
 - `2026-06-24`: Added the policy-pack and stack-intelligence product plan to the roadmap so upcoming work can grow Skopos through accepted project policy, stack recommendation, gates, drift detection, and agent bootstrap integration with proof-grade pack quality.
 - `2026-04-17`: Added the initial synthesized repo-understanding contract and active workpack, so the next brownfield-onboarding hardening slice now adds one compact explanation layer above raw bootstrap, scope, symbol, and graph artifacts instead of continuing to rely on machine-readable surfaces alone.
@@ -146,7 +167,15 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 
 ## Current Focus
 
-- Add policy-pack, stack-intelligence, and durable memory as the next major product-intelligence direction after the current onboarding, token-control, and program-state hardening lanes. Treat this as a proof-grade project-agnostic layer: pack schemas, accepted decisions, stack capability reasoning, drift detection, freshness rules, and agent briefs must land before broad pack catalogs. Unisane may inspire rigor, but Skopos must work for any serious product repo.
+- Add the human guidance layer across command output, UI surfaces, workpacks, and agent answers:
+  - keep strict `.skopos/**` artifacts as the machine contract
+  - make default output explain status, risk, blocker, question, proof, and next step in simple English; implemented for trust, policy, `start`, `plan`, `decide`, workflow-router, program-router, done, and eval command paths
+  - preserve `--json` and raw artifact views for agents, scripts, and expert users
+  - add workpack progress summaries with current phase, approximate completion, next action, blockers, decisions, findings, and proof needed; first CLI projection now covers mission-backed progress, phase, done, doing-now, blockers, decisions, findings, and proof-needed guidance
+  - make guided questions include a recommended option, tradeoffs, and what happens after the answer; first CLI projection now covers `start`, `plan`, `decide`, and `next`
+  - route mission detail through the same guidance model; first UI slice now shows mission progress, current focus, blockers, decisions, findings, proof, and open questions before raw detail
+  - treat human comprehension as part of product quality, not only UI polish
+- Continue policy-pack, stack-intelligence, and durable memory as the next major product-intelligence direction after the current onboarding, token-control, and program-state hardening lanes. The first policy catalog, accepted-policy loop, accepted-policy drift report, composable policy application, `stack.async-work`, `gates.progressive-validation`, local policy overrides, `done` blocking for open accepted `must` drift, and routed Rules review surface with pack-detail/codebase-verification guidance are now implemented. Next priority is dedicated recommendation UX for stack and gate packs plus richer pack comparison and acceptance flows before broad catalog expansion. Treat this as a proof-grade project-agnostic layer: stack capability reasoning, gates, freshness rules, and agent briefs must land before broad public claims. Unisane may inspire rigor, but Skopos must work for any serious product repo.
 - Run the self-healing loop before more broad control-plane or UI growth:
   - detect real product friction through self-hosting and pilots
   - record it as bounded findings rather than chat memory

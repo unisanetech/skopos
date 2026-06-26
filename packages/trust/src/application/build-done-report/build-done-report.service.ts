@@ -1,8 +1,9 @@
-import { access } from 'node:fs/promises';
+import { access, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import type {
   SkoposDoneReport,
+  SkoposDriftReportArtifact,
   SkoposEvalArtifact,
   SkoposTrustCheck,
   SkoposWorkflowRequirementEvidence,
@@ -66,6 +67,8 @@ export const buildSkoposDoneReport = async ({
   const missionEvalPath = missionArtifact
     ? join(workspaceRoot, '.skopos', 'evals', `${missionArtifact.id}.json`)
     : undefined;
+  const policyDrift = await loadPolicyDriftReport(workspaceRoot);
+  const openMustPolicyDriftCount = policyDrift?.counts.openMustCount ?? 0;
 
   const checks: SkoposTrustCheck[] = [
     createCheck(
@@ -109,6 +112,13 @@ export const buildSkoposDoneReport = async ({
         advisoryWorkflowQuestions,
         missionId: missionArtifact?.id,
       }),
+    ),
+    createCheck(
+      'accepted-must-policy-drift',
+      openMustPolicyDriftCount > 0 ? 'fail' : 'pass',
+      openMustPolicyDriftCount > 0
+        ? `Accepted policy has ${openMustPolicyDriftCount} open must drift finding${openMustPolicyDriftCount === 1 ? '' : 's'}. Fix it or add an explicit local policy override before closure.`
+        : 'No open accepted must policy drift is blocking closure.',
     ),
     createCheck(
       'required-workflows',
@@ -179,6 +189,12 @@ export const buildSkoposDoneReport = async ({
   if (missionArtifact && (missionArtifact.state !== 'complete' || pendingMissionItems.length > 0)) {
     requiredActions.push(
       `Complete mission ${missionArtifact.id} before claiming closure evidence.`,
+    );
+  }
+
+  if (openMustPolicyDriftCount > 0) {
+    requiredActions.push(
+      'Fix open accepted `must` policy drift or add a clear local policy override, then run `skopos policies drift .` before closure.',
     );
   }
 
@@ -256,6 +272,17 @@ const resolveActorId = (actor?: string): string | undefined => {
 
   const normalized = candidate.trim();
   return normalized.length > 0 ? normalized : undefined;
+};
+
+const loadPolicyDriftReport = async (
+  workspaceRoot: string,
+): Promise<SkoposDriftReportArtifact | null> => {
+  try {
+    const contents = await readFile(join(workspaceRoot, '.skopos', 'drift', 'report.json'), 'utf8');
+    return JSON.parse(contents) as SkoposDriftReportArtifact;
+  } catch {
+    return null;
+  }
 };
 
 const createCheck = (

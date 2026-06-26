@@ -47,19 +47,38 @@ describe('skopos package boundary contract', () => {
     }
   });
 
-  it('allows tool surfaces to depend on internal product surfaces without making them core sdk dependencies', async () => {
+  it('keeps the publishable CLI manifest free from Skopos workspace runtime dependencies', async () => {
     const cliPackage = await loadPackageJson('@skopos/cli');
     const mcpPackage = await loadPackageJson('@skopos/mcp');
 
-    expect(Object.keys(cliPackage.dependencies ?? {})).toEqual(
-      expect.arrayContaining(['@skopos/runtime', '@skopos/ui']),
-    );
+    expect(
+      Object.keys(cliPackage.dependencies ?? {}).filter((dependencyName) =>
+        dependencyName.startsWith('@skopos/'),
+      ),
+      'the CLI tarball should install as one bundled product instead of resolving private workspace packages',
+    ).toEqual([]);
     expect(Object.keys(mcpPackage.dependencies ?? {})).toEqual(
       expect.arrayContaining(['@skopos/runtime']),
     );
     expect(Object.keys(mcpPackage.dependencies ?? {})).not.toEqual(
       expect.arrayContaining(['@skopos/ui', '@skopos/docs-engine']),
     );
+  });
+
+  it('keeps the CLI entrypoint and top-level router thin', async () => {
+    const cliEntrypoint = await readWorkspaceFile('packages/cli/src/cli.ts');
+    const cliRouter = await readWorkspaceFile('packages/cli/src/cli/index.ts');
+    const cliRegistry = await readWorkspaceFile('packages/cli/src/cli/registry.ts');
+
+    expect(countLines(cliEntrypoint), 'cli.ts should only bootstrap the CLI process').toBeLessThanOrEqual(40);
+    expect(countLines(cliRouter), 'cli/index.ts should only route command names to registry handlers').toBeLessThanOrEqual(80);
+    expect(countLines(cliRegistry), 'cli/registry.ts should only map command names to command-owned handlers').toBeLessThanOrEqual(120);
+
+    expect(cliEntrypoint).toContain("from './cli/index.js'");
+    expect(cliEntrypoint).not.toContain('./cli/commands/');
+    expect(cliRouter).not.toContain('./commands/');
+    expect(cliRouter).not.toContain('switch');
+    expect(cliRegistry).not.toContain('process.argv');
   });
 });
 
@@ -74,3 +93,7 @@ const loadPackageJson = async (packageName: string): Promise<PackageJsonShape> =
   const contents = await readFile(packageJsonPath, 'utf8');
   return JSON.parse(contents) as PackageJsonShape;
 };
+
+const readWorkspaceFile = (path: string): Promise<string> => readFile(`${skoposRoot}/${path}`, 'utf8');
+
+const countLines = (value: string): number => value.split('\n').length;

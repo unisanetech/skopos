@@ -44,6 +44,46 @@ export function PlansInspectorAside({
   );
 }
 
+export function PlanListGuidanceCard({
+  currentCount,
+  libraryCount,
+}: {
+  currentCount: number;
+  libraryCount: number;
+}): React.JSX.Element {
+  return (
+    <Card
+      title="How to use this page"
+      description="Plans are saved paths for work that is too large, risky, or important to keep only in chat."
+    >
+      <div className="grid gap-3 md:grid-cols-3">
+        <GuidancePoint
+          label="Start here"
+          text={
+            currentCount > 0
+              ? 'Open the current plan linked to the work you are doing now.'
+              : 'No active plan is driving work right now.'
+          }
+        />
+        <GuidancePoint
+          label="Use when"
+          text="A change needs phases, tradeoffs, user decisions, validation steps, or future follow-up."
+        />
+        <GuidancePoint
+          label="Next step"
+          text={
+            currentCount > 0
+              ? 'Read the plan brief, then follow the execution steps and decision gates.'
+              : libraryCount > 0
+                ? 'Use the library when you need past context or a reusable work shape.'
+                : 'Create a plan when the next task is bigger than a simple edit.'
+          }
+        />
+      </div>
+    </Card>
+  );
+}
+
 export function PlanListCard({
   title,
   description,
@@ -79,6 +119,25 @@ export function PlanListCard({
         <EmptyMessage title={emptyTitle} description={emptyDescription} />
       )}
     </Card>
+  );
+}
+
+function GuidancePoint({
+  label,
+  text,
+}: {
+  label: string;
+  text: string;
+}): React.JSX.Element {
+  return (
+    <div className="border-t border-[var(--line)] pt-3">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        {label}
+      </p>
+      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+        {text}
+      </p>
+    </div>
   );
 }
 

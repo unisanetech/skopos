@@ -4,6 +4,7 @@ import type { SkoposReadiness, SkoposTrustLevel } from './skopos-trust-report.js
 export type SkoposProgramItemSourceKind =
   | 'mission'
   | 'finding'
+  | 'workflow-recommendation'
   | 'discussion-checkpoint'
   | 'trust-blocker'
   | 'roadmap-item'
@@ -44,6 +45,7 @@ export type SkoposProgramRecommendedActionKind =
   | 'continue-current-mission'
   | 'complete-current-mission'
   | 'start-mission'
+  | 'run-workflow-recommendation'
   | 'review-program-state';
 
 export interface SkoposProgramScopeRef {
@@ -68,6 +70,7 @@ export interface SkoposProgramItem {
   recommendedDisposition: SkoposProgramRecommendedDisposition;
   linkedPlanId?: string;
   linkedMissionId?: string;
+  recommendedCommand?: string;
   obligationIds: string[];
 }
 

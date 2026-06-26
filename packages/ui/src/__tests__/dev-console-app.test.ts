@@ -178,6 +178,133 @@ describe('devSkoposUiConsoleApp', () => {
       await result.server.close();
     }
   }, 20_000);
+
+  it('stays quiet during repeated generated-output and tooling churn', async () => {
+    const workspaceRoot = await createConsoleWorkspace();
+    const middlewares = new Map<string, Function>();
+    const watchHandlers = new Map<string, (filePath: string) => void>();
+    const wsMessages: Array<{ type: string; event?: string; data?: Record<string, string> }> = [];
+
+    const fakeServer = {
+      middlewares: {
+        use(pathOrHandler: string | Function, handler?: Function) {
+          if (typeof pathOrHandler === 'string' && handler) {
+            middlewares.set(pathOrHandler, handler);
+          }
+        },
+      },
+      watcher: {
+        add() {
+          return undefined;
+        },
+        on(eventName: string, handler: (filePath: string) => void) {
+          watchHandlers.set(eventName, handler);
+          return this;
+        },
+      },
+      ws: {
+        send(payload: { type: string; event?: string; data?: Record<string, string> }) {
+          wsMessages.push(payload);
+        },
+      },
+      config: {
+        logger: {
+          error: vi.fn(),
+        },
+      },
+      resolvedUrls: {
+        local: ['http://127.0.0.1:4173/'],
+      },
+      async listen() {
+        return this;
+      },
+      async close() {
+        return undefined;
+      },
+    };
+
+    const result = await devSkoposUiConsoleApp({
+      cwd: workspaceRoot,
+      createViteDevServer: async (config) => {
+        expect(config.server?.watch?.ignored).toEqual(
+          expect.arrayContaining([
+            join(workspaceRoot, 'docs', 'generated', 'skopos', 'app', '**'),
+            join(workspaceRoot, '.skopos', 'tooling', '**'),
+          ]),
+        );
+
+        for (const plugin of config.plugins ?? []) {
+          if (
+            plugin &&
+            typeof plugin === 'object' &&
+            'configureServer' in plugin &&
+            typeof plugin.configureServer === 'function'
+          ) {
+            plugin.configureServer(fakeServer as never);
+          }
+        }
+
+        return fakeServer as never;
+      },
+    });
+
+    try {
+      await requestJson(middlewares.get('/__skopos/ui-state')!, '/__skopos/ui-state');
+
+      await mkdir(join(workspaceRoot, 'docs', 'generated', 'skopos', 'app'), { recursive: true });
+      await mkdir(join(workspaceRoot, '.skopos', 'tooling', 'codex'), { recursive: true });
+
+      for (let index = 0; index < 25; index += 1) {
+        const generatedPath = join(workspaceRoot, 'docs', 'generated', 'skopos', 'app', `chunk-${index}.json`);
+        const toolingPath = join(workspaceRoot, '.skopos', 'tooling', 'codex', `adapter-${index}.json`);
+        await writeFile(generatedPath, `{"index":${index}}`, 'utf8');
+        await writeFile(toolingPath, `{"index":${index}}`, 'utf8');
+        watchHandlers.get('change')?.(generatedPath);
+        watchHandlers.get('add')?.(toolingPath);
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(wsMessages).toHaveLength(0);
+
+      await writeFile(
+        join(workspaceRoot, 'docs', '00-start-here.md'),
+        '# Updated after churn\n\nA real docs change should still refresh.\n',
+        'utf8',
+      );
+      watchHandlers.get('change')?.(join(workspaceRoot, 'docs', '00-start-here.md'));
+
+      const refreshedState = await waitForRefreshedState(
+        middlewares.get('/__skopos/ui-state')!,
+        (state) =>
+          state.documents.some(
+            (document: { id: string; excerpt: string }) =>
+              document.id === 'docs-start' && document.excerpt.includes('Updated after churn'),
+          ),
+      );
+
+      expect(refreshedState.documents.some((document: { id: string }) => document.id === 'docs-start')).toBe(true);
+      expect(wsMessages).toEqual([
+        expect.objectContaining({
+          type: 'custom',
+          event: skoposUiDevStateUpdatedEvent,
+        }),
+      ]);
+
+      for (let index = 25; index < 40; index += 1) {
+        watchHandlers.get('change')?.(
+          join(workspaceRoot, 'docs', 'generated', 'skopos', 'app', `chunk-${index}.json`),
+        );
+        watchHandlers.get('change')?.(
+          join(workspaceRoot, '.skopos', 'tooling', 'codex', `adapter-${index}.json`),
+        );
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      expect(wsMessages).toHaveLength(1);
+    } finally {
+      await result.server.close();
+    }
+  }, 20_000);
 });
 
 const requestJson = async (handler: Function, url: string): Promise<any> => {

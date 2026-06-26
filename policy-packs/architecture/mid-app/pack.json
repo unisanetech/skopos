@@ -12,6 +12,346 @@
   "version": "0.1.0",
   "displayName": "Mid-App Architecture",
   "description": "A portable architecture pack for small-to-mid product applications with multiple features, user workflows, runtime integrations, and enough shared behavior to need explicit boundaries.",
+  "plainLanguageSummary": "Use this when a product app has several features and needs clear ownership without large-platform ceremony.",
+  "bestFor": [
+    "Small-to-mid product apps with multiple features",
+    "Brownfield apps where agents keep creating second patterns",
+    "Greenfield apps that need clear feature, infrastructure, shared-code, UI, and generated-output boundaries"
+  ],
+  "notFor": [
+    "One-off scripts or throwaway prototypes",
+    "Public libraries where exports are the product",
+    "Large modular platforms that need formal package/module ownership"
+  ],
+  "userQuestions": [
+    "Where does runtime wiring live?",
+    "Where does each feature own behavior, UI, and tests?",
+    "Which generated files must never be hand-edited?"
+  ],
+  "qualityBar": [
+    "Rules include examples, anti-patterns, brownfield guidance, greenfield guidance, drift checks, and proof fixtures.",
+    "The pack is framework-agnostic and maps roles to local project names instead of forcing folder names.",
+    "Agents can explain what to do differently before editing code."
+  ],
+  "agentUse": [
+    "Load this pack after project bootstrap when architecture or file placement matters.",
+    "Use accepted local names first, then apply this pack's ownership and dependency direction rules.",
+    "Escalate to normal or workpack lane when changing boundaries, generated outputs, or validation lanes."
+  ],
+  "structureTree": {
+    "title": "Mid-app structure tree",
+    "summary": "A practical app shape where runtime wiring, product features, infrastructure adapters, shared code, UI primitives, generated outputs, docs, and tests each have a clear owner. These are roles, not required folder names.",
+    "rootLabel": "project or app source root",
+    "nodes": [
+      {
+        "path": "app / composition root",
+        "label": "App shell and composition root",
+        "responsibility": "Owns route setup, app startup, providers, layout shell, and dependency assembly.",
+        "required": true,
+        "matchPaths": [
+          "src/app",
+          "app",
+          "src/pages",
+          "pages",
+          "src/routes",
+          "routes",
+          "src/server",
+          "server",
+          "packages/*/src/app",
+          "apps/*/src/app",
+          "packages/*/src/routes",
+          "apps/*/src/routes"
+        ],
+        "examples": [
+          "src/app/router.tsx",
+          "src/routes/index.ts",
+          "src/server/bootstrap.ts"
+        ],
+        "antiPatterns": [
+          "Feature services create database, cache, queue, or API clients directly."
+        ]
+      },
+      {
+        "path": "features / modules / domains",
+        "label": "Product features",
+        "responsibility": "Owns user workflows, feature services, local components, feature tests, and behavior-specific state.",
+        "required": true,
+        "matchPaths": [
+          "src/features",
+          "features",
+          "src/modules",
+          "modules",
+          "src/domains",
+          "domains",
+          "src/use-cases",
+          "use-cases",
+          "packages/*/src/features",
+          "apps/*/src/features",
+          "packages/*/src/modules",
+          "apps/*/src/modules",
+          "packages/*/src/domains",
+          "apps/*/src/domains",
+          "packages/*/src/use-cases",
+          "apps/*/src/use-cases"
+        ],
+        "examples": [
+          "src/features/orders/service.ts",
+          "src/modules/orders/use-cases/create-order.ts",
+          "src/features/orders/components/order-list.tsx",
+          "src/features/orders/__tests__"
+        ],
+        "antiPatterns": [
+          "Business behavior hidden in generic shared helpers.",
+          "One feature imports another feature's private component."
+        ]
+      },
+      {
+        "path": "infrastructure / adapters",
+        "label": "Infrastructure and adapters",
+        "responsibility": "Owns API clients, auth/session adapters, environment interpretation, persistence adapters, queue/storage integrations, and vendor boundaries.",
+        "required": true,
+        "matchPaths": [
+          "src/infrastructure",
+          "infrastructure",
+          "src/infra",
+          "infra",
+          "src/adapters",
+          "adapters",
+          "src/gateways",
+          "gateways",
+          "src/frameworks",
+          "frameworks",
+          "src/platform",
+          "platform",
+          "packages/*/src/infrastructure",
+          "apps/*/src/infrastructure",
+          "packages/*/src/infra",
+          "apps/*/src/infra",
+          "packages/*/src/adapters",
+          "apps/*/src/adapters",
+          "packages/*/src/gateways",
+          "apps/*/src/gateways",
+          "packages/*/src/frameworks",
+          "apps/*/src/frameworks",
+          "packages/*/src/platform",
+          "apps/*/src/platform"
+        ],
+        "examples": [
+          "src/infrastructure/api/client.ts",
+          "src/adapters/auth/session.ts",
+          "src/platform/api/client.ts"
+        ],
+        "antiPatterns": [
+          "Infrastructure or adapter code imports feature internals.",
+          "UI components create infrastructure clients."
+        ]
+      },
+      {
+        "path": "shared / lib / support",
+        "label": "Shared code",
+        "responsibility": "Owns stable cross-feature helpers, formatting, parsing, small utilities, and project-wide support functions after reuse is proven.",
+        "required": false,
+        "matchPaths": [
+          "src/shared",
+          "shared",
+          "src/lib",
+          "lib",
+          "src/utils",
+          "utils",
+          "src/support",
+          "support",
+          "packages/*/src/shared",
+          "apps/*/src/shared",
+          "packages/*/src/lib",
+          "apps/*/src/lib",
+          "packages/*/src/utils",
+          "apps/*/src/utils",
+          "packages/*/src/support",
+          "apps/*/src/support"
+        ],
+        "examples": [
+          "src/shared/formatting/money.ts",
+          "src/lib/date/format.ts",
+          "src/support/ui/classnames.ts"
+        ],
+        "antiPatterns": [
+          "src/utils/misc.ts becomes a dumping ground.",
+          "Shared helpers quietly own product decisions."
+        ]
+      },
+      {
+        "path": "ui / components / design system",
+        "label": "Reusable UI primitives",
+        "responsibility": "Owns reusable design primitives, page patterns, shells, and low-level UI building blocks that are not feature-specific.",
+        "required": false,
+        "matchPaths": [
+          "src/ui",
+          "src/components",
+          "src/patterns",
+          "src/presenters",
+          "presenters",
+          "packages/*/src/ui",
+          "packages/*/src/components",
+          "packages/*/src/patterns",
+          "packages/*/src/presenters",
+          "apps/*/src/ui",
+          "apps/*/src/components",
+          "apps/*/src/patterns",
+          "apps/*/src/presenters"
+        ],
+        "examples": [
+          "src/ui/button.tsx",
+          "src/components/layout/page-shell.tsx",
+          "src/patterns/pages/review-page.tsx"
+        ],
+        "antiPatterns": [
+          "Feature-specific UI moves into global components before reuse is proven."
+        ]
+      },
+      {
+        "path": "generated outputs",
+        "label": "Generated outputs",
+        "responsibility": "Owns generated SDKs, route maps, schemas, docs indexes, and other files that must be changed through their generator.",
+        "required": false,
+        "matchPaths": [
+          "src/generated",
+          "generated",
+          ".skopos",
+          "docs/generated",
+          "packages/*/src/generated",
+          "apps/*/src/generated"
+        ],
+        "examples": [
+          "docs/generated/**",
+          ".skopos/**"
+        ],
+        "antiPatterns": [
+          "Patch generated output by hand instead of changing the owning source or generator."
+        ]
+      },
+      {
+        "path": "docs",
+        "label": "Project knowledge",
+        "responsibility": "Owns durable project guidance, decisions, architecture notes, and developer-facing explanations.",
+        "required": false,
+        "matchPaths": [
+          "docs",
+          "packages/*/docs",
+          "apps/*/docs"
+        ],
+        "examples": [
+          "docs/00-start-here.md",
+          "docs/decisions"
+        ],
+        "antiPatterns": [
+          "Important architecture decisions live only in chat history."
+        ]
+      }
+    ]
+  },
+  "recommendedLayers": [
+    "composition-root",
+    "features",
+    "domain",
+    "application",
+    "infrastructure",
+    "shared",
+    "ui",
+    "generated",
+    "docs"
+  ],
+  "dependencyDirection": {
+    "composition-root": {
+      "mayImport": [
+        "features",
+        "infrastructure",
+        "shared",
+        "ui"
+      ]
+    },
+    "features": {
+      "mayImport": [
+        "domain",
+        "application",
+        "infrastructure",
+        "shared",
+        "ui"
+      ]
+    },
+    "application": {
+      "mayImport": [
+        "domain",
+        "shared"
+      ]
+    },
+    "infrastructure": {
+      "mayImport": [
+        "application",
+        "domain",
+        "shared"
+      ]
+    },
+    "domain": {
+      "mayImport": [
+        "shared"
+      ]
+    },
+    "shared": {
+      "mayImport": []
+    },
+    "ui": {
+      "mayImport": [
+        "shared"
+      ]
+    }
+  },
+  "forbiddenImports": [
+    {
+      "from": "domain",
+      "to": [
+        "composition-root",
+        "infrastructure",
+        "ui",
+        "database",
+        "vendor-sdk"
+      ]
+    },
+    {
+      "from": "shared",
+      "to": [
+        "features",
+        "composition-root",
+        "infrastructure"
+      ]
+    },
+    {
+      "from": "infrastructure",
+      "to": [
+        "feature internals"
+      ]
+    }
+  ],
+  "gates": {
+    "required": [
+      "pnpm typecheck"
+    ],
+    "recommended": [
+      "pnpm test",
+      "pnpm build"
+    ]
+  },
+  "agentPrompts": {
+    "beforeEditing": [
+      "Identify the current architecture layers before adding files.",
+      "Search for existing patterns for routing, services, repositories, validation, config, and generated outputs.",
+      "Decide whether this is feature-local, shared code, infrastructure/adapter work, generated-output work, docs, or public-contract work."
+    ],
+    "beforeDone": [
+      "Confirm no second routing, DI, state, config, validation, or generated-output pattern was introduced.",
+      "Confirm changed public contracts have migration notes or explicit user approval.",
+      "Confirm validation gates match the layer touched."
+    ]
+  },
   "projectLifecycles": [
     "greenfield",
     "early-product",
@@ -87,7 +427,7 @@
       "id": "architecture.mid-app.composition-root-owns-wiring",
       "title": "Composition root owns runtime wiring",
       "severity": "must",
-      "summary": "App startup, route registration, dependency assembly, provider selection, and environment interpretation must live in a composition root or platform layer, not inside feature internals.",
+      "summary": "App startup, route registration, dependency assembly, provider selection, and environment interpretation must live in a composition root or infrastructure/adapters layer, not inside feature internals.",
       "rationale": "Feature code stays testable and portable when runtime choices are assembled at the edge.",
       "appliesTo": [
         "app entrypoints",
@@ -96,8 +436,8 @@
         "provider/adaptor setup"
       ],
       "examples": [
-        "src/app/** wires providers and routes",
-        "src/platform/** exposes stable runtime adapters consumed by features"
+        "src/app/** or src/routes/** wires providers and routes",
+        "src/infrastructure/**, src/adapters/**, or a local equivalent exposes stable runtime adapters consumed by features"
       ],
       "antiPatterns": [
         "Feature service imports environment variables directly",
@@ -138,17 +478,17 @@
       "id": "architecture.mid-app.shared-is-earned",
       "title": "Shared code is earned",
       "severity": "must",
-      "summary": "Shared modules must represent stable cross-feature primitives, platform adapters, or design-system components. Do not create shared buckets for speculative reuse.",
+      "summary": "Shared modules must represent stable cross-feature primitives, infrastructure adapters, or design-system components. Do not create shared buckets for speculative reuse.",
       "rationale": "Premature shared folders make agents choose generic placement and create second patterns.",
       "appliesTo": [
         "shared modules",
-        "support folders",
+        "lib/shared/support folders",
         "component libraries",
         "utility functions"
       ],
       "examples": [
-        "src/support/formatting/money.ts after two or more features need identical money formatting",
-        "src/platform/api/client.ts as a single API boundary"
+        "src/shared/formatting/money.ts after two or more features need identical money formatting",
+        "src/infrastructure/api/client.ts or src/adapters/api/client.ts as a single API boundary"
       ],
       "antiPatterns": [
         "src/utils/misc.ts",
@@ -164,20 +504,20 @@
       "id": "architecture.mid-app.import-direction-is-one-way",
       "title": "Import direction is one-way",
       "severity": "must",
-      "summary": "Feature internals may depend on platform/support primitives, but platform/support code must not depend on feature internals, and features must not import private internals from sibling features.",
+      "summary": "Feature internals may depend on infrastructure, adapter, shared, or UI primitives, but those lower-level roles must not depend on feature internals, and features must not import private internals from sibling features.",
       "rationale": "Acyclic direction keeps refactors bounded and makes ownership clear.",
       "appliesTo": [
         "imports",
         "module boundaries",
         "feature internals",
-        "support code"
+        "infrastructure and shared code"
       ],
       "examples": [
-        "features/orders imports platform/api/client",
-        "support/formatting has no feature imports"
+        "features/orders imports infrastructure/api/client or adapters/api/client",
+        "shared/formatting has no feature imports"
       ],
       "antiPatterns": [
-        "platform imports features/orders/service",
+        "infrastructure imports features/orders/service",
         "features/billing imports features/orders/components/private-row"
       ],
       "checkIds": [

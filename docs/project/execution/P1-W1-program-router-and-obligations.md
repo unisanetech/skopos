@@ -18,7 +18,7 @@ Temporary execution workpack for the first broad Skopos batch that defines the p
   - `../implementation-checklist.md`
   - `../system-ui-plan.md`
   - `../missing-decisions-checklist.md`
-  - `../../findings/F-20260412-program-router-and-obligation-gap.md`
+  - `../../findings/archive/F-20260412-program-router-and-obligation-gap.md`
   - `../../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
   - `../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
   - `../../decisions/022-program-router-sequencing-and-obligation-contract.md`
