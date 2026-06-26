@@ -290,7 +290,16 @@ const loadPolicyPackManifestViews = async ({
     }),
   );
 
-  return manifestViews.filter((view): view is NonNullable<typeof view> => Boolean(view));
+  const seenPackIds = new Set<string>();
+
+  return manifestViews.filter((view): view is NonNullable<typeof view> => {
+    if (!view || seenPackIds.has(view.manifest.packId)) {
+      return false;
+    }
+
+    seenPackIds.add(view.manifest.packId);
+    return true;
+  });
 };
 
 const listPolicyPackManifestPaths = async (directoryPath: string): Promise<string[]> => {
