@@ -1,5 +1,6 @@
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { loadSkoposPolicyPacks } from '@skopos/indexer';
 import type { SkoposLoadedPolicyPack } from '@skopos/indexer';
@@ -145,11 +146,19 @@ export interface SkoposPolicyRoleMappingDecisionsRuntimeResult {
   actorId?: string;
 }
 
+const BUNDLED_POLICY_PACK_ROOT = join(dirname(fileURLToPath(import.meta.url)), 'policy-packs');
+
+const resolvePolicyPackRoots = (_workspaceRoot: string): string[] => [
+  'policy-packs',
+  BUNDLED_POLICY_PACK_ROOT,
+];
+
 export const listSkoposPolicyPacksRuntime = async ({
   cwd,
 }: ListSkoposPolicyPacksRuntimeOptions): Promise<SkoposLoadedPolicyPack[]> =>
   loadSkoposPolicyPacks({
     cwd: resolve(cwd),
+    packRoots: resolvePolicyPackRoots(resolve(cwd)),
   });
 
 export const showSkoposPolicyPackRuntime = async ({

@@ -1,0 +1,355 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.clean-code.maintainability",
+  "type": "policy-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Clean-code policy for keeping everyday product code readable, small, testable, and safe for coding agents to modify.",
+  "updatedAt": "2026-06-27",
+  "packId": "clean-code.maintainability",
+  "family": "clean-code",
+  "variant": "maintainability",
+  "version": "0.1.0",
+  "displayName": "Clean Code Maintainability",
+  "description": "A portable clean-code pack for projects that want readable files, clear names, small responsibilities, low duplication, useful tests, and simple code that agents can safely change.",
+  "plainLanguageSummary": "Use this when a project needs code that is easy for humans and agents to read, change, and verify.",
+  "bestFor": [
+    "Product apps where files or helpers are becoming hard to understand",
+    "Brownfield projects where agents keep adding duplicate helpers or second patterns",
+    "Teams that want simple standards for naming, file size, comments, tests, and responsibility boundaries"
+  ],
+  "notFor": [
+    "One-off scripts where speed matters more than maintainability",
+    "Generated code or vendored code",
+    "Performance-critical internals that need a separate low-level engineering policy"
+  ],
+  "userQuestions": [
+    "Which files are too large or doing too many jobs?",
+    "Which helpers or names make the code harder to understand?",
+    "Which changed behavior needs a focused test before we call it done?"
+  ],
+  "qualityBar": [
+    "Rules are practical and do not force style-only rewrites.",
+    "Agents can apply the pack during normal edits without stopping progress.",
+    "The pack protects readability, naming, responsibility, duplication, and test proof."
+  ],
+  "agentUse": [
+    "Use this pack after understanding the local code style and existing helpers.",
+    "Prefer improving touched code over broad cleanup unrelated to the task.",
+    "Escalate to normal lane when a cleanup changes public behavior, shared helpers, or many files."
+  ],
+  "structureTree": {
+    "title": "Clean-code responsibility tree",
+    "summary": "A practical view of where maintainability concerns usually live. These are code roles, not required folder names.",
+    "rootLabel": "changed code surface",
+    "nodes": [
+      {
+        "path": "feature or use-case code",
+        "label": "Behavior owner",
+        "responsibility": "Owns product behavior, workflow logic, local validation, and tests for a specific user or system action.",
+        "required": true,
+        "matchPaths": [
+          "src/features",
+          "features",
+          "src/modules",
+          "modules",
+          "src/use-cases",
+          "use-cases",
+          "src/application",
+          "application"
+        ],
+        "examples": [
+          "src/features/orders/create-order.ts",
+          "src/use-cases/send-invite.ts"
+        ],
+        "antiPatterns": [
+          "One file handles input parsing, business rules, persistence, UI mapping, and notifications."
+        ]
+      },
+      {
+        "path": "shared helpers",
+        "label": "Shared utility owner",
+        "responsibility": "Owns stable cross-feature helpers only after reuse is real and the helper has one clear job.",
+        "required": false,
+        "matchPaths": [
+          "src/shared",
+          "shared",
+          "src/lib",
+          "lib",
+          "src/utils",
+          "utils",
+          "src/support",
+          "support"
+        ],
+        "examples": [
+          "src/shared/format-money.ts",
+          "src/lib/date/parse-date.ts"
+        ],
+        "antiPatterns": [
+          "misc.ts, helpers.ts, utils.ts, or common.ts becomes a bucket for unrelated logic."
+        ]
+      },
+      {
+        "path": "tests",
+        "label": "Proof owner",
+        "responsibility": "Owns focused tests or smoke checks that prove changed behavior and protect important edge cases.",
+        "required": false,
+        "matchPaths": [
+          "src/**/__tests__",
+          "tests",
+          "test",
+          "__tests__",
+          "specs"
+        ],
+        "examples": [
+          "src/features/orders/__tests__/create-order.test.ts",
+          "tests/invite-flow.test.ts"
+        ],
+        "antiPatterns": [
+          "Behavior changes with only snapshot churn or no focused proof."
+        ]
+      }
+    ]
+  },
+  "gates": {
+    "required": [
+      "pnpm typecheck"
+    ],
+    "recommended": [
+      "pnpm test",
+      "pnpm lint"
+    ]
+  },
+  "agentPrompts": {
+    "beforeEditing": [
+      "Find the local naming, helper, and test patterns before adding new code.",
+      "Identify the smallest owner for the behavior being changed.",
+      "Check whether a helper already exists before adding a new one."
+    ],
+    "beforeDone": [
+      "Confirm touched files still have one clear responsibility.",
+      "Confirm any new helper has a specific name and real caller.",
+      "Confirm changed behavior has focused proof or an explicit reason proof was skipped."
+    ]
+  },
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "appliesWhen": [
+    {
+      "id": "signal.product-code-changing",
+      "summary": "The task changes product source code, shared helpers, tests, or behavior-bearing files.",
+      "confidence": "high",
+      "evidence": [
+        "Source files under src, app, packages, features, modules, or services are being changed",
+        "The task adds helpers, validation, components, services, or tests"
+      ]
+    },
+    {
+      "id": "signal.maintainability-risk",
+      "summary": "The project has large files, duplicated helpers, vague names, weak tests, or mixed responsibilities.",
+      "confidence": "medium",
+      "evidence": [
+        "Files with many unrelated sections",
+        "Helpers named misc, common, or utils",
+        "Repeated local parsing or formatting logic",
+        "Behavior changes without focused tests"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.generated-or-vendored-code",
+      "summary": "Generated or vendored files should not be cleaned manually.",
+      "confidence": "high",
+      "evidence": [
+        "Path contains generated, vendor, dist, build, or node_modules",
+        "File header says generated",
+        "Owning generator exists"
+      ]
+    },
+    {
+      "id": "anti.unrelated-style-cleanup",
+      "summary": "Unrelated cleanup should not be mixed into a focused behavior change.",
+      "confidence": "high",
+      "evidence": [
+        "Cleanup touches files outside the task scope",
+        "No bug, feature, or readability reason is tied to the touched code"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "clean-code.maintainability.one-clear-responsibility",
+      "title": "One clear responsibility",
+      "severity": "must",
+      "summary": "A touched file or function should have one clear job. Split or move code when one place handles unrelated behavior, transport, persistence, formatting, and UI concerns together.",
+      "rationale": "Small ownership makes agent edits safer and human review easier.",
+      "appliesTo": [
+        "source files",
+        "functions",
+        "services",
+        "components",
+        "helpers"
+      ],
+      "examples": [
+        "Keep input parsing at the boundary and product behavior in the feature/service.",
+        "Extract a named helper when a branch has a reusable, clear concept."
+      ],
+      "antiPatterns": [
+        "A file handles request parsing, business rules, persistence, email, and response shaping.",
+        "A component owns data fetching, formatting, mutation logic, and complex layout state."
+      ],
+      "checkIds": [
+        "clean-code.maintainability.mixed-responsibility-file"
+      ]
+    },
+    {
+      "id": "clean-code.maintainability.names-say-purpose",
+      "title": "Names say the purpose",
+      "severity": "must",
+      "summary": "Names should describe the domain idea or technical responsibility. Avoid vague names such as misc, helper, data, thing, manager, or utils when a specific name is possible.",
+      "rationale": "Clear names reduce repeated explanation and help agents find the right code.",
+      "appliesTo": [
+        "files",
+        "functions",
+        "variables",
+        "types",
+        "helpers"
+      ],
+      "examples": [
+        "formatInvoiceTotal instead of helper",
+        "parseWebhookPayload instead of normalizeData"
+      ],
+      "antiPatterns": [
+        "utils.ts grows unrelated exports",
+        "manager.ts owns multiple unrelated workflows",
+        "data variable hides whether the value is user input, database output, or API output"
+      ],
+      "checkIds": [
+        "clean-code.maintainability.vague-name-bucket"
+      ]
+    },
+    {
+      "id": "clean-code.maintainability.shared-code-is-proven",
+      "title": "Shared code is proven",
+      "severity": "must",
+      "summary": "Do not move code into shared helpers until at least two real callers need the same stable behavior.",
+      "rationale": "Speculative shared code becomes a dumping ground and makes future changes harder.",
+      "appliesTo": [
+        "shared folders",
+        "utility modules",
+        "component libraries",
+        "support modules"
+      ],
+      "examples": [
+        "Keep feature-only logic inside the feature.",
+        "Move formatting code to shared only after multiple features use the same behavior."
+      ],
+      "antiPatterns": [
+        "Create shared/helpers.ts before reuse is proven.",
+        "Move one feature's private business rule into shared."
+      ],
+      "checkIds": [
+        "clean-code.maintainability.speculative-shared-helper"
+      ]
+    },
+    {
+      "id": "clean-code.maintainability.boundaries-parse-unknowns",
+      "title": "Boundaries parse unknowns",
+      "severity": "must",
+      "summary": "Parse and normalize unknown external data at boundaries. Do not spread defensive unknown checks through core product logic.",
+      "rationale": "Core code stays simpler when uncertainty is handled at the edge.",
+      "appliesTo": [
+        "HTTP handlers",
+        "forms",
+        "database reads",
+        "webhooks",
+        "jobs",
+        "third-party APIs"
+      ],
+      "examples": [
+        "Validate request body before calling the use case.",
+        "Normalize webhook payload in the adapter."
+      ],
+      "antiPatterns": [
+        "Every service function checks whether the same field is a string.",
+        "UI components repeatedly defend against impossible server shapes."
+      ],
+      "checkIds": [
+        "clean-code.maintainability.unknown-checks-inside-core"
+      ]
+    },
+    {
+      "id": "clean-code.maintainability.comments-explain-why",
+      "title": "Comments explain why",
+      "severity": "should",
+      "summary": "Use comments for non-obvious decisions, constraints, or tradeoffs. Do not add comments that repeat what the code already says.",
+      "rationale": "Useful comments preserve context; noisy comments make files harder to scan.",
+      "appliesTo": [
+        "source comments",
+        "TODOs",
+        "workaround notes"
+      ],
+      "examples": [
+        "Explain why a retry limit is lower than normal.",
+        "Link a temporary workaround to an owner or issue."
+      ],
+      "antiPatterns": [
+        "Comment says 'increment counter' above counter += 1.",
+        "TODO has no owner, reason, or removal condition."
+      ],
+      "checkIds": [
+        "clean-code.maintainability.noisy-or-stale-comment"
+      ]
+    },
+    {
+      "id": "clean-code.maintainability.changed-behavior-has-proof",
+      "title": "Changed behavior has proof",
+      "severity": "must",
+      "summary": "When behavior changes, add or run focused proof that would fail if the behavior were wrong.",
+      "rationale": "Clean code is not only readable; it must be safe to change.",
+      "appliesTo": [
+        "tests",
+        "smoke checks",
+        "done reports",
+        "review notes"
+      ],
+      "examples": [
+        "Run the feature test that covers the changed branch.",
+        "Add a focused unit test for a new parsing rule."
+      ],
+      "antiPatterns": [
+        "Only run formatting after changing behavior.",
+        "Close work with no test, smoke check, or skipped-proof reason."
+      ],
+      "checkIds": [
+        "clean-code.maintainability.changed-behavior-without-proof"
+      ]
+    }
+  ],
+  "requiredDocs": [
+    "policies/overview.md",
+    "policies/naming-and-responsibility.md",
+    "policies/testing-and-proof.md"
+  ],
+  "generatedArtifacts": [
+    ".skopos/policies/resolved.json",
+    ".skopos/policies/agent-brief.md"
+  ],
+  "driftCheckIds": [
+    "clean-code.maintainability.mixed-responsibility-file",
+    "clean-code.maintainability.vague-name-bucket",
+    "clean-code.maintainability.speculative-shared-helper",
+    "clean-code.maintainability.unknown-checks-inside-core",
+    "clean-code.maintainability.noisy-or-stale-comment",
+    "clean-code.maintainability.changed-behavior-without-proof"
+  ],
+  "proofFixtureIds": [
+    "clean-code.maintainability.good-readable-feature",
+    "clean-code.maintainability.drift-helper-bucket"
+  ]
+}

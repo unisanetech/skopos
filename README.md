@@ -92,6 +92,7 @@ Policy packs are reusable project rules.
 
 Examples:
 
+- clean code and maintainability
 - architecture boundaries
 - stack choices like Redis, queues, cron, or durable workflows
 - UI/component structure

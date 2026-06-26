@@ -1,4 +1,4 @@
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 
 import type { SkoposPolicyPackManifest } from '@skopos/model';
 import { z } from 'zod';
@@ -166,9 +166,11 @@ export const loadSkoposPolicyPacks = async ({
   packRoots = ['policy-packs'],
 }: LoadSkoposPolicyPacksOptions): Promise<SkoposLoadedPolicyPack[]> => {
   const packs: SkoposLoadedPolicyPack[] = [];
+  const seenPackIds = new Set<string>();
 
   for (const packRoot of packRoots) {
-    const manifestPaths = (await listFilesUnder(join(cwd, packRoot), ['.json'])).filter(
+    const resolvedPackRoot = isAbsolute(packRoot) ? packRoot : join(cwd, packRoot);
+    const manifestPaths = (await listFilesUnder(resolvedPackRoot, ['.json'])).filter(
       (manifestPath) => manifestPath.endsWith('/pack.json'),
     );
 
@@ -179,6 +181,11 @@ export const loadSkoposPolicyPacks = async ({
       }
 
       const parsed = policyPackManifestSchema.parse(JSON.parse(contents));
+      if (seenPackIds.has(parsed.packId)) {
+        continue;
+      }
+
+      seenPackIds.add(parsed.packId);
       packs.push({
         ...parsed,
         sourcePath: relative(cwd, manifestPath) || manifestPath,

@@ -65,6 +65,22 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
       expect(trustOutput.trustLevel).toBeTruthy();
       expect(trustOutput.readiness).toBeTruthy();
 
+      const policiesOutput = JSON.parse(
+        execFileSync('pnpm', ['exec', 'skopos', 'policies', 'list', '.', '--json'], {
+          cwd: projectDirectory,
+          encoding: 'utf8',
+        }),
+      ) as Array<{ packId?: string }>;
+
+      expect(policiesOutput.map((pack) => pack.packId)).toEqual(
+        expect.arrayContaining([
+          'architecture.mid-app',
+          'clean-code.maintainability',
+          'gates.progressive-validation',
+          'stack.async-work',
+        ]),
+      );
+
       const packageJson = JSON.parse(
         await readFile(join(projectDirectory, 'node_modules', '@skopos', 'cli', 'package.json'), 'utf8'),
       ) as {
@@ -76,6 +92,22 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
         join(projectDirectory, 'node_modules', '@skopos', 'cli', 'LICENSE'),
         'utf8',
       );
+      const installedCleanCodePack = JSON.parse(
+        await readFile(
+          join(
+            projectDirectory,
+            'node_modules',
+            '@skopos',
+            'cli',
+            'dist',
+            'policy-packs',
+            'clean-code',
+            'maintainability',
+            'pack.json',
+          ),
+          'utf8',
+        ),
+      ) as { packId?: string };
 
       expect(
         Object.keys(packageJson.dependencies ?? {}).filter((dependencyName) =>
@@ -85,6 +117,7 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
       expect(packageJson.license).toBe('Apache-2.0');
       expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
       expect(installedLicense).toContain('Apache License');
+      expect(installedCleanCodePack.packId).toBe('clean-code.maintainability');
 
       const npmExecProjectDirectory = join(tempRoot, 'npm-exec-project');
       await mkdir(npmExecProjectDirectory, { recursive: true });

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.clean-code.maintainability.drift-rules",
+  "packId": "clean-code.maintainability",
+  "updatedAt": "2026-06-27",
+  "rules": [
+    {
+      "id": "clean-code.maintainability.mixed-responsibility-file",
+      "severity": "must",
+      "target": "source files and functions",
+      "strategy": "heuristic-now semantic-later",
+      "evidence": [
+        "one file mixes boundary parsing, product behavior, persistence, formatting, and UI mapping",
+        "large touched file has unrelated sections and no clear owner",
+        "function performs multiple unrelated side effects"
+      ],
+      "remediation": "Move boundary work to adapters, product behavior to the owning feature or service, and formatting to a named helper only when reuse is real."
+    },
+    {
+      "id": "clean-code.maintainability.vague-name-bucket",
+      "severity": "must",
+      "target": "files, folders, exports, and helpers",
+      "strategy": "filesystem-and-symbol-scan",
+      "evidence": [
+        "files named misc, helper, helpers, common, manager, thing, or utils contain unrelated exports",
+        "new helper name does not explain the domain or technical responsibility",
+        "barrel exports unrelated helpers as one bucket"
+      ],
+      "remediation": "Rename by purpose, split unrelated helpers, or move feature-specific behavior back to the owning feature."
+    },
+    {
+      "id": "clean-code.maintainability.speculative-shared-helper",
+      "severity": "must",
+      "target": "shared/lib/support folders",
+      "strategy": "usage-count-now semantic-later",
+      "evidence": [
+        "shared helper has only one real caller",
+        "shared code contains feature-specific product nouns",
+        "new shared folder appears before repeated need is proven"
+      ],
+      "remediation": "Keep code feature-local until at least two real callers need the same stable behavior."
+    },
+    {
+      "id": "clean-code.maintainability.unknown-checks-inside-core",
+      "severity": "must",
+      "target": "core product logic",
+      "strategy": "ast-later",
+      "evidence": [
+        "domain or service logic repeatedly checks unknown external shapes",
+        "boundary data is passed through without parsing",
+        "UI or core logic repeats defensive server-shape checks"
+      ],
+      "remediation": "Parse and normalize data at transport, persistence, job, form, or vendor boundaries before calling core logic."
+    },
+    {
+      "id": "clean-code.maintainability.noisy-or-stale-comment",
+      "severity": "should",
+      "target": "source comments and TODOs",
+      "strategy": "text-scan-now review-later",
+      "evidence": [
+        "comment repeats the code literally",
+        "TODO has no owner, reason, or removal condition",
+        "comment describes behavior that no longer matches the implementation"
+      ],
+      "remediation": "Keep comments for why, constraints, tradeoffs, and temporary decisions; remove comments that only restate obvious code."
+    },
+    {
+      "id": "clean-code.maintainability.changed-behavior-without-proof",
+      "severity": "must",
+      "target": "changed behavior and done reports",
+      "strategy": "workflow-evidence-later",
+      "evidence": [
+        "behavior changed with no focused test or smoke check",
+        "done report lists no proof command for product logic change",
+        "skipped proof has no reason"
+      ],
+      "remediation": "Run or add focused proof that would fail if the changed behavior were wrong, or record why proof was skipped."
+    }
+  ]
+}

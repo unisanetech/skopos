@@ -29,7 +29,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && node scripts/copy-policy-packs.mjs",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
     "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/compact-output.test.ts src/__tests__/cli.e2e.test.ts",
