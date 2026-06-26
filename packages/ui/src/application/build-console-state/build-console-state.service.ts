@@ -250,6 +250,10 @@ const loadPolicyPackManifestViews = async ({
 }): Promise<NonNullable<SkoposUiConsoleState['policyReview']>['packManifests']> => {
   const candidatePaths = new Set<string>();
 
+  for (const manifestPath of await listPolicyPackManifestPaths(join(workspaceRoot, 'policy-packs'))) {
+    candidatePaths.add(manifestPath);
+  }
+
   for (const sourcePath of resolvedPolicy?.sourcePaths ?? []) {
     candidatePaths.add(sourcePath);
   }
@@ -287,6 +291,31 @@ const loadPolicyPackManifestViews = async ({
   );
 
   return manifestViews.filter((view): view is NonNullable<typeof view> => Boolean(view));
+};
+
+const listPolicyPackManifestPaths = async (directoryPath: string): Promise<string[]> => {
+  try {
+    const entries = await readdir(directoryPath, { withFileTypes: true });
+    const nested = await Promise.all(
+      entries.map(async (entry) => {
+        const entryPath = join(directoryPath, entry.name);
+
+        if (entry.isFile() && entry.name === 'pack.json') {
+          return [entryPath];
+        }
+
+        if (entry.isDirectory()) {
+          return listPolicyPackManifestPaths(entryPath);
+        }
+
+        return [];
+      }),
+    );
+
+    return nested.flat().sort((left, right) => left.localeCompare(right));
+  } catch {
+    return [];
+  }
 };
 
 const buildStructureMatchNode = async (
