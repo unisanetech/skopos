@@ -9,6 +9,7 @@ import {
   LocalExceptionsCard,
   PackArchitectureContractCard,
   PackDetailInspectorAside,
+  PackGateStatusCard,
   PackOverviewCard,
   PackRoleMappingReviewCard,
   PackRulesCard,
@@ -334,6 +335,7 @@ export function PackDetailView({
       <PackStructureTreeCard pack={pack} />
       <PackRoleMappingReviewCard pack={pack} />
       <PackArchitectureContractCard pack={pack} />
+      <PackGateStatusCard pack={pack} />
       <PackRulesCard pack={pack} />
     </ReviewPage>
   );

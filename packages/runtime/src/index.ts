@@ -9,6 +9,7 @@ export * from './application/decide/decide.service.js';
 export * from './application/discussion/discussion.service.js';
 export * from './application/done/done.service.js';
 export * from './application/eval/eval.service.js';
+export * from './application/gates/gates.service.js';
 export * from './application/impact/impact.service.js';
 export * from './application/jobs/jobs.service.js';
 export * from './application/plan/plan.service.js';
@@ -40,6 +41,7 @@ export const skoposRuntimeCommands = [
   'jobs',
   'done',
   'eval',
+  'gates',
   'trust',
   'understand',
 ] as const;

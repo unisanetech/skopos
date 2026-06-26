@@ -56,7 +56,27 @@
           "src/use-cases",
           "use-cases",
           "src/application",
-          "application"
+          "application",
+          "src/services",
+          "services",
+          "src/domain",
+          "domain",
+          "src/domains",
+          "domains",
+          "packages/*/src/features",
+          "apps/*/src/features",
+          "packages/*/src/modules",
+          "apps/*/src/modules",
+          "packages/*/src/use-cases",
+          "apps/*/src/use-cases",
+          "packages/*/src/application",
+          "apps/*/src/application",
+          "packages/*/src/services",
+          "apps/*/src/services",
+          "packages/*/src/domain",
+          "apps/*/src/domain",
+          "packages/*/src/domains",
+          "apps/*/src/domains"
         ],
         "examples": [
           "src/features/orders/create-order.ts",
@@ -79,7 +99,15 @@
           "src/utils",
           "utils",
           "src/support",
-          "support"
+          "support",
+          "packages/*/src/shared",
+          "apps/*/src/shared",
+          "packages/*/src/lib",
+          "apps/*/src/lib",
+          "packages/*/src/utils",
+          "apps/*/src/utils",
+          "packages/*/src/support",
+          "apps/*/src/support"
         ],
         "examples": [
           "src/shared/format-money.ts",
@@ -99,7 +127,13 @@
           "tests",
           "test",
           "__tests__",
-          "specs"
+          "specs",
+          "packages/*/src/**/__tests__",
+          "apps/*/src/**/__tests__",
+          "packages/*/tests",
+          "apps/*/tests",
+          "packages/*/test",
+          "apps/*/test"
         ],
         "examples": [
           "src/features/orders/__tests__/create-order.test.ts",
@@ -113,11 +147,19 @@
   },
   "gates": {
     "required": [
-      "pnpm typecheck"
+      "typecheck",
+      "focused behavior proof"
     ],
     "recommended": [
-      "pnpm test",
-      "pnpm lint"
+      "lint",
+      "format check",
+      "test",
+      "large file scan",
+      "long function scan",
+      "vague name scan",
+      "helper bucket scan",
+      "comment hygiene scan",
+      "boundary unknown scan"
     ]
   },
   "agentPrompts": {

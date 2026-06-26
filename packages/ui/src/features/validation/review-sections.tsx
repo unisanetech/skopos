@@ -18,6 +18,7 @@ export {
   PackArchitectureContractCard,
   PackDetailsCard,
   PackDetailInspectorAside,
+  PackGateStatusCard,
   PackOverviewCard,
   PackRoleMappingReviewCard,
   PackRulesCard,

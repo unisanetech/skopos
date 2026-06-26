@@ -17,6 +17,7 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
@@ -187,12 +188,14 @@ const loadPolicyReviewView = async (
   const overridesPath = join(workspaceRoot, '.skopos', 'policies', 'overrides.json');
   const roleMappingPath = join(workspaceRoot, '.skopos', 'policies', 'role-mapping.json');
   const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
-  const [resolvedPolicy, recommendations, overrides, roleMapping, driftReport] = await Promise.all([
+  const gatesPath = join(workspaceRoot, '.skopos', 'gates', 'resolved.json');
+  const [resolvedPolicy, recommendations, overrides, roleMapping, driftReport, gates] = await Promise.all([
     loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath),
     loadJsonArtifact<SkoposPolicyRecommendationArtifact>(recommendationsPath),
     loadJsonArtifact<SkoposPolicyOverrideArtifact>(overridesPath),
     loadJsonArtifact<SkoposPolicyRoleMappingArtifact>(roleMappingPath),
     loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath),
+    loadJsonArtifact<SkoposResolvedGatesArtifact>(gatesPath),
   ]);
   const packManifests = await loadPolicyPackManifestViews({
     workspaceRoot,
@@ -200,7 +203,7 @@ const loadPolicyReviewView = async (
     recommendations,
   });
 
-  if (!resolvedPolicy && !recommendations && !overrides && !roleMapping && !driftReport && packManifests.length === 0) {
+  if (!resolvedPolicy && !recommendations && !overrides && !roleMapping && !driftReport && !gates && packManifests.length === 0) {
     return undefined;
   }
 
@@ -233,6 +236,12 @@ const loadPolicyReviewView = async (
       ? {
           artifactPath: driftReportPath,
           report: driftReport,
+        }
+      : undefined,
+    gates: gates
+      ? {
+          artifactPath: gatesPath,
+          resolved: gates,
         }
       : undefined,
     packManifests,

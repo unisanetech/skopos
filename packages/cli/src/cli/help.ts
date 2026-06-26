@@ -17,6 +17,7 @@ Usage:
   skopos context [scope] [target] [--json]
   skopos plan <goal> [target] [--scope <scope>] [--actor <id>] [--dry-run] [--json]
   skopos overrides show [target] [--json]
+  skopos gates resolve [target] [--actor <id>] [--dry-run] [--json]
   skopos policies list [target] [--json]
   skopos policies show <pack> [target] [--json]
   skopos policies recommend [target] [--dry-run] [--json]

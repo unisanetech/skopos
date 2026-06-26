@@ -38,7 +38,7 @@ This file is the canonical instruction source for the standalone Skopos workspac
 ## Skopos Accepted Policy
 
 - Source of truth: `.skopos/policies/resolved.json`
-- Accepted packs: `stack.async-work@0.1.0`, `gates.progressive-validation@0.1.0`, `architecture.mid-app@0.1.0`
+- Accepted packs: `stack.async-work@0.1.0`, `gates.progressive-validation@0.1.0`, `architecture.mid-app@0.1.0`, `clean-code.maintainability@0.1.0`
 - Default execution lane: `normal`
 - Progressive workflow rule: keep small tasks light, use normal gates for bounded feature work, and create/use a workpack for public API, architecture, stack, security, migration, multi-package, or long-running changes.
 - Agent brief: `.skopos/agent/policy-brief.json`

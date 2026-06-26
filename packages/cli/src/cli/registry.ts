@@ -1,5 +1,6 @@
 import { runImpactCommand, runDoneCommand } from './commands/impact.js';
 import { runDiscussionCommand } from './commands/discussion.js';
+import { runGatesCommand } from './commands/gates.js';
 import { runInitCommand } from './commands/init.js';
 import { runInstructionsCommand } from './commands/instructions.js';
 import { runJobsCommand } from './commands/jobs.js';
@@ -35,6 +36,7 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   plan: runPlanCommand,
   program: runProgramCommand,
   overrides: runOverridesCommand,
+  gates: runGatesCommand,
   policies: runPoliciesCommand,
   workflows: runWorkflowsCommand,
   mission: runMissionCommand,

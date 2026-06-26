@@ -13,6 +13,7 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
@@ -200,6 +201,10 @@ export interface SkoposUiConsolePolicyReviewView {
   driftReport?: {
     artifactPath: string;
     report: SkoposDriftReportArtifact;
+  };
+  gates?: {
+    artifactPath: string;
+    resolved: SkoposResolvedGatesArtifact;
   };
   packManifests: Array<{
     artifactPath: string;

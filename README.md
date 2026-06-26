@@ -63,6 +63,7 @@ skopos understand .
 skopos policies recommend .
 skopos policies apply .
 skopos policies drift .
+skopos gates resolve .
 skopos program next . --compact
 skopos trust . --compact
 skopos done . --compact

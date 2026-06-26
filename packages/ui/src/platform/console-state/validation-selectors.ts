@@ -1,3 +1,5 @@
+import type { SkoposResolvedGate } from '@skopos/model';
+
 import type { SkoposUiConsoleState } from '../../contracts/skopos-ui-console-state.js';
 import { humanize } from '../../support/formatting/console-formatting.js';
 import { toneForReadiness } from '../../support/ui/tone-helpers.js';
@@ -82,6 +84,13 @@ export interface PolicyPackDetail extends PolicyPackSummary {
     required: string[];
     recommended: string[];
   };
+  resolvedGates: SkoposResolvedGate[];
+  gateCounts: {
+    available: number;
+    manual: number;
+    missing: number;
+    missingRequired: number;
+  };
   agentPrompts?: {
     beforeEditing: string[];
     beforeDone: string[];
@@ -139,6 +148,7 @@ export interface PolicyViewContext {
   executionLanes: NonNullable<
     NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
   >['policy']['recommendedExecutionLanes'];
+  resolvedGates?: NonNullable<NonNullable<SkoposUiConsoleState['policyReview']>['gates']>['resolved'];
   sourceItems: InspectorItem[];
 }
 
@@ -280,6 +290,7 @@ export const getProofViewContext = (state: SkoposUiConsoleState): ProofViewConte
 export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewContext => {
   const resolvedPolicy = state.policyReview?.resolvedPolicy?.policy;
   const driftReport = state.policyReview?.driftReport?.report;
+  const resolvedGates = state.policyReview?.gates?.resolved;
   const recommendationByPackId = new Map(
     (state.policyReview?.recommendations?.recommendations.recommendations ?? []).map(
       (recommendation) => [recommendation.packId, recommendation],
@@ -336,6 +347,7 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
       const rules = acceptedPack
         ? activeRules.filter((rule) => rule.id.startsWith(`${packId}.`))
         : manifest?.rules ?? [];
+      const packGates = resolvedGates?.gates.filter((gate) => gate.packId === packId) ?? [];
       const roleMappings =
         state.policyReview?.roleMapping?.mapping.mappings.filter((mapping) => mapping.packId === packId) ?? [];
 
@@ -393,6 +405,15 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
         ),
         forbiddenImports: manifest?.forbiddenImports ?? [],
         gates: manifest?.gates,
+        resolvedGates: packGates,
+        gateCounts: {
+          available: packGates.filter((gate) => gate.status === 'available').length,
+          manual: packGates.filter((gate) => gate.status === 'manual').length,
+          missing: packGates.filter((gate) => gate.status === 'missing').length,
+          missingRequired: packGates.filter(
+            (gate) => gate.status === 'missing' && gate.requiredness === 'required',
+          ).length,
+        },
         agentPrompts: manifest?.agentPrompts,
         rules,
         ruleCounts: {
@@ -414,6 +435,7 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
     openDriftFindings: findings.filter((finding) => finding.status === 'open'),
     suppressedDriftFindings: findings.filter((finding) => finding.status === 'suppressed'),
     executionLanes: resolvedPolicy?.recommendedExecutionLanes ?? [],
+    resolvedGates,
     sourceItems: [
       ...(state.policyReview?.resolvedPolicy
         ? [{ label: 'Accepted rules', value: state.policyReview.resolvedPolicy.artifactPath }]
@@ -426,6 +448,9 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
         : []),
       ...(state.policyReview?.roleMapping
         ? [{ label: 'Role mapping', value: state.policyReview.roleMapping.artifactPath }]
+        : []),
+      ...(state.policyReview?.gates
+        ? [{ label: 'Gate plan', value: state.policyReview.gates.artifactPath }]
         : []),
       ...(state.policyReview?.overrides
         ? [{ label: 'Local exceptions', value: state.policyReview.overrides.artifactPath }]

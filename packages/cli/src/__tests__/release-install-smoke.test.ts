@@ -81,6 +81,26 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
         ]),
       );
 
+      const gatesOutput = JSON.parse(
+        execFileSync('pnpm', ['exec', 'skopos', 'gates', 'resolve', '.', '--json'], {
+          cwd: projectDirectory,
+          encoding: 'utf8',
+        }),
+      ) as {
+        artifactWrite?: string;
+        artifact?: {
+          gates?: Array<{ id?: string; packId?: string; status?: string }>;
+        };
+      };
+
+      expect(gatesOutput.artifactWrite).toBe('written');
+      expect(gatesOutput.artifact?.gates?.map((gate) => gate.packId)).toContain(
+        'clean-code.maintainability',
+      );
+      expect(gatesOutput.artifact?.gates?.map((gate) => gate.id)).toContain(
+        'clean-code.maintainability.gate.vague-name-scan',
+      );
+
       const packageJson = JSON.parse(
         await readFile(join(projectDirectory, 'node_modules', '@skopos', 'cli', 'package.json'), 'utf8'),
       ) as {

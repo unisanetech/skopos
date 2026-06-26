@@ -867,6 +867,73 @@ export function PackArchitectureContractCard({
   );
 }
 
+export function PackGateStatusCard({
+  pack,
+}: {
+  pack: PolicyPackDetail;
+}): React.JSX.Element {
+  return (
+    <Card
+      title="Gate status"
+      description="Shows which checks Skopos found in this project, which checks need manual proof, and which commands are missing."
+    >
+      {pack.resolvedGates.length > 0 ? (
+        <div className="grid gap-4">
+          <MetricGrid
+            items={[
+              {
+                label: 'Available',
+                value: pack.gateCounts.available,
+                helper: 'Project commands Skopos can run or ask the agent to run.',
+              },
+              {
+                label: 'Manual proof',
+                value: pack.gateCounts.manual,
+                helper: 'Checks the agent must inspect and explain clearly.',
+              },
+              {
+                label: 'Missing',
+                value: pack.gateCounts.missing,
+                helper: pack.gateCounts.missingRequired > 0
+                  ? 'Required commands are missing from package scripts.'
+                  : 'Recommended commands not found in package scripts.',
+              },
+            ]}
+          />
+          <div className={skoposListSurfaceClass}>
+            {pack.resolvedGates.map((gate, index) => (
+              <article
+                key={gate.id}
+                className={getSkoposListRowClass({ bordered: index > 0, interactive: false })}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="skopos-section-title">{gate.label}</p>
+                    <p className="skopos-helper-copy mt-1">{gate.summary}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <StatusPill value={humanize(gate.status)} tone={gateStatusTone(gate)} />
+                    <StatusPill value={humanize(gate.requiredness)} tone={gate.requiredness === 'required' ? 'warning' : 'neutral'} />
+                  </div>
+                </div>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  <SmallFact label="Kind" value={humanize(gate.kind)} />
+                  <SmallFact label="Proof" value={gate.command ?? gate.missingReason ?? 'Agent must inspect and explain.'} monospace={Boolean(gate.command)} />
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <EmptyMessage
+          title="No resolved gate status"
+          description="Apply this pack, then run skopos gates resolve . to generate the gate plan for this project."
+        />
+      )}
+    </Card>
+  );
+}
+
 export function PackRulesCard({
   pack,
 }: {
@@ -1422,6 +1489,19 @@ const roleMappingStatusTone = (
       return 'danger';
     case 'ignored':
       return 'neutral';
+  }
+};
+
+const gateStatusTone = (
+  gate: PolicyPackDetail['resolvedGates'][number],
+): 'neutral' | 'positive' | 'warning' | 'danger' | 'info' => {
+  switch (gate.status) {
+    case 'available':
+      return 'positive';
+    case 'manual':
+      return 'info';
+    case 'missing':
+      return gate.requiredness === 'required' ? 'danger' : 'warning';
   }
 };
 
