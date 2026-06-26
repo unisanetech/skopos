@@ -9,7 +9,7 @@ Track active Skopos structural findings here.
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-06-26`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `README.md`
@@ -17,6 +17,7 @@ Track active Skopos structural findings here.
 
 ## Changelog
 
+- `2026-06-27`: Opened and closed the workflow-recording preflight gap after Pack Gates V1 showed that cross-cutting agent work could bypass Skopos mission/decision/finding records until after implementation; generated plans now include a workflow-recording guard item for broad or high-risk work.
 - `2026-06-26`: Closed the token-control and agent-transport gap after shared compact CLI JSON projections began reporting direct response budget telemetry, compact human output began warning only when a response exceeds the compact budget, and compact eval output stopped replaying full mission checklist objects.
 - `2026-06-26`: Closed the initial synthesized repo-understanding gap after `skopos understand` began writing compact repo-summary, feature-inventory, and implementation-hotspot artifacts, indexing them, and surfacing them on the overview UI.
 - `2026-06-26`: Closed the stale advisory-decision eval reconciliation gap after the existing runtime fix and regression coverage were confirmed current, removing the last active self-healing finding from the program queue.

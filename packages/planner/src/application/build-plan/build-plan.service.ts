@@ -104,11 +104,17 @@ export const buildSkoposPlan = ({
   const implementationSteps = buildImplementationSteps({
     goal: normalizedGoal,
     scopeTitle,
+    scopeKind: context.scope.scope.kind,
     decisionQuestions,
     recommendedChecks,
     recommendedWorkflows,
   });
-  const nextSteps = buildNextSteps(decisionQuestions, recommendedChecks, recommendedWorkflows);
+  const nextSteps = buildNextSteps({
+    scopeKind: context.scope.scope.kind,
+    decisionQuestions,
+    recommendedChecks,
+    recommendedWorkflows,
+  });
 
   return {
     workspaceRoot,
@@ -551,6 +557,7 @@ const normalizeMatchValue = (value: string): string =>
 interface BuildImplementationStepsInput {
   goal: string;
   scopeTitle: string;
+  scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
   recommendedChecks: string[];
   recommendedWorkflows: SkoposWorkflowRequirement[];
@@ -559,6 +566,7 @@ interface BuildImplementationStepsInput {
 const buildImplementationSteps = ({
   goal,
   scopeTitle,
+  scopeKind,
   decisionQuestions,
   recommendedChecks,
   recommendedWorkflows,
@@ -571,6 +579,20 @@ const buildImplementationSteps = ({
       title: 'Resolve plan decisions',
       detail:
         'Answer the recommended ask-back questions before implementation so the agent does not guess on high-impact choices.',
+    });
+  }
+
+  if (requiresWorkflowRecordGuard({
+    scopeKind,
+    decisionQuestions,
+    recommendedChecks,
+    recommendedWorkflows,
+  })) {
+    steps.push({
+      id: 'record-workflow-lane',
+      title: 'Record the workflow lane before editing',
+      detail:
+        'Confirm whether this is light, normal, or workpack work. Keep the active mission and plan current for normal/workpack work, add a decision when a durable product or architecture choice is made, and add or update a finding when a structural gap is discovered.',
     });
   }
 
@@ -613,15 +635,32 @@ const buildImplementationSteps = ({
   return steps;
 };
 
-const buildNextSteps = (
-  decisionQuestions: SkoposDecisionQuestion[],
-  recommendedChecks: string[],
-  recommendedWorkflows: SkoposWorkflowRequirement[],
-): string[] => {
+const buildNextSteps = ({
+  scopeKind,
+  decisionQuestions,
+  recommendedChecks,
+  recommendedWorkflows,
+}: {
+  scopeKind: SkoposContextBundle['scope']['scope']['kind'];
+  decisionQuestions: SkoposDecisionQuestion[];
+  recommendedChecks: string[];
+  recommendedWorkflows: SkoposWorkflowRequirement[];
+}): string[] => {
   const nextSteps = ['Review the compact references before making code changes.'];
 
   if (decisionQuestions.length > 0) {
     nextSteps.push('Answer the plan questions that Skopos marked as high-impact.');
+  }
+
+  if (requiresWorkflowRecordGuard({
+    scopeKind,
+    decisionQuestions,
+    recommendedChecks,
+    recommendedWorkflows,
+  })) {
+    nextSteps.push(
+      'Before editing, confirm the workflow lane and record mission, decision, or finding artifacts when the work changes durable project truth.',
+    );
   }
 
   if (recommendedChecks.length > 0) {
@@ -638,3 +677,19 @@ const buildNextSteps = (
 
   return nextSteps;
 };
+
+const requiresWorkflowRecordGuard = ({
+  scopeKind,
+  decisionQuestions,
+  recommendedChecks,
+  recommendedWorkflows,
+}: {
+  scopeKind: SkoposContextBundle['scope']['scope']['kind'];
+  decisionQuestions: SkoposDecisionQuestion[];
+  recommendedChecks: string[];
+  recommendedWorkflows: SkoposWorkflowRequirement[];
+}): boolean =>
+  scopeKind === 'workspace' ||
+  decisionQuestions.some((question) => question.escalation === 'must-ask') ||
+  recommendedWorkflows.length >= 2 ||
+  recommendedChecks.length >= 4;

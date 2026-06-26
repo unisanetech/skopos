@@ -3740,6 +3740,9 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(plan.mission.coordination.lastUpdatedBy).toBe('agent-plan');
     expect(plan.references.some((reference) => reference.kind === 'package-manifest')).toBe(true);
     expect(plan.implementationSteps.some((step) => step.id === 'resolve-decisions')).toBe(true);
+    expect(plan.implementationSteps.some((step) => step.id === 'record-workflow-lane')).toBe(
+      true,
+    );
     expect(plan.decisionQuestions.map((question) => question.id)).toEqual(
       expect.arrayContaining(['plan.public-api-change', 'plan.vendor-choice']),
     );
@@ -3763,6 +3766,14 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(plan.mission.items.some((item) => item.kind === 'decision')).toBe(true);
     expect(plan.mission.items.some((item) => item.kind === 'validation')).toBe(true);
     expect(plan.mission.items.some((item) => item.kind === 'workflow')).toBe(true);
+    expect(plan.mission.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'step-record-workflow-lane',
+          kind: 'workflow',
+        }),
+      ]),
+    );
 
     const planText = runCliText([
       'plan',

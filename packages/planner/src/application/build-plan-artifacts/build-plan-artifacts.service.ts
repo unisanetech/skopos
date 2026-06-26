@@ -117,6 +117,10 @@ const buildMissionItems = (plan: SkoposPlanResult): SkoposMissionItem[] => {
 };
 
 const classifyMissionItemKind = (stepId: string): SkoposMissionItem['kind'] => {
+  if (stepId === 'record-workflow-lane') {
+    return 'workflow';
+  }
+
   if (stepId === 'run-checks') {
     return 'validation';
   }
