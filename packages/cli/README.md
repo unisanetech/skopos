@@ -1,28 +1,42 @@
 # Skopos CLI
 
-Skopos is a local-first project intelligence layer for coding agents and developers.
+Skopos is a local-first project intelligence layer for developers who use coding agents.
 
-Use it inside a project to create compact project memory, agent instructions, workflow state, policy guidance, and closure checks.
+The CLI installs Skopos into a project, builds local project memory, writes agent guidance, recommends useful rules, and helps agents close work with clear proof. It is designed to work with real projects, not only demo repositories.
 
-## Install and Run
+## Run Without Installing Globally
 
-Run without a permanent install:
+Use npm:
 
 ```bash
 npx @skopos/cli init .
 ```
 
-With pnpm:
+Use pnpm:
 
 ```bash
 pnpm dlx @skopos/cli init .
 ```
 
-With explicit npm exec:
+Use explicit npm exec:
 
 ```bash
 npm exec --package @skopos/cli -- skopos init .
 ```
+
+After initialization, the command is:
+
+```bash
+skopos
+```
+
+## What It Does
+
+Skopos writes local project intelligence under `.skopos/`. This gives coding agents a compact view of the project so they do not need to rediscover the same facts every time.
+
+Skopos can also create or update `AGENTS.md`. That file gives agents practical guidance for the project, such as how to inspect the codebase, how to choose the right workflow size, when to ask the developer a question, and which checks matter before finishing.
+
+The default output is written for humans. Use `--json` when another tool needs stable machine-readable output.
 
 ## Common Commands
 
@@ -30,16 +44,18 @@ npm exec --package @skopos/cli -- skopos init .
 skopos init .
 skopos understand .
 skopos policies recommend .
+skopos policies apply .
+skopos policies drift .
 skopos program next . --compact
 skopos trust . --compact
 skopos done . --compact
 ```
 
-## What It Writes
+## How To Think About It
 
-Skopos writes local project intelligence under `.skopos/` and can maintain `AGENTS.md` guidance for coding agents.
+For a small task, Skopos should stay light. The agent reads a compact brief, edits the relevant files, runs a focused check, and updates memory only when a real project fact changed.
 
-Generated `.skopos/` artifacts are project-local memory and should be reviewed before committing if a team wants durable shared state.
+For bigger work, Skopos can guide a stronger workflow. It can track a mission or workpack, show progress, record decisions, surface blockers, and explain what proof is still needed before the work is done.
 
 ## License
 
