@@ -1,59 +1,64 @@
 # Skopos
 
-**Skopos helps coding agents understand your project and work without losing context.**
+**Persistent project memory for coding agents.**
 
-It creates a local memory layer for your codebase, writes useful agent instructions, recommends project rules, and helps prove when work is actually done.
+Skopos helps Codex, Claude, Cursor, and other coding agents understand your project before they edit it. It keeps project knowledge, rules, decisions, and work status close to the code so agents drift less and developers get clearer answers.
 
-Works with new projects and existing projects. Not tied to one framework.
+Use it in a new project or an existing project. Skopos is framework-agnostic.
 
-## 🚀 Quick Start
+## 🚀 Install
 
-Run Skopos inside any project:
+Run this inside your project:
 
 ```bash
 npx @skopos/cli init .
 ```
 
-Or use pnpm:
+Other options:
 
 ```bash
 pnpm dlx @skopos/cli init .
-```
-
-Or explicit npm exec:
-
-```bash
 npm exec --package @skopos/cli -- skopos init .
 ```
 
-## 🧠 Why Skopos Exists
+## 🤖 Use With Your Coding Agent
 
-Coding agents are powerful, but they can drift.
+After `init`, tell your agent:
 
-They may forget project rules, miss past decisions, create a second pattern, or say work is done without enough proof.
+```txt
+Read AGENTS.md first, then use Skopos context before editing.
+```
 
-Skopos gives them a stable project memory and a simple workflow:
+Skopos creates project guidance that helps the agent answer and code in the right way for your repo.
 
-- remember important project facts
-- follow local architecture and style rules
-- ask better questions when needed
-- choose light workflow for small tasks
-- use stronger workpacks for big changes
-- show progress, blockers, decisions, and proof
+Good agent prompt:
 
-## 📦 What It Adds
+```txt
+Use Skopos. Check the project memory, follow AGENTS.md, make the smallest safe change, run the right checks, and update memory if project truth changed.
+```
 
-Skopos writes project-local files:
+## 🧠 What Skopos Does
 
-- `.skopos/` for project memory, state, policies, and reports
-- `AGENTS.md` for coding-agent guidance
+- remembers important project facts
+- writes agent-friendly `AGENTS.md`
+- recommends architecture, stack, and validation rules
+- tracks missions/workpacks for bigger changes
+- shows next steps, blockers, decisions, and proof
+- helps check whether work is really done
 
-The saved text is meant for humans too. A developer should be able to open it and understand what is going on.
+## 📦 What Gets Added
+
+```txt
+your-project/
+  AGENTS.md      # guidance for coding agents
+  .skopos/       # local project memory and workflow state
+```
+
+The files are written for humans too. You should be able to open them and understand what Skopos knows.
 
 ## 🛠 Common Commands
 
 ```bash
-skopos init .
 skopos understand .
 skopos policies recommend .
 skopos policies apply .
@@ -63,23 +68,23 @@ skopos trust . --compact
 skopos done . --compact
 ```
 
-Use normal text output for reading. Use `--json` when another tool needs machine-readable output.
+Use normal text output when you are reading. Use `--json` when another tool needs structured output.
 
-## 🧭 How Skopos Guides Work
+## 🧭 Light Work vs Big Work
 
-Small task:
-
-```txt
-read compact context → edit relevant files → run focused check → update memory only if truth changed
-```
-
-Big or risky task:
+Small change:
 
 ```txt
-create mission/workpack → split phases → track decisions → run staged gates → close with proof
+read context → edit files → run focused check → update memory only if needed
 ```
 
-The goal is **progressive workflow**, not process for everything.
+Large or risky change:
+
+```txt
+mission/workpack → phases → decisions → gates → proof
+```
+
+Skopos is meant to be progressive. Small work should stay fast. Bigger work should get more structure.
 
 ## 🧩 Policy Packs
 
@@ -89,26 +94,33 @@ Examples:
 
 - architecture boundaries
 - stack choices like Redis, queues, cron, or durable workflows
-- validation gates
 - UI/component structure
-- naming and file-structure rules
+- naming and folder rules
+- validation gates
 
-For existing projects, Skopos should first understand the current structure. It should not force every codebase into the same folder names.
+For existing projects, Skopos should respect proven local structure. It maps rules to your codebase instead of forcing every repo into the same folder names.
 
-## ✅ Release Status
+## ✅ Status
 
-First public release target:
+Skopos is preparing for its first public npm release:
 
 ```txt
 @skopos/cli@0.1.0
 ```
 
-The first npm release should publish with the `next` tag. Promote to `latest` only after real registry install tests pass.
+The first release should use the `next` tag. `latest` should wait until registry install tests pass.
 
-## 🧑‍💻 Development
+## 🧑‍💻 Contributing
+
+Install dependencies:
 
 ```bash
 pnpm install
+```
+
+Run checks:
+
+```bash
 pnpm release:check
 pnpm typecheck
 pnpm release:smoke

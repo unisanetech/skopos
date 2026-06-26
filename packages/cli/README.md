@@ -1,64 +1,59 @@
 # Skopos CLI
 
-**Skopos helps coding agents understand your project and work without losing context.**
+**Persistent project memory for coding agents.**
 
-The CLI adds local project memory, agent guidance, policy recommendations, and done checks to your codebase.
+Skopos helps Codex, Claude, Cursor, and other coding agents understand your project before they edit it.
 
-## 🚀 Run It
+## 🚀 Start
 
-Use npm:
+Run inside your project:
 
 ```bash
 npx @skopos/cli init .
 ```
 
-Use pnpm:
+Or:
 
 ```bash
 pnpm dlx @skopos/cli init .
-```
-
-Use npm exec:
-
-```bash
 npm exec --package @skopos/cli -- skopos init .
 ```
 
-## 📦 What It Writes
+## 🤖 Tell Your Agent
 
-- `.skopos/` for local project memory and workflow state
-- `AGENTS.md` for coding-agent instructions
+After setup, tell your coding agent:
 
-The output is written for developers first, not only for machines.
+```txt
+Read AGENTS.md first. Use Skopos context before editing.
+```
 
-## 🛠 Common Commands
+Better prompt:
+
+```txt
+Use Skopos. Follow AGENTS.md, make the smallest safe change, run the right checks, and update memory if project truth changed.
+```
+
+## 📦 What It Adds
+
+```txt
+AGENTS.md
+.skopos/
+```
+
+`AGENTS.md` gives coding agents project guidance. `.skopos/` stores local project memory and workflow state.
+
+## 🛠 Useful Commands
 
 ```bash
-skopos init .
 skopos understand .
 skopos policies recommend .
 skopos policies apply .
-skopos policies drift .
 skopos program next . --compact
 skopos trust . --compact
 skopos done . --compact
 ```
 
-Use `--json` when another tool needs machine-readable output.
-
-## 🧭 Workflow
-
-Small work stays light:
-
-```txt
-read context → edit → check → update memory if needed
-```
-
-Big work gets more structure:
-
-```txt
-mission/workpack → phases → decisions → gates → proof
-```
+Use `--json` when another tool needs structured output.
 
 ## 📄 License
 
