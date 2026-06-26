@@ -2,7 +2,7 @@
   "extends": "../../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "../..",
+    "rootDir": "../..",
     "module": "ESNext",
     "target": "ES2022",
     "moduleResolution": "bundler",
@@ -10,28 +10,28 @@
     "esModuleInterop": true,
     "paths": {
       "@skopos/config": [
-        "./packages/config/src/index.ts"
+        "../config/src/index.ts"
       ],
       "@skopos/indexer": [
-        "./packages/indexer/src/index.ts"
+        "../indexer/src/index.ts"
       ],
       "@skopos/instructions": [
-        "./packages/instructions/src/index.ts"
+        "../instructions/src/index.ts"
       ],
       "@skopos/model": [
-        "./packages/model/src/index.ts"
+        "../model/src/index.ts"
       ],
       "@skopos/planner": [
-        "./packages/planner/src/index.ts"
+        "../planner/src/index.ts"
       ],
       "@skopos/query": [
-        "./packages/query/src/index.ts"
+        "../query/src/index.ts"
       ],
       "@skopos/trust": [
-        "./packages/trust/src/index.ts"
+        "../trust/src/index.ts"
       ],
       "@skopos/*": [
-        "./packages/*/src"
+        "../*/src"
       ]
     }
   },

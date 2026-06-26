@@ -2,10 +2,10 @@
   "extends": "../../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "../..",
+    "rootDir": "../..",
     "paths": {
       "@skopos/*": [
-        "./packages/*/src"
+        "../*/src"
       ]
     },
     "module": "ESNext",

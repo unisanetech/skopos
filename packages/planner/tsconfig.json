@@ -2,7 +2,7 @@
   "extends": "../../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "baseUrl": "../..",
+    "rootDir": "../..",
     "module": "ESNext",
     "target": "ES2022",
     "moduleResolution": "bundler",
@@ -19,7 +19,7 @@
         "../query/src/index.ts"
       ],
       "@skopos/*": [
-        "./packages/*/src"
+        "../*/src"
       ]
     }
   },
