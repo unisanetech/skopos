@@ -1,10 +1,10 @@
 # Skopos CLI
 
-Skopos is a local-first project intelligence layer for developers who use coding agents.
+**Skopos helps coding agents understand your project and work without losing context.**
 
-The CLI installs Skopos into a project, builds local project memory, writes agent guidance, recommends useful rules, and helps agents close work with clear proof. It is designed to work with real projects, not only demo repositories.
+The CLI adds local project memory, agent guidance, policy recommendations, and done checks to your codebase.
 
-## Run Without Installing Globally
+## 🚀 Run It
 
 Use npm:
 
@@ -18,27 +18,20 @@ Use pnpm:
 pnpm dlx @skopos/cli init .
 ```
 
-Use explicit npm exec:
+Use npm exec:
 
 ```bash
 npm exec --package @skopos/cli -- skopos init .
 ```
 
-After initialization, the command is:
+## 📦 What It Writes
 
-```bash
-skopos
-```
+- `.skopos/` for local project memory and workflow state
+- `AGENTS.md` for coding-agent instructions
 
-## What It Does
+The output is written for developers first, not only for machines.
 
-Skopos writes local project intelligence under `.skopos/`. This gives coding agents a compact view of the project so they do not need to rediscover the same facts every time.
-
-Skopos can also create or update `AGENTS.md`. That file gives agents practical guidance for the project, such as how to inspect the codebase, how to choose the right workflow size, when to ask the developer a question, and which checks matter before finishing.
-
-The default output is written for humans. Use `--json` when another tool needs stable machine-readable output.
-
-## Common Commands
+## 🛠 Common Commands
 
 ```bash
 skopos init .
@@ -51,12 +44,22 @@ skopos trust . --compact
 skopos done . --compact
 ```
 
-## How To Think About It
+Use `--json` when another tool needs machine-readable output.
 
-For a small task, Skopos should stay light. The agent reads a compact brief, edits the relevant files, runs a focused check, and updates memory only when a real project fact changed.
+## 🧭 Workflow
 
-For bigger work, Skopos can guide a stronger workflow. It can track a mission or workpack, show progress, record decisions, surface blockers, and explain what proof is still needed before the work is done.
+Small work stays light:
 
-## License
+```txt
+read context → edit → check → update memory if needed
+```
+
+Big work gets more structure:
+
+```txt
+mission/workpack → phases → decisions → gates → proof
+```
+
+## 📄 License
 
 Apache-2.0
