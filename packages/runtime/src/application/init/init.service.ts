@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import {
@@ -23,7 +23,12 @@ import {
   syncCodexWrapperAdapter,
   syncManualHostAdapter,
 } from '@skopos/instructions';
-import type { SkoposDocsScaffoldArtifact, SkoposInitMode, SkoposInitResult } from '@skopos/model';
+import type {
+  SkoposDocsScaffoldArtifact,
+  SkoposGitignoreScaffoldArtifact,
+  SkoposInitMode,
+  SkoposInitResult,
+} from '@skopos/model';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -86,6 +91,10 @@ export const initSkoposProject = async ({
     projectName: bootstrap.recommendedConfig.project.name,
     docsRoot: bootstrap.recommendedConfig.docs.root,
     startHerePath: bootstrap.recommendedConfig.docs.startHerePath,
+    dryRun,
+  });
+  const gitignoreScaffold = await scaffoldGitignore({
+    workspaceRoot,
     dryRun,
   });
   const instructionScaffold = scaffoldInstructions
@@ -249,6 +258,7 @@ export const initSkoposProject = async ({
       commandsGraphPath,
       scopeRelationsGraphPath,
       docsScaffold.path,
+      gitignoreScaffold.path,
       ...(instructionScaffold ? [instructionScaffold.path] : []),
     ],
     metadata: {
@@ -263,6 +273,8 @@ export const initSkoposProject = async ({
       instructionScaffoldPath: instructionScaffold?.relativePath ?? null,
       docsScaffoldStatus: docsScaffold.status,
       docsScaffoldPath: docsScaffold.relativePath,
+      gitignoreScaffoldStatus: gitignoreScaffold.status,
+      gitignoreScaffoldPath: gitignoreScaffold.relativePath,
     },
     dryRun,
   });
@@ -326,6 +338,7 @@ export const initSkoposProject = async ({
     ],
     toolAdapterArtifacts: enforcement.toolAdapters,
     docsScaffold,
+    gitignoreScaffold,
     instructionScaffold,
     configWrite,
     bootstrapWrite,
@@ -406,6 +419,58 @@ List the commands developers and agents should run before finishing work.
 
 Keep durable project docs under \`${docsRoot}/\` and link the important pages from here.
 `;
+
+const scaffoldGitignore = async ({
+  workspaceRoot,
+  dryRun,
+}: {
+  workspaceRoot: string;
+  dryRun: boolean;
+}): Promise<SkoposGitignoreScaffoldArtifact> => {
+  const gitignorePath = join(workspaceRoot, '.gitignore');
+  const existing = await readTextIfExists(gitignorePath);
+  const ignoredPaths = ['.skopos/', 'docs/generated/skopos/'];
+  const missingEntries = ignoredPaths.filter((entry) => !hasGitignoreEntry(existing ?? '', entry));
+
+  if (missingEntries.length === 0) {
+    return {
+      path: gitignorePath,
+      relativePath: '.gitignore',
+      status: 'skipped-existing',
+      ignoredPaths,
+    };
+  }
+
+  if (!dryRun) {
+    const block = [
+      '# Skopos generated local state',
+      ...missingEntries,
+    ].join('\n');
+    const next = existing ? `${existing.trimEnd()}\n\n${block}\n` : `${block}\n`;
+    await writeFile(gitignorePath, next, 'utf8');
+  }
+
+  return {
+    path: gitignorePath,
+    relativePath: '.gitignore',
+    status: dryRun ? 'dry-run' : 'written',
+    ignoredPaths,
+  };
+};
+
+const hasGitignoreEntry = (contents: string, entry: string): boolean =>
+  contents
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .some((line) => line === entry);
+
+const readTextIfExists = async (path: string): Promise<string | undefined> => {
+  try {
+    return await readFile(path, 'utf8');
+  } catch {
+    return undefined;
+  }
+};
 
 interface WriteConfigIfNeededOptions {
   configPath: string;

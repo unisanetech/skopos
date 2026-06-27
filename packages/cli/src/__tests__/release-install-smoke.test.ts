@@ -51,6 +51,9 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
       expect(initOutput.actorId).toBe('release-smoke');
       expect(initOutput.bootstrapWrite).toBe('written');
       expect(initOutput.indexWrite).toBe('written');
+      expect(await readFile(join(projectDirectory, '.gitignore'), 'utf8')).toContain(
+        'docs/generated/skopos/',
+      );
 
       const trustOutput = JSON.parse(
         execFileSync('pnpm', ['exec', 'skopos', 'trust', '.', '--compact', '--json'], {

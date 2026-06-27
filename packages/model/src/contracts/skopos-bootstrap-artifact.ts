@@ -65,6 +65,15 @@ export interface SkoposDocsScaffoldArtifact {
   title: string;
 }
 
+export type SkoposGitignoreScaffoldWriteStatus = 'written' | 'skipped-existing' | 'dry-run';
+
+export interface SkoposGitignoreScaffoldArtifact {
+  path: string;
+  relativePath: string;
+  status: SkoposGitignoreScaffoldWriteStatus;
+  ignoredPaths: string[];
+}
+
 export interface SkoposInitResult {
   configPath: string;
   bootstrapPath: string;
@@ -79,6 +88,7 @@ export interface SkoposInitResult {
   referenceArtifacts: SkoposInitReferenceArtifact[];
   toolAdapterArtifacts: SkoposToolAdapterSummary[];
   docsScaffold?: SkoposDocsScaffoldArtifact;
+  gitignoreScaffold?: SkoposGitignoreScaffoldArtifact;
   instructionScaffold?: SkoposInstructionScaffoldArtifact;
   configWrite: SkoposWriteStatus;
   bootstrapWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
