@@ -1,4 +1,6 @@
-import { join, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { dirname, join, relative, resolve } from 'node:path';
 
 import {
   loadSkoposConfig,
@@ -21,7 +23,7 @@ import {
   syncCodexWrapperAdapter,
   syncManualHostAdapter,
 } from '@skopos/instructions';
-import type { SkoposInitMode, SkoposInitResult } from '@skopos/model';
+import type { SkoposDocsScaffoldArtifact, SkoposInitMode, SkoposInitResult } from '@skopos/model';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -79,6 +81,13 @@ export const initSkoposProject = async ({
     dryRun,
     force,
   });
+  const docsScaffold = await scaffoldDocsStartHere({
+    workspaceRoot,
+    projectName: bootstrap.recommendedConfig.project.name,
+    docsRoot: bootstrap.recommendedConfig.docs.root,
+    startHerePath: bootstrap.recommendedConfig.docs.startHerePath,
+    dryRun,
+  });
   const instructionScaffold = scaffoldInstructions
     ? await scaffoldProjectInstructions({
         cwd: workspaceRoot,
@@ -96,9 +105,10 @@ export const initSkoposProject = async ({
     : undefined;
 
   if (
-    instructionScaffold &&
     !dryRun &&
-    (instructionScaffold.status === 'written' || instructionScaffold.status === 'overwritten')
+    (docsScaffold.status === 'written' ||
+      (instructionScaffold &&
+        (instructionScaffold.status === 'written' || instructionScaffold.status === 'overwritten')))
   ) {
     ({ bootstrap, scopesLite, diagnosis, architecture } = await buildSkoposBootstrapArtifacts({
       cwd: workspaceRoot,
@@ -238,6 +248,7 @@ export const initSkoposProject = async ({
       docsGraphPath,
       commandsGraphPath,
       scopeRelationsGraphPath,
+      docsScaffold.path,
       ...(instructionScaffold ? [instructionScaffold.path] : []),
     ],
     metadata: {
@@ -250,6 +261,8 @@ export const initSkoposProject = async ({
       workspacePackageCount: bootstrap.detected.workspacePackageCount,
       instructionScaffoldStatus: instructionScaffold?.status ?? null,
       instructionScaffoldPath: instructionScaffold?.relativePath ?? null,
+      docsScaffoldStatus: docsScaffold.status,
+      docsScaffoldPath: docsScaffold.relativePath,
     },
     dryRun,
   });
@@ -312,6 +325,7 @@ export const initSkoposProject = async ({
       },
     ],
     toolAdapterArtifacts: enforcement.toolAdapters,
+    docsScaffold,
     instructionScaffold,
     configWrite,
     bootstrapWrite,
@@ -330,6 +344,68 @@ export const initSkoposProject = async ({
     enforcement,
   };
 };
+
+const scaffoldDocsStartHere = async ({
+  workspaceRoot,
+  projectName,
+  docsRoot,
+  startHerePath,
+  dryRun,
+}: {
+  workspaceRoot: string;
+  projectName: string;
+  docsRoot: string;
+  startHerePath?: string;
+  dryRun: boolean;
+}): Promise<SkoposDocsScaffoldArtifact> => {
+  const relativePath = startHerePath ?? join(docsRoot, '00-start-here.md');
+  const absolutePath = resolve(workspaceRoot, relativePath);
+
+  if (existsSync(absolutePath)) {
+    return {
+      path: absolutePath,
+      relativePath,
+      status: 'skipped-existing',
+      title: `${projectName} Docs Start`,
+    };
+  }
+
+  if (!dryRun) {
+    await mkdir(dirname(absolutePath), { recursive: true });
+    await writeFile(absolutePath, buildStartHereContents(projectName, docsRoot), 'utf8');
+  }
+
+  return {
+    path: absolutePath,
+    relativePath: relative(workspaceRoot, absolutePath),
+    status: dryRun ? 'dry-run' : 'written',
+    title: `${projectName} Docs Start`,
+  };
+};
+
+const buildStartHereContents = (projectName: string, docsRoot: string): string => `# ${projectName}
+
+This is the project knowledge start page for Skopos.
+
+Use this file to keep the most important project guidance easy to find:
+
+- What this project is for
+- How the code is organized
+- Which commands prove a change is safe
+- Which decisions future agents should not forget
+
+## Project Notes
+
+Add the current product goal, architecture notes, and important workflow links here as the project grows.
+
+## Validation
+
+List the commands developers and agents should run before finishing work.
+
+## More Docs
+
+Keep durable project docs under \`${docsRoot}/\` and link the important pages from here.
+`;
 
 interface WriteConfigIfNeededOptions {
   configPath: string;

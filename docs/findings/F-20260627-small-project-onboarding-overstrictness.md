@@ -3,7 +3,7 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260627-SMALL-PROJECT-ONBOARDING-OVERSTRICTNESS`
-- Status: `active`
+- Status: `resolved`
 - Owner: `skopos-core`
 - Scope: `skopos/onboarding`
 - Canonical: `yes`
@@ -16,15 +16,16 @@
 
 ## Changelog
 
+- `2026-06-27`: Resolved by scaffolding `docs/00-start-here.md` during init, preventing `understand` from listing missing docs routers, making pack recommendations inspect real project signals, and adding simple-source role mapping fallbacks for small projects.
 - `2026-06-27`: Opened after the external `skopos-pilot-basic` pilot showed that a tiny TypeScript project receives over-confident pack recommendations, missing role mapping pressure, and hard docs-root trust failures.
 
 ## Summary
 
 - Severity: `MUST`
-- Status: `active`
+- Status: `resolved`
 - Owner: `skopos-core`
 - Target Pack: `onboarding, policy recommendations, role mapping, trust`
-- Current State: install and core artifacts work, but the first-run experience is too noisy for a small project.
+- Current State: fresh small-project onboarding now creates the docs router, keeps trust free of docs failures, treats async-work as review-only without async signals, and maps simple `src/` layouts without missing required role pressure.
 
 ## Symptoms
 
@@ -49,8 +50,8 @@
 
 ## Verification
 
-1. fresh small TypeScript pilot does not recommend async stack unless async signals exist
-2. accepted clean-code/architecture packs do not mark simple valid `src/` layouts as missing required roles
-3. first-run trust gives a clear setup path and avoids hard failure for docs that Skopos itself did not scaffold
-4. understanding output lists only existing docs entrypoints
-
+1. `npm exec --yes --package /tmp/skopos-pilot-packs/skopos-cli-0.1.0.tgz -- skopos init . --actor pilot --json` created `docs/00-start-here.md` and regenerated bootstrap with `docsHealth.hasStartHere: true`.
+2. `skopos trust . --compact --json` in the pilot reported 0 failures; remaining warnings were instruction mirrors and, after policy acceptance, missing drift report.
+3. `skopos policies recommend . --json` in the pilot marked `stack.async-work` as low-confidence `review`, not `apply`, because no async-work signals were found.
+4. Applying `architecture.mid-app` in the pilot mapped product behavior to `src` and marked app-shell/adapter roles as `needs-review`, with no `missing` required roles.
+5. `skopos understand . --actor pilot --json` listed only existing docs entrypoints: `docs/00-start-here.md` and `docs`.

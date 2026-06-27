@@ -17,6 +17,7 @@ Track active Skopos structural findings here.
 
 ## Changelog
 
+- `2026-06-27`: Closed the two launch-blocking pilot findings after packed dashboard assets were included in the CLI tarball, installed `skopos ui build` passed in an external pilot, init began creating the docs router, pack recommendations became signal-aware, and simple `src/` projects stopped receiving missing required role pressure.
 - `2026-06-27`: Added two launch-blocking pilot findings after the external `skopos-pilot-basic` install-style pilot: packed CLI dashboard build resolution fails outside the monorepo, and small-project onboarding is too strict/noisy for simple TypeScript projects.
 - `2026-06-27`: Opened and closed the workflow-recording preflight gap after Pack Gates V1 showed that cross-cutting agent work could bypass Skopos mission/decision/finding records until after implementation; generated plans now include a workflow-recording guard item for broad or high-risk work.
 - `2026-06-26`: Closed the token-control and agent-transport gap after shared compact CLI JSON projections began reporting direct response budget telemetry, compact human output began warning only when a response exceeds the compact budget, and compact eval output stopped replaying full mission checklist objects.
@@ -75,18 +76,8 @@ Track active Skopos structural findings here.
 ### Current Hardening Tracks
 
 1. Track A: onboarding, scope, and trust correctness
-   - `F-20260627-small-project-onboarding-overstrictness`
-     - Severity: `MUST`
-     - Status: `active`
-     - Owner: `skopos-core`
-     - Target Pack: `onboarding, policy recommendations, role mapping, trust`
-     - Detail: `F-20260627-small-project-onboarding-overstrictness.md`
+   - No active findings currently routed in this track.
 2. Track B: validation and transport proportionality
-   - `F-20260627-packed-cli-ui-build-install-gap`
-     - Severity: `MUST`
-     - Status: `active`
-     - Owner: `skopos-core`
-     - Target Pack: `release packaging and dashboard`
-     - Detail: `F-20260627-packed-cli-ui-build-install-gap.md`
+   - No active findings currently routed in this track.
 3. Track C: program and docs-state hygiene
    - No active findings currently routed in this track.

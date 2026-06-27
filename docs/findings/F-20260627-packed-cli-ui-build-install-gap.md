@@ -3,7 +3,7 @@
 ## Metadata
 
 - Doc ID: `SKOPOS-F-20260627-PACKED-CLI-UI-BUILD-INSTALL-GAP`
-- Status: `active`
+- Status: `resolved`
 - Owner: `skopos-core`
 - Scope: `skopos/release`
 - Canonical: `yes`
@@ -15,15 +15,16 @@
 
 ## Changelog
 
+- `2026-06-27`: Resolved by packaging the built dashboard app into the CLI tarball, falling back to bundled static assets for installed `skopos ui build`, and extending release smoke plus the external `skopos-pilot-basic` pilot to cover installed dashboard generation.
 - `2026-06-27`: Opened after the external `skopos-pilot-basic` install-style pilot showed that `skopos ui build .` fails from the packed CLI tarball.
 
 ## Summary
 
 - Severity: `MUST`
-- Status: `active`
+- Status: `resolved`
 - Owner: `skopos-core`
 - Target Pack: `release packaging and dashboard`
-- Current State: packed CLI onboarding works for init, scan, policies, gates, trust, and instruction sync, but the installed dashboard build path cannot resolve `@skopos/ui`.
+- Current State: packed CLI dashboard build now works from an installed tarball by copying bundled static UI assets and injecting the external project's generated state.
 
 ## Symptom
 
@@ -53,7 +54,6 @@ Could not resolve the @skopos/ui package root for the Vite app.
 
 ## Verification
 
-1. packed CLI can run `skopos ui build .` in a fresh external project
-2. generated dashboard opens and reads the external project's `ui-state.json`
-3. release smoke fails if installed UI resolution regresses
-
+1. `pnpm --filter @skopos/cli release:smoke`
+2. `npm exec --yes --package /tmp/skopos-pilot-packs/skopos-cli-0.1.0.tgz -- skopos ui build . --json` in `/Users/bhaskarbarma/Desktop/TOP/skopos-pilot-basic`
+3. `rg -n "__SKOPOS_UI_STATE__" docs/generated/skopos/app/index.html || true` returned no matches in the pilot, confirming inline state injection replaced the placeholder.

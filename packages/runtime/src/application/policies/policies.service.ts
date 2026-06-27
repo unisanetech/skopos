@@ -184,12 +184,13 @@ export const recommendSkoposPolicyPacksRuntime = async ({
   const workspaceRoot = resolve(cwd);
   const packs = await listSkoposPolicyPacksRuntime({ cwd: workspaceRoot });
   const projectLifecycle = await inferProjectLifecycle(workspaceRoot);
+  const projectSignals = await analyzeProjectPolicySignals(workspaceRoot);
   const acceptedPolicy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(
     join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH),
   );
   const acceptedPackIds = new Set(acceptedPolicy?.acceptedPacks.map((pack) => pack.packId) ?? []);
   const recommendations = packs.map((pack) =>
-    recommendPack(pack, projectLifecycle, acceptedPackIds.has(pack.packId)),
+    recommendPack(pack, projectLifecycle, acceptedPackIds.has(pack.packId), projectSignals),
   );
   const artifact: SkoposPolicyRecommendationArtifact = {
     schemaVersion: 1,
@@ -354,6 +355,7 @@ const buildPolicyRoleMappingArtifact = async ({
 }): Promise<SkoposPolicyRoleMappingArtifact> => {
   const acceptedPackIds = new Set(policy.acceptedPacks.map((entry) => entry.packId));
   const decisionByKey = new Map(decisions.map((decision) => [buildPolicyRoleMappingDecisionKey(decision), decision]));
+  const projectSignals = await analyzeProjectPolicySignals(workspaceRoot);
   const mappings = (
     await Promise.all(
       packs
@@ -364,6 +366,7 @@ const buildPolicyRoleMappingArtifact = async ({
               workspaceRoot,
               pack,
               role: node,
+              projectSignals,
             }),
           ),
         ),
@@ -429,10 +432,12 @@ const buildPolicyRoleMapping = async ({
   workspaceRoot,
   pack,
   role,
+  projectSignals,
 }: {
   workspaceRoot: string;
   pack: SkoposLoadedPolicyPack;
   role: NonNullable<SkoposLoadedPolicyPack['structureTree']>['nodes'][number];
+  projectSignals: ProjectPolicySignals;
 }): Promise<SkoposPolicyRoleMapping> => {
   const checkedAliases = role.matchPaths && role.matchPaths.length > 0 ? role.matchPaths : [role.path];
   const aliasMatches = await Promise.all(
@@ -449,6 +454,13 @@ const buildPolicyRoleMapping = async ({
     .map((match) => match.alias)
     .sort((left, right) => left.localeCompare(right));
   const required = role.required ?? false;
+  const simpleProjectFallback =
+    matchedPaths.length === 0
+      ? buildSmallProjectRoleFallback({ pack, role, checkedAliases, projectSignals })
+      : undefined;
+  if (simpleProjectFallback) {
+    return simpleProjectFallback;
+  }
   const status: SkoposPolicyRoleMapping['status'] =
     matchedPaths.length > 0 ? 'inferred' : required ? 'missing' : 'needs-review';
   const confidence: SkoposPolicyRoleMapping['confidence'] =
@@ -710,6 +722,7 @@ const recommendPack = (
   pack: SkoposLoadedPolicyPack,
   projectLifecycle: SkoposProjectLifecycle,
   accepted: boolean,
+  projectSignals: ProjectPolicySignals,
 ): SkoposPolicyRecommendationEntry => {
   const lifecycleMatch = pack.projectLifecycles.includes(projectLifecycle);
   const antiSignals = lifecycleMatch ? [] : pack.avoidWhen;
@@ -752,6 +765,44 @@ const recommendPack = (
     };
   }
 
+  if (pack.packId === 'stack.async-work' && !projectSignals.hasAsyncWorkSignals) {
+    return {
+      packId: pack.packId,
+      version: pack.version,
+      family: pack.family,
+      variant: pack.variant,
+      displayName: pack.displayName,
+      confidence: 'low',
+      recommendation: 'review',
+      reason: 'Review only when the project is adding jobs, queues, cron, Redis, workers, webhooks, retries, or other background work. This scan found no async-work signals.',
+      plainLanguageSummary: pack.plainLanguageSummary,
+      qualityBar: pack.qualityBar,
+      accepted: false,
+      signals: [],
+      antiSignals: pack.avoidWhen,
+      sourcePath: pack.sourcePath,
+    };
+  }
+
+  if (pack.packId === 'architecture.mid-app' && projectSignals.simpleSourceProject) {
+    return {
+      packId: pack.packId,
+      version: pack.version,
+      family: pack.family,
+      variant: pack.variant,
+      displayName: pack.displayName,
+      confidence: 'medium',
+      recommendation: 'review',
+      reason: 'Review manually because this looks like a small source package, not a product app with app shell, feature areas, and infrastructure adapters.',
+      plainLanguageSummary: pack.plainLanguageSummary,
+      qualityBar: pack.qualityBar,
+      accepted: false,
+      signals: pack.appliesWhen,
+      antiSignals: pack.avoidWhen,
+      sourcePath: pack.sourcePath,
+    };
+  }
+
   return {
     packId: pack.packId,
     version: pack.version,
@@ -768,6 +819,138 @@ const recommendPack = (
     antiSignals: [],
     sourcePath: pack.sourcePath,
   };
+};
+
+interface ProjectPolicySignals {
+  hasPackageJson: boolean;
+  hasSourceRoot: boolean;
+  hasWorkspaceManifest: boolean;
+  hasAsyncWorkSignals: boolean;
+  hasAppArchitectureSignals: boolean;
+  simpleSourceProject: boolean;
+  sourceFileCount: number;
+}
+
+const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<ProjectPolicySignals> => {
+  const entries = await readDirectoryNames(workspaceRoot);
+  const packageJson = await readJsonIfExists<{
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    workspaces?: unknown;
+  }>(join(workspaceRoot, 'package.json'));
+  const sourceFiles = await listFilesUnder(workspaceRoot, [
+    '.ts',
+    '.tsx',
+    '.js',
+    '.jsx',
+    '.mjs',
+    '.cjs',
+    '.mts',
+    '.cts',
+  ]);
+  const sourceFileText = (
+    await Promise.all(
+      sourceFiles.slice(0, 80).map(async (filePath) => (await readTextIfExists(filePath)) ?? ''),
+    )
+  ).join('\n');
+  const dependencyNames = Object.keys({
+    ...(packageJson?.dependencies ?? {}),
+    ...(packageJson?.devDependencies ?? {}),
+  });
+  const searchableText = [
+    entries.join(' '),
+    sourceFiles.map((filePath) => relative(workspaceRoot, filePath)).join(' '),
+    dependencyNames.join(' '),
+    sourceFileText,
+  ]
+    .join('\n')
+    .toLowerCase();
+  const hasWorkspaceManifest =
+    entries.includes('pnpm-workspace.yaml') ||
+    entries.includes('lerna.json') ||
+    entries.includes('turbo.json') ||
+    Array.isArray(packageJson?.workspaces) ||
+    Boolean(packageJson?.workspaces && typeof packageJson.workspaces === 'object');
+  const hasAsyncWorkSignals =
+    /\b(redis|bullmq|queue|queues|queued|worker|workers|cron|schedule|scheduler|webhook|retry|retries|inngest|temporal|background job|job queue)\b/.test(
+      searchableText,
+    );
+  const hasAppArchitectureSignals =
+    /\b(next|react|vue|svelte|express|fastify|hono|koa|router|routes|pages|server|app shell|controller|middleware)\b/.test(
+      searchableText,
+    );
+
+  return {
+    hasPackageJson: entries.includes('package.json'),
+    hasSourceRoot: entries.includes('src'),
+    hasWorkspaceManifest,
+    hasAsyncWorkSignals,
+    hasAppArchitectureSignals,
+    sourceFileCount: sourceFiles.length,
+    simpleSourceProject:
+      entries.includes('package.json') &&
+      entries.includes('src') &&
+      sourceFiles.length <= 16 &&
+      !hasWorkspaceManifest &&
+      !hasAppArchitectureSignals &&
+      !hasAsyncWorkSignals,
+  };
+};
+
+const buildSmallProjectRoleFallback = ({
+  pack,
+  role,
+  checkedAliases,
+  projectSignals,
+}: {
+  pack: SkoposLoadedPolicyPack;
+  role: NonNullable<SkoposLoadedPolicyPack['structureTree']>['nodes'][number];
+  checkedAliases: string[];
+  projectSignals: ProjectPolicySignals;
+}): SkoposPolicyRoleMapping | undefined => {
+  if (!projectSignals.simpleSourceProject) {
+    return undefined;
+  }
+
+  const rolePath = role.path.toLowerCase();
+  const isBehaviorOwner =
+    rolePath.includes('feature') ||
+    rolePath.includes('modules') ||
+    rolePath.includes('domains') ||
+    rolePath.includes('use-case');
+  if (isBehaviorOwner && projectSignals.hasSourceRoot) {
+    return {
+      packId: pack.packId,
+      sourcePath: pack.sourcePath,
+      role: role.path,
+      label: role.label,
+      required: role.required ?? false,
+      status: 'inferred',
+      confidence: 'medium',
+      checkedAliases,
+      matchedAliases: ['src'],
+      matchedPaths: ['src'],
+      reason: `Small source package fallback: \`src\` is the local owner for ${role.label}.`,
+    };
+  }
+
+  if (rolePath.includes('composition root') || rolePath.includes('infrastructure') || rolePath.includes('adapter')) {
+    return {
+      packId: pack.packId,
+      sourcePath: pack.sourcePath,
+      role: role.path,
+      label: role.label,
+      required: role.required ?? false,
+      status: 'needs-review',
+      confidence: 'medium',
+      checkedAliases,
+      matchedAliases: [],
+      matchedPaths: [],
+      reason: `This looks like a small source package. Map ${role.label} only if the project actually has this app-level role.`,
+    };
+  }
+
+  return undefined;
 };
 
 const readPolicyOverrides = async ({

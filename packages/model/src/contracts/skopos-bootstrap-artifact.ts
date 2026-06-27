@@ -56,6 +56,15 @@ export interface SkoposInstructionScaffoldArtifact {
   sections: string[];
 }
 
+export type SkoposDocsScaffoldWriteStatus = 'written' | 'skipped-existing' | 'dry-run';
+
+export interface SkoposDocsScaffoldArtifact {
+  path: string;
+  relativePath: string;
+  status: SkoposDocsScaffoldWriteStatus;
+  title: string;
+}
+
 export interface SkoposInitResult {
   configPath: string;
   bootstrapPath: string;
@@ -69,6 +78,7 @@ export interface SkoposInitResult {
   graphArtifacts: SkoposInitGraphArtifact[];
   referenceArtifacts: SkoposInitReferenceArtifact[];
   toolAdapterArtifacts: SkoposToolAdapterSummary[];
+  docsScaffold?: SkoposDocsScaffoldArtifact;
   instructionScaffold?: SkoposInstructionScaffoldArtifact;
   configWrite: SkoposWriteStatus;
   bootstrapWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;

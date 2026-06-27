@@ -270,7 +270,7 @@ const buildDocsEntrypoints = (
   const entries: SkoposUnderstandingEvidence[] = [];
   const startHerePath = bootstrap.recommendedConfig.docs.startHerePath;
 
-  if (startHerePath) {
+  if (startHerePath && bootstrap.detected.docsHealth.hasStartHere) {
     entries.push({
       label: 'Start here',
       path: startHerePath,

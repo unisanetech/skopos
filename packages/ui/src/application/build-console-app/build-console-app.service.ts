@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { readFile, readdir, writeFile } from 'node:fs/promises';
+import { cp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,16 +32,25 @@ export const buildSkoposUiConsoleApp = async ({
 
   if (!dryRun) {
     const packageRoot = resolveUiPackageRoot(import.meta.url);
-    const viteConfigPath = join(packageRoot, 'vite.config.ts');
-    const { build: buildVite } = await import('vite');
-    await buildVite({
-      configFile: viteConfigPath,
-      build: {
-        outDir: resolvedOutputDirectory,
-        emptyOutDir: true,
-      },
-      logLevel: 'silent',
-    });
+    if (packageRoot) {
+      const viteConfigPath = join(packageRoot, 'vite.config.ts');
+      const { build: buildVite } = await import('vite');
+      await buildVite({
+        configFile: viteConfigPath,
+        build: {
+          outDir: resolvedOutputDirectory,
+          emptyOutDir: true,
+        },
+        logLevel: 'silent',
+      });
+    } else {
+      const bundledAppRoot = resolveBundledUiAppRoot(import.meta.url);
+      if (!bundledAppRoot) {
+        throw new Error('Could not resolve the bundled Skopos UI app for dashboard build.');
+      }
+      await rm(resolvedOutputDirectory, { recursive: true, force: true });
+      await cp(bundledAppRoot, resolvedOutputDirectory, { recursive: true });
+    }
 
     const html = await readFile(entryHtmlPath, 'utf8');
     if (!html.includes('__SKOPOS_UI_STATE__')) {
@@ -89,7 +98,7 @@ const listBuiltFiles = async (directoryPath: string): Promise<string[]> => {
   return results;
 };
 
-function resolveUiPackageRoot(moduleUrl: string): string {
+function resolveUiPackageRoot(moduleUrl: string): string | undefined {
   let currentPath = resolve(fileURLToPath(new URL('.', moduleUrl)));
 
   for (let depth = 0; depth < 6; depth += 1) {
@@ -99,7 +108,27 @@ function resolveUiPackageRoot(moduleUrl: string): string {
     currentPath = resolve(currentPath, '..');
   }
 
-  throw new Error('Could not resolve the @skopos/ui package root for the Vite app.');
+  return undefined;
+}
+
+function resolveBundledUiAppRoot(moduleUrl: string): string | undefined {
+  let currentPath = resolve(fileURLToPath(new URL('.', moduleUrl)));
+
+  for (let depth = 0; depth < 6; depth += 1) {
+    const cliBundleCandidate = join(currentPath, 'ui-app');
+    if (existsSync(join(cliBundleCandidate, 'index.html'))) {
+      return cliBundleCandidate;
+    }
+
+    const sourceBuildCandidate = join(currentPath, 'dist-app');
+    if (existsSync(join(sourceBuildCandidate, 'index.html'))) {
+      return sourceBuildCandidate;
+    }
+
+    currentPath = resolve(currentPath, '..');
+  }
+
+  return undefined;
 }
 
 const serializeInlineJson = (value: unknown): string =>

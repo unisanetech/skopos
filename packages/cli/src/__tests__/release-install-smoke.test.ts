@@ -101,6 +101,21 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
         'clean-code.maintainability.gate.vague-name-scan',
       );
 
+      const uiBuildOutput = JSON.parse(
+        execFileSync('pnpm', ['exec', 'skopos', 'ui', 'build', '.', '--json'], {
+          cwd: projectDirectory,
+          encoding: 'utf8',
+        }),
+      ) as {
+        entryHtmlPath?: string;
+        writeStatus?: string;
+      };
+      expect(uiBuildOutput.writeStatus).toBe('written');
+      expect(uiBuildOutput.entryHtmlPath).toBeTruthy();
+      expect(await readFile(uiBuildOutput.entryHtmlPath ?? '', 'utf8')).not.toContain(
+        '__SKOPOS_UI_STATE__',
+      );
+
       const packageJson = JSON.parse(
         await readFile(join(projectDirectory, 'node_modules', '@skopos', 'cli', 'package.json'), 'utf8'),
       ) as {
@@ -128,6 +143,10 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
           'utf8',
         ),
       ) as { packId?: string };
+      const installedUiApp = await readFile(
+        join(projectDirectory, 'node_modules', '@skopos', 'cli', 'dist', 'ui-app', 'index.html'),
+        'utf8',
+      );
 
       expect(
         Object.keys(packageJson.dependencies ?? {}).filter((dependencyName) =>
@@ -138,6 +157,7 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
       expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
       expect(installedLicense).toContain('Apache License');
       expect(installedCleanCodePack.packId).toBe('clean-code.maintainability');
+      expect(installedUiApp).toContain('__SKOPOS_UI_STATE__');
 
       const npmExecProjectDirectory = join(tempRoot, 'npm-exec-project');
       await mkdir(npmExecProjectDirectory, { recursive: true });
