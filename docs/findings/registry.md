@@ -17,6 +17,8 @@ Track active Skopos structural findings here.
 
 ## Changelog
 
+- `2026-06-27`: Narrowed the validation-lane progress and timeout gap after the broad CLI e2e suite moved out of the default `test` script and foreground `skopos eval` gained bounded validation command execution, `timed-out` check runs, partial-proof artifacts, compact output support, and `--check-timeout-ms`; remaining work is live progress/noise reduction and resumable validation phases for explicit heavy suites.
+- `2026-06-27`: Added the validation-lane progress and timeout gap after the self-hosted memory/workflow mission showed that `pnpm test` and `skopos eval` can still run for several minutes without useful progress or bounded partial-proof handoff.
 - `2026-06-27`: Closed the two launch-blocking pilot findings after packed dashboard assets were included in the CLI tarball, installed `skopos ui build` passed in an external pilot, init began creating the docs router, pack recommendations became signal-aware, and simple `src/` projects stopped receiving missing required role pressure.
 - `2026-06-27`: Added two launch-blocking pilot findings after the external `skopos-pilot-basic` install-style pilot: packed CLI dashboard build resolution fails outside the monorepo, and small-project onboarding is too strict/noisy for simple TypeScript projects.
 - `2026-06-27`: Opened and closed the workflow-recording preflight gap after Pack Gates V1 showed that cross-cutting agent work could bypass Skopos mission/decision/finding records until after implementation; generated plans now include a workflow-recording guard item for broad or high-risk work.
@@ -78,6 +80,6 @@ Track active Skopos structural findings here.
 1. Track A: onboarding, scope, and trust correctness
    - No active findings currently routed in this track.
 2. Track B: validation and transport proportionality
-   - No active findings currently routed in this track.
+   - `F-20260627-validation-lane-progress-timeout-gap`: Default validation is bounded now; remaining gap is live progress, quieter output, and resumable phases for explicit heavy suites.
 3. Track C: program and docs-state hygiene
    - No active findings currently routed in this track.

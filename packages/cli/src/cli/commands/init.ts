@@ -172,6 +172,12 @@ const renderInitSummary = (result: Awaited<ReturnType<typeof initSkoposProject>>
     `- diagnosis: ${result.diagnosisPath} (${result.diagnosisWrite})`,
     `- architecture: ${result.architecturePath} (${result.architectureWrite})`,
     `- enforcement: ${result.enforcementPath} (${result.enforcementWrite})`,
+    result.memoryPath
+      ? `- memory map: ${result.memoryPath} (${result.memoryWrite ?? 'written'})`
+      : '- memory map: (not generated)',
+    result.communicationBriefPath
+      ? `- agent communication: ${result.communicationBriefPath} (${result.communicationBriefWrite ?? 'written'})`
+      : '- agent communication: (not generated)',
     `- index: ${result.indexPath} (${result.indexWrite})`,
     `- log: ${result.logPath} (${result.logWrite})`,
     `- workspace graph: ${result.workspaceGraphPath} (${result.workspaceGraphWrite})`,

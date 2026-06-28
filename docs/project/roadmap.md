@@ -9,7 +9,7 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `no`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -23,6 +23,7 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 
 ## Changelog
 
+- `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract as the next foundation priority before broad pack expansion, so Skopos maps existing project truth by role and generates agent communication guidance for the complete workflow.
 - `2026-06-24`: Refined the first architecture pack so it reads as portable Skopos guidance instead of a Skopos/Unisane-shaped folder template, with project-local names now treated as aliases and detected evidence.
 - `2026-06-24`: Added dedicated rule-pack detail pages with structure-tree and architecture-contract rendering, so pack UI can now show what a pack expects and how the current codebase matches it.
 - `2026-06-24`: Expanded the Rules route with full pack-detail review and codebase-verification guidance, so the next policy-pack UI priority moves to stack/gate recommendation clarity and acceptance/compare flows.
@@ -167,6 +168,13 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 
 ## Current Focus
 
+- Implement Memory Map v1 before more broad policy-pack expansion:
+  - map existing project truth by role instead of assuming `docs/00-start-here.md`
+  - distinguish greenfield scaffolding from brownfield mapping and suggestions
+  - make `.skopos/memory/state.json` the durable runtime surface for observed, inferred, accepted, operational, and agent-ready memory
+  - make trust check memory completeness and freshness
+  - add a human-readable Project Memory UI surface
+  - generate an agent communication brief so coding agents explain lanes, questions, progress, proof, memory updates, and handoffs clearly
 - Add the human guidance layer across command output, UI surfaces, workpacks, and agent answers:
   - keep strict `.skopos/**` artifacts as the machine contract
   - make default output explain status, risk, blocker, question, proof, and next step in simple English; implemented for trust, policy, `start`, `plan`, `decide`, workflow-router, program-router, done, and eval command paths

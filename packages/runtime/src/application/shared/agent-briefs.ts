@@ -32,6 +32,7 @@ import {
   BOOTSTRAP_ARTIFACT_PATH,
   CONFIG_ARTIFACT_PATH,
   DONE_BRIEF_ARTIFACT_PATH,
+  COMMUNICATION_BRIEF_ARTIFACT_PATH,
   POLICY_BRIEF_ARTIFACT_PATH,
   POLICY_ROLE_MAPPING_ARTIFACT_PATH,
   PROGRAM_BRIEF_ARTIFACT_PATH,
@@ -652,6 +653,14 @@ const buildWorkspaceDoctrineReferences = async (
     };
   }>(join(workspaceRoot, BOOTSTRAP_ARTIFACT_PATH));
   const references = [
+    buildPromptLayerReference(workspaceRoot, {
+      id: 'communication-brief',
+      title: 'Agent communication brief',
+      role: 'agent-communication-guidance',
+      path: COMMUNICATION_BRIEF_ARTIFACT_PATH,
+      defaultIncluded: true,
+      optional: true,
+    }),
     buildPromptLayerReference(workspaceRoot, {
       id: 'workspace-bootstrap',
       title: 'Workspace bootstrap',

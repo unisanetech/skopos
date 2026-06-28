@@ -34,6 +34,7 @@ import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
+import { refreshSkoposMemoryState } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 
@@ -278,6 +279,10 @@ export const initSkoposProject = async ({
     },
     dryRun,
   });
+  const memoryState = await refreshSkoposMemoryState({
+    workspaceRoot,
+    dryRun,
+  });
   const indexWrite = await refreshSkoposKnowledgeIndex({
     workspaceRoot,
     dryRun,
@@ -286,6 +291,8 @@ export const initSkoposProject = async ({
   return {
     configPath,
     bootstrapPath,
+    memoryPath: memoryState.memoryPath,
+    communicationBriefPath: memoryState.communicationBriefPath,
     scopesLitePath,
     diagnosisPath,
     architecturePath,
@@ -347,6 +354,8 @@ export const initSkoposProject = async ({
     architectureWrite,
     enforcementWrite,
     indexWrite: indexWrite.write,
+    memoryWrite: memoryState.memoryWrite,
+    communicationBriefWrite: memoryState.communicationBriefWrite,
     logWrite: logWrite.write,
     workspaceGraphWrite,
     actorId,

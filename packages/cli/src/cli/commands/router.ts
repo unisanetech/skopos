@@ -18,6 +18,7 @@ import {
   buildCompactNextLines,
   buildGuidedDecisionQuestionLines,
   buildGuidedWorkflowQuestionLines,
+  buildProjectKnowledgeGuidanceLines,
 } from '../shared/compact-output.js';
 import {
   buildSummaryLines,
@@ -58,6 +59,7 @@ interface ParsedEvalArgs {
   mission?: string;
   actor?: string;
   dryRun: boolean;
+  checkTimeoutMs?: number;
   background: boolean;
   compact: boolean;
   summary: boolean;
@@ -88,6 +90,8 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `Scope: ${result.scope.scope.id}`,
     'Next step:',
     result.nextCommand ?? result.recommendedAction?.command ?? 'Review the questions below before editing code.',
+    '',
+    ...buildProjectKnowledgeGuidanceLines(result.projectKnowledge),
   ];
 
   if (result.blockingQuestions.length > 0) {
@@ -293,6 +297,7 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
     mission: parsed.mission,
     actor: parsed.actor,
     dryRun: parsed.dryRun,
+    checkTimeoutMs: parsed.checkTimeoutMs,
   });
   const output = parsed.compact ? buildCompactEvalOutput(result) : result;
 
@@ -675,6 +680,7 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
   let mission: string | undefined;
   let actor: string | undefined;
   let dryRun = false;
+  let checkTimeoutMs: number | undefined;
   let background = false;
   let compact = false;
   let summary = false;
@@ -722,6 +728,24 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
 
     if (argument.startsWith('--fields=')) {
       fields = parseFieldList(argument.slice('--fields='.length));
+      continue;
+    }
+
+    if (argument === '--check-timeout-ms') {
+      const nextValue = args[index + 1];
+      if (!nextValue || nextValue.startsWith('-')) {
+        throw new Error('Missing value for --check-timeout-ms.');
+      }
+      checkTimeoutMs = parseNonNegativeInteger(nextValue, '--check-timeout-ms');
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--check-timeout-ms=')) {
+      checkTimeoutMs = parseNonNegativeInteger(
+        argument.slice('--check-timeout-ms='.length),
+        '--check-timeout-ms',
+      );
       continue;
     }
 
@@ -775,7 +799,16 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
     throw new Error('Field selection requires --json.');
   }
 
-  return { cwd, mission, actor, dryRun, background, compact, summary, fields, json };
+  return { cwd, mission, actor, dryRun, checkTimeoutMs, background, compact, summary, fields, json };
+};
+
+const parseNonNegativeInteger = (value: string, flagName: string): number => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 0) {
+    throw new Error(`${flagName} must be a non-negative integer.`);
+  }
+
+  return parsed;
 };
 
 const spawnBackgroundEvalJob = (jobId: string, cwd: string): void => {

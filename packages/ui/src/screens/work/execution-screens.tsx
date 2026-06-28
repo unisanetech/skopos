@@ -17,6 +17,7 @@ import {
   MissionQueueCard,
   OverviewAdapterSupportCard,
   OverviewInspectorAside,
+  OverviewProjectKnowledgeCard,
   OverviewRecentDiscussionCard,
   OverviewRecentPlansCard,
   OverviewUnderstandingCard,
@@ -121,6 +122,7 @@ export function ExecutionOverviewView(): React.JSX.Element {
     >
       <PageSectionStack>
         <OverviewUnderstandingCard understanding={state.understanding} />
+        <OverviewProjectKnowledgeCard memoryView={state.memoryView} />
         <MissionFocusCard missions={activeMissions} />
         <ProgramAttentionCard
           state={state}

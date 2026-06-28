@@ -1,4 +1,5 @@
 import type { SkoposMissionArtifact, SkoposPlanRunResult } from './skopos-plan.js';
+import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
 import type { SkoposResolvedScope } from './skopos-scope-lite.js';
 import type {
   SkoposWorkflowQuestionArtifact,
@@ -30,6 +31,7 @@ export interface SkoposStartRunResult {
   recommendationsWrite: 'written' | 'dry-run';
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
   recommendations: SkoposWorkflowRecommendationArtifact;
+  projectKnowledge: SkoposProjectKnowledgeGuidance;
   blockingQuestions: SkoposWorkflowQuestionEntry[];
   recommendedAction?: SkoposWorkflowRecommendationEntry;
   nextCommand?: string;

@@ -13,6 +13,8 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposAgentCommunicationBriefArtifact,
+  SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
@@ -222,9 +224,17 @@ export interface SkoposUiConsoleUnderstandingView {
   hotspots: SkoposImplementationHotspotsArtifact;
 }
 
+export interface SkoposUiConsoleMemoryView {
+  memoryPath: string;
+  communicationBriefPath?: string;
+  memory: SkoposMemoryStateArtifact;
+  communicationBrief?: SkoposAgentCommunicationBriefArtifact;
+}
+
 export interface SkoposUiConsoleState {
   workspaceRoot: string;
   workspaceLabel: string;
+  uiMode: 'live' | 'snapshot';
   outputDirectory: string;
   generatedAt: string;
   artifactCounts: SkoposUiArtifactCounts;
@@ -241,6 +251,7 @@ export interface SkoposUiConsoleState {
   adapterSupport?: SkoposUiConsoleAdapterSupportView;
   policyReview?: SkoposUiConsolePolicyReviewView;
   understanding?: SkoposUiConsoleUnderstandingView;
+  memoryView?: SkoposUiConsoleMemoryView;
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   discussionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
   docsLinks: SkoposUiConsoleLink[];

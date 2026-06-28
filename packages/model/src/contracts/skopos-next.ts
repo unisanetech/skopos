@@ -1,4 +1,5 @@
 import type { SkoposMissionArtifact, SkoposMissionItem } from './skopos-plan.js';
+import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
 import type { SkoposTrustReport } from './skopos-trust-report.js';
 import type {
   SkoposWorkflowQuestionArtifact,
@@ -25,6 +26,7 @@ export interface SkoposNextRunResult {
   recommendationsWrite: 'written' | 'dry-run';
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
   recommendations: SkoposWorkflowRecommendationArtifact;
+  projectKnowledge: SkoposProjectKnowledgeGuidance;
   recommendedAction?: SkoposWorkflowRecommendationEntry;
   nextCommand?: string;
   nextItem?: SkoposMissionItem;

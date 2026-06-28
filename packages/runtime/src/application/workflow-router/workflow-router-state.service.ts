@@ -559,7 +559,12 @@ const buildMissionItemCommand = ({
     return command.join(' ');
   }
 
-  return undefined;
+  const command = ['skopos', 'mission', 'item', 'complete', mission.id, item.id, workspaceRoot];
+  if (actorId) {
+    command.push('--actor', actorId);
+  }
+
+  return command.join(' ');
 };
 
 const isBlockingQuestion = (question: SkoposDecisionQuestion): boolean =>

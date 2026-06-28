@@ -605,12 +605,24 @@ const detectDocsStartHerePath = async (
 ): Promise<string | undefined> => {
   for (const candidate of DOCS_ROUTER_RELATIVE_CANDIDATES) {
     const candidatePath = join(docsRoot, candidate);
-    if (await pathExists(join(cwd, candidatePath))) {
+    if ((await pathExists(join(cwd, candidatePath))) && !(await isGeneratedStartHerePlaceholder(cwd, candidatePath))) {
       return candidatePath;
     }
   }
 
   return undefined;
+};
+
+const isGeneratedStartHerePlaceholder = async (
+  cwd: string,
+  candidatePath: string,
+): Promise<boolean> => {
+  const contents = await readTextFile(join(cwd, candidatePath));
+
+  return Boolean(
+    contents?.includes('This is the project knowledge start page for Skopos.') &&
+      contents.includes('Add the current product goal, architecture notes, and important workflow links here'),
+  );
 };
 
 interface ParsedDocFreshness {

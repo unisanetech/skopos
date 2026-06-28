@@ -58,12 +58,13 @@ const readInlineState = (): SkoposUiConsoleState | undefined => {
   }
 
   const source = document.getElementById('skopos-ui-state');
-  if (!source?.textContent || source.textContent.includes('__SKOPOS_UI_STATE__')) {
+  const textContent = source?.textContent?.trim();
+  if (!textContent || textContent === '__SKOPOS_UI_STATE__') {
     return undefined;
   }
 
   try {
-    return JSON.parse(source.textContent) as SkoposUiConsoleState;
+    return JSON.parse(textContent) as SkoposUiConsoleState;
   } catch {
     return undefined;
   }

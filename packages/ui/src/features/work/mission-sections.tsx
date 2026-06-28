@@ -2,6 +2,7 @@ export {
   OverviewAdapterSupportCard,
   MissionFocusCard,
   OverviewInspectorAside,
+  OverviewProjectKnowledgeCard,
   OverviewRecentPlansCard,
   OverviewUnderstandingCard,
 } from './overview-sections.js';

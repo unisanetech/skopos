@@ -4,6 +4,7 @@ export const TRUST_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/trust-brief.j
 export const DONE_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/done-brief.json`;
 export const PROGRAM_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/program-brief.json`;
 export const PROMPT_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/prompt-brief.json`;
+export const COMMUNICATION_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/communication-brief.json`;
 export const TOKEN_TELEMETRY_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/token-telemetry.json`;
 export const AGENT_EVAL_BRIEF_DIRECTORY = `${AGENT_BRIEF_DIRECTORY}/evals`;
 export const AGENT_MISSION_BRIEF_DIRECTORY = `${AGENT_BRIEF_DIRECTORY}/missions`;
@@ -24,6 +25,7 @@ export const POLICY_OVERRIDES_ARTIFACT_PATH = '.skopos/policies/overrides.json';
 export const POLICY_ROLE_MAPPING_ARTIFACT_PATH = '.skopos/policies/role-mapping.json';
 export const POLICY_ROLE_MAPPING_DECISIONS_ARTIFACT_PATH = '.skopos/policies/role-mapping-decisions.json';
 export const DRIFT_REPORT_ARTIFACT_PATH = '.skopos/drift/report.json';
+export const MEMORY_STATE_ARTIFACT_PATH = '.skopos/memory/state.json';
 
 export const TOKEN_BUDGETS = {
   policyBrief: 350,

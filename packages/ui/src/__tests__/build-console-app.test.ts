@@ -1050,6 +1050,7 @@ security:
     expect(html).toContain('Skopos Console');
     expect(html).not.toContain('__SKOPOS_UI_STATE__');
     expect(html).toContain('"workspaceLabel":"');
+    expect(stateJson).toContain('"uiMode": "snapshot"');
     expect(stateJson).toContain('"workspaceLabel"');
     expect(stateJson).toContain('"workspaceRoot"');
     expect(stateJson).toContain('"proofReport"');

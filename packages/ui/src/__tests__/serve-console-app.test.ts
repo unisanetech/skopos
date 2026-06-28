@@ -43,8 +43,10 @@ describe('serveSkoposUiConsoleApp', () => {
 
       const state = JSON.parse(await readFile(result.statePath, 'utf8')) as {
         workspaceLabel: string;
+        uiMode: string;
       };
       expect(state.workspaceLabel).toContain('skopos-ui-serve-');
+      expect(state.uiMode).toBe('snapshot');
       expect(listenedHost).toBe('127.0.0.1');
       expect(listenedPort).toBe(0);
       expect(result.url).toBe('http://127.0.0.1:43123');

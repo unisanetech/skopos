@@ -156,6 +156,7 @@ export const devSkoposUiConsoleApp = async ({
 const buildCurrentState = async (workspaceRoot: string) =>
   buildSkoposUiConsoleState({
     cwd: workspaceRoot,
+    uiMode: 'live',
     linkMode: 'dev-server',
     fileHrefBasePath: skoposUiDevFileEndpointPath,
   });

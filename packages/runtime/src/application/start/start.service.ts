@@ -11,6 +11,7 @@ import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
+import { buildSkoposProjectKnowledgeGuidance } from '../shared/memory-state.js';
 import {
   buildSkoposAgentMissionBrief,
   resolveAgentMissionBriefArtifactPath,
@@ -96,6 +97,10 @@ export const buildSkoposStartRuntime = async ({
     blockingQuestionCount: blockingQuestions.length,
     codeAllowed,
   });
+  const projectKnowledge = await buildSkoposProjectKnowledgeGuidance({
+    workspaceRoot,
+    dryRun,
+  });
   await writeSkoposAgentBrief({
     artifactPath: resolveAgentMissionBriefArtifactPath(workspaceRoot, mission.id),
     artifact: buildSkoposAgentMissionBrief({
@@ -124,6 +129,8 @@ export const buildSkoposStartRuntime = async ({
       plan.graphPath,
       questionsPath,
       recommendationsPath,
+      projectKnowledge.memoryPath,
+      projectKnowledge.communicationBriefPath,
     ],
     metadata: {
       goal: plan.goal,
@@ -133,6 +140,8 @@ export const buildSkoposStartRuntime = async ({
       missionId: mission.id,
       codeAllowed,
       blockingQuestionCount: blockingQuestions.length,
+      projectKnowledgeKnownAreaCount: projectKnowledge.knownAreaCount,
+      projectKnowledgeAttentionAreaCount: projectKnowledge.attentionAreaCount,
     },
     dryRun,
   });
@@ -161,6 +170,7 @@ export const buildSkoposStartRuntime = async ({
     recommendationsWrite,
     executionSurface: recommendations.executionSurface,
     recommendations,
+    projectKnowledge,
     blockingQuestions,
     recommendedAction,
     nextCommand: recommendedAction?.command,

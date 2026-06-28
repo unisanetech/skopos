@@ -9,6 +9,7 @@ import type {
   SkoposAgentPromptBriefArtifact,
   SkoposAgentProgramBriefArtifact,
   SkoposAgentTrustBriefArtifact,
+  SkoposAgentCommunicationBriefArtifact,
   SkoposArchitectureReport,
   SkoposBootstrapArtifact,
   SkoposContradictionReferenceArtifact,
@@ -33,6 +34,7 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposMemoryStateArtifact,
   SkoposWorkflowRunArtifact,
 } from '@skopos/model';
 
@@ -207,6 +209,12 @@ const buildSkoposKnowledgeIndex = async (
   const promptBrief = await loadJsonArtifact<SkoposAgentPromptBriefArtifact>(
     join(workspaceRoot, '.skopos', 'agent', 'prompt-brief.json'),
   );
+  const communicationBrief = await loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(
+    join(workspaceRoot, '.skopos', 'agent', 'communication-brief.json'),
+  );
+  const memoryState = await loadJsonArtifact<SkoposMemoryStateArtifact>(
+    join(workspaceRoot, '.skopos', 'memory', 'state.json'),
+  );
   const tokenTelemetry = await loadJsonArtifact<SkoposTokenTelemetryArtifact>(
     join(workspaceRoot, '.skopos', 'agent', 'token-telemetry.json'),
   );
@@ -351,6 +359,13 @@ const buildSkoposKnowledgeIndex = async (
       '.skopos/agent/prompt-brief.json',
       promptBrief,
     ],
+    [
+      'agent-brief-communication',
+      'Agent communication brief',
+      'Project-specific guidance for how coding agents should explain, ask, progress, validate, and close work.',
+      '.skopos/agent/communication-brief.json',
+      communicationBrief,
+    ],
   ];
 
   for (const [id, title, summary, path, artifact] of topLevelAgentBriefs) {
@@ -381,6 +396,20 @@ const buildSkoposKnowledgeIndex = async (
         'Compact budget diagnosis for agent briefs, handoffs, and resume context.',
         '.skopos/agent/token-telemetry.json',
         tokenTelemetry.updatedAt,
+      ),
+    );
+  }
+
+  if (memoryState) {
+    coreEntries.push(
+      buildIndexEntry(
+        workspaceRoot,
+        'memory-state',
+        'core-artifact',
+        'Project memory',
+        memoryState.summary,
+        '.skopos/memory/state.json',
+        memoryState.updatedAt,
       ),
     );
   }

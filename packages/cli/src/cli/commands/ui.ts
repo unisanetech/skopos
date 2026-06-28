@@ -118,12 +118,14 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
     }
 
     writeLines([
-      'Skopos ui serve',
+      'Skopos ui serve (snapshot preview)',
       `- workspace: ${result.workspaceRoot}`,
       `- app: ${result.entryHtmlPath}`,
       `- state: ${result.statePath}`,
       `- search index: ${result.searchIndexPath}`,
       `- url: ${result.url}`,
+      '- mode: snapshot; restart this command after workspace state changes',
+      '- live mode: use skopos ui dev for auto-refreshing workspace state',
       `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       '- stop: Ctrl+C',
@@ -175,11 +177,12 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
     }
 
     writeLines([
-      'Skopos ui dev',
+      'Skopos ui dev (live workspace)',
       `- workspace: ${result.workspaceRoot}`,
       `- url: ${result.url}`,
       `- state endpoint: ${result.stateEndpointPath}`,
       `- file endpoint: ${result.fileEndpointPath}`,
+      '- mode: live; refreshes when docs or .skopos state changes',
       `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       '- stop: Ctrl+C',

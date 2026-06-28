@@ -45,6 +45,7 @@ import {
   DocsView,
   FindingDetailView,
   FindingsView,
+  MemoryView,
   PlanDetailView,
   PlansView,
 } from '../screens/knowledge/knowledge-screens.js';
@@ -148,6 +149,12 @@ const docsRoute = createRoute({
   component: DocsView,
 });
 
+const memoryRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/memory',
+  component: MemoryView,
+});
+
 const docsDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/docs/$docId',
@@ -204,6 +211,7 @@ const routeTree = rootRoute.addChildren([
   proofRoute,
   scopesRoute,
   scopeDetailRoute,
+  memoryRoute,
   docsRoute,
   docsDetailRoute,
   decisionsRoute,
@@ -250,7 +258,9 @@ function RootShell(): React.JSX.Element {
                   {state?.workspaceLabel ?? 'Skopos'}
                 </p>
                 <p className="skopos-sidebar-brand-subtitle">project guide</p>
-                <p className="skopos-sidebar-workspace-note">self-hosted workspace</p>
+                <p className="skopos-sidebar-workspace-note">
+                  {state?.uiMode === 'live' ? 'live workspace' : 'snapshot workspace'}
+                </p>
               </div>
             </div>
             <div className="skopos-sidebar-search-slot">

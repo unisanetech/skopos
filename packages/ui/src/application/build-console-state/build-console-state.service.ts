@@ -17,6 +17,8 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposAgentCommunicationBriefArtifact,
+  SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposProgramStateArtifact,
@@ -46,6 +48,7 @@ export interface BuildSkoposUiConsoleStateOptions {
   cwd: string;
   outputDirectory?: string;
   generatedAt?: string;
+  uiMode?: 'live' | 'snapshot';
   linkMode?: 'static' | 'dev-server';
   fileHrefBasePath?: string;
 }
@@ -54,6 +57,7 @@ export const buildSkoposUiConsoleState = async ({
   cwd,
   outputDirectory,
   generatedAt = new Date().toISOString(),
+  uiMode = 'snapshot',
   linkMode = 'static',
   fileHrefBasePath = '/__skopos/file',
 }: BuildSkoposUiConsoleStateOptions): Promise<SkoposUiConsoleState> => {
@@ -78,6 +82,7 @@ export const buildSkoposUiConsoleState = async ({
     workflowQuestions,
     adapterSupport,
     understanding,
+    memoryView,
     policyReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
@@ -101,6 +106,7 @@ export const buildSkoposUiConsoleState = async ({
       ),
       loadAdapterSupportView(workspaceRoot),
       loadUnderstandingView(workspaceRoot),
+      loadMemoryView(workspaceRoot),
       loadPolicyReviewView(workspaceRoot),
       loadDiscussionHandoffView(workspaceRoot),
       loadDiscussionCheckpointViews(workspaceRoot),
@@ -126,6 +132,7 @@ export const buildSkoposUiConsoleState = async ({
   const stateWithoutSearch = {
     workspaceRoot,
     workspaceLabel: basename(workspaceRoot),
+    uiMode,
     outputDirectory: resolvedOutputDirectory,
     generatedAt,
     artifactCounts,
@@ -141,6 +148,7 @@ export const buildSkoposUiConsoleState = async ({
     scopes,
     adapterSupport,
     understanding,
+    memoryView,
     policyReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
@@ -177,6 +185,28 @@ const loadUnderstandingView = async (
     summary,
     featureInventory,
     hotspots,
+  };
+};
+
+const loadMemoryView = async (
+  workspaceRoot: string,
+): Promise<SkoposUiConsoleState['memoryView']> => {
+  const memoryPath = join(workspaceRoot, '.skopos', 'memory', 'state.json');
+  const communicationBriefPath = join(workspaceRoot, '.skopos', 'agent', 'communication-brief.json');
+  const [memory, communicationBrief] = await Promise.all([
+    loadJsonArtifact<SkoposMemoryStateArtifact>(memoryPath),
+    loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(communicationBriefPath),
+  ]);
+
+  if (!memory) {
+    return undefined;
+  }
+
+  return {
+    memoryPath,
+    communicationBriefPath: communicationBrief ? communicationBriefPath : undefined,
+    memory,
+    communicationBrief,
   };
 };
 

@@ -17,6 +17,7 @@ Use this folder for durable Skopos architectural and product decisions.
 
 ## Changelog
 
+- `2026-06-27`: Added decision 033 for the Memory Map and Agent Workflow Intelligence contract that maps project truth by role before scaffolding docs and guides coding-agent communication across the full workflow.
 - `2026-06-27`: Added decision 032 for the workflow-recording preflight guard that prevents non-light work from bypassing mission, decision, and finding memory.
 - `2026-06-26`: Added decision 031 for the bundled CLI release contract and `npx`/`npm exec`/`pnpm dlx` install UX.
 - `2026-06-24`: Added decision 030 for the human guidance and developer experience contract across CLI output, UI surfaces, workpacks, and agent answers.

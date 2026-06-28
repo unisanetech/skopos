@@ -10,6 +10,8 @@ import type {
   SkoposImpactEntry,
   SkoposEnforcementProfileArtifact,
   SkoposDriftReportArtifact,
+  SkoposAgentCommunicationBriefArtifact,
+  SkoposMemoryStateArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposReadiness,
   SkoposTrustCheck,
@@ -41,12 +43,16 @@ export const buildSkoposTrustReport = async ({
   const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'policies', 'resolved.json');
   const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
   const policyBriefPath = join(workspaceRoot, '.skopos', 'agent', 'policy-brief.json');
+  const memoryStatePath = join(workspaceRoot, '.skopos', 'memory', 'state.json');
+  const communicationBriefPath = join(workspaceRoot, '.skopos', 'agent', 'communication-brief.json');
   const { bootstrap } = await loadSkoposQueryState({
     cwd: workspaceRoot,
   });
   const enforcement = await loadJsonArtifact<SkoposEnforcementProfileArtifact>(enforcementPath);
   const resolvedPolicy = await loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath);
   const driftReport = await loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath);
+  const memoryState = await loadJsonArtifact<SkoposMemoryStateArtifact>(memoryStatePath);
+  const communicationBrief = await loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(communicationBriefPath);
   const availablePolicyPacks = await loadPolicyPacksIfAvailable(workspaceRoot);
 
   const docsRoot = bootstrap.recommendedConfig.docs.root;
@@ -59,7 +65,10 @@ export const buildSkoposTrustReport = async ({
   const scopesLiteExists = await pathExists(scopesLitePath);
   const architectureExists = await pathExists(architecturePath);
   const docsRootExists = await pathExists(docsRootPath);
-  const docsRouterExists = docsRootExists && (await pathExists(docsStartHereAbsolutePath));
+  const docsRouterExists =
+    docsRootExists &&
+    bootstrap.detected.docsHealth.hasStartHere &&
+    (await pathExists(docsStartHereAbsolutePath));
   const staleDocs = bootstrap.detected.docsHealth.staleDocPaths;
   const canonicalInstructionSource = bootstrap.recommendedConfig.agents.canonicalInstructions;
   const instructionSourceExists = bootstrap.detected.instructionFiles.some(
@@ -94,6 +103,10 @@ export const buildSkoposTrustReport = async ({
   const driftCoverage = buildPolicyDriftCoverageSummary({
     resolvedPolicy,
     driftReport,
+  });
+  const memoryCoverage = buildMemoryCoverageSummary({
+    memoryState,
+    communicationBrief,
   });
 
   const checks: SkoposTrustCheck[] = [
@@ -152,6 +165,9 @@ export const buildSkoposTrustReport = async ({
     createCheck('policy-brief', acceptedPolicyCoverage.policyBrief.status, acceptedPolicyCoverage.policyBrief.summary),
     createCheck('policy-source-freshness', acceptedPolicyCoverage.sourceFreshness.status, acceptedPolicyCoverage.sourceFreshness.summary),
     createCheck('policy-drift', driftCoverage.status, driftCoverage.summary),
+    createCheck('memory-map', memoryCoverage.memoryMap.status, memoryCoverage.memoryMap.summary),
+    createCheck('memory-roles', memoryCoverage.memoryRoles.status, memoryCoverage.memoryRoles.summary),
+    createCheck('agent-communication', memoryCoverage.communication.status, memoryCoverage.communication.summary),
     createCheck('active-mission', activeMissionCoverage.status, activeMissionCoverage.summary),
     createCheck(
       'workflow-questions',
@@ -311,6 +327,75 @@ interface PolicyDriftCoverageSummary {
   status: SkoposTrustCheckStatus;
   summary: string;
 }
+
+interface MemoryCoverageSummary {
+  memoryMap: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  memoryRoles: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  communication: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+}
+
+const buildMemoryCoverageSummary = ({
+  memoryState,
+  communicationBrief,
+}: {
+  memoryState: SkoposMemoryStateArtifact | null;
+  communicationBrief: SkoposAgentCommunicationBriefArtifact | null;
+}): MemoryCoverageSummary => {
+  if (!memoryState) {
+    return {
+      memoryMap: {
+        status: 'warn',
+        summary: 'Project memory map is missing. Run `skopos init` or refresh memory before broad agent work.',
+      },
+      memoryRoles: {
+        status: 'warn',
+        summary: 'Memory roles cannot be checked until `.skopos/memory/state.json` exists.',
+      },
+      communication: {
+        status: communicationBrief ? 'pass' : 'warn',
+        summary: communicationBrief
+          ? 'Agent communication guidance is available.'
+          : 'Agent communication guidance is missing. Refresh Skopos memory to generate it.',
+      },
+    };
+  }
+
+  const missingRoles = memoryState.roles.filter((role) => role.status === 'missing');
+  const reviewRoles = memoryState.roles.filter((role) => role.status === 'needs-review');
+  const staleRoles = memoryState.roles.filter((role) => role.status === 'stale');
+
+  return {
+    memoryMap: {
+      status: memoryState.freshness === 'stale' ? 'warn' : 'pass',
+      summary:
+        memoryState.freshness === 'stale'
+          ? 'Project memory map has stale sources. Refresh Skopos memory before relying on it.'
+          : `Project memory map is available with ${memoryState.roles.length} mapped role checks.`,
+    },
+    memoryRoles: {
+      status: missingRoles.length > 0 || staleRoles.length > 0 ? 'warn' : 'pass',
+      summary:
+        missingRoles.length > 0 || staleRoles.length > 0 || reviewRoles.length > 0
+          ? `Memory roles need review: ${missingRoles.length} missing, ${reviewRoles.length} review, ${staleRoles.length} stale.`
+          : 'All tracked memory roles are mapped.',
+    },
+    communication: {
+      status: communicationBrief ? 'pass' : 'warn',
+      summary: communicationBrief
+        ? 'Agent communication guidance is available for lane explanations, guided questions, progress, proof, and closure.'
+        : 'Agent communication guidance is missing. Refresh Skopos memory to generate it.',
+    },
+  };
+};
 
 const buildPolicyDriftCoverageSummary = ({
   resolvedPolicy,

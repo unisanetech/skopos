@@ -32,7 +32,8 @@
     "build": "tsup && node scripts/copy-policy-packs.mjs && node scripts/copy-ui-app.mjs",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
-    "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/compact-output.test.ts src/__tests__/cli.e2e.test.ts",
+    "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/compact-output.test.ts",
+    "test:e2e": "vitest run src/__tests__/cli.e2e.test.ts",
     "proof": "vitest run src/__tests__/proof-phase.e2e.test.ts",
     "release:smoke": "vitest run src/__tests__/release-install-smoke.test.ts"
   },

@@ -14,7 +14,7 @@ import type {
 import type { SkoposWorkflowRequirementEvidence } from './skopos-workflow.js';
 
 export type SkoposEvalStatus = 'complete' | 'needs-review' | 'blocked';
-export type SkoposEvalCheckRunStatus = 'pass' | 'fail' | 'skipped';
+export type SkoposEvalCheckRunStatus = 'pass' | 'fail' | 'skipped' | 'timed-out';
 export type SkoposEvalProofStatus = 'pass' | 'fail' | 'missing';
 
 export interface SkoposEvalCheckRun {
@@ -22,6 +22,7 @@ export interface SkoposEvalCheckRun {
   status: SkoposEvalCheckRunStatus;
   summary: string;
   exitCode: number | null;
+  timeoutMs?: number;
   startedAt?: string;
   finishedAt?: string;
   stdoutExcerpt?: string;

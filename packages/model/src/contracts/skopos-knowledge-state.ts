@@ -85,6 +85,7 @@ export type SkoposOperationalLogEventKind =
   | 'mission-slice'
   | 'mission-claim'
   | 'mission-release'
+  | 'mission-item-complete'
   | 'mission-complete'
   | 'workflow-run'
   | 'impact'

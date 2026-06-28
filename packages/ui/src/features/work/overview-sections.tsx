@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 
 import type {
   SkoposUiConsoleAdapterSupportView,
+  SkoposUiConsoleMemoryView,
   SkoposUiConsoleMissionView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleUnderstandingView,
@@ -170,6 +171,80 @@ export function OverviewUnderstandingCard({
         <EmptyMessage
           title="No repo understanding yet"
           description="Run `skopos understand` after bootstrap to generate a compact project summary, feature inventory, and implementation hotspots."
+        />
+      )}
+    </Card>
+  );
+}
+
+export function OverviewProjectKnowledgeCard({
+  memoryView,
+}: {
+  memoryView?: SkoposUiConsoleMemoryView;
+}): React.JSX.Element {
+  const mappedCount = memoryView?.memory.roles.filter((role) => role.status === 'mapped').length ?? 0;
+  const totalCount = memoryView?.memory.roles.length ?? 0;
+  const attentionCount = memoryView?.memory.roles.filter((role) => role.status !== 'mapped').length ?? 0;
+
+  return (
+    <Card
+      title="Project knowledge"
+      description="What Skopos knows before agents start work."
+    >
+      {memoryView ? (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-2">
+            <StatusPill
+              value={`${mappedCount}/${totalCount} areas known`}
+              tone={attentionCount === 0 ? 'positive' : 'warning'}
+            />
+            <StatusPill
+              value={`${attentionCount} need attention`}
+              tone={attentionCount === 0 ? 'positive' : 'warning'}
+            />
+            <StatusPill
+              value={memoryView.communicationBrief ? 'agent guide ready' : 'agent guide missing'}
+              tone={memoryView.communicationBrief ? 'positive' : 'warning'}
+            />
+            <StatusPill value={memoryView.memory.freshness} tone="neutral" />
+          </div>
+          <p className="text-[13px] leading-[1.5rem] text-[var(--text)]">
+            {attentionCount === 0
+              ? 'Skopos found clear sources for the main project knowledge areas. Agents can use this as a compact starting point before reading deeper docs.'
+              : 'Some project knowledge areas still need review. Check them before broad or risky agent work.'}
+          </p>
+          <div className="border-y border-[var(--line)]">
+            {memoryView.memory.roles.slice(0, 4).map((role, index) => (
+              <div
+                key={role.role}
+                className={`py-3.5 ${index > 0 ? 'border-t border-[var(--line)]' : ''}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-medium tracking-[-0.01em]">{role.title}</p>
+                    <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
+                      {role.summary}
+                    </p>
+                  </div>
+                  <StatusPill
+                    value={role.status}
+                    tone={role.status === 'mapped' ? 'positive' : 'warning'}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <Link
+            to="/memory"
+            className="inline-flex text-[12.5px] font-semibold text-[var(--accent)] hover:underline"
+          >
+            Open Project Knowledge
+          </Link>
+        </div>
+      ) : (
+        <EmptyMessage
+          title="Project knowledge is not available"
+          description="Run `skopos init` or `skopos trust` to generate the project knowledge view."
         />
       )}
     </Card>

@@ -5,6 +5,8 @@ export interface SkoposShellCommandExecutionResult {
   exitCode: number;
   startedAt: string;
   finishedAt: string;
+  timedOut: boolean;
+  timeoutMs?: number;
   stdoutExcerpt?: string;
   stderrExcerpt?: string;
 }
@@ -16,16 +18,21 @@ const TAIL_LINE_COUNT = 6;
 export const executeSkoposShellCommand = async ({
   command,
   cwd,
+  timeoutMs,
 }: {
   command: string;
   cwd: string;
+  timeoutMs?: number;
 }): Promise<SkoposShellCommandExecutionResult> => {
   const startedAt = new Date().toISOString();
   const resolvedCwd = resolve(cwd);
 
   return new Promise((resolvePromise, rejectPromise) => {
+    let settled = false;
+    let timedOut = false;
     const child = spawn('/bin/zsh', ['-lc', `setopt NONOMATCH; ${command}`], {
       cwd: resolvedCwd,
+      detached: true,
       env: {
         ...process.env,
         PATH: buildAugmentedPath(resolvedCwd, process.env.PATH),
@@ -43,17 +50,52 @@ export const executeSkoposShellCommand = async ({
       stderr += chunk.toString('utf8');
     });
 
+    const timeout =
+      timeoutMs && timeoutMs > 0
+        ? setTimeout(() => {
+            timedOut = true;
+            killChildProcessGroup(child.pid, 'SIGTERM');
+            setTimeout(() => {
+              if (!settled) {
+                killChildProcessGroup(child.pid, 'SIGKILL');
+              }
+            }, 2000).unref();
+          }, timeoutMs)
+        : undefined;
+
     child.on('error', rejectPromise);
     child.on('close', (code) => {
+      settled = true;
+      if (timeout) {
+        clearTimeout(timeout);
+      }
       resolvePromise({
         exitCode: code ?? 1,
         startedAt,
         finishedAt: new Date().toISOString(),
+        timedOut,
+        timeoutMs,
         stdoutExcerpt: clipOutput(stdout),
         stderrExcerpt: clipOutput(stderr),
       });
     });
   });
+};
+
+const killChildProcessGroup = (pid: number | undefined, signal: NodeJS.Signals): void => {
+  if (!pid) {
+    return;
+  }
+
+  try {
+    process.kill(-pid, signal);
+  } catch {
+    try {
+      process.kill(pid, signal);
+    } catch {
+      // The process may have exited between the timeout and the signal.
+    }
+  }
 };
 
 const buildAugmentedPath = (cwd: string, existingPath = ''): string => {

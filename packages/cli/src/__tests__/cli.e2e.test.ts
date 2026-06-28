@@ -62,10 +62,14 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       enforcementWrite: string;
       indexWrite: string;
       logWrite: string;
+      memoryWrite: string;
+      communicationBriefWrite: string;
       architecturePath: string;
       enforcementPath: string;
       indexPath: string;
       logPath: string;
+      memoryPath: string;
+      communicationBriefPath: string;
       workspaceGraphPath: string;
       workspaceGraphWrite: string;
       graphArtifacts: Array<{ id: string; kind: string; path: string; write: string }>;
@@ -91,6 +95,8 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(result.enforcementWrite).toBe('written');
     expect(result.indexWrite).toBe('written');
     expect(result.logWrite).toBe('written');
+    expect(result.memoryWrite).toBe('written');
+    expect(result.communicationBriefWrite).toBe('written');
     expect(result.workspaceGraphWrite).toBe('written');
     expect(result.actorId).toBe('agent-bootstrap');
     expect(result.instructionScaffold).toEqual(
@@ -176,6 +182,20 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       latestEvent?: { eventKind: string; status: string };
       quickLinks: { logPath: string };
       entries: Array<{ kind: string; path: string }>;
+    };
+    const memory = JSON.parse(await readFile(result.memoryPath, 'utf8')) as {
+      type: string;
+      freshness: string;
+      roles: Array<{ role: string; status: string; sources: Array<{ path: string }> }>;
+    };
+    const communicationBrief = JSON.parse(
+      await readFile(result.communicationBriefPath, 'utf8'),
+    ) as {
+      type: string;
+      briefKind: string;
+      audience: string;
+      defaultResponseShape: string[];
+      escalationRules: Array<{ id: string; situation: string }>;
     };
     const symbols = JSON.parse(
       await readFile(join(workspaceDir, '.skopos', 'references', 'symbols.json'), 'utf8'),
@@ -332,11 +352,78 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
           path: '.skopos/bootstrap.json',
         }),
         expect.objectContaining({
+          kind: 'core-artifact',
+          path: '.skopos/memory/state.json',
+        }),
+        expect.objectContaining({
+          kind: 'agent-brief-artifact',
+          path: '.skopos/agent/communication-brief.json',
+        }),
+        expect.objectContaining({
           kind: 'reference-artifact',
           path: '.skopos/references/symbols.json',
         }),
       ]),
     );
+    expect(memory.type).toBe('memory-state');
+    expect(memory.freshness).toBe('partial');
+    expect(memory.roles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'agent-entrypoint',
+          status: 'mapped',
+          sources: expect.arrayContaining([
+            expect.objectContaining({
+              path: 'AGENTS.md',
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          role: 'validation-gates',
+          status: 'mapped',
+        }),
+      ]),
+    );
+    expect(communicationBrief.type).toBe('agent-brief');
+    expect(communicationBrief.briefKind).toBe('communication');
+    expect(communicationBrief.audience).toBe('beginner-mid-level');
+    expect(communicationBrief.defaultResponseShape.length).toBeGreaterThan(0);
+    expect(communicationBrief.escalationRules).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'lane.light',
+        }),
+        expect.objectContaining({
+          id: 'lane.workpack',
+        }),
+      ]),
+    );
+    const knowledge = runCliJson<{
+      summary: string;
+      knownAreaCount: number;
+      totalAreaCount: number;
+      attentionAreaCount: number;
+      agentGuideReady: boolean;
+      areas: Array<{ role: string; sourcePaths: string[] }>;
+    }>(['knowledge', workspaceDir, '--compact', '--json']);
+
+    expect(knowledge.summary).toContain('project knowledge areas known');
+    expect(knowledge.knownAreaCount).toBeGreaterThan(0);
+    expect(knowledge.totalAreaCount).toBe(11);
+    expect(knowledge.attentionAreaCount).toBeGreaterThan(0);
+    expect(knowledge.agentGuideReady).toBe(true);
+    expect(knowledge.areas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'agent-entrypoint',
+          sourcePaths: expect.arrayContaining(['AGENTS.md']),
+        }),
+      ]),
+    );
+
+    const knowledgeText = runCliText(['knowledge', workspaceDir]);
+    expect(knowledgeText).toContain('Skopos project knowledge');
+    expect(knowledgeText).toContain('Known areas:');
     expect(symbols.packages).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -3935,6 +4022,8 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(startText).toContain('Skopos start');
     expect(startText).toContain('Status: Decision needed');
     expect(startText).toContain('Next step:');
+    expect(startText).toContain('Project knowledge:');
+    expect(startText).toContain('load first: skopos knowledge');
     expect(startText).toContain('Questions:');
     expect(startText).toContain('Recommended:');
     expect(startText).toContain('Why this matters:');
@@ -3952,6 +4041,14 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       questionsWrite: string;
       recommendationsPath: string;
       recommendationsWrite: string;
+      projectKnowledge: {
+        summary: string;
+        knownAreaCount: number;
+        totalAreaCount: number;
+        attentionAreaCount: number;
+        command: string;
+        recommendedReads: Array<{ title: string; path: string }>;
+      };
       blockingQuestions: Array<{
         id: string;
         blocking: boolean;
@@ -3993,6 +4090,17 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(start.missionClaimedByActorId).toBe('agent-router');
     expect(start.questionsWrite).toBe('written');
     expect(start.recommendationsWrite).toBe('written');
+    expect(start.projectKnowledge.summary).toContain('project knowledge areas known');
+    expect(start.projectKnowledge.knownAreaCount).toBeGreaterThan(0);
+    expect(start.projectKnowledge.totalAreaCount).toBe(11);
+    expect(start.projectKnowledge.command).toContain('skopos knowledge');
+    expect(start.projectKnowledge.recommendedReads).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: 'AGENTS.md',
+        }),
+      ]),
+    );
     expect(start.blockingQuestions.map((question) => question.id)).toEqual(
       expect.arrayContaining(['plan.public-api-change', 'plan.vendor-choice']),
     );
@@ -4335,6 +4443,11 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         trustLevel: string;
         readiness: string;
       };
+      projectKnowledge: {
+        summary: string;
+        command: string;
+        attentionAreaCount: number;
+      };
     }>(['next', workspaceDir, '--actor', 'agent-router', '--json']);
 
     expect(next.actorId).toBe('agent-router');
@@ -4361,10 +4474,15 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(next.nextItem).toBeUndefined();
     expect(next.trust.trustLevel).toBe('medium');
     expect(next.trust.readiness).toBe('needs-review');
+    expect(next.projectKnowledge.summary).toContain('project knowledge areas known');
+    expect(next.projectKnowledge.command).toContain('skopos knowledge');
+    expect(next.projectKnowledge.attentionAreaCount).toBeGreaterThanOrEqual(0);
 
     const nextText = runCliText(['next', workspaceDir, '--actor', 'agent-router']);
     expect(nextText).toContain('Skopos next');
     expect(nextText).toContain('Status: Blocked');
+    expect(nextText).toContain('Project knowledge:');
+    expect(nextText).toContain('load first: skopos knowledge');
     expect(nextText).toContain('Progress:');
     expect(nextText).toContain('Current phase:');
     expect(nextText).toContain('Questions:');
@@ -4432,6 +4550,7 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         blocking: boolean;
         title: string;
         summary: string;
+        command?: string;
       };
       recommendations: {
         entries: Array<{ actionKind: string; title: string; blocking: boolean }>;
@@ -4444,28 +4563,86 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(next.blockingQuestions).toHaveLength(0);
     expect(next.nextItem).toEqual(
       expect.objectContaining({
-        id: 'step-review-current-pattern',
-        title: 'Review the current pattern in @fixture/api',
+        id: 'step-record-workflow-lane',
+        title: 'Record the workflow lane before editing',
         status: 'pending',
       }),
     );
-    expect(next.pendingItems[0]?.id).toBe('step-review-current-pattern');
+    expect(next.pendingItems[0]?.id).toBe('step-record-workflow-lane');
+    expect(next.recommendedAction?.command).toContain(
+      `skopos mission item complete ${start.missionId} step-record-workflow-lane`,
+    );
     expect(next.recommendedAction).toEqual(
       expect.objectContaining({
-        actionKind: 'implement',
+        actionKind: 'run-workflow',
         blocking: false,
-        title: 'Review the current pattern in @fixture/api',
+        title: 'Record the workflow lane before editing',
       }),
     );
     expect(next.recommendations.entries).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          actionKind: 'implement',
-          title: 'Review the current pattern in @fixture/api',
+          actionKind: 'run-workflow',
+          title: 'Record the workflow lane before editing',
           blocking: false,
         }),
       ]),
     );
+
+    const itemCompleted = runCliJson<{
+      items: Array<{ id: string; status: string }>;
+      coordination: {
+        claimedBy?: { actorId: string };
+        lastUpdatedBy?: string;
+      };
+    }>([
+      'mission',
+      'item',
+      'complete',
+      start.missionId,
+      'step-record-workflow-lane',
+      workspaceDir,
+      '--actor',
+      'agent-router',
+      '--json',
+    ]);
+
+    expect(itemCompleted.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'step-record-workflow-lane',
+          status: 'complete',
+        }),
+      ]),
+    );
+    expect(itemCompleted.coordination.claimedBy?.actorId).toBe('agent-router');
+    expect(itemCompleted.coordination.lastUpdatedBy).toBe('agent-router');
+
+    const nextAfterItem = runCliJson<{
+      nextItem?: { id: string };
+      recommendedAction?: { command?: string };
+    }>(['next', workspaceDir, '--actor', 'agent-router', '--json']);
+    expect(nextAfterItem.nextItem?.id).toBe('step-review-current-pattern');
+    expect(nextAfterItem.recommendedAction?.command).toContain(
+      `skopos mission item complete ${start.missionId} step-review-current-pattern`,
+    );
+
+    runCliJson([
+      'mission',
+      'item',
+      'complete',
+      start.missionId,
+      'step-review-current-pattern',
+      workspaceDir,
+      '--actor',
+      'agent-router',
+      '--json',
+    ]);
+
+    const nextAfterReview = runCliJson<{
+      nextItem?: { id: string };
+    }>(['next', workspaceDir, '--actor', 'agent-router', '--json']);
+    expect(nextAfterReview.nextItem?.id).toBe('step-implement-scoped-change');
   });
 
   it('allows implementation from start when no blocking workflow questions remain', async () => {
@@ -4778,6 +4955,66 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(persistedEval.missionId).toBe(start.missionId);
     expect(persistedEval.evaluationStatus).toBe('needs-review');
     expect(persistedEval.checkRuns.every((entry) => entry.status === 'pass')).toBe(true);
+  });
+
+  it('records timed-out validation checks without completing validation checklist state', async () => {
+    const workspaceDir = await createTempWorkspace();
+    runCliJson(['init', workspaceDir, '--json']);
+
+    const start = runCliJson<{
+      missionId: string;
+      missionPath: string;
+    }>([
+      'start',
+      'prove bounded eval timeout behavior',
+      workspaceDir,
+      '--scope',
+      '@fixture/api',
+      '--actor',
+      'agent-router',
+      '--json',
+    ]);
+
+    const mission = JSON.parse(await readFile(start.missionPath, 'utf8')) as {
+      recommendedChecks: string[];
+    };
+    mission.recommendedChecks = ['sleep 1'];
+    await writeFile(start.missionPath, `${JSON.stringify(mission, null, 2)}\n`, 'utf8');
+
+    const result = runCliJson<{
+      missionPath: string;
+      eval: {
+        evaluationStatus: string;
+        checkRuns: Array<{ status: string; command: string; timeoutMs?: number; summary: string }>;
+      };
+    }>([
+      'eval',
+      workspaceDir,
+      '--mission',
+      start.missionId,
+      '--actor',
+      'agent-router',
+      '--check-timeout-ms',
+      '10',
+      '--json',
+    ]);
+
+    expect(result.eval.evaluationStatus).toBe('needs-review');
+    expect(result.eval.checkRuns).toEqual([
+      expect.objectContaining({
+        command: 'sleep 1',
+        status: 'timed-out',
+        timeoutMs: 10,
+        summary: expect.stringContaining('eval timeout'),
+      }),
+    ]);
+
+    const persistedMission = JSON.parse(await readFile(result.missionPath, 'utf8')) as {
+      items: Array<{ id: string; status: string }>;
+    };
+    expect(
+      persistedMission.items.find((item) => item.id === 'step-run-checks')?.status,
+    ).toBe('pending');
   });
 
   it('reconciles mission checklist drift after a complete eval and recommends mission completion', async () => {

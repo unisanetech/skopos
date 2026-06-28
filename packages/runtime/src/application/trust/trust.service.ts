@@ -7,6 +7,7 @@ import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
+import { refreshSkoposMemoryState } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
   buildSkoposAgentTrustBrief,
@@ -38,6 +39,11 @@ export const buildSkoposTrustRuntime = async ({
       workspaceRoot,
       report,
     }),
+  });
+  await refreshSkoposMemoryState({
+    workspaceRoot,
+    trustLevel: report.trustLevel,
+    readiness: report.readiness,
   });
   await appendSkoposOperationalLogEntry({
     workspaceRoot,

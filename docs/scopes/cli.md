@@ -9,13 +9,15 @@ The `cli` scope owns the human and agent terminal surface only.
 - Owner: `skopos-core`
 - Scope: `skopos/scopes`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `../architecture/runtime-model.md`
 
 ## Changelog
 
+- `2026-06-27`: Updated UI command wording so `skopos ui dev` is clearly the live auto-refreshing workspace console and `skopos ui serve` is clearly a static snapshot preview.
+- `2026-06-27`: Updated the cli scope after moving the broad CLI e2e suite to `pnpm --filter @skopos/cli test:e2e`, so the default `pnpm test` lane remains bounded for normal mission eval while full CLI workflow coverage stays available as an explicit heavier gate.
 - `2026-04-12`: Updated the cli scope after separating the heavyweight proof-phase scorecard from the default CLI `test` lane, so normal regression validation stays in `pnpm test` while the reliability scorecard remains on the dedicated `proof` lane and `quality.run-proof-phase` workflow.
 - `2026-04-12`: Updated the cli scope after trust-and-done closure integration landed, so the workflow-router surface now extends through closure and `skopos done` can fail directly on open blocking workflow questions or missing mission eval artifacts.
 - `2026-04-12`: Updated the cli scope to reflect the workflow-router command surface, so `skopos start`, `skopos decide`, `skopos next`, and `skopos eval` now sit alongside the existing plan-mission-trust tool lanes and evaluation can hand off to explicit mission completion instead of leaving checklist drift behind.
@@ -76,19 +78,22 @@ The `cli` package currently owns:
 22. `skopos workflows run`
 23. `skopos ui render`
 24. `skopos ui build`
-25. JSON and human-readable command output
-26. argument parsing for `mode`, `dry-run`, `force`, `scope`, `cwd`, `mission`, `actor`, `output`, `output-dir`, `reason`, and `json`
-27. optional git-backed changed-path collection for `impact` and `done`
-28. durable workflow-router artifact writes for `.skopos/questions.json`, `.skopos/recommendations.json`, and `.skopos/evals/*.json`
-29. workflow recommendation and evidence output in `plan`, `impact`, `next`, `eval`, and `done`
-30. graph artifact path reporting in runtime command output
-31. portal-shell and graph-portal output reporting for `skopos ui render`
-32. routed app bundle and compiled console-state output reporting for `skopos ui build`
-33. override ownership and force-transfer feedback in `skopos overrides show` and `skopos overrides set`
-34. mutating workflow actor attribution and actor-aware workflow evidence feedback
-35. actor-attributed plan creation feedback in `skopos plan`
-36. optional actor-attributed instruction mirror sync feedback in `skopos instructions sync`
-37. optional actor-attributed bootstrap, diagnosis, and validation feedback in `skopos init`, `skopos scan`, `skopos trust`, and `skopos impact`
-38. linked child mission creation feedback for `skopos mission slice`, including narrowed scope, parent mission id, and optional immediate child claim
-39. closure feedback that surfaces workflow-question and mission-eval evidence inside `skopos done`
-40. package-level validation lane ownership, where default CLI regression coverage stays in `pnpm test` and the heavyweight proof-phase scorecard stays on `pnpm proof`
+25. `skopos ui dev`
+26. `skopos ui serve`
+27. JSON and human-readable command output
+28. argument parsing for `mode`, `dry-run`, `force`, `scope`, `cwd`, `mission`, `actor`, `output`, `output-dir`, `reason`, and `json`
+29. optional git-backed changed-path collection for `impact` and `done`
+30. durable workflow-router artifact writes for `.skopos/questions.json`, `.skopos/recommendations.json`, and `.skopos/evals/*.json`
+31. workflow recommendation and evidence output in `plan`, `impact`, `next`, `eval`, and `done`
+32. graph artifact path reporting in runtime command output
+33. portal-shell and graph-portal output reporting for `skopos ui render`
+34. routed app bundle and compiled console-state output reporting for `skopos ui build`
+35. live UI output reporting for `skopos ui dev` and snapshot UI output reporting for `skopos ui serve`
+36. override ownership and force-transfer feedback in `skopos overrides show` and `skopos overrides set`
+37. mutating workflow actor attribution and actor-aware workflow evidence feedback
+38. actor-attributed plan creation feedback in `skopos plan`
+39. optional actor-attributed instruction mirror sync feedback in `skopos instructions sync`
+40. optional actor-attributed bootstrap, diagnosis, and validation feedback in `skopos init`, `skopos scan`, `skopos trust`, and `skopos impact`
+41. linked child mission creation feedback for `skopos mission slice`, including narrowed scope, parent mission id, and optional immediate child claim
+42. closure feedback that surfaces workflow-question and mission-eval evidence inside `skopos done`
+43. package-level validation lane ownership, where default CLI regression coverage stays in `pnpm test`, broad CLI workflow e2e coverage stays on `pnpm --filter @skopos/cli test:e2e`, and the heavyweight proof-phase scorecard stays on `pnpm proof`

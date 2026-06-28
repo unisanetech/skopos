@@ -6,6 +6,7 @@ import type {
   SkoposJobShowRunResult,
   SkoposMissionArtifact,
   SkoposNextRunResult,
+  SkoposProjectKnowledgeGuidance,
   SkoposProgramNextRunResult,
   SkoposProgramSyncRunResult,
   SkoposTrustCheck,
@@ -106,6 +107,7 @@ const summarizeTrustChecks = (checks: SkoposTrustCheck[]) => ({
 const summarizeEvalChecks = (checks: SkoposEvalRunResult['eval']['checkRuns']) => ({
   pass: checks.filter((check) => check.status === 'pass').length,
   fail: checks.filter((check) => check.status === 'fail').length,
+  timedOut: checks.filter((check) => check.status === 'timed-out').length,
   skipped: checks.filter((check) => check.status === 'skipped').length,
 });
 
@@ -194,6 +196,11 @@ const buildEvalNextStep = (result: SkoposEvalRunResult): string => {
     return `Fix \`${firstFailedCheck.command}\`, then run \`skopos eval\` again.`;
   }
 
+  const firstTimedOutCheck = result.eval.checkRuns.find((check) => check.status === 'timed-out');
+  if (firstTimedOutCheck) {
+    return `Rerun \`${firstTimedOutCheck.command}\` directly, or rerun \`skopos eval --check-timeout-ms <larger-ms>\` if the long check is expected.`;
+  }
+
   return 'Review the evaluation items, then run `skopos eval` again.';
 };
 
@@ -273,6 +280,35 @@ const buildNextStep = (result: SkoposNextRunResult): string => {
   }
 
   return 'No next item is available. Review the mission state before continuing.';
+};
+
+export const buildProjectKnowledgeGuidanceLines = (
+  projectKnowledge?: SkoposProjectKnowledgeGuidance,
+): string[] => {
+  if (!projectKnowledge) {
+    return [];
+  }
+
+  return [
+    'Project knowledge:',
+    `- ${projectKnowledge.summary}`,
+    `- freshness: ${projectKnowledge.freshness}`,
+    `- load first: ${projectKnowledge.command}`,
+    ...(projectKnowledge.recommendedReads.length > 0
+      ? [
+          '- recommended reads:',
+          ...projectKnowledge.recommendedReads.map((read) => `  - ${read.title}: ${read.path}`),
+        ]
+      : []),
+    ...(projectKnowledge.attentionAreas.length > 0
+      ? [
+          '- needs attention:',
+          ...projectKnowledge.attentionAreas
+            .slice(0, 3)
+            .map((area) => `  - ${area.title} [${area.status}]${area.nextAction ? `: ${area.nextAction}` : ''}`),
+        ]
+      : []),
+  ];
 };
 
 const isWorkflowRecordingProgramItem = (
@@ -600,6 +636,13 @@ export const buildCompactEvalOutput = (result: SkoposEvalRunResult) =>
         command: check.command,
         summary: check.summary,
       })),
+    timedOutChecks: result.eval.checkRuns
+      .filter((check) => check.status === 'timed-out')
+      .map((check) => ({
+        command: check.command,
+        summary: check.summary,
+        timeoutMs: check.timeoutMs,
+      })),
     workflowFailures: result.eval.workflowEvidence
       .filter((entry) => entry.status === 'fail')
       .map((entry) => ({
@@ -767,7 +810,7 @@ export const buildCompactEvalLines = (result: SkoposEvalRunResult): string[] => 
     `Status: ${describeReviewStatus(result.eval.evaluationStatus)}`,
     `Mission: ${result.missionId}`,
     `Summary: ${result.summary}`,
-    `Checks: ${counts.pass} pass, ${counts.fail} fix, ${counts.skipped} skipped`,
+    `Checks: ${counts.pass} pass, ${counts.fail} fix, ${counts.timedOut} timed out, ${counts.skipped} skipped`,
     `Proof: ${result.eval.proof.status}`,
     `Trust: ${result.eval.trust.trustLevel} / ${result.eval.trust.readiness}`,
     ...buildMissionProgressLines({
@@ -784,6 +827,16 @@ export const buildCompactEvalLines = (result: SkoposEvalRunResult): string[] => 
     lines.push('Attention:');
     for (const check of failedChecks) {
       lines.push(`- Fix before closing: ${check.command} - ${check.summary}`);
+    }
+  }
+
+  const timedOutChecks = result.eval.checkRuns.filter((check) => check.status === 'timed-out');
+  if (timedOutChecks.length > 0) {
+    if (failedChecks.length === 0) {
+      lines.push('Attention:');
+    }
+    for (const check of timedOutChecks) {
+      lines.push(`- Timed out before closing: ${check.command} - ${check.summary}`);
     }
   }
 
@@ -868,6 +921,7 @@ export const buildCompactNextLines = (result: SkoposNextRunResult): string[] => 
     `Summary: ${result.summary}`,
     `Code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `Trust: ${result.trust.trustLevel} / ${result.trust.readiness}`,
+    ...buildProjectKnowledgeGuidanceLines(result.projectKnowledge),
     ...buildMissionProgressLines({
       mission: result.mission,
       blockingQuestionCount: result.blockingQuestions.length,

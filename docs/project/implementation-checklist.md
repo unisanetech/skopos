@@ -9,7 +9,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-26`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -29,9 +29,11 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `../architecture/retrieval-and-query-strategy.md`
   - `../architecture/trust-and-closure-model.md`
   - `../architecture/decision-escalation-model.md`
+  - `../decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
 
 ## Changelog
 
+- `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract as the next implementation sequence: model memory roles, map existing docs/instructions before scaffolding, generate memory state and communication briefs, connect trust/workflow/UI, and prove behavior on greenfield plus brownfield pilots.
 - `2026-06-27`: Added first-release version policy: keep package versions aligned at `0.1.0`, publish only `@skopos/cli@0.1.0` on `next`, and hold `latest` until real registry smoke passes.
 - `2026-06-26`: Added Apache-2.0 license metadata and package license inclusion to the bundled CLI release contract.
 - `2026-06-26`: Added the bundled CLI release contract with clean package files, public `@skopos/cli` metadata, and release smoke coverage for installed binary, npm-exec/npx-style use, and pnpm-dlx use.
@@ -217,6 +219,20 @@ Before adding a new Skopos feature, artifact, command, or routed UI surface, ans
 8. Can a beginner or mid-level developer understand the default output and next step without reading raw JSON?
 
 If those answers are weak, narrow the change, fold it into an existing layer, or defer it.
+
+## Next Foundation Slice: Memory Map And Agent Workflow Intelligence
+
+Implement this before broad pack-catalog expansion.
+
+1. Add model contracts for memory roles, memory suggestions, memory freshness, and agent communication guidance.
+2. Update `init` so existing projects are mapped before Skopos writes new human docs.
+3. Generate `.skopos/memory/state.json` from observed, inferred, accepted, operational, and agent-ready project truth.
+4. Add or extend a command so users and agents can inspect memory status in simple language.
+5. Update trust so memory completeness, freshness, missing roles, and stale agent briefs affect readiness.
+6. Generate `.skopos/agent/communication-brief.json`.
+7. Connect `start`, `next`, `decide`, `eval`, and `done` output to the communication guidance.
+8. Add a Project Memory UI page that shows what Skopos knows, where it came from, what needs review, and the safest next action.
+9. Prove on a greenfield project, a small library, a mature brownfield app with existing docs, a weak-docs brownfield app, and Skopos itself.
 
 ## Self-Healing Discipline
 

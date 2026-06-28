@@ -10,7 +10,7 @@ Usage:
   skopos discuss handoff [target] [--dry-run] [--json]
   skopos discuss recent [target] [--json]
   skopos next [target] [--mission <id>] [--actor <id>] [--dry-run] [--json]
-  skopos eval [target] [--mission <id>] [--actor <id>] [--dry-run] [--background] [--compact] [--summary] [--fields <names>] [--json]
+  skopos eval [target] [--mission <id>] [--actor <id>] [--dry-run] [--check-timeout-ms <ms>] [--background] [--compact] [--summary] [--fields <names>] [--json]
   skopos program sync [target] [--actor <id>] [--dry-run] [--compact] [--summary] [--fields <names>] [--json]
   skopos program next [target] [--actor <id>] [--dry-run] [--compact] [--summary] [--fields <names>] [--json]
   skopos resolve [scope] [target] [--json]
@@ -35,9 +35,11 @@ Usage:
   skopos mission slice <mission> <goal> [target] [--scope <scope>] [--actor <id>] [--claim] [--force] [--json]
   skopos mission claim <mission> [target] [--actor <id>] [--force] [--json]
   skopos mission release <mission> [target] [--actor <id>] [--force] [--json]
+  skopos mission item complete <mission> <item-id> [target] [--actor <id>] [--force] [--json]
   skopos mission complete <mission> [target] [--actor <id>] [--force] [--json]
   skopos jobs show <job-id> [target] [--compact] [--summary] [--fields <names>] [--json]
   skopos jobs list [target] [--json]
+  skopos knowledge [target] [--actor <id>] [--compact] [--summary] [--fields <names>] [--json]
   skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--json]
   skopos done [changed-path...] [--mission <mission>] [--actor <id>] [--cwd <target>] [--compact] [--summary] [--fields <names>] [--json]
   skopos instructions scaffold [target] [--mode existing|greenfield] [--force] [--dry-run] [--actor <id>] [--json]
@@ -46,8 +48,8 @@ Usage:
   skopos understand [target] [--actor <id>] [--dry-run] [--json]
   skopos ui render [target] [--output <path>] [--dry-run] [--json]
   skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]
-  skopos ui dev [target] [--host <host>] [--port <port>] [--json]
-  skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]
+  skopos ui dev [target] [--host <host>] [--port <port>] [--json]        # live workspace UI with auto-refreshing state
+  skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]  # snapshot preview; restart after state changes
 `;
 
 export const printHelp = (): void => {

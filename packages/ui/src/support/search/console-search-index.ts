@@ -30,6 +30,7 @@ export const buildSkoposConsoleSearchEntries = (
 
   return [
     ...buildRouteSearchEntries(),
+    ...buildMemorySearchEntries(state),
     ...buildDocumentSearchEntries(state),
     ...buildDiscussionSearchEntries(state),
     ...buildPlanSearchEntries(state),
@@ -147,6 +148,13 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
     '/trust': ['readiness', 'quality', 'closure checks'],
     '/rules': ['policy', 'packs', 'accepted rules', 'drift', 'local exceptions'],
     '/proof': ['evidence', 'scorecard', 'benchmarks', 'validation proof'],
+    '/memory': [
+      'project knowledge',
+      'what skopos knows',
+      'project truth',
+      'agent guidance',
+      'AGENTS',
+    ],
     '/docs': ['knowledge docs', 'documentation'],
     '/decisions': ['decision log', 'architecture decisions'],
     '/findings': ['issues', 'issue registry', 'active issues'],
@@ -157,6 +165,7 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
     '/missions': 194,
     '/plans': 192,
     '/discussion': 191,
+    '/memory': 190,
     '/docs': 190,
     '/trust': 188,
     '/rules': 187,
@@ -191,6 +200,66 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
   );
 
   return visibleRouteEntries;
+};
+
+const buildMemorySearchEntries = (
+  state: SkoposUiConsoleState,
+): SkoposUiConsoleSearchEntry[] => {
+  const memoryView = state.memoryView;
+
+  if (!memoryView) {
+    return [];
+  }
+
+  return [
+    {
+      id: 'memory-map',
+      group: 'docs',
+      kind: 'artifact',
+      title: 'What Skopos knows',
+      summary: memoryView.memory.summary,
+      meta: `project knowledge · ${memoryView.memory.freshness}`,
+      href: '#/memory',
+      aliases: ['project knowledge', 'what skopos knows', 'project truth', 'agent memory'],
+      keywords: [
+        memoryView.memory.summary,
+        memoryView.memory.freshness,
+        memoryView.memoryPath,
+        memoryView.communicationBriefPath,
+      ].filter((value): value is string => Boolean(value)),
+      canonical: true,
+      active: true,
+      historical: false,
+      stale: memoryView.memory.freshness === 'stale',
+      updatedAt: memoryView.memory.updatedAt,
+      defaultRank: 193,
+    },
+    ...memoryView.memory.roles.map((role, index) => ({
+      id: `memory-role-${role.role}`,
+      group: 'docs',
+      kind: 'artifact',
+      title: role.title,
+      summary: role.summary,
+      meta: `knowledge area · ${role.status}`,
+      href: '#/memory',
+      aliases: [role.role, role.title],
+      keywords: [
+        role.role,
+        role.title,
+        role.status,
+        role.authority,
+        role.summary,
+        ...role.sources.map((source) => source.path),
+        ...role.sources.map((source) => source.summary),
+      ],
+      canonical: true,
+      active: role.status !== 'missing',
+      historical: false,
+      stale: role.status === 'stale',
+      updatedAt: memoryView.memory.updatedAt,
+      defaultRank: 176 - Math.min(index, 12),
+    } satisfies SkoposUiConsoleSearchEntry)),
+  ];
 };
 
 const buildDocumentSearchEntries = (

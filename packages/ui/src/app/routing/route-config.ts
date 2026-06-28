@@ -44,6 +44,10 @@ const appRouteMeta = {
     title: 'Docs',
     description: 'Canonical entrypoints, artifacts, and routes back to authoritative files.',
   },
+  memory: {
+    title: 'Project Knowledge',
+    description: 'What Skopos knows about the project and which sources it uses before agent work starts.',
+  },
   decisions: {
     title: 'Decisions',
     description: 'Accepted product and architecture decisions that guide the system.',
@@ -84,6 +88,7 @@ export const navSections = [
   {
     label: 'Knowledge',
     items: [
+      { to: '/memory', label: 'Project Knowledge' },
       { to: '/docs', label: 'Docs' },
       { to: '/decisions', label: 'Decisions' },
       { to: '/findings', label: 'Issues' },
@@ -119,6 +124,9 @@ export const resolveRouteMeta = (pathname: string): RouteMeta => {
   }
   if (pathname.startsWith('/docs')) {
     return appRouteMeta.docs;
+  }
+  if (pathname.startsWith('/memory')) {
+    return appRouteMeta.memory;
   }
   if (pathname.startsWith('/decisions')) {
     return appRouteMeta.decisions;

@@ -32,9 +32,14 @@ export interface SliceSkoposMissionRuntimeOptions extends MutateSkoposMissionRun
   claim?: boolean;
 }
 
+export interface CompleteSkoposMissionItemRuntimeOptions extends MutateSkoposMissionRuntimeOptions {
+  itemId: string;
+}
+
 export type ClaimSkoposMissionRuntimeOptions = MutateSkoposMissionRuntimeOptions;
 export type ReleaseSkoposMissionRuntimeOptions = MutateSkoposMissionRuntimeOptions;
 export type CompleteSkoposMissionRuntimeOptions = MutateSkoposMissionRuntimeOptions;
+export type CompleteSkoposMissionItemRuntimeRunOptions = CompleteSkoposMissionItemRuntimeOptions;
 export type SliceSkoposMissionRuntimeRunOptions = SliceSkoposMissionRuntimeOptions;
 
 export const loadSkoposMissionRuntime = async ({
@@ -244,6 +249,93 @@ export const completeSkoposMissionRuntime = async ({
       scopeId: completedMission.scope.scope.id,
       itemCount: completedMission.items.length,
       actorId: actorId ?? null,
+      forceComplete: force,
+    },
+  });
+  await refreshSkoposKnowledgeIndex({
+    workspaceRoot,
+  });
+
+  return completedMission;
+};
+
+export const completeSkoposMissionItemRuntime = async ({
+  cwd,
+  mission,
+  itemId,
+  actor,
+  force = false,
+}: CompleteSkoposMissionItemRuntimeRunOptions): Promise<SkoposMissionArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const missionPath = resolveMissionPath(workspaceRoot, mission);
+  const existingMission = await loadSkoposMissionRuntime({
+    cwd: workspaceRoot,
+    mission,
+  });
+  const actorId = requireMissionActorId(actor);
+  const activeClaim = existingMission.coordination.claimedBy;
+  const targetItem = existingMission.items.find((item) => item.id === itemId);
+
+  if (!targetItem) {
+    throw new Error(`Mission ${existingMission.id} has no checklist item ${itemId}.`);
+  }
+
+  if (existingMission.state === 'complete') {
+    throw new Error(`Mission ${existingMission.id} is already complete.`);
+  }
+
+  if (activeClaim && activeClaim.actorId !== actorId && !force) {
+    throw new Error(
+      `Mission ${existingMission.id} is currently claimed by ${activeClaim.actorId}. Re-run with --actor ${activeClaim.actorId} or use --force to update the checklist item.`,
+    );
+  }
+
+  const completedAt = new Date().toISOString();
+  const completedMission: SkoposMissionArtifact = {
+    ...existingMission,
+    state: existingMission.state === 'planned' ? 'active' : existingMission.state,
+    updatedAt: completedAt,
+    items: existingMission.items.map((item) =>
+      item.id === itemId
+        ? {
+            ...item,
+            status: 'complete',
+          }
+        : item,
+    ),
+    coordination: {
+      claimedBy: activeClaim
+        ? {
+            actorId,
+            claimedAt: activeClaim.claimedAt,
+          }
+        : {
+            actorId,
+            claimedAt: completedAt,
+          },
+      lastUpdatedBy: actorId,
+      lastUpdatedAt: completedAt,
+    },
+  };
+
+  await writeMissionArtifact(missionPath, completedMission);
+  const parentSync = await syncParentMissionLinkFromChildMission({
+    workspaceRoot,
+    mission: completedMission,
+    actorId,
+  });
+  await appendSkoposOperationalLogEntry({
+    workspaceRoot,
+    eventKind: 'mission-item-complete',
+    status: 'succeeded',
+    summary: `Mission ${completedMission.id} checklist item ${itemId} marked complete.`,
+    relatedArtifactPaths: [missionPath, ...parentSync.relatedArtifactPaths],
+    metadata: {
+      missionId: completedMission.id,
+      parentMissionId: completedMission.parentMissionId ?? null,
+      itemId,
+      itemKind: targetItem.kind,
+      actorId,
       forceComplete: force,
     },
   });

@@ -9,7 +9,7 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 - Owner: `skopos-core`
 - Scope: `skopos/docs`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `project/overview.md`
@@ -35,9 +35,17 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
   - `decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
   - `decisions/022-program-router-sequencing-and-obligation-contract.md`
   - `decisions/029-policy-pack-stack-intelligence-and-memory-contract.md`
+  - `decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
 
 ## Changelog
 
+- `2026-06-27`: Clarified UI runtime modes: `skopos ui dev` is the live auto-refreshing workspace console, while `skopos ui serve` is a static snapshot preview that must be restarted after state changes.
+- `2026-06-27`: Added item-level mission progress recording through `skopos mission item complete`, so agents can keep UI checklists current without hand-editing generated mission JSON.
+- `2026-06-27`: Added bounded foreground eval checks with `--check-timeout-ms`, so long validation commands produce timed-out partial-proof artifacts instead of silently hanging.
+- `2026-06-27`: Split the broad CLI e2e suite onto `pnpm --filter @skopos/cli test:e2e`, keeping default `pnpm test` bounded for normal eval and release validation.
+- `2026-06-27`: Updated the workflow contract so `skopos start` and `skopos next` return a compact project-knowledge block before implementation guidance.
+- `2026-06-27`: Added `skopos knowledge . --compact` to the self-hosting workflow so agents can load the short project-knowledge summary before deciding which docs or source files to inspect.
+- `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract to the canonical read path so Skopos maps existing project truth before scaffolding docs and guides agent communication across the full workflow.
 - `2026-06-24`: Added the accepted policy-pack, stack-intelligence, and memory contract decision to the Skopos read path before implementation of the new product-intelligence artifacts.
 - `2026-06-24`: Added the policy-pack and stack-intelligence plan to the canonical read path so Skopos can mature from project-state tooling into accepted project policy, stack recommendation, drift detection, and agent bootstrap intelligence without shipping placeholder packs.
 - `2026-04-12`: Updated the start router again to add the program-router contract, so the next structural control-plane slice now sits above the implemented mission router: Skopos should sequence accepted work, docs obligations, and UI obligations through one compiled program state instead of leaving that ordering to user memory.
@@ -88,7 +96,8 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 23. `decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
 24. `decisions/022-program-router-sequencing-and-obligation-contract.md`
 25. `decisions/029-policy-pack-stack-intelligence-and-memory-contract.md`
-26. `findings/registry.md`
+26. `decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
+27. `findings/registry.md`
 
 ## Self-Hosting Mode
 
@@ -102,13 +111,17 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 8. When self-hosting exposes structural friction, route it into `findings/registry.md` instead of keeping it only in chat context.
 9. Repository-level safety and validation rules still apply, but they do not replace Skopos workflow artifacts as the execution router for Skopos work.
 10. Use `skopos next . --actor <id>` during ongoing work so the current mission, recommendation state, and next bounded action stay synchronized without re-reading broad docs.
-11. Use `skopos decide <question-id> <option-id>` whenever `skopos start` or `skopos next` returns a blocking workflow question instead of clearing the blocker only in chat context.
-12. Use `skopos eval . --mission <id> --actor <id>` after implementation when the current mission reaches validation and proof.
-13. Treat the router `executionSurface` guidance as advisory workflow hygiene: stay `artifact-only` by default and only add a temporary workpack doc when the reported coordination signals justify it.
-14. The first low-noise program-router slice now exists through `.skopos/program/state.json`, `skopos program sync`, and `skopos program next`.
-15. That slice currently sequences active mission state plus active findings, derives typed obligations, and returns compact continue-versus-interrupt guidance without creating a second heavy planning system.
-16. Discussion continuity remains the adjacent memory slice: checkpoints and handoffs still need to feed the program router so accepted direction survives compaction and new-thread continuation without replaying raw chat.
-17. Routed UI adoption is still pending, so `overview`, `mission detail`, `trust`, and the search dock do not yet surface the full program-state guidance directly.
+11. Use `skopos knowledge . --compact` when an agent needs a short project-knowledge summary before choosing what to read next.
+12. Treat the `projectKnowledge` block from `skopos start` and `skopos next` as the first context hint before loading broader docs.
+13. Use `skopos mission item complete <mission-id> <item-id> . --actor <id>` when a checklist item is genuinely done, so the UI, mission JSON, and next-step router stay aligned.
+14. Use `skopos decide <question-id> <option-id>` whenever `skopos start` or `skopos next` returns a blocking workflow question instead of clearing the blocker only in chat context.
+15. Use `skopos eval . --mission <id> --actor <id>` after implementation when the current mission reaches validation and proof.
+16. Use `skopos ui dev .` while actively changing project state; use `skopos ui serve .` only when a static snapshot preview is enough.
+17. Treat the router `executionSurface` guidance as advisory workflow hygiene: stay `artifact-only` by default and only add a temporary workpack doc when the reported coordination signals justify it.
+18. The first low-noise program-router slice now exists through `.skopos/program/state.json`, `skopos program sync`, and `skopos program next`.
+19. That slice currently sequences active mission state plus active findings, derives typed obligations, and returns compact continue-versus-interrupt guidance without creating a second heavy planning system.
+20. Discussion continuity remains the adjacent memory slice: checkpoints and handoffs still need to feed the program router so accepted direction survives compaction and new-thread continuation without replaying raw chat.
+21. Routed UI adoption is still pending, so `overview`, `mission detail`, `trust`, and the search dock do not yet surface the full program-state guidance directly.
 
 ## Immediate Build Priorities
 
@@ -125,3 +138,4 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 11. turn structural friction into findings or benchmark gaps
 12. add compact discussion checkpoints and handoffs before expecting long-running self-hosted work to survive context compaction with low user effort
 13. build policy-pack and stack-intelligence work from real schemas, proof fixtures, accepted decisions, and drift gates rather than placeholder pack content
+14. implement Memory Map v1 before more broad pack expansion, so existing docs, instructions, decisions, gates, and active work are mapped by role before Skopos suggests new durable docs

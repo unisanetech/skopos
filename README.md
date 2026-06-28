@@ -60,11 +60,14 @@ The files are written for humans too. You should be able to open them and unders
 
 ```bash
 skopos understand .
+skopos knowledge . --compact
 skopos policies recommend .
 skopos policies apply .
 skopos policies drift .
 skopos gates resolve .
 skopos program next . --compact
+skopos mission item complete <mission-id> <item-id> .
+skopos eval . --mission <mission-id> --check-timeout-ms 120000 --compact
 skopos trust . --compact
 skopos done . --compact
 ```

@@ -115,6 +115,7 @@ describe('devSkoposUiConsoleApp', () => {
         '/__skopos/ui-state',
       );
       expect(initialState.workspaceLabel).toContain('skopos-ui-dev-');
+      expect(initialState.uiMode).toBe('live');
       expect(initialState.documents.some((document: { id: string }) => document.id === 'docs-start')).toBe(true);
 
       await writeFile(

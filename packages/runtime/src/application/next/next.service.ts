@@ -12,6 +12,7 @@ import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
+import { buildSkoposProjectKnowledgeGuidance } from '../shared/memory-state.js';
 import {
   buildSkoposAgentMissionBrief,
   resolveAgentMissionBriefArtifactPath,
@@ -94,6 +95,12 @@ export const buildSkoposNextRuntime = async ({
   const trustReport = await buildSkoposTrustReport({
     cwd: workspaceRoot,
   });
+  const projectKnowledge = await buildSkoposProjectKnowledgeGuidance({
+    workspaceRoot,
+    trustLevel: trustReport.trustLevel,
+    readiness: trustReport.readiness,
+    dryRun,
+  });
   const summary = buildSummary({
     mission: currentMission,
     blockingQuestionCount: blockingQuestions.length,
@@ -126,6 +133,8 @@ export const buildSkoposNextRuntime = async ({
       resolveMissionPath(workspaceRoot, currentMission.id),
       join(workspaceRoot, QUESTIONS_ARTIFACT_PATH),
       recommendationsPath,
+      projectKnowledge.memoryPath,
+      projectKnowledge.communicationBriefPath,
     ],
     metadata: {
       actorId: actorId ?? null,
@@ -136,6 +145,8 @@ export const buildSkoposNextRuntime = async ({
       pendingItemCount: pendingItems.length,
       readiness: trustReport.readiness,
       trustLevel: trustReport.trustLevel,
+      projectKnowledgeKnownAreaCount: projectKnowledge.knownAreaCount,
+      projectKnowledgeAttentionAreaCount: projectKnowledge.attentionAreaCount,
     },
     dryRun,
   });
@@ -159,6 +170,7 @@ export const buildSkoposNextRuntime = async ({
     recommendationsWrite,
     executionSurface: recommendations.executionSurface,
     recommendations,
+    projectKnowledge,
     recommendedAction,
     nextCommand: recommendedAction?.command,
     nextItem,

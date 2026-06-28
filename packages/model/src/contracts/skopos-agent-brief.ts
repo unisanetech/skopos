@@ -20,7 +20,8 @@ export type SkoposAgentBriefKind =
   | 'eval'
   | 'mission'
   | 'prompt'
-  | 'policy';
+  | 'policy'
+  | 'communication';
 
 interface SkoposAgentBriefBase<K extends SkoposAgentBriefKind>
   extends SkoposArtifactEnvelope<'agent-brief'> {
@@ -165,6 +166,25 @@ export interface SkoposAgentPromptBriefArtifact extends SkoposAgentBriefBase<'pr
   overBudgetIds: string[];
 }
 
+export interface SkoposAgentCommunicationRule {
+  id: string;
+  situation: string;
+  agentShouldDo: string;
+  userFacingTemplate?: string;
+}
+
+export interface SkoposAgentCommunicationBriefArtifact
+  extends SkoposAgentBriefBase<'communication'> {
+  audience: 'beginner-mid-level' | 'expert' | 'mixed';
+  tone: string[];
+  defaultResponseShape: string[];
+  questionRules: string[];
+  progressRules: string[];
+  closureRules: string[];
+  memoryUpdateRules: string[];
+  escalationRules: SkoposAgentCommunicationRule[];
+}
+
 export type SkoposAgentBriefArtifact =
   | SkoposAgentTrustBriefArtifact
   | SkoposAgentDoneBriefArtifact
@@ -172,4 +192,5 @@ export type SkoposAgentBriefArtifact =
   | SkoposAgentEvalBriefArtifact
   | SkoposAgentMissionBriefArtifact
   | SkoposAgentPolicyBriefArtifact
-  | SkoposAgentPromptBriefArtifact;
+  | SkoposAgentPromptBriefArtifact
+  | SkoposAgentCommunicationBriefArtifact;

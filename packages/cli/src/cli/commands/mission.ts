@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 
 import {
   claimSkoposMissionRuntime,
+  completeSkoposMissionItemRuntime,
   completeSkoposMissionRuntime,
   loadSkoposMissionRuntime,
   releaseSkoposMissionRuntime,
@@ -22,6 +23,10 @@ interface ParsedMissionSliceArgs extends ParsedMissionArgs {
   goal: string;
   scope?: string;
   claim: boolean;
+}
+
+interface ParsedMissionItemArgs extends ParsedMissionArgs {
+  itemId: string;
 }
 
 export const runMissionCommand = async (args: string[]): Promise<void> => {
@@ -102,6 +107,38 @@ export const runMissionCommand = async (args: string[]): Promise<void> => {
     return;
   }
 
+  if (subcommand === 'item') {
+    const [itemSubcommand, ...itemRest] = rest;
+    if (itemSubcommand !== 'complete') {
+      throw new Error(`Unknown Skopos mission item subcommand: ${itemSubcommand ?? '(missing)'}`);
+    }
+
+    const parsed = parseMissionItemArgs(itemRest);
+    const result = await completeSkoposMissionItemRuntime({
+      cwd: parsed.cwd,
+      mission: parsed.mission,
+      itemId: parsed.itemId,
+      actor: parsed.actor,
+      force: parsed.force,
+    });
+    const completedItem = result.items.find((item) => item.id === parsed.itemId);
+
+    if (parsed.json) {
+      writeJsonOutput(result);
+      return;
+    }
+
+    writeLines([
+      'Skopos mission item complete',
+      `- mission: ${result.id}`,
+      `- item: ${completedItem?.title ?? parsed.itemId}`,
+      `- item id: ${parsed.itemId}`,
+      `- status: ${completedItem?.status ?? '(unknown)'}`,
+      `- claimed by: ${result.coordination.claimedBy?.actorId ?? '(unclaimed)'}`,
+    ]);
+    return;
+  }
+
   if (subcommand === 'release') {
     const parsed = parseMissionArgs(rest);
     const result = await releaseSkoposMissionRuntime({
@@ -150,6 +187,76 @@ export const runMissionCommand = async (args: string[]): Promise<void> => {
   }
 
   throw new Error(`Unknown Skopos mission subcommand: ${subcommand ?? '(missing)'}`);
+};
+
+const parseMissionItemArgs = (args: string[]): ParsedMissionItemArgs => {
+  let cwd = process.cwd();
+  let mission: string | undefined;
+  let itemId: string | undefined;
+  let actor: string | undefined;
+  let force = false;
+  let json = false;
+  let targetProvided = false;
+
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+
+    if (argument === '--json') {
+      json = true;
+      continue;
+    }
+
+    if (argument === '--force') {
+      force = true;
+      continue;
+    }
+
+    if (argument === '--actor') {
+      const nextValue = args[index + 1];
+      if (!nextValue || nextValue.startsWith('-')) {
+        throw new Error('Missing value for --actor.');
+      }
+      actor = nextValue;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--actor=')) {
+      actor = argument.slice('--actor='.length);
+      continue;
+    }
+
+    if (argument.startsWith('-')) {
+      throw new Error(`Unknown Skopos mission item flag: ${argument}`);
+    }
+
+    if (!mission) {
+      mission = argument;
+      continue;
+    }
+
+    if (!itemId) {
+      itemId = argument;
+      continue;
+    }
+
+    if (targetProvided) {
+      throw new Error(`Unexpected extra mission item target: ${argument}`);
+    }
+
+    cwd = resolve(argument);
+    targetProvided = true;
+  }
+
+  if (!mission || mission.trim().length === 0) {
+    throw new Error('Missing mission id or path.');
+  }
+
+  if (!itemId || itemId.trim().length === 0) {
+    throw new Error('Missing mission item id.');
+  }
+
+  return { cwd, mission, itemId, actor, force, json };
 };
 
 const parseMissionArgs = (args: string[]): ParsedMissionArgs => {

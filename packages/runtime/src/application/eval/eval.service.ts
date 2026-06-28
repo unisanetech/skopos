@@ -49,13 +49,17 @@ export interface BuildSkoposEvalRuntimeOptions {
   mission?: string;
   actor?: string;
   dryRun?: boolean;
+  checkTimeoutMs?: number;
 }
+
+const DEFAULT_EVAL_CHECK_TIMEOUT_MS = 120_000;
 
 export const buildSkoposEvalRuntime = async ({
   cwd,
   mission,
   actor,
   dryRun = false,
+  checkTimeoutMs = DEFAULT_EVAL_CHECK_TIMEOUT_MS,
 }: BuildSkoposEvalRuntimeOptions): Promise<SkoposEvalRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = requireActorId(actor);
@@ -87,6 +91,7 @@ export const buildSkoposEvalRuntime = async ({
         workspaceRoot,
         mission: currentMission,
         dryRun,
+        checkTimeoutMs,
       })
     : buildSkippedCheckRuns({
         mission: currentMission,
@@ -353,7 +358,9 @@ const buildUpdatedMission = ({
   workflowEvidence: SkoposWorkflowRequirementEvidence[];
   evaluationStatus: SkoposEvalArtifact['evaluationStatus'];
 }): SkoposMissionArtifact => {
-  const checksPassed = checkRuns.every((entry) => entry.status !== 'fail');
+  const checksPassed = checkRuns.every(
+    (entry) => entry.status !== 'fail' && entry.status !== 'timed-out',
+  );
   const workflowsPassed = workflowEvidence.every((entry) => entry.status === 'pass');
   const workflowPassIds = new Set(
     workflowEvidence.filter((entry) => entry.status === 'pass').map((entry) => entry.id),
@@ -467,6 +474,10 @@ const deriveEvaluationStatus = ({
     return 'blocked';
   }
 
+  if (checkRuns.some((entry) => entry.status === 'timed-out')) {
+    return 'needs-review';
+  }
+
   if (proof.status === 'fail' || trustLevel === 'low') {
     return 'blocked';
   }
@@ -498,21 +509,24 @@ const buildSummary = ({
 }): string => {
   const passingChecks = checkRuns.filter((entry) => entry.status === 'pass').length;
   const failedChecks = checkRuns.filter((entry) => entry.status === 'fail').length;
+  const timedOutChecks = checkRuns.filter((entry) => entry.status === 'timed-out').length;
   const failedWorkflowEvidence = workflowEvidence.filter((entry) => entry.status === 'fail').length;
   const proofSummary =
     proof.status === 'missing' && !proofRequiredForDone ? 'optional-proof missing' : `proof ${proof.status}`;
 
-  return `Eval ${evaluationStatus} for ${mission.id} with ${passingChecks} passing checks, ${failedChecks} failed checks, ${failedWorkflowEvidence} workflow evidence gaps, and ${proofSummary}.`;
+  return `Eval ${evaluationStatus} for ${mission.id} with ${passingChecks} passing checks, ${failedChecks} failed checks, ${timedOutChecks} timed-out checks, ${failedWorkflowEvidence} workflow evidence gaps, and ${proofSummary}.`;
 };
 
 const runMissionChecks = async ({
   workspaceRoot,
   mission,
   dryRun,
+  checkTimeoutMs,
 }: {
   workspaceRoot: string;
   mission: SkoposMissionArtifact;
   dryRun: boolean;
+  checkTimeoutMs: number;
 }): Promise<SkoposEvalCheckRun[]> => {
   const runs: SkoposEvalCheckRun[] = [];
 
@@ -530,15 +544,19 @@ const runMissionChecks = async ({
     const execution = await executeSkoposShellCommand({
       command,
       cwd: workspaceRoot,
+      timeoutMs: checkTimeoutMs,
     });
     runs.push({
       command,
-      status: execution.exitCode === 0 ? 'pass' : 'fail',
+      status: execution.timedOut ? 'timed-out' : execution.exitCode === 0 ? 'pass' : 'fail',
       summary:
-        execution.exitCode === 0
+        execution.timedOut
+          ? `Validation command exceeded the ${formatTimeout(checkTimeoutMs)} eval timeout. Record partial proof and rerun this command directly or with a larger --check-timeout-ms value.`
+          : execution.exitCode === 0
           ? 'Validation command completed successfully.'
           : `Validation command failed with exit code ${execution.exitCode}.`,
       exitCode: execution.exitCode,
+      timeoutMs: execution.timeoutMs,
       startedAt: execution.startedAt,
       finishedAt: execution.finishedAt,
       stdoutExcerpt: execution.stdoutExcerpt,
@@ -547,6 +565,18 @@ const runMissionChecks = async ({
   }
 
   return runs;
+};
+
+const formatTimeout = (timeoutMs: number): string => {
+  if (timeoutMs >= 60_000 && timeoutMs % 60_000 === 0) {
+    return `${timeoutMs / 60_000} minute${timeoutMs === 60_000 ? '' : 's'}`;
+  }
+
+  if (timeoutMs >= 1000 && timeoutMs % 1000 === 0) {
+    return `${timeoutMs / 1000} second${timeoutMs === 1000 ? '' : 's'}`;
+  }
+
+  return `${timeoutMs}ms`;
 };
 
 const buildSkippedCheckRuns = ({

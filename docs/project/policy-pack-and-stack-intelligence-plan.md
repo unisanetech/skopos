@@ -9,7 +9,7 @@ Use this plan to turn Skopos from project-state tooling into a stronger project-
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-27`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -25,9 +25,11 @@ Use this plan to turn Skopos from project-state tooling into a stronger project-
   - `../architecture/runtime-model.md`
   - `../architecture/trust-and-closure-model.md`
   - `../decisions/029-policy-pack-stack-intelligence-and-memory-contract.md`
+  - `../decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
 
 ## Changelog
 
+- `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract as the next foundation slice, so Skopos must map existing project truth by role before scaffolding docs and must guide coding-agent communication across start, context, questions, execution, gates, proof, memory sync, and handoff.
 - `2026-06-24`: Added persisted local role mapping through `.skopos/policies/role-mapping.json` and policy-brief integration, so accepted architecture roles carry concrete local path evidence for future agents.
 - `2026-06-24`: Added role-mapping decisions through `skopos policies mappings` and `.skopos/policies/role-mapping-decisions.json`, so inferred mappings can become explicit confirmed or ignored local project truth.
 - `2026-06-24`: Added brownfield-safe role mapping for architecture packs, including checked aliases, matched aliases, and UI copy that treats different good folder structures as local mappings instead of policy drift.
@@ -115,6 +117,12 @@ Skopos should become the durable memory and intelligence layer around LLM coding
 11. Proof before product claims.
    Each pack family needs test repos, drift fixtures, and regression gates before being treated as production-grade.
 
+12. Memory roles over fixed paths.
+   Skopos should know which project surfaces own agent entrypoint, overview, architecture, validation, decisions, findings, generated-output rules, accepted policy, stack decisions, active work, and handoff state. It should not treat one folder layout as universal project truth.
+
+13. Agent communication is part of the product.
+   Skopos should guide how coding agents explain work, ask questions, show progress, run gates, update memory, and close with proof. Clear human conversation is a runtime behavior, not only documentation style.
+
 
 
 ## Project-Agnostic Reference Boundary
@@ -171,6 +179,39 @@ Freshness rules:
 7. Memory updates should be explainable: every generated recommendation should point back to source signals or accepted decisions.
 
 The memory layer should make this possible: an agent can enter a project months later, ask Skopos for context, and receive the current architecture, policies, gates, stack decisions, known drift, and next required proof without rereading the whole repo or asking the user to repeat history.
+
+## Memory Map And Agent Workflow Intelligence
+
+The next foundation slice is Memory Map v1, followed by Agent Communication Brief v1.
+
+Memory Map v1 should compile role-based project truth instead of assuming every project uses the same docs structure. For greenfield projects, Skopos may scaffold the recommended docs and agent surfaces. For brownfield projects, Skopos must first map existing `AGENTS.md`, README, docs, scripts, decisions, findings, and generated-output rules, then suggest safe improvements before editing human-authored docs.
+
+Initial memory roles:
+
+1. agent entrypoint
+2. project overview
+3. architecture and structure
+4. validation and gates
+5. decisions and rationale
+6. findings and known drift
+7. generated artifact ownership
+8. accepted policy
+9. stack decisions
+10. active work and proof history
+11. discussion handoff and accepted direction
+
+Agent Communication Brief v1 should tell coding agents how to use Skopos in conversation and execution:
+
+1. explain the selected workflow lane
+2. ask guided questions with a recommended option and tradeoffs
+3. show phase, approximate progress, blockers, next action, and proof still needed
+4. use simple beginner/mid-level friendly language by default
+5. update memory only when project truth changed
+6. close with checks run, results, remaining risks, and memory updates
+
+The full workflow should follow one loop:
+
+`goal -> lane -> compact memory -> guided questions -> execution -> gates -> proof -> memory sync -> handoff`
 
 ## Seeded Pack Catalog
 
