@@ -269,7 +269,17 @@ function MemoryAgentCommunicationCard({
       title="Agent communication guide"
       description="This is the short guide agents should follow when they explain, ask, validate, and close work."
     >
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div>
+          <p className="skopos-section-title">Session start</p>
+          <ul className="mt-2 grid gap-2">
+            {(brief.startupRules ?? []).map((item) => (
+              <li key={item} className="skopos-helper-copy border-t border-[var(--line)] pt-2">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
         <div>
           <p className="skopos-section-title">Default answer shape</p>
           <ul className="mt-2 grid gap-2">

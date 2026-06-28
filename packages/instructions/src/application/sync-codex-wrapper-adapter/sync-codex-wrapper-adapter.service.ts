@@ -383,7 +383,7 @@ process.exit(result.status ?? 0);
 
 const renderCodexReadme = (): string => `# Codex Discussion Adapter
 
-This wrapper-mediated adapter keeps Codex on the same discussion-memory lane as Claude Code while also surfacing the current workflow-router recommendation on session start.
+This wrapper-mediated adapter keeps Codex on the same discussion-memory lane as Claude Code while also surfacing the current workflow-router recommendation on session start. The wrapper should treat \`AGENTS.md\` plus \`.skopos/agent/communication-brief.json\` as the default agent operating contract.
 
 Use the generated entrypoint at \`${ENTRYPOINT_RELATIVE_PATH}\` from an external Codex wrapper or host integration. Event mapping:
 
@@ -394,5 +394,5 @@ Use the generated entrypoint at \`${ENTRYPOINT_RELATIVE_PATH}\` from an external
 - \`pre-compact\` -> \`skopos discuss handoff --json\`
 - \`stop\` -> consult \`skopos program next --json\` first, then fall back to \`skopos done --json\`
 
-The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context plus workflow guidance. Do not replay raw discussion journals into the prompt.
+The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context plus workflow guidance. The agent should choose light, normal, or workpack lane before editing and should not claim complete until \`skopos done\` or the routed next step allows closure. Do not replay raw discussion journals into the prompt.
 `;

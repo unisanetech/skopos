@@ -623,8 +623,8 @@ const runBrownfieldStabilizationDeltaBenchmark = async (
       `repo/package counts: ${beforeInit.bootstrap.detected.repoMode}:${beforeInit.bootstrap.detected.packageCount} -> ${afterInit.bootstrap.detected.repoMode}:${afterInit.bootstrap.detected.packageCount}`,
     ),
     metric(
-      'before-state-shows-incomplete-stabilization',
-      beforeInit.bootstrap.detected.docsHealth.hasStartHere === false &&
+      'before-state-self-heals-router-but-needs-command-stabilization',
+      beforeInit.bootstrap.detected.docsHealth.hasStartHere === true &&
         Boolean(beforeInit.bootstrap.detected.commands.dev) &&
         Boolean(beforeInit.bootstrap.detected.commands.build) &&
         !beforeInit.bootstrap.detected.commands.test &&
@@ -815,8 +815,8 @@ const runStaleDocsTrustBenchmark = async (
       `tracked/stale docs: ${init.bootstrap.detected.docsHealth.freshnessTrackedCount}/${init.bootstrap.detected.docsHealth.staleDocPaths.join(', ')}`,
     ),
     metric(
-      'docs-router-missing',
-      init.bootstrap.detected.docsHealth.hasStartHere === false,
+      'docs-router-generated',
+      init.bootstrap.detected.docsHealth.hasStartHere === true,
       `has start-here: ${init.bootstrap.detected.docsHealth.hasStartHere}`,
     ),
     metric(
@@ -825,12 +825,12 @@ const runStaleDocsTrustBenchmark = async (
       `health: ${diagnosis.health}`,
     ),
     metric(
-      'docs-root-recommended',
+      'docs-root-canonical',
       diagnosis.findings.some(
         (finding) =>
           finding.id === 'docs-root' &&
-          finding.classification === 'recommended' &&
-          finding.severity === 'medium',
+          finding.classification === 'canonical' &&
+          finding.severity === 'low',
       ),
       `docs-root finding: ${stringifyFinding(diagnosis.findings, 'docs-root')}`,
     ),
@@ -856,8 +856,8 @@ const runStaleDocsTrustBenchmark = async (
     ),
     metric(
       'trust-checks-warn',
-      trust.checks.some((check) => check.id === 'docs-router' && check.status === 'warn') &&
-        trust.checks.some((check) => check.id === 'docs-freshness' && check.status === 'warn'),
+      trust.checks.some((check) => check.id === 'docs-freshness' && check.status === 'warn') &&
+        trust.checks.some((check) => check.id === 'scan-findings' && check.status === 'warn'),
       `checks: ${trust.checks.map((check) => `${check.id}:${check.status}`).join(', ')}`,
     ),
   ];
@@ -1979,7 +1979,8 @@ const runToolNativeEnforcementBenchmark = async (
     ),
     metric(
       'stop-reason-high-signal',
-      stopDecision.reason.includes('reference.refresh-api-note'),
+      stopDecision.reason.includes('no active claimed mission') &&
+        stopDecision.reason.includes('skopos trust'),
       `reason: ${stopDecision.reason}`,
     ),
   ];

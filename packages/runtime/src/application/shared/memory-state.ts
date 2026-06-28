@@ -694,6 +694,13 @@ const buildAgentCommunicationBrief = ({
   workspaceRoot,
   briefKind: 'communication',
   audience: 'beginner-mid-level',
+  startupRules: [
+    'Read AGENTS.md first.',
+    'Run or inspect `skopos program next . --compact --json` before broad scanning or implementation.',
+    'If Skopos state is missing or stale, run `skopos init .` and re-check program next.',
+    'Choose light, normal, or workpack lane before editing.',
+    'Load this communication brief when available so answers, questions, progress, and closure stay user-friendly.',
+  ],
   tone: [
     'Use clear, calm, simple English.',
     'Explain important tradeoffs without assuming the user knows Skopos internals.',

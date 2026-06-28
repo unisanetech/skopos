@@ -59,8 +59,9 @@ This is not full automation. It is the minimum safe workflow-router contract for
 ## Required Calls
 
 1. Session start:
+   - Read \`AGENTS.md\`; it is the canonical operating contract.
    - Run \`skopos program next <project-root> --compact --json\`.
-   - Give the returned next action to the agent before it edits code.
+   - Give the returned next action and lane expectation to the agent before it edits code.
 2. User message:
    - Run \`skopos discuss append-turn <project-root> --role user --message-stdin --json\`.
    - Pipe only the user's message text into stdin.
@@ -86,6 +87,14 @@ The agent can stop when one of these is true:
 1. \`skopos program next\` says the next action is complete or there is no active routed action.
 2. \`skopos done\` passes without blocking mission, trust, question, eval, or policy issues.
 3. A human explicitly pauses the work.
+
+## Lane Rule
+
+Keep the happy path light, but make risky work explicit:
+
+1. Light lane: narrow local edit, focused check, memory update only if project truth changed.
+2. Normal lane: tracked mission, proportional checks, decisions kept current.
+3. Workpack lane: phases, staged proof, durable decisions/findings, memory sync, and explicit closure.
 
 ## What To Show Humans
 

@@ -46,3 +46,38 @@ This file is the canonical instruction source for the standalone Skopos workspac
 
 <!-- skopos:policy:end -->
 
+<!-- skopos-operating-contract:start -->
+## Default Skopos Operating Contract
+When Skopos is installed, agents should treat it as the default workflow layer for project memory, planning, validation, and closure.
+### Session Start
+1. Read `AGENTS.md` first.
+2. Run or inspect `skopos program next . --compact --json` before broad scanning or implementation.
+3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos program next`.
+4. Use `docs/00-start-here.md` as the human docs router when it exists; otherwise inspect `docs/` conservatively.
+5. Load `.skopos/agent/communication-brief.json` when available so user-facing answers follow project tone, question, progress, and closure rules.
+### Lane Selection
+- Light lane: use for narrow local edits with low risk. Inspect relevant files, edit, run a focused check, and update memory only if project truth changed.
+- Normal lane: use for multi-file feature, docs, policy, or maintenance work. Start or continue a Skopos mission, keep decisions current, run proportional checks, and summarize proof.
+- Workpack lane: use for architecture, public API, data migration, security, stack, release, or long-running work. Track phases, decisions, staged gates, findings, memory sync, and closure proof.
+### Memory And Docs
+- Update durable docs, decisions, findings, or policy only when project truth changes.
+- Do not duplicate truth. Workpacks track execution; durable rules belong in docs, policy, decisions, findings, or memory.
+- In brownfield projects, suggest docs organization improvements before rewriting existing docs.
+- After changing `AGENTS.md`, run `skopos instructions sync .` so mirrors and adapters stay aligned.
+### Closure
+- Before saying work is done, run the focused checks that match the lane.
+- For normal/workpack work, run `skopos done --cwd . --actor <id>` or explain why it could not be run.
+- Do not claim complete when `skopos trust`, `skopos eval`, accepted-policy drift, open workflow questions, or mission state blocks closure.
+- Final responses should state what changed, proof/checks, memory/docs updates, and remaining risk.
+### Default Commands
+- Program next: `skopos program next . --compact --json`
+- Trust check: `skopos trust . --compact`
+- Start tracked work: `skopos start "<goal>" . --actor <id>`
+- Continue work: `skopos next . --actor <id>`
+- Sync instructions: `skopos instructions sync .`
+- Closure: `skopos done --cwd . --actor <id>`
+- typecheck: `pnpm typecheck`
+- test: `pnpm test`
+- build: `pnpm build`
+<!-- skopos-operating-contract:end -->
+

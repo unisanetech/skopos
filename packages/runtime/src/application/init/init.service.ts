@@ -119,7 +119,9 @@ export const initSkoposProject = async ({
     (docsScaffold.status === 'written' ||
       docsScaffold.status === 'updated-placeholder' ||
       (instructionScaffold &&
-        (instructionScaffold.status === 'written' || instructionScaffold.status === 'overwritten')))
+        (instructionScaffold.status === 'written' ||
+          instructionScaffold.status === 'overwritten' ||
+          instructionScaffold.status === 'updated-contract')))
   ) {
     ({ bootstrap, scopesLite, diagnosis, architecture } = await buildSkoposBootstrapArtifacts({
       cwd: workspaceRoot,

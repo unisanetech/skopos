@@ -1,4 +1,4 @@
-import { access, mkdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, normalize, resolve } from 'node:path';
 
 import type {
@@ -11,6 +11,7 @@ import type {
 export type SkoposInstructionScaffoldWriteStatus =
   | 'written'
   | 'overwritten'
+  | 'updated-contract'
   | 'skipped-existing'
   | 'dry-run';
 
@@ -59,6 +60,30 @@ export const scaffoldProjectInstructions = async ({
   const exists = await fileExists(targetPath);
 
   if (exists && !force) {
+    const existingContents = await readTextIfExists(targetPath);
+    const nextContents = upsertSkoposOperatingContract(existingContents, {
+      projectName: resolvedProjectName,
+      docsRoot,
+      docsStartHerePath: resolvedStartHerePath,
+      commands,
+    });
+
+    if (nextContents !== existingContents) {
+      if (!dryRun) {
+        await writeFile(targetPath, nextContents, 'utf8');
+      }
+
+      return {
+        path: targetPath,
+        relativePath,
+        status: dryRun ? 'dry-run' : 'updated-contract',
+        mode,
+        projectName: resolvedProjectName,
+        templateVersion: 1,
+        sections: [...SCAFFOLD_SECTIONS],
+      };
+    }
+
     return {
       path: targetPath,
       relativePath,
@@ -137,10 +162,11 @@ export const renderProjectInstructions = ({
     '## First Read Order',
     '',
     '1. Read this file before changing code.',
-    `2. Read \`${docsStartHerePath}\` if it exists; otherwise inspect \`${docsRoot}/\` and the package README files relevant to the task.`,
-    '3. Use Skopos compact state before broad scanning when available: `.skopos/bootstrap.json`, `.skopos/scopes-lite.json`, `.skopos/architecture.json`, and `.skopos/index.json`.',
-    '4. Read the files you will edit and search usages of changed symbols before editing.',
-    "5. Prefer the project's existing patterns, boundaries, naming, and command surface over new conventions.",
+    '2. Run or inspect `skopos program next . --compact --json` before broad scanning. If Skopos is not initialized yet, run `skopos init .` first.',
+    `3. Read \`${docsStartHerePath}\` if it exists; otherwise inspect \`${docsRoot}/\` and the package README files relevant to the task.`,
+    '4. Use Skopos compact state before broad scanning when available: `.skopos/bootstrap.json`, `.skopos/scopes-lite.json`, `.skopos/architecture.json`, `.skopos/index.json`, and `.skopos/agent/communication-brief.json`.',
+    '5. Read the files you will edit and search usages of changed symbols before editing.',
+    "6. Prefer the project's existing patterns, boundaries, naming, and command surface over new conventions.",
     '',
     '## Project Context To Fill In',
     '',
@@ -156,6 +182,14 @@ export const renderProjectInstructions = ({
     modePolicy,
     '',
     repoPolicy,
+    '',
+    renderSkoposOperatingContract({
+      projectName,
+      docsRoot,
+      docsStartHerePath,
+      commands,
+      includeMarkers: false,
+    }),
     '',
     '## Agent Workflow',
     '',
@@ -204,11 +238,12 @@ export const renderProjectInstructions = ({
     '## Skopos Workflow',
     '',
     '1. Initialize or refresh project understanding with `skopos init .`.',
-    '2. Check readiness with `skopos trust .` before broad agent work.',
-    '3. Start substantial work with `skopos start "<goal>" . --actor <id>` so plan, mission, and questions are durable.',
-    '4. Use `skopos next . --actor <id>` during longer work to keep the current recommendation visible.',
-    '5. Use `skopos instructions sync .` after changing `AGENTS.md` so mirrors and tool adapters stay aligned.',
-    '6. Use `skopos done --cwd . --actor <id>` when closure evidence matters.',
+    '2. Use `skopos program next . --compact --json` as the default session-start command.',
+    '3. Check readiness with `skopos trust .` before broad agent work.',
+    '4. Start substantial work with `skopos start "<goal>" . --actor <id>` so plan, mission, and questions are durable.',
+    '5. Use `skopos next . --actor <id>` during longer work to keep the current recommendation visible.',
+    '6. Use `skopos instructions sync .` after changing `AGENTS.md` so mirrors and tool adapters stay aligned.',
+    '7. Use `skopos done --cwd . --actor <id>` before claiming complete when closure evidence matters.',
     '',
   ].join('\n');
 };
@@ -226,6 +261,107 @@ const SCAFFOLD_SECTIONS = [
   'git-worktree-safety',
   'skopos-workflow',
 ] as const;
+
+const SKOPOS_CONTRACT_START = '<!-- skopos-operating-contract:start -->';
+const SKOPOS_CONTRACT_END = '<!-- skopos-operating-contract:end -->';
+
+const upsertSkoposOperatingContract = (
+  contents: string,
+  options: {
+    projectName: string;
+    docsRoot: string;
+    docsStartHerePath: string;
+    commands: SkoposCommandMap;
+  },
+): string => {
+  const contract = renderSkoposOperatingContract({
+    ...options,
+    includeMarkers: true,
+  });
+  const startIndex = contents.indexOf(SKOPOS_CONTRACT_START);
+  const endIndex = contents.indexOf(SKOPOS_CONTRACT_END);
+
+  if (startIndex !== -1 && endIndex !== -1 && endIndex > startIndex) {
+    const afterEnd = endIndex + SKOPOS_CONTRACT_END.length;
+    return `${contents.slice(0, startIndex).trimEnd()}\n\n${contract}\n\n${contents.slice(afterEnd).trimStart()}`;
+  }
+
+  if (contents.includes('## Default Skopos Operating Contract')) {
+    return contents;
+  }
+
+  return `${contents.trimEnd()}\n\n${contract}\n`;
+};
+
+const renderSkoposOperatingContract = ({
+  projectName: _projectName,
+  docsRoot,
+  docsStartHerePath,
+  commands,
+  includeMarkers,
+}: {
+  projectName: string;
+  docsRoot: string;
+  docsStartHerePath: string;
+  commands: SkoposCommandMap;
+  includeMarkers: boolean;
+}): string => {
+  const lines = [
+    includeMarkers ? SKOPOS_CONTRACT_START : '',
+    '## Default Skopos Operating Contract',
+    '',
+    'When Skopos is installed, agents should treat it as the default workflow layer for project memory, planning, validation, and closure.',
+    '',
+    '### Session Start',
+    '',
+    '1. Read `AGENTS.md` first.',
+    '2. Run or inspect `skopos program next . --compact --json` before broad scanning or implementation.',
+    '3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos program next`.',
+    `4. Use \`${docsStartHerePath}\` as the human docs router when it exists; otherwise inspect \`${docsRoot}/\` conservatively.`,
+    '5. Load `.skopos/agent/communication-brief.json` when available so user-facing answers follow project tone, question, progress, and closure rules.',
+    '',
+    '### Lane Selection',
+    '',
+    '- Light lane: use for narrow local edits with low risk. Inspect relevant files, edit, run a focused check, and update memory only if project truth changed.',
+    '- Normal lane: use for multi-file feature, docs, policy, or maintenance work. Start or continue a Skopos mission, keep decisions current, run proportional checks, and summarize proof.',
+    '- Workpack lane: use for architecture, public API, data migration, security, stack, release, or long-running work. Track phases, decisions, staged gates, findings, memory sync, and closure proof.',
+    '',
+    '### Memory And Docs',
+    '',
+    '- Update durable docs, decisions, findings, or policy only when project truth changes.',
+    '- Do not duplicate truth. Workpacks track execution; durable rules belong in docs, policy, decisions, findings, or memory.',
+    '- In brownfield projects, suggest docs organization improvements before rewriting existing docs.',
+    '- After changing `AGENTS.md`, run `skopos instructions sync .` so mirrors and adapters stay aligned.',
+    '',
+    '### Closure',
+    '',
+    '- Before saying work is done, run the focused checks that match the lane.',
+    '- For normal/workpack work, run `skopos done --cwd . --actor <id>` or explain why it could not be run.',
+    '- Do not claim complete when `skopos trust`, `skopos eval`, accepted-policy drift, open workflow questions, or mission state blocks closure.',
+    '- Final responses should state what changed, proof/checks, memory/docs updates, and remaining risk.',
+    '',
+    '### Default Commands',
+    '',
+    `- Program next: \`skopos program next . --compact --json\``,
+    `- Trust check: \`skopos trust . --compact\``,
+    `- Start tracked work: \`skopos start "<goal>" . --actor <id>\``,
+    `- Continue work: \`skopos next . --actor <id>\``,
+    `- Sync instructions: \`skopos instructions sync .\``,
+    `- Closure: \`skopos done --cwd . --actor <id>\``,
+    ...renderAvailableValidationCommands(commands),
+    includeMarkers ? SKOPOS_CONTRACT_END : '',
+  ];
+
+  return lines.filter((line) => line.length > 0).join('\n');
+};
+
+const renderAvailableValidationCommands = (commands: SkoposCommandMap): string[] =>
+  ['typecheck', 'test', 'lint', 'build']
+    .map((name) => {
+      const command = commands[name as keyof SkoposCommandMap];
+      return command ? `- ${name}: \`${command}\`` : undefined;
+    })
+    .filter((line): line is string => Boolean(line));
 
 const renderCommandRows = (commands: SkoposCommandMap): string => {
   const commandNames = ['dev', 'build', 'test', 'typecheck', 'lint'] as const;
@@ -296,5 +432,13 @@ const fileExists = async (targetPath: string): Promise<boolean> => {
     return true;
   } catch {
     return false;
+  }
+};
+
+const readTextIfExists = async (targetPath: string): Promise<string> => {
+  try {
+    return await readFile(targetPath, 'utf8');
+  } catch {
+    return '';
   }
 };

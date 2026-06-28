@@ -101,7 +101,7 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(result.actorId).toBe('agent-bootstrap');
     expect(result.instructionScaffold).toEqual(
       expect.objectContaining({
-        status: 'skipped-existing',
+        status: 'updated-contract',
         relativePath: 'AGENTS.md',
       }),
     );
@@ -194,6 +194,7 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       type: string;
       briefKind: string;
       audience: string;
+      startupRules: string[];
       defaultResponseShape: string[];
       escalationRules: Array<{ id: string; situation: string }>;
     };
@@ -387,6 +388,12 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(communicationBrief.type).toBe('agent-brief');
     expect(communicationBrief.briefKind).toBe('communication');
     expect(communicationBrief.audience).toBe('beginner-mid-level');
+    expect(communicationBrief.startupRules).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('skopos program next'),
+        expect.stringContaining('skopos init'),
+      ]),
+    );
     expect(communicationBrief.defaultResponseShape.length).toBeGreaterThan(0);
     expect(communicationBrief.escalationRules).toEqual(
       expect.arrayContaining([
@@ -546,26 +553,32 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     const contents = await readFile(join(workspaceDir, 'AGENTS.md'), 'utf8');
     expect(contents).toContain('## Project Snapshot');
     expect(contents).toContain('### Greenfield Policy');
+    expect(contents).toContain('## Default Skopos Operating Contract');
+    expect(contents).toContain('skopos program next . --compact --json');
     expect(contents).toContain('## Agent Workflow');
     expect(contents).toContain('## Security And Privacy');
     expect(contents).toContain('skopos start "<goal>"');
   });
 
-  it('scaffolds instructions explicitly and skips existing sources unless forced', async () => {
+  it('scaffolds instructions explicitly and updates existing sources with the Skopos contract', async () => {
     const workspaceDir = await createTempWorkspace();
 
-    const skipped = runCliJson<{ status: string; relativePath: string }>([
+    const updated = runCliJson<{ status: string; relativePath: string }>([
       'instructions',
       'scaffold',
       workspaceDir,
       '--json',
     ]);
-    expect(skipped).toEqual(
+    expect(updated).toEqual(
       expect.objectContaining({
-        status: 'skipped-existing',
+        status: 'updated-contract',
         relativePath: 'AGENTS.md',
       }),
     );
+    const updatedContents = await readFile(join(workspaceDir, 'AGENTS.md'), 'utf8');
+    expect(updatedContents).toContain('# Fixture agent rules');
+    expect(updatedContents).toContain('## Default Skopos Operating Contract');
+    expect(updatedContents).toContain('skopos program next . --compact --json');
 
     const forced = runCliJson<{ status: string; mode: string; actorId?: string }>([
       'instructions',
@@ -3110,8 +3123,10 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     const adapter = enforcement.toolAdapters.find((entry) => entry.toolId === 'manual-hosts');
 
     expect(guide).toContain('Manual Host Adapter');
+    expect(guide).toContain('Read `AGENTS.md`; it is the canonical operating contract.');
     expect(guide).toContain('skopos program next <project-root> --compact --json');
     expect(guide).toContain('skopos done --cwd <project-root> --json');
+    expect(guide).toContain('Light lane: narrow local edit');
     expect(adapter).toEqual(
       expect.objectContaining({
         supportTier: 'manual-fallback',

@@ -560,6 +560,11 @@ const buildSourceDependencies = ({
     const packageParentDir = dirname(packageJsonPath);
     if (packageParentDir !== '.' && packageParentDir.length > 0) {
       register(packageParentDir, 'package-directory', true);
+
+      const packageCollectionDir = dirname(packageParentDir);
+      if (packageCollectionDir !== '.' && packageCollectionDir.length > 0) {
+        register(packageCollectionDir, 'package-directory', true);
+      }
     }
   }
 

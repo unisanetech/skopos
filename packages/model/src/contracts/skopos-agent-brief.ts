@@ -176,6 +176,7 @@ export interface SkoposAgentCommunicationRule {
 export interface SkoposAgentCommunicationBriefArtifact
   extends SkoposAgentBriefBase<'communication'> {
   audience: 'beginner-mid-level' | 'expert' | 'mixed';
+  startupRules: string[];
   tone: string[];
   defaultResponseShape: string[];
   questionRules: string[];

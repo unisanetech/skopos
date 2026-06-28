@@ -43,6 +43,7 @@ export interface SkoposInitReferenceArtifact {
 export type SkoposInstructionScaffoldWriteStatus =
   | 'written'
   | 'overwritten'
+  | 'updated-contract'
   | 'skipped-existing'
   | 'dry-run';
 
