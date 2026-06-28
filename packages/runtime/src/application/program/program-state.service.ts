@@ -95,6 +95,11 @@ export const buildSkoposProgramState = async ({
     questions,
     currentMission,
   });
+  const trustBlockerItems = buildTrustBlockerProgramItems({
+    workspaceRoot: resolvedWorkspaceRoot,
+    checks: trust.checks,
+    currentMission,
+  });
 
   const obligations = currentMissionItem && currentMission
     ? buildMissionProgramObligations({
@@ -103,7 +108,7 @@ export const buildSkoposProgramState = async ({
       })
     : [];
 
-  const items = [currentMissionItem, ...workflowRecommendationItems, ...findingItems]
+  const items = [currentMissionItem, ...workflowRecommendationItems, ...trustBlockerItems, ...findingItems]
     .filter((entry): entry is SkoposProgramItem => Boolean(entry))
     .map((item) =>
       item.id === currentMissionItem?.id
@@ -119,7 +124,7 @@ export const buildSkoposProgramState = async ({
 
   const sequence = buildProgramSequence({
     currentMissionItem,
-    queuedItems: [...workflowRecommendationItems, ...findingItems],
+    queuedItems: [...workflowRecommendationItems, ...trustBlockerItems, ...findingItems],
     openProgramQuestions: questions ? getBlockingWorkflowQuestions(questions).map((entry) => entry.id) : [],
   });
   const doNowItem = items.find((item) => item.id === sequence.doNow);
@@ -377,6 +382,90 @@ const buildWorkflowRecommendationProgramItem = ({
   };
 };
 
+const buildTrustBlockerProgramItems = ({
+  workspaceRoot,
+  checks,
+  currentMission,
+}: {
+  workspaceRoot: string;
+  checks: Array<{ id: string; status: string; summary: string }>;
+  currentMission?: SkoposMissionArtifact;
+}): SkoposProgramItem[] =>
+  checks
+    .filter((check) => check.status === 'fail' || check.status === 'warn')
+    .map((check) => {
+      const priority = check.status === 'fail' ? 'critical' : 'high';
+      return {
+        id: `program-item.trust-blocker.${check.id}`,
+        title: buildTrustBlockerTitle(check.id),
+        summary: check.summary,
+        sourceKind: 'trust-blocker',
+        sourceRef: '.skopos/trust.json',
+        scope: {
+          id: 'workspace',
+          kind: 'workspace',
+          title: 'workspace',
+          path: '.',
+        },
+        status: 'ready',
+        priority,
+        whyNow:
+          'Trust reported this as needing attention, so program next should show the repair instead of saying nothing is active.',
+        dependencies: [],
+        interruptsCurrentMission: check.status === 'fail',
+        recommendedDisposition: currentMission
+          ? check.status === 'fail'
+            ? 'interrupt-current'
+            : 'do-next'
+          : 'do-now',
+        recommendedCommand: buildTrustBlockerCommand({
+          workspaceRoot,
+          checkId: check.id,
+        }),
+        obligationIds: [],
+      } satisfies SkoposProgramItem;
+    });
+
+const buildTrustBlockerTitle = (checkId: string): string => {
+  switch (checkId) {
+    case 'docs-router':
+      return 'Repair the docs start-here router';
+    case 'instruction-mirrors':
+      return 'Sync agent instruction mirrors';
+    case 'accepted-policy':
+      return 'Choose the project policy packs';
+    case 'policy-brief':
+      return 'Refresh the agent policy brief';
+    case 'scan-findings':
+      return 'Review Skopos scan findings';
+    default:
+      return `Review trust check ${checkId}`;
+  }
+};
+
+const buildTrustBlockerCommand = ({
+  workspaceRoot,
+  checkId,
+}: {
+  workspaceRoot: string;
+  checkId: string;
+}): string => {
+  switch (checkId) {
+    case 'docs-router':
+      return `skopos init ${workspaceRoot} && skopos trust ${workspaceRoot}`;
+    case 'instruction-mirrors':
+      return `skopos instructions sync ${workspaceRoot} && skopos trust ${workspaceRoot}`;
+    case 'accepted-policy':
+      return `skopos policies recommend ${workspaceRoot} && skopos trust ${workspaceRoot}`;
+    case 'policy-brief':
+      return `skopos policies apply <pack-id> ${workspaceRoot} && skopos trust ${workspaceRoot}`;
+    case 'scan-findings':
+      return `skopos scan ${workspaceRoot} --json`;
+    default:
+      return `skopos trust ${workspaceRoot}`;
+  }
+};
+
 const buildMissionProgramObligations = ({
   mission,
   linkedItemId,
@@ -615,6 +704,16 @@ const buildProgramRecommendedAction = ({
   if (doNowItem?.sourceKind === 'workflow-recommendation') {
     return {
       kind: 'run-workflow-recommendation',
+      title: doNowItem.title,
+      summary: doNowItem.summary,
+      command: doNowItem.recommendedCommand,
+      linkedItemId: doNowItem.id,
+    };
+  }
+
+  if (doNowItem?.sourceKind === 'trust-blocker') {
+    return {
+      kind: 'review-program-state',
       title: doNowItem.title,
       summary: doNowItem.summary,
       command: doNowItem.recommendedCommand,

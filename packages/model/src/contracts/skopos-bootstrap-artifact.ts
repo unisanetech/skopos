@@ -56,7 +56,11 @@ export interface SkoposInstructionScaffoldArtifact {
   sections: string[];
 }
 
-export type SkoposDocsScaffoldWriteStatus = 'written' | 'skipped-existing' | 'dry-run';
+export type SkoposDocsScaffoldWriteStatus =
+  | 'written'
+  | 'updated-placeholder'
+  | 'skipped-existing'
+  | 'dry-run';
 
 export interface SkoposDocsScaffoldArtifact {
   path: string;

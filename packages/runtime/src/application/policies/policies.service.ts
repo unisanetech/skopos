@@ -147,10 +147,20 @@ export interface SkoposPolicyRoleMappingDecisionsRuntimeResult {
 }
 
 const BUNDLED_POLICY_PACK_ROOT = join(dirname(fileURLToPath(import.meta.url)), 'policy-packs');
+const SOURCE_POLICY_PACK_ROOT = join(
+  dirname(fileURLToPath(import.meta.url)),
+  '..',
+  '..',
+  '..',
+  '..',
+  '..',
+  'policy-packs',
+);
 
 const resolvePolicyPackRoots = (_workspaceRoot: string): string[] => [
   'policy-packs',
   BUNDLED_POLICY_PACK_ROOT,
+  SOURCE_POLICY_PACK_ROOT,
 ];
 
 export const listSkoposPolicyPacksRuntime = async ({

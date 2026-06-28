@@ -117,6 +117,7 @@ export const initSkoposProject = async ({
   if (
     !dryRun &&
     (docsScaffold.status === 'written' ||
+      docsScaffold.status === 'updated-placeholder' ||
       (instructionScaffold &&
         (instructionScaffold.status === 'written' || instructionScaffold.status === 'overwritten')))
   ) {
@@ -384,6 +385,32 @@ const scaffoldDocsStartHere = async ({
   const absolutePath = resolve(workspaceRoot, relativePath);
 
   if (existsSync(absolutePath)) {
+    const existing = await readTextIfExists(absolutePath);
+    if (existing && isGeneratedStartHerePlaceholder(existing)) {
+      if (!dryRun) {
+        await writeFile(
+          absolutePath,
+          buildStartHereContents({
+            projectName,
+            docsRoot,
+            links: await collectStartHereLinks({
+              workspaceRoot,
+              docsRoot,
+              startHerePath: relativePath,
+            }),
+          }),
+          'utf8',
+        );
+      }
+
+      return {
+        path: absolutePath,
+        relativePath,
+        status: dryRun ? 'dry-run' : 'updated-placeholder',
+        title: `${projectName} Docs Start`,
+      };
+    }
+
     return {
       path: absolutePath,
       relativePath,
@@ -394,7 +421,19 @@ const scaffoldDocsStartHere = async ({
 
   if (!dryRun) {
     await mkdir(dirname(absolutePath), { recursive: true });
-    await writeFile(absolutePath, buildStartHereContents(projectName, docsRoot), 'utf8');
+    await writeFile(
+      absolutePath,
+      buildStartHereContents({
+        projectName,
+        docsRoot,
+        links: await collectStartHereLinks({
+          workspaceRoot,
+          docsRoot,
+          startHerePath: relativePath,
+        }),
+      }),
+      'utf8',
+    );
   }
 
   return {
@@ -405,29 +444,133 @@ const scaffoldDocsStartHere = async ({
   };
 };
 
-const buildStartHereContents = (projectName: string, docsRoot: string): string => `# ${projectName}
+interface StartHereLink {
+  label: string;
+  path: string;
+  reason: string;
+}
 
-This is the project knowledge start page for Skopos.
+const buildStartHereContents = ({
+  projectName,
+  docsRoot,
+  links,
+}: {
+  projectName: string;
+  docsRoot: string;
+  links: StartHereLink[];
+}): string => `# ${projectName} Start Here
 
-Use this file to keep the most important project guidance easy to find:
+This is the first page humans and coding agents should read before changing the project.
 
-- What this project is for
-- How the code is organized
-- Which commands prove a change is safe
-- Which decisions future agents should not forget
+## Read First
 
-## Project Notes
+${formatStartHereLinks(links)}
 
-Add the current product goal, architecture notes, and important workflow links here as the project grows.
+## What To Keep Here
+
+- The current product goal
+- The main architecture and folder rules
+- The commands that prove a change is safe
+- The durable decisions future agents should not forget
 
 ## Validation
 
-List the commands developers and agents should run before finishing work.
+List the commands developers and agents should run before finishing work. If the project already has these commands in \`package.json\`, keep this section short and link to the existing guide.
 
-## More Docs
+## Docs Home
 
-Keep durable project docs under \`${docsRoot}/\` and link the important pages from here.
+Keep durable project docs under \`${docsRoot}/\`. Link the important pages above so agents do not scan random files first.
 `;
+
+const formatStartHereLinks = (links: StartHereLink[]): string => {
+  if (links.length === 0) {
+    return '- `README.md` - Project overview, if present.\n- `AGENTS.md` - Agent working rules, if present.';
+  }
+
+  return links.map((link) => `- \`${link.path}\` - ${link.reason}`).join('\n');
+};
+
+const isGeneratedStartHerePlaceholder = (contents: string): boolean =>
+  contents.includes('This is the project knowledge start page for Skopos.') &&
+  contents.includes('Add the current product goal, architecture notes, and important workflow links here');
+
+const collectStartHereLinks = async ({
+  workspaceRoot,
+  docsRoot,
+  startHerePath,
+}: {
+  workspaceRoot: string;
+  docsRoot: string;
+  startHerePath: string;
+}): Promise<StartHereLink[]> => {
+  const candidates: StartHereLink[] = [
+    {
+      label: 'Agent rules',
+      path: 'AGENTS.md',
+      reason: 'Agent working rules and project-specific guardrails.',
+    },
+    {
+      label: 'Project overview',
+      path: 'README.md',
+      reason: 'Project overview and setup notes.',
+    },
+  ];
+  const agentsContents = await readTextIfExists(join(workspaceRoot, 'AGENTS.md'));
+  const docsMentionPaths = extractDocsMentionPaths(agentsContents ?? '').slice(0, 8);
+
+  for (const path of docsMentionPaths) {
+    candidates.push({
+      label: path,
+      path,
+      reason: 'Canonical project documentation referenced by AGENTS.md.',
+    });
+  }
+
+  const docsDirectory = resolve(workspaceRoot, docsRoot);
+  let docsEntries: string[] = [];
+
+  try {
+    const { readdir } = await import('node:fs/promises');
+    docsEntries = (await readdir(docsDirectory, { withFileTypes: true }))
+      .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
+      .map((entry) => join(docsRoot, entry.name))
+      .filter((path) => path !== startHerePath)
+      .sort()
+      .slice(0, 6);
+  } catch {
+    docsEntries = [];
+  }
+
+  for (const path of docsEntries) {
+    if (candidates.some((candidate) => candidate.path === path)) {
+      continue;
+    }
+
+    candidates.push({
+      label: path,
+      path,
+      reason: 'Existing project documentation.',
+    });
+  }
+
+  const existing = await Promise.all(
+    candidates.map(async (candidate) => ({
+      candidate,
+      exists: Boolean(await readTextIfExists(join(workspaceRoot, candidate.path))),
+    })),
+  );
+
+  return existing.filter((entry) => entry.exists).map((entry) => entry.candidate);
+};
+
+const extractDocsMentionPaths = (contents: string): string[] =>
+  Array.from(
+    new Set(
+      [...contents.matchAll(/(?:`|\b)(docs\/[A-Za-z0-9._/-]+\.md)(?:`|\b)/g)]
+        .map((match) => match[1])
+        .filter((path): path is string => Boolean(path)),
+    ),
+  );
 
 const scaffoldGitignore = async ({
   workspaceRoot,

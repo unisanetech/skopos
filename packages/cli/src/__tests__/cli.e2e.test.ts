@@ -1489,6 +1489,32 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(nextText).toContain(`--mission ${started.missionId}`);
   });
 
+  it('promotes trust warnings into program next guidance when no mission is active', async () => {
+    const workspaceDir = await createTempWorkspace();
+    runCliJson(['init', workspaceDir, '--json']);
+    await rm(join(workspaceDir, 'docs', '00-start-here.md'), { force: true });
+
+    const next = runCliJson<{
+      currentDisposition: string;
+      recommendedItem?: { id: string; sourceKind: string };
+      recommendedAction?: { title: string; command?: string };
+      state: {
+        sequence: {
+          interruptRecommendation: { decision: string };
+        };
+      };
+    }>(['program', 'next', workspaceDir, '--json']);
+
+    expect(next.currentDisposition).toBe('start-do-now');
+    expect(next.recommendedItem).toEqual(
+      expect.objectContaining({
+        sourceKind: 'trust-blocker',
+      }),
+    );
+    expect(next.recommendedAction?.command).toContain('skopos');
+    expect(next.state.sequence.interruptRecommendation.decision).toBe('start-do-now');
+  });
+
   it('promotes blocking workflow recommendations into program do-now guidance', async () => {
     const workspaceDir = await createTempWorkspace(selfHostedFixtureRepoRoot);
     runCliJson(['init', workspaceDir, '--json']);
@@ -3348,6 +3374,55 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         }),
       ]),
     );
+  });
+
+  it('upgrades a generated placeholder docs router instead of treating it as real project memory', async () => {
+    const workspaceDir = await createTempWorkspace();
+    await writeFile(
+      join(workspaceDir, 'docs', '00-start-here.md'),
+      `# Placeholder
+
+This is the project knowledge start page for Skopos.
+
+Add the current product goal, architecture notes, and important workflow links here as the project grows.
+`,
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceDir, 'docs', 'product-roadmap.md'),
+      '# Product Roadmap\n',
+      'utf8',
+    );
+
+    const init = runCliJson<{
+      docsScaffold: { status: string; relativePath: string };
+      bootstrap: {
+        detected: {
+          docsHealth: {
+            hasStartHere: boolean;
+            startHerePath?: string;
+          };
+        };
+      };
+    }>(['init', workspaceDir, '--json']);
+    const startHere = await readFile(join(workspaceDir, 'docs', '00-start-here.md'), 'utf8');
+
+    expect(init.docsScaffold).toEqual(
+      expect.objectContaining({
+        status: 'updated-placeholder',
+        relativePath: 'docs/00-start-here.md',
+      }),
+    );
+    expect(init.bootstrap.detected.docsHealth).toEqual(
+      expect.objectContaining({
+        hasStartHere: true,
+        startHerePath: 'docs/00-start-here.md',
+      }),
+    );
+    expect(startHere).toContain('This is the first page humans and coding agents should read');
+    expect(startHere).toContain('`AGENTS.md` - Agent working rules');
+    expect(startHere).toContain('`docs/product-roadmap.md` - Existing project documentation.');
+    expect(startHere).not.toContain('Add the current product goal');
   });
 
   it('writes canonical overrides and applies them during bootstrap and context assembly', async () => {
@@ -5473,8 +5548,20 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       }>
     >(['policies', 'list', workspaceDir, '--json']);
 
-    expect(listed).toHaveLength(2);
-    expect(listed[0]).toEqual(
+    expect(listed.length).toBeGreaterThanOrEqual(4);
+    expect(listed).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          packId: 'clean-code.maintainability',
+          family: 'clean-code',
+        }),
+        expect.objectContaining({
+          packId: 'stack.async-work',
+          family: 'stack',
+        }),
+      ]),
+    );
+    expect(listed.find((pack) => pack.packId === 'architecture.mid-app')).toEqual(
       expect.objectContaining({
         packId: 'architecture.mid-app',
         family: 'architecture',
@@ -5482,7 +5569,7 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         sourcePath: 'policy-packs/architecture/mid-app/pack.json',
       }),
     );
-    expect(listed[1]).toEqual(
+    expect(listed.find((pack) => pack.packId === 'gates.progressive-validation')).toEqual(
       expect.objectContaining({
         packId: 'gates.progressive-validation',
         family: 'gates',
@@ -5491,7 +5578,9 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
         sourcePath: 'policy-packs/gates/progressive-validation/pack.json',
       }),
     );
-    expect(listed[0]?.rules.map((rule) => rule.id)).toEqual([
+    expect(
+      listed.find((pack) => pack.packId === 'architecture.mid-app')?.rules.map((rule) => rule.id),
+    ).toEqual([
       'architecture.mid-app.feature-owns-product-behavior',
       'architecture.mid-app.shared-is-earned',
       'architecture.mid-app.import-direction-is-one-way',
