@@ -9,16 +9,19 @@ Skopos is a local-first SDK that turns a repo into an agent-safe working environ
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `vision.md`
   - `positioning.md`
+  - `agentic-operating-plan.md`
   - `roadmap.md`
   - `human-guidance-and-developer-experience-plan.md`
   - `../architecture/00-architecture.md`
 
 ## Changelog
+
+- `2026-06-29`: Added the agentic operating direction: explicit project modes, command-guided agent prompts, and cleanup/refactor behavior are now part of the core Skopos promise.
 
 - `2026-06-24`: Added the human guidance direction so Skopos is explicitly responsible for explaining project state, agent progress, decisions, blockers, and next steps in simple language while keeping strict machine artifacts on disk.
 - `2026-04-12`: Added the token-control and compact-agent-transport doctrine to the overview, so retrieval, runtime output, and continuity now share one explicit rule: keep full truth on disk but keep the default agent path compact and progressive.
@@ -39,6 +42,7 @@ Skopos is:
 3. a compiled project knowledgebase that accumulates and maintains repo understanding over time
 4. a docs and instruction governance runtime
 5. a trust and drift-control layer for agent-produced changes
+6. a command-guided agent operating layer that tells coding agents how to work in the selected project mode
 
 Skopos is not:
 
@@ -59,6 +63,8 @@ The next control-plane increment should make that promise survive reprioritizati
 The next transport increment should keep canonical truth rich on disk while making the default agent path compact and progressive, so Skopos stops spending context on full artifact payloads, replayed validation state, and historical docs that are not needed for the current step.
 
 The next human-guidance increment should make Skopos clear to the developer supervising the work. CLI output, UI surfaces, workpack summaries, and agent answers should explain status, risk, blockers, questions, proof, and next steps in simple English while raw machine artifacts remain available on demand.
+
+The next agentic-operating increment should make project mode explicit. Existing projects may need preservation, clean refactor, or greenfield reset behavior. Skopos must guide agents differently for each mode so cleanup-heavy work removes obsolete paths instead of adding duplicate hybrid systems.
 
 Those increments only belong if they reduce supervision cost more than they add workflow weight. Skopos should not solve supervision problems by turning itself into a heavier process system than the one it is replacing.
 
@@ -88,6 +94,7 @@ That rule is the restraint layer on top of the roadmap:
 7. preserve recent accepted direction across chat compaction through compact discussion memory instead of raw transcript replay
 8. keep default command transport and retrieval compact enough that normal self-hosted workflow does not burn context windows on operational replay
 9. present the compiled truth in human language before asking users to inspect raw artifacts
+10. generate command-level agent briefs that explain reads, lane, risks, do/do-not guidance, checks, and closure expectations
 
 ## Operating Loop Diagram
 
@@ -117,3 +124,4 @@ flowchart LR
 9. lower workflow ceremony by keeping new control-plane surfaces proportionate to the supervision burden they remove
 10. lower token waste through compact briefs, progressive retrieval, and smallest-sufficient validation lanes
 11. better developer experience through plain-language status, guided questions, visible progress, and clear next steps
+12. better cleanup/refactor execution through explicit project modes and no-legacy guidance when the user wants a clean target architecture

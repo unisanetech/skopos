@@ -9,7 +9,7 @@ Skopos should use one small root-level checked-in config and generate the rest.
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-04-10`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `artifact-model.md`
@@ -18,6 +18,7 @@ Skopos should use one small root-level checked-in config and generate the rest.
 
 ## Changelog
 
+- `2026-06-29`: Clarified that inferred command config must omit missing scripts instead of writing null command keys.
 - `2026-04-10`: Updated the config model to make `workspace.ignore` canonical, so internal, proof, test, and generated roots can stay out of the active workspace model during self-hosting and product development.
 - `2026-04-09`: Updated the config model to make subtree-local self-hosting explicit, so Skopos-on-Skopos uses its own root config and workflow registry instead of borrowing outer repo policy implicitly.
 - `2026-04-09`: Updated the config model to reflect the implemented `.skopos/overrides.json` artifact and `skopos overrides` CLI for declared canonicals that outrank inference.
@@ -50,6 +51,12 @@ Skopos should use one small root-level checked-in config and generate the rest.
 9. optional workflow manifest directories
 10. artifact policy defaults
 11. canonical override hooks
+
+## Command Config Rule
+
+Canonical command inference must only write commands that Skopos can resolve to a real string command.
+
+If a project has `build`, `typecheck`, and `lint` scripts but no `test` script, the generated `commands` config should omit `test` instead of writing `test: null`. Missing command keys mean “not detected yet”; they should not make the generated config invalid on the next read.
 
 ## Workspace Boundary Rule
 

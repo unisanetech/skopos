@@ -42,6 +42,7 @@ export const buildSkoposBootstrapArtifacts = async ({
     projectName: basename(cwd),
     archetype: detected.archetypeSuggestion,
     repoMode: detected.repoMode,
+    projectMode: mode === 'greenfield' ? 'new-project' : 'brownfield',
     docsRoot: detected.docsHealth.root ?? detected.docsRoots[0] ?? 'docs',
     docsStartHerePath:
       detected.docsHealth.startHerePath ??

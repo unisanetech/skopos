@@ -74,6 +74,18 @@ export const buildDocsLinks = async ({
       join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json'),
       'artifact',
     ),
+    buildLinkSpec(
+      'understanding-setup-review',
+      'Setup review',
+      join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json'),
+      'artifact',
+    ),
+    buildLinkSpec(
+      'understanding-setup-answers',
+      'Setup answers',
+      join(workspaceRoot, '.skopos', 'understanding', 'setup-answers.json'),
+      'artifact',
+    ),
     buildLinkSpec('proof-report', 'Proof report', join(workspaceRoot, '.skopos', 'proof', 'latest-report.json'), 'report'),
     buildLinkSpec(
       'snapshot-portal',

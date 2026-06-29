@@ -1,9 +1,11 @@
 import { join, resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 import { buildSkoposTrustReport } from '@skopos/trust';
 import type {
   SkoposMissionArtifact,
   SkoposNextRunResult,
+  SkoposUnderstandingSetupReviewArtifact,
   SkoposWorkflowQuestionArtifact,
 } from '@skopos/model';
 
@@ -95,6 +97,8 @@ export const buildSkoposNextRuntime = async ({
   const trustReport = await buildSkoposTrustReport({
     cwd: workspaceRoot,
   });
+  const setupReviewPath = join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json');
+  const setupReview = await loadOptionalJson<SkoposUnderstandingSetupReviewArtifact>(setupReviewPath);
   const projectKnowledge = await buildSkoposProjectKnowledgeGuidance({
     workspaceRoot,
     trustLevel: trustReport.trustLevel,
@@ -170,6 +174,16 @@ export const buildSkoposNextRuntime = async ({
     recommendationsWrite,
     executionSurface: recommendations.executionSurface,
     recommendations,
+    setupReview: setupReview
+      ? {
+          path: setupReviewPath,
+          readiness: setupReview.readiness,
+          openQuestionCount: setupReview.openConfirmationQuestions.length,
+          answeredQuestionCount: setupReview.answeredQuestions.length,
+          nextCommand: setupReview.nextCommand,
+          openQuestions: setupReview.openConfirmationQuestions,
+        }
+      : undefined,
     projectKnowledge,
     recommendedAction,
     nextCommand: recommendedAction?.command,
@@ -183,6 +197,21 @@ export const buildSkoposNextRuntime = async ({
     },
   };
 };
+
+const loadOptionalJson = async <T>(artifactPath: string): Promise<T | undefined> => {
+  try {
+    return JSON.parse(await readFile(artifactPath, 'utf8')) as T;
+  } catch (error) {
+    if (isMissingFileError(error)) {
+      return undefined;
+    }
+
+    throw error;
+  }
+};
+
+const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>
+  typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
 
 const loadOptionalWorkflowQuestionsArtifact = async (
   workspaceRoot: string,

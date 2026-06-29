@@ -130,10 +130,31 @@ export function OverviewUnderstandingCard({
                 value={`${understanding.featureInventory.features.length} areas`}
                 tone="neutral"
               />
+              {understanding.setupReview ? (
+                <StatusPill
+                  value={
+                    understanding.setupReview.readiness === 'ready'
+                      ? 'setup ready'
+                      : 'needs confirmation'
+                  }
+                  tone={understanding.setupReview.readiness === 'ready' ? 'positive' : 'warning'}
+                />
+              ) : null}
             </div>
             <p className="mt-3 text-[13px] leading-[1.5rem] text-[var(--text)]">
               {understanding.summary.purpose}
             </p>
+            {understanding.setupReview ? (
+              <p className="mt-2 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
+                Setup review has {understanding.setupReview.assumptions.length} assumption
+                {understanding.setupReview.assumptions.length === 1 ? '' : 's'} and{' '}
+                {understanding.setupReview.openConfirmationQuestions.length} open question
+                {understanding.setupReview.openConfirmationQuestions.length === 1 ? '' : 's'}.
+                {understanding.setupReview.answeredQuestions.length > 0
+                  ? ` ${understanding.setupReview.answeredQuestions.length} setup question${understanding.setupReview.answeredQuestions.length === 1 ? '' : 's'} already answered.`
+                  : ' Answer setup questions before broad work.'}
+              </p>
+            ) : null}
           </div>
           <div className="border-y border-[var(--line)]">
             {understanding.summary.mainAreas.slice(0, 5).map((area, index) => (

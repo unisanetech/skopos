@@ -30,12 +30,37 @@ export const runUnderstandCommand = async (args: string[]): Promise<void> => {
     `Summary: ${result.summary.purpose}`,
     `Features: ${result.featureInventory.features.length}`,
     `Hotspots: ${result.hotspots.hotspots.length}`,
+    `Understanding depth: ${result.agentAnalysisBrief.analysisStatus}`,
+    `Setup review: ${result.setupReview.readiness}`,
+    `Assumptions: ${result.setupReview.assumptions.length}`,
+    `Open questions: ${result.setupReview.openConfirmationQuestions.length}`,
+    `Answered questions: ${result.setupReview.answeredQuestions.length}`,
+    `Next: ${result.agentAnalysisBrief.analysisStatus === 'agent-reviewed' ? result.setupReview.nextCommand : result.agentAnalysisBrief.nextCommand}`,
+    ...(result.agentAnalysisBrief.analysisStatus !== 'agent-reviewed'
+      ? [
+          'Agent analysis needed:',
+          `- ${result.agentAnalysisBrief.nextAgentAction}`,
+        ]
+      : []),
     'First places to look:',
     ...result.hotspots.hotspots.slice(0, 5).map((hotspot) => `- ${hotspot.title}: ${hotspot.path}`),
+    ...(result.setupReview.openConfirmationQuestions.length > 0
+      ? [
+          'Questions to confirm:',
+          ...result.setupReview.openConfirmationQuestions
+            .slice(0, 3)
+            .map(
+              (question) =>
+                `- ${question.question} (answer: skopos setup answer ${question.id} ${question.recommendedOptionId} ${result.workspaceRoot})`,
+            ),
+        ]
+      : []),
     'Artifacts:',
     `- repo summary: ${result.summaryPath} (${result.summaryWrite})`,
     `- feature inventory: ${result.featureInventoryPath} (${result.featureInventoryWrite})`,
     `- hotspots: ${result.hotspotsPath} (${result.hotspotsWrite})`,
+    `- setup review: ${result.setupReviewPath} (${result.setupReviewWrite})`,
+    `- agent analysis brief: ${result.agentAnalysisBriefPath} (${result.agentAnalysisBriefWrite})`,
   ]);
 };
 

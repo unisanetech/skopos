@@ -9,7 +9,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-27`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -20,6 +20,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `system-ui-plan.md`
   - `policy-pack-and-stack-intelligence-plan.md`
   - `human-guidance-and-developer-experience-plan.md`
+  - `agentic-operating-plan.md`
   - `roadmap.md`
   - `../architecture/00-architecture.md`
   - `../architecture/package-boundaries.md`
@@ -30,8 +31,19 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `../architecture/trust-and-closure-model.md`
   - `../architecture/decision-escalation-model.md`
   - `../decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
+  - `../decisions/036-project-modes-and-command-guided-agent-briefs.md`
+  - `../decisions/037-role-based-memory-and-agent-operating-layer.md`
+  - `../decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
 
 ## Changelog
+
+- `2026-06-29`: Added Skopos self-hosting mode cleanup to the implementation sequence: internals should use clean-refactor behavior while public CLI/package/schema surfaces keep compatibility discipline.
+
+- `2026-06-29`: Added role-based memory as a concrete implementation requirement: Skopos must map existing project docs and instructions to required memory roles before creating or suggesting new docs.
+
+- `2026-06-29`: Expanded the agentic operating plan into the concrete seven-slice build sequence: proof correctness, project mode, no-legacy cleanup policy, agent-led understanding, command-guided briefs, workflow/UI integration, and real pilots.
+
+- `2026-06-29`: Added the project-mode and command-guided agent brief slice: setup must distinguish brownfield, clean-refactor, greenfield-in-existing-repo, and new-project behavior, and commands must provide practical prompts that prevent legacy-preserving drift during agentic coding.
 
 - `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract as the next implementation sequence: model memory roles, map existing docs/instructions before scaffolding, generate memory state and communication briefs, connect trust/workflow/UI, and prove behavior on greenfield plus brownfield pilots.
 - `2026-06-27`: Added first-release version policy: keep package versions aligned at `0.1.0`, publish only `@skopos/cli@0.1.0` on `next`, and hold `latest` until real registry smoke passes.
@@ -234,6 +246,91 @@ Implement this before broad pack-catalog expansion.
 8. Add a Project Memory UI page that shows what Skopos knows, where it came from, what needs review, and the safest next action.
 9. Prove on a greenfield project, a small library, a mature brownfield app with existing docs, a weak-docs brownfield app, and Skopos itself.
 
+## Next Foundation Slice: Project Modes And Command-Guided Agent Briefs
+
+Implement this before claiming Skopos is ready for serious cleanup/refactor-heavy agentic coding.
+
+1. Add model/config support for project mode:
+   - `brownfield`
+   - `clean-refactor`
+   - `greenfield-in-existing-repo`
+   - `new-project`
+2. Update `setup review` so existing projects ask whether agents should preserve behavior, cleanly refactor, or reset toward a clean target architecture.
+3. Persist the selected mode in setup answers and generated agent briefs.
+4. Add a no-legacy / clean-refactor policy pack with rules for deleting replaced paths, avoiding second patterns, limiting compatibility shims, and proving cleanup.
+5. Make `skopos next`, `start`, `understand`, `trust`, and `done` output agent-facing prompt guidance using project mode, memory, findings, open questions, packs, and gates.
+6. Make `understand` report duplicate, legacy, fallback, and hybrid-pattern risks when cleanup-oriented modes are selected.
+7. Make trust warn when cleanup mode is selected but old and new patterns coexist without an explicit migration/removal plan.
+8. Update UI overview/memory/work screens to show project mode, cleanup policy, next agent action, and open cleanup obligations.
+9. Prove on one brownfield-preserve pilot and one clean-refactor pilot.
+
+## Concrete Build Sequence For The Agentic System
+
+Follow this order unless a blocking defect forces a narrower interruption.
+
+### 1. Restore proof and readiness correctness
+
+- Update proof fixtures so scanner-only understanding remains `needs-review`.
+- Require agent-reviewed project memory before a project can be called agent-ready.
+- Keep one proof fixture that intentionally proves scanner-only onboarding is not enough.
+- Rerun and pass `pnpm proof`.
+
+### 2. Make project mode durable
+
+- Add persisted support for `brownfield`, `clean-refactor`, `greenfield-in-existing-repo`, and `new-project`.
+- Ask the mode during setup review for non-empty repos.
+- Feed mode into memory state, trust, `next`, UI, and generated agent briefs.
+
+### 3. Make memory roles durable
+
+- Add first-class memory role records for purpose, architecture, domains, workflows, validation, decisions, findings, project mode, cleanup policy, and agent instructions.
+- Map existing docs and instruction files to those roles before creating new docs.
+- Ask confirmation questions when multiple files claim the same role.
+- Suggest docs cleanup when roles are missing, duplicated, stale, or contradictory.
+- Keep tool-specific instruction mirrors compact and role-linked.
+
+### 4. Dogfood clean-refactor self-hosting
+
+- Store Skopos self-hosting mode as internal `clean-refactor`.
+- Mark public CLI, package exports, generated schemas, and adapter contracts as compatibility-boundary surfaces.
+- Inventory current fallback and compatibility paths.
+- Require owner, reason, affected surface, and removal condition or compatibility note for durable fallbacks.
+- Make trust or policy drift warn when internal fallback paths lack metadata.
+
+### 5. Add no-legacy cleanup policy
+
+- Add a real pack for cleanup/refactor behavior.
+- Cover duplicate patterns, fallback paths, permanent shims, dead exports, and hybrid implementations.
+- Tie cleanup obligations to trust, `done`, and proof where practical.
+
+### 6. Upgrade `understand` into agent-led project analysis
+
+- Keep scanner output as orientation only.
+- Generate an agent analysis brief with read order, expected durable docs, open assumptions, and confidence rules.
+- Require overview, architecture, domains, workflows, validation, risks, and assumptions before full readiness.
+- Add cleanup-risk analysis when the selected mode allows or requires cleanup.
+
+### 7. Make commands produce practical agent briefs
+
+- Make `skopos next` the main "what should the agent do now?" surface.
+- Include read-first files, mode, lane, current work, risks, questions, gates, memory obligations, and "do not" rules.
+- Reuse the same guidance in `start`, `understand`, `trust`, `eval`, and `done`.
+
+### 8. Align workflow and UI
+
+- Show mode, memory readiness, open assumptions, active findings, cleanup obligations, current lane, and next action in the UI.
+- Keep raw artifacts visible but secondary.
+- Ensure checklist progress is updated through commands so the UI does not stay stale.
+
+### 9. Prove with pilots and release gates
+
+- Run a new-project pilot.
+- Run a brownfield-preserve existing-project pilot.
+- Run a clean-refactor existing-project pilot.
+- Run Skopos-on-Skopos dogfooding.
+- Run external install smoke through `npx`, `pnpm dlx`, and `npm exec`.
+- Keep unresolved launch risk in findings, not chat memory.
+
 ## Self-Healing Discipline
 
 Before opening a Skopos hardening batch, answer:
@@ -249,30 +346,51 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
 
 ## Current Next Slices
 
-1. Run the bounded self-healing loop first:
+1. Restore proof and readiness correctness:
+   - update proof fixtures so scanner-only understanding stays `needs-review`
+   - require agent-reviewed project memory before agent-ready proof expectations
+   - keep one intentional scanner-only proof fixture as a regression guard
+   - rerun and pass `pnpm proof`
+2. Implement project modes and command-guided agent briefs:
+   - durable setup mode
+   - no-legacy cleanup pack
+   - mode-aware `next` prompt brief
+   - mode-aware trust warnings
+   - UI visibility for mode and cleanup obligations
+3. Make role-based memory first-class:
+   - map existing docs before creating new docs
+   - track missing, stale, duplicate, inferred, and confirmed memory roles
+   - make instruction mirrors compact pointers to memory roles
+   - show role health in UI and trust output
+4. Dogfood clean-refactor self-hosting:
+   - encode Skopos internal mode as clean-refactor
+   - protect public CLI/package/schema compatibility boundaries
+   - inventory fallback and compatibility paths
+   - warn on internal fallback paths without owner/removal metadata
+5. Run the bounded self-healing loop:
    - Track A: onboarding, scope, and trust correctness
    - Track B: validation and transport proportionality
    - Track C: program and docs-state hygiene
    - prove each slice on Skopos plus one non-Skopos workspace
-2. Add the first synthesized brownfield-understanding layer:
+6. Continue synthesized understanding hardening:
    - compact repo-summary artifact
    - compact feature-inventory artifact
    - compact implementation-hotspots artifact
    - one routed orientation surface above raw symbols and graphs
-3. Add the token-control transport layer before more control-plane surface growth:
+7. Add the token-control transport layer before more control-plane surface growth:
    - compact command output modes
    - `.skopos/agent/**` brief artifacts
    - active versus durable versus historical docs filtering
    - smallest-sufficient validation lanes
    - compact-polled heavy jobs and stable prompt layering
-4. Add the human guidance layer before widening policy, stack, and workflow surfaces:
+8. Add the human guidance layer before widening policy, stack, and workflow surfaces:
    - default CLI output explains status, risk, blocker, user question, proof, and next step in simple English; implemented for `trust`, `policies recommend/apply/drift`, `start`, `plan`, `decide`, `next`, `program sync`, `program next`, `done`, and `eval`
    - `--json` remains the strict machine contract
    - guided questions include a recommended option, alternatives, tradeoffs, and what happens after the answer; first CLI slice implemented for `start`, `plan`, `decide`, and `next`
    - workpack summaries show current phase, approximate progress, done, doing, next, blockers, decisions, findings, and proof needed; the first mission-backed CLI slice now covers progress, phase, done, doing-now, blockers, decisions, findings, and proof-needed guidance
    - routed UI surfaces lead with human status and next action, not raw ids or artifact handles
    - agent briefs include answer-style guidance without turning the hot path into a wall of policy text
-5. Add the policy-pack, stack-intelligence, and durable-memory foundation before creating a broad catalog:
+9. Add the policy-pack, stack-intelligence, and durable-memory foundation before creating a broad catalog:
    - pack manifest, resolved-policy, stack recommendation, memory freshness, and drift schemas
    - first realistic internal architecture pack source now seeded at `policy-packs/architecture/mid-app`; catalog loading, recommendation, acceptance, resolved policy generation, AGENTS.md policy projection, policy agent brief generation, and policy trust checks are implemented through `skopos policies list/show/recommend/apply`
    - first stack policy source now seeded at `policy-packs/stack/async-work`, covering inline work, cron, queues, durable workflows, Redis, retries, idempotency, and worker ownership
@@ -286,14 +404,14 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
    - trust and agent-brief integration for accepted policy posture is implemented; trust now reports policy drift posture; `done` blocks open accepted `must` drift after overrides are applied
    - proof fixtures that block placeholder-only packs and catch stale project-knowledge drift
    - portability checks that prove the layer works outside Unisane-style projects
-6. Add the program router above the now-implemented mission router:
+10. Add the program router above the now-implemented mission router:
    - extend the first implemented `.skopos/program/state.json` slice beyond active mission plus active findings
    - keep `skopos program sync` and `skopos program next` stable while new sources are added
    - keep typed docs and UI obligations compact and deterministic
-7. Feed promoted discussion checkpoints into that program state instead of leaving accepted work only in chat or local memory.
-8. Reflect the implemented workflow and program state in `overview`, `mission detail`, `trust`, and the `search dock`.
-9. Keep the mission router, trust, done, and the first program-router slice stable while that higher control-plane layer expands.
-10. Reflect the implemented discussion-memory state in `overview`, `mission detail`, and the `search dock` before considering a dedicated `Discussion` route or sidebar entry.
+11. Feed promoted discussion checkpoints into that program state instead of leaving accepted work only in chat or local memory.
+12. Reflect the implemented workflow and program state in `overview`, `mission detail`, `trust`, and the `search dock`.
+13. Keep the mission router, trust, done, and the first program-router slice stable while that higher control-plane layer expands.
+14. Reflect the implemented discussion-memory state in `overview`, `mission detail`, and the `search dock` before considering a dedicated `Discussion` route or sidebar entry.
 
 ## Current Completed Slices
 

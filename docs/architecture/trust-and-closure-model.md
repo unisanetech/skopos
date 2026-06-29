@@ -9,7 +9,7 @@ Skopos should make “done” evidence-backed rather than summary-backed.
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `runtime-model.md`
@@ -18,6 +18,7 @@ Skopos should make “done” evidence-backed rather than summary-backed.
 
 ## Changelog
 
+- `2026-06-29`: Clarified that first-time Skopos onboarding files are allowed to pass active-mission coverage when they are only the expected generated setup surfaces.
 - `2026-04-12`: Reconciled stale advisory decision drift during eval, so older missions no longer keep `decision-*` items pending in `.skopos/evals/*.json` after the linked workflow question has disappeared or already resolved for that mission.
 - `2026-04-12`: Tightened trust and done around workflow-router state, so unresolved blocking questions now fail closure directly, mission eval artifacts are explicit closure evidence, and `skopos eval` ignores self-referential mission-eval pressure while producing its own proof.
 - `2026-04-12`: Tightened the eval-to-closure handoff so successful mission evaluation now reconciles remaining non-decision checklist drift and leaves `skopos next` recommending explicit mission completion instead of returning to stale implementation steps.
@@ -83,6 +84,10 @@ The current `skopos trust` slice reports:
 6. whether `AGENTS.md` exists
 7. whether instruction mirrors have been generated
 8. whether bootstrap scan findings still need review
+9. whether tracked source/workflow changes are covered by an active or recently completed claimed mission
+10. whether tracked changes are only first-time Skopos onboarding files
+
+Fresh Skopos onboarding is a special case for active-mission coverage. When `skopos.config.yaml` is part of the change set and every tracked changed path is an expected onboarding surface, trust should pass with a review-and-commit message instead of asking the user to start a mission just to install Skopos. Later product, source, docs, or hand-edited instruction changes still require normal mission coverage.
 
 It currently classifies readiness as:
 

@@ -13,6 +13,7 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposUnderstandingSetupReviewArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
@@ -219,9 +220,11 @@ export interface SkoposUiConsoleUnderstandingView {
   summaryPath: string;
   featureInventoryPath: string;
   hotspotsPath: string;
+  setupReviewPath?: string;
   summary: SkoposRepoUnderstandingSummaryArtifact;
   featureInventory: SkoposFeatureInventoryArtifact;
   hotspots: SkoposImplementationHotspotsArtifact;
+  setupReview?: SkoposUnderstandingSetupReviewArtifact;
 }
 
 export interface SkoposUiConsoleMemoryView {

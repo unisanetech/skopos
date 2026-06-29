@@ -458,6 +458,36 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     );
   });
 
+  it('omits missing command keys instead of writing null commands', async () => {
+    const workspaceDir = await createTempWorkspace();
+    const packageJsonPath = join(workspaceDir, 'package.json');
+    const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    delete packageJson.scripts.test;
+    packageJson.scripts['test:ci'] = 'vitest run';
+    await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
+
+    const result = runCliJson<{
+      bootstrap: {
+        recommendedConfig: {
+          commands: {
+            build?: string;
+            test?: string;
+            typecheck?: string;
+            lint?: string;
+          };
+        };
+      };
+    }>(['init', workspaceDir, '--json']);
+
+    const configContents = await readFile(join(workspaceDir, 'skopos.config.yaml'), 'utf8');
+    expect(result.bootstrap.recommendedConfig.commands.build).toBe('pnpm build');
+    expect(result.bootstrap.recommendedConfig.commands.test).toBeUndefined();
+    expect(configContents).not.toContain('test: null');
+    expect(configContents).not.toContain('test:');
+  });
+
   it('generates compact repo understanding artifacts after bootstrap', async () => {
     const workspaceDir = await createTempWorkspace(messyFixtureRepoRoot);
     runCliJson(['init', workspaceDir, '--actor', 'agent-bootstrap', '--json']);
@@ -466,10 +496,14 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       summaryWrite: string;
       featureInventoryWrite: string;
       hotspotsWrite: string;
+      setupReviewWrite: string;
+      setupAnswersWrite: string;
       indexWrite: string;
       summaryPath: string;
       featureInventoryPath: string;
       hotspotsPath: string;
+      setupReviewPath: string;
+      setupAnswersPath: string;
       summary: {
         purpose: string;
         mainAreas: Array<{ title: string; path: string; confidence: string }>;
@@ -480,16 +514,40 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       hotspots: {
         hotspots: Array<{ title: string; path: string; reason: string }>;
       };
+      setupReview: {
+        readiness: string;
+        facts: unknown[];
+        inferences: unknown[];
+        assumptions: unknown[];
+        confirmationQuestions: unknown[];
+        openConfirmationQuestions: unknown[];
+        answeredQuestions: unknown[];
+        recommendedActions: string[];
+      };
+      setupAnswers: {
+        answers: unknown[];
+      };
     }>(['understand', workspaceDir, '--actor', 'agent-understanding', '--json']);
 
     expect(result.summaryWrite).toBe('written');
     expect(result.featureInventoryWrite).toBe('written');
     expect(result.hotspotsWrite).toBe('written');
+    expect(result.setupReviewWrite).toBe('written');
+    expect(result.setupAnswersWrite).toBe('written');
     expect(result.indexWrite).toBe('written');
     expect(result.summary.purpose).toContain('workspace');
     expect(result.summary.mainAreas.length).toBeGreaterThan(0);
     expect(result.featureInventory.features.length).toBeGreaterThan(0);
     expect(result.hotspots.hotspots.length).toBeGreaterThan(0);
+    expect(result.setupReview.readiness).toBe('needs-confirmation');
+    expect(result.setupReview.facts.length).toBeGreaterThan(0);
+    expect(result.setupReview.inferences.length).toBeGreaterThan(0);
+    expect(result.setupReview.assumptions.length).toBeGreaterThan(0);
+    expect(result.setupReview.confirmationQuestions.length).toBeGreaterThan(0);
+    expect(result.setupReview.openConfirmationQuestions.length).toBeGreaterThan(0);
+    expect(result.setupReview.answeredQuestions.length).toBe(0);
+    expect(result.setupReview.recommendedActions.length).toBeGreaterThan(0);
+    expect(result.setupAnswers.answers.length).toBe(0);
 
     const summary = JSON.parse(await readFile(result.summaryPath, 'utf8')) as {
       type: string;
@@ -514,6 +572,28 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     expect(hotspots.type).toBe('implementation-hotspots');
     expect(hotspots.hotspots.length).toBeGreaterThan(0);
 
+    const setupReview = JSON.parse(await readFile(result.setupReviewPath, 'utf8')) as {
+      type: string;
+      readiness: string;
+      assumptions: unknown[];
+      confirmationQuestions: unknown[];
+      openConfirmationQuestions: unknown[];
+      answeredQuestions: unknown[];
+    };
+    expect(setupReview.type).toBe('understanding-setup-review');
+    expect(setupReview.readiness).toBe(result.setupReview.readiness);
+    expect(setupReview.assumptions.length).toBeGreaterThan(0);
+    expect(setupReview.confirmationQuestions.length).toBeGreaterThan(0);
+    expect(setupReview.openConfirmationQuestions.length).toBeGreaterThan(0);
+    expect(setupReview.answeredQuestions.length).toBe(0);
+
+    const setupAnswers = JSON.parse(await readFile(result.setupAnswersPath, 'utf8')) as {
+      type: string;
+      answers: unknown[];
+    };
+    expect(setupAnswers.type).toBe('understanding-setup-answers');
+    expect(setupAnswers.answers).toEqual([]);
+
     const index = JSON.parse(await readFile(join(workspaceDir, '.skopos', 'index.json'), 'utf8')) as {
       entries: Array<{ id: string; kind: string; path: string }>;
     };
@@ -524,8 +604,110 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
           kind: 'understanding-artifact',
           path: '.skopos/understanding/repo-summary.json',
         }),
+        expect.objectContaining({
+          id: 'understanding-setup-review',
+          kind: 'understanding-artifact',
+          path: '.skopos/understanding/setup-review.json',
+        }),
+        expect.objectContaining({
+          id: 'understanding-setup-answers',
+          kind: 'understanding-artifact',
+          path: '.skopos/understanding/setup-answers.json',
+        }),
       ]),
     );
+  });
+
+  it('reviews and answers setup questions after understanding', async () => {
+    const workspaceDir = await createTempWorkspace(messyFixtureRepoRoot);
+    runCliJson(['init', workspaceDir, '--actor', 'agent-bootstrap', '--json']);
+    runCliJson(['understand', workspaceDir, '--actor', 'agent-understanding', '--json']);
+
+    const review = runCliJson<{
+      setupReview: {
+        readiness: string;
+        openConfirmationQuestions: Array<{ id: string; recommendedOptionId: string }>;
+        answeredQuestions: unknown[];
+      };
+      setupAnswers: {
+        answers: unknown[];
+      };
+    }>(['setup', 'review', workspaceDir, '--json']);
+
+    expect(review.setupReview.readiness).toBe('needs-confirmation');
+    expect(review.setupReview.openConfirmationQuestions.length).toBeGreaterThan(0);
+    expect(review.setupReview.answeredQuestions.length).toBe(0);
+    expect(review.setupAnswers.answers.length).toBe(0);
+
+    const answer = runCliJson<{
+      configWrite: string;
+      answer: { questionId: string; optionId: string; appliedEffects: Array<{ kind: string; summary: string }> };
+      setupReview: {
+        openConfirmationQuestions: Array<{ id: string }>;
+        answeredQuestions: unknown[];
+      };
+      setupAnswers: {
+        answers: Array<{ questionId: string; optionId: string }>;
+      };
+    }>([
+      'setup',
+      'answer',
+      'bootstrap.project-archetype',
+      'api',
+      workspaceDir,
+      '--actor',
+      'agent-setup',
+      '--json',
+    ]);
+
+    expect(answer.configWrite).toBe('written');
+    expect(answer.answer.questionId).toBe('bootstrap.project-archetype');
+    expect(answer.answer.optionId).toBe('api');
+    expect(answer.answer.appliedEffects).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          kind: 'config-updated',
+        }),
+      ]),
+    );
+    expect(answer.setupReview.answeredQuestions.length).toBe(1);
+    expect(answer.setupReview.openConfirmationQuestions).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'bootstrap.project-archetype',
+        }),
+      ]),
+    );
+    expect(answer.setupAnswers.answers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          questionId: 'bootstrap.project-archetype',
+          optionId: 'api',
+        }),
+      ]),
+    );
+
+    const configContents = await readFile(join(workspaceDir, 'skopos.config.yaml'), 'utf8');
+    expect(configContents).toContain('archetype: api');
+
+    runCliJson(['start', 'Check setup review visibility', workspaceDir, '--actor', 'agent-next', '--json']);
+    const next = runCliJson<{
+      setupReview?: {
+        readiness: string;
+        openQuestionCount: number;
+        answeredQuestionCount: number;
+        nextCommand: string;
+      };
+    }>(['next', workspaceDir, '--actor', 'agent-next', '--json']);
+
+    expect(next.setupReview).toEqual(
+      expect.objectContaining({
+        readiness: 'needs-confirmation',
+        answeredQuestionCount: 1,
+        nextCommand: 'skopos setup review .',
+      }),
+    );
+    expect(next.setupReview?.openQuestionCount).toBeGreaterThan(0);
   });
 
   it('scaffolds project instructions during init when the canonical source is missing', async () => {
@@ -1219,6 +1401,47 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
       status: 'pass',
       summary: expect.stringContaining(claimedMission.id),
     });
+  });
+
+  it('does not require a mission for fresh Skopos onboarding files', async () => {
+    const workspaceDir = await createTempWorkspace();
+    initializeGitWorkspace(workspaceDir);
+    commitWorkspace(workspaceDir, 'baseline');
+
+    runCliJson(['init', workspaceDir, '--actor', 'agent-onboarding', '--json']);
+    runCliJson(['instructions', 'sync', workspaceDir, '--actor', 'agent-onboarding', '--json']);
+
+    const trust = runCliJson<{
+      trustLevel: string;
+      readiness: string;
+      checks: Array<{ id: string; status: string; summary: string }>;
+    }>(['trust', workspaceDir, '--actor', 'agent-onboarding', '--json']);
+
+    expect(trust.trustLevel).toBe('high');
+    expect(trust.readiness).toBe('agent-ready');
+    expect(trust.checks).toContainEqual({
+      id: 'active-mission',
+      status: 'pass',
+      summary: expect.stringContaining('Fresh Skopos onboarding files are present'),
+    });
+
+    const next = runCliJson<{
+      currentDisposition: string;
+      recommendedAction?: { title: string; command?: string };
+      state: {
+        sequence: {
+          interruptRecommendation: { decision: string };
+        };
+      };
+    }>(['program', 'next', workspaceDir, '--actor', 'agent-onboarding', '--json']);
+
+    expect(next.currentDisposition).toBe('idle');
+    expect(next.state.sequence.interruptRecommendation.decision).toBe('idle');
+    expect(next.recommendedAction).toEqual(
+      expect.objectContaining({
+        title: 'Review program state',
+      }),
+    );
   });
 
   it('treats tracked work as covered after a claimed mission completes with complete eval and no newer edits', async () => {

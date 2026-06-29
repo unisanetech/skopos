@@ -600,6 +600,9 @@ const runBrownfieldStabilizationDeltaBenchmark = async (
     remediationMissions: Array<{ id: string }>;
   }>(['scan', afterWorkspaceDir, '--json']);
   runCliJson(['instructions', 'sync', afterWorkspaceDir, '--json']);
+  runCliJson(['understand', afterWorkspaceDir, '--actor', 'agent-understanding', '--json']);
+  await writeFixtureDurableUnderstandingDocs(afterWorkspaceDir);
+  runCliJson(['understand', afterWorkspaceDir, '--actor', 'agent-understanding', '--json']);
   const afterTrust = runCliJson<{
     readiness: string;
     trustLevel: string;
@@ -1054,6 +1057,9 @@ const runKnowledgeIndexLogBenchmark = async (
   }>(['init', workspaceDir, '--actor', 'agent-bootstrap', '--json']);
 
   runCliJson(['instructions', 'sync', workspaceDir, '--actor', 'agent-proof', '--json']);
+  runCliJson(['understand', workspaceDir, '--actor', 'agent-understanding', '--json']);
+  await writeFixtureDurableUnderstandingDocs(workspaceDir);
+  runCliJson(['understand', workspaceDir, '--actor', 'agent-understanding', '--json']);
   runCliJson([
     'plan',
     benchmark.goal,
@@ -1790,6 +1796,9 @@ const runSelfHostedDogfoodingBenchmark = async (
     '--json',
   ]);
   runCliJson(['instructions', 'sync', workspaceDir, '--actor', 'agent-selfhost', '--json']);
+  runCliJson(['understand', workspaceDir, '--actor', 'agent-selfhost', '--json']);
+  await writeFixtureDurableUnderstandingDocs(workspaceDir);
+  runCliJson(['understand', workspaceDir, '--actor', 'agent-selfhost', '--json']);
   const trust = runCliJson<{
     trustLevel: string;
     readiness: string;
@@ -2417,6 +2426,49 @@ const initializeGitWorkspace = (workspaceDir: string): void => {
 const commitWorkspace = (workspaceDir: string, message: string): void => {
   runGit(workspaceDir, ['add', '.']);
   runGit(workspaceDir, ['commit', '-m', message]);
+};
+
+const writeFixtureDurableUnderstandingDocs = async (workspaceDir: string): Promise<void> => {
+  const projectDocsDir = join(workspaceDir, 'docs', 'project');
+  await mkdir(projectDocsDir, { recursive: true });
+
+  const docs = {
+    'overview.md': [
+      '# Project Overview',
+      '',
+      'This fixture represents a project that has been reviewed by an agent after Skopos init.',
+      'The document records product purpose in durable project memory so future agents do not rely only on scanner output.',
+    ],
+    'architecture.md': [
+      '# Architecture',
+      '',
+      'The fixture uses package and source boundaries discovered by Skopos.',
+      'New code should follow existing package ownership and avoid adding duplicate architecture paths.',
+    ],
+    'domains.md': [
+      '# Domains',
+      '',
+      'The main domain is the fixture application or package under test.',
+      'Code ownership should be checked against package paths and existing docs before broad edits.',
+    ],
+    'workflows.md': [
+      '# Workflows',
+      '',
+      'Agents should start from Skopos knowledge, run setup review when needed, make the smallest scoped change, and update durable docs when project truth changes.',
+    ],
+    'validation.md': [
+      '# Validation',
+      '',
+      'Focused changes should run the relevant package checks.',
+      'Broad or reliability-sensitive work should run Skopos trust and proof workflows before closure.',
+    ],
+  };
+
+  await Promise.all(
+    Object.entries(docs).map(([filename, lines]) =>
+      writeFile(join(projectDocsDir, filename), `${lines.join('\n')}\n`, 'utf8'),
+    ),
+  );
 };
 
 const stringifyFinding = (

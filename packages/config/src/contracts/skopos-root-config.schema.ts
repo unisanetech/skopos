@@ -11,6 +11,13 @@ export const skoposProjectArchetypeSchema = z.enum([
 
 export const skoposRepoModeSchema = z.enum(['single', 'multi-package', 'monorepo']);
 
+export const skoposProjectModeSchema = z.enum([
+  'brownfield',
+  'clean-refactor',
+  'greenfield-in-existing-repo',
+  'new-project',
+]);
+
 export const skoposScopeStrategySchema = z.enum(['package', 'domain', 'service', 'hybrid']);
 
 export const skoposTrustModeSchema = z.enum(['fast', 'balanced', 'strict', 'stabilize']);
@@ -38,6 +45,7 @@ export const skoposRootConfigSchema = z
         archetype: skoposProjectArchetypeSchema,
         repoMode: skoposRepoModeSchema,
         scopeStrategy: skoposScopeStrategySchema,
+        mode: skoposProjectModeSchema.optional(),
       })
       .strict(),
     commands: skoposCommandMapSchema,

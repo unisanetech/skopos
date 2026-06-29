@@ -26,6 +26,7 @@ export * from './application/understanding/understanding.service.js';
 export const skoposRuntimeCommands = [
   'init',
   'scan',
+  'setup',
   'start',
   'decide',
   'discuss',

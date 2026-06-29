@@ -17,6 +17,17 @@ export const reconcileGeneratedSkoposConfig = ({
   let nextConfig = existingConfig;
   let refreshedManagedFields = false;
 
+  if (!existingConfig.project.mode && recommendedConfig.project.mode) {
+    nextConfig = {
+      ...nextConfig,
+      project: {
+        ...nextConfig.project,
+        mode: recommendedConfig.project.mode,
+      },
+    };
+    refreshedManagedFields = true;
+  }
+
   if (
     existingConfig.project.repoMode === 'single' &&
     existingConfig.project.scopeStrategy === 'domain' &&

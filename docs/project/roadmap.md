@@ -9,7 +9,7 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `no`
-- Last Updated: `2026-06-27`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -19,9 +19,20 @@ Skopos should be built in phases so the runtime becomes usable early without ove
   - `system-ui-plan.md`
   - `policy-pack-and-stack-intelligence-plan.md`
   - `human-guidance-and-developer-experience-plan.md`
+  - `agentic-operating-plan.md`
   - `../architecture/00-architecture.md`
+  - `../decisions/037-role-based-memory-and-agent-operating-layer.md`
+  - `../decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
 
 ## Changelog
+
+- `2026-06-29`: Added Skopos self-hosting mode and fallback policy to the roadmap so internal work uses clean-refactor behavior while public distribution surfaces stay compatibility-protected.
+
+- `2026-06-29`: Added role-based memory to the current roadmap so Skopos maps existing docs, instructions, gates, decisions, and findings before creating or recommending new project docs.
+
+- `2026-06-29`: Reordered the current agentic-system roadmap around the concrete build sequence: first fix proof/readiness correctness, then project mode, cleanup policy, agent-led understanding, command-guided briefs, UI alignment, and pilots.
+
+- `2026-06-29`: Added the final agentic operating direction: explicit project modes, no-legacy cleanup behavior, and command-guided agent prompt briefs now become the next foundation slice before broader launch claims.
 
 - `2026-06-27`: Added the Memory Map and Agent Workflow Intelligence contract as the next foundation priority before broad pack expansion, so Skopos maps existing project truth by role and generates agent communication guidance for the complete workflow.
 - `2026-06-24`: Refined the first architecture pack so it reads as portable Skopos guidance instead of a Skopos/Unisane-shaped folder template, with project-local names now treated as aliases and detected evidence.
@@ -168,6 +179,32 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 
 ## Current Focus
 
+- Restore proof and readiness correctness before adding broader agentic surfaces:
+  - update proof fixtures so scanner-only project understanding stays `needs-review`
+  - require agent-reviewed project memory before trust can report full agent readiness
+  - keep one intentional scanner-only fixture as a regression guard
+  - make `pnpm proof` pass under the stronger understanding standard
+  - close active documentation or workflow missions only after proof reflects the new contract
+- Add the project-mode and command-guided agent brief layer:
+  - record `brownfield`, `clean-refactor`, `greenfield-in-existing-repo`, or `new-project` as durable setup truth
+  - make existing repo setup ask whether to preserve behavior, cleanly refactor, or reset toward a new architecture
+  - add no-legacy cleanup policy for clean-refactor and greenfield-in-existing-repo modes
+  - make `skopos next` and related workflow commands produce practical agent prompt briefs
+  - make trust warn when the selected mode conflicts with observed legacy, duplicate, fallback, or hybrid patterns
+  - show project mode, cleanup obligations, memory readiness, questions, findings, and next action in the UI
+  - pilot both brownfield and clean-refactor modes on existing projects before launch claims
+- Make role-based memory the docs strategy:
+  - map existing docs and instruction files to required memory roles before creating new docs
+  - support project purpose, architecture, domains, workflows, validation, decisions, findings, project mode, cleanup policy, and agent instructions as tracked roles
+  - ask confirmation questions when multiple docs compete for the same role
+  - recommend docs cleanup when roles are missing, duplicated, stale, or contradictory
+  - keep AGENTS/CLAUDE/Copilot/Cursor mirrors compact and linked to memory roles
+- Dogfood Skopos self-hosting mode:
+  - set Skopos internal work to clean-refactor behavior
+  - protect public CLI, package export, generated schema, and adapter compatibility boundaries
+  - inventory existing fallback and compatibility paths
+  - require owner, reason, affected surface, and removal condition or compatibility note for durable fallbacks
+  - add trust or policy drift warnings for internal fallback paths without metadata
 - Implement Memory Map v1 before more broad policy-pack expansion:
   - map existing project truth by role instead of assuming `docs/00-start-here.md`
   - distinguish greenfield scaffolding from brownfield mapping and suggestions

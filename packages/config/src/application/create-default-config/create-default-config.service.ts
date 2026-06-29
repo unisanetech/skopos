@@ -1,6 +1,7 @@
 import type {
   SkoposCommandMap,
   SkoposProjectArchetype,
+  SkoposProjectMode,
   SkoposRepoMode,
   SkoposRootConfig,
 } from '@skopos/model';
@@ -9,6 +10,7 @@ export interface CreateDefaultSkoposConfigInput {
   projectName: string;
   archetype: SkoposProjectArchetype;
   repoMode: SkoposRepoMode;
+  projectMode?: SkoposProjectMode;
   docsRoot?: string;
   docsStartHerePath?: string;
   canonicalInstructions?: string;
@@ -19,6 +21,7 @@ export const createDefaultSkoposConfig = ({
   projectName,
   archetype,
   repoMode,
+  projectMode,
   docsRoot = 'docs',
   docsStartHerePath = `${docsRoot}/00-start-here.md`,
   canonicalInstructions = 'AGENTS.md',
@@ -30,8 +33,9 @@ export const createDefaultSkoposConfig = ({
     archetype,
     repoMode,
     scopeStrategy: repoMode === 'single' ? 'domain' : 'hybrid',
+    ...(projectMode ? { mode: projectMode } : {}),
   },
-  commands,
+  commands: sanitizeCommandMap(commands),
   workspace: {
     ignore: [],
   },
@@ -67,3 +71,8 @@ export const createDefaultSkoposConfig = ({
     redactSecrets: true,
   },
 });
+
+const sanitizeCommandMap = (commands: SkoposCommandMap): SkoposCommandMap =>
+  Object.fromEntries(
+    Object.entries(commands).filter(([, command]) => typeof command === 'string' && command.trim().length > 0),
+  ) as SkoposCommandMap;

@@ -9,13 +9,21 @@ Track active Skopos structural findings here.
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-06-27`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `README.md`
   - `../architecture/00-architecture.md`
 
 ## Changelog
+
+- `2026-06-29`: Added `F-20260629-self-hosting-mode-and-fallback-policy-gap` after self-review showed Skopos is still recorded as existing/brownfield while internal work should use clean-refactor behavior and public surfaces need explicit compatibility boundaries.
+
+- `2026-06-29`: Added `F-20260629-proof-fixtures-understanding-depth-gap` after `pnpm proof` showed the proof fixtures still treat scanner-only onboarding as ready even though the new trust model correctly requires agent-reviewed understanding docs.
+
+- `2026-06-29`: Added `F-20260629-project-mode-and-agent-brief-gap` after the final product review clarified that Skopos must encode project modes and command-guided prompts before it can reliably support cleanup/refactor-heavy agentic coding.
+
+- `2026-06-29`: Added `F-20260629-understand-scanner-only-onboarding-gap` after the existing-project pilot showed that scanner-generated understanding is not enough for Skopos's durable project-memory vision.
 
 - `2026-06-27`: Narrowed the validation-lane progress and timeout gap after the broad CLI e2e suite moved out of the default `test` script and foreground `skopos eval` gained bounded validation command execution, `timed-out` check runs, partial-proof artifacts, compact output support, and `--check-timeout-ms`; remaining work is live progress/noise reduction and resumable validation phases for explicit heavy suites.
 - `2026-06-27`: Added the validation-lane progress and timeout gap after the self-hosted memory/workflow mission showed that `pnpm test` and `skopos eval` can still run for several minutes without useful progress or bounded partial-proof handoff.
@@ -75,11 +83,19 @@ Track active Skopos structural findings here.
 
 ## Active Findings
 
+- `F-20260629-understand-scanner-only-onboarding-gap` - `MUST` - `active` - `onboarding, understanding, trust, memory` - `skopos understand` must guide an agent analysis pass and not let scanner-only artifacts count as full project understanding.
+- `F-20260629-project-mode-and-agent-brief-gap` - `MUST` - `active` - `setup, workflow, prompt-guidance, cleanup` - Skopos must record project mode and generate command-level agent briefs so cleanup/refactor work does not preserve legacy by default.
+- `F-20260629-proof-fixtures-understanding-depth-gap` - `MUST` - `active` - `proof, trust, onboarding, fixtures` - Proof fixtures must be updated so agent-ready expectations include agent-reviewed project understanding docs.
+- `F-20260629-self-hosting-mode-and-fallback-policy-gap` - `MUST` - `active` - `self-hosting, project-mode, cleanup, compatibility` - Skopos must dogfood clean-refactor internals while protecting public compatibility boundaries and tracking fallback debt.
+
 ### Current Hardening Tracks
 
 1. Track A: onboarding, scope, and trust correctness
-   - No active findings currently routed in this track.
+   - `F-20260629-understand-scanner-only-onboarding-gap`: `skopos understand` must require agent-reviewed project memory before full readiness.
+   - `F-20260629-project-mode-and-agent-brief-gap`: setup and command briefs must distinguish preserve, cleanup, and greenfield-reset behavior.
+   - `F-20260629-self-hosting-mode-and-fallback-policy-gap`: Skopos self-hosting must distinguish internal clean-refactor work from public compatibility surfaces.
 2. Track B: validation and transport proportionality
    - `F-20260627-validation-lane-progress-timeout-gap`: Default validation is bounded now; remaining gap is live progress, quieter output, and resumable phases for explicit heavy suites.
+   - `F-20260629-proof-fixtures-understanding-depth-gap`: Proof fixtures must model the new understanding-depth trust rule before proof can return to 20/20.
 3. Track C: program and docs-state hygiene
    - No active findings currently routed in this track.

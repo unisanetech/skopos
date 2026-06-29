@@ -17,6 +17,7 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposUnderstandingSetupReviewArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
@@ -168,10 +169,12 @@ const loadUnderstandingView = async (
   const summaryPath = join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json');
   const featureInventoryPath = join(workspaceRoot, '.skopos', 'understanding', 'feature-inventory.json');
   const hotspotsPath = join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json');
-  const [summary, featureInventory, hotspots] = await Promise.all([
+  const setupReviewPath = join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json');
+  const [summary, featureInventory, hotspots, setupReview] = await Promise.all([
     loadJsonArtifact<SkoposRepoUnderstandingSummaryArtifact>(summaryPath),
     loadJsonArtifact<SkoposFeatureInventoryArtifact>(featureInventoryPath),
     loadJsonArtifact<SkoposImplementationHotspotsArtifact>(hotspotsPath),
+    loadJsonArtifact<SkoposUnderstandingSetupReviewArtifact>(setupReviewPath),
   ]);
 
   if (!summary || !featureInventory || !hotspots) {
@@ -182,9 +185,11 @@ const loadUnderstandingView = async (
     summaryPath,
     featureInventoryPath,
     hotspotsPath,
+    setupReviewPath: setupReview ? setupReviewPath : undefined,
     summary,
     featureInventory,
     hotspots,
+    setupReview,
   };
 };
 

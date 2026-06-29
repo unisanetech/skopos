@@ -14,10 +14,12 @@ Skopos should prefer exact, compact, low-drift retrieval over broad semantic sea
 - Related Docs:
   - `artifact-model.md`
   - `trust-and-closure-model.md`
+  - `../decisions/034-post-init-setup-review-and-confirmed-understanding-contract.md`
   - `../findings/registry.md`
 
 ## Changelog
 
+- `2026-06-29`: Added the setup-review retrieval rule so post-init project understanding loads facts, inferences, assumptions, and confirmation questions before treating synthesized knowledge as trusted memory.
 - `2026-04-17`: Tightened the default search lane so historical docs are no longer merely down-ranked; they are now excluded from normal search results and only re-enter when the query explicitly asks for archive or historical material.
 - `2026-04-13`: Added the first runtime-managed workflow handoff and standalone telemetry diagnosis artifacts, so retrieval and adapter surfaces can now load `.skopos/discussions/handoffs/latest-workflow.json` as the compact resume packet and `.skopos/agent/token-telemetry.json` as the explicit budget-pressure surface instead of inferring both from `.skopos/agent/prompt-brief.json` alone.
 - `2026-04-12`: Added the first prompt-layering and token-telemetry artifact under `.skopos/agent/prompt-brief.json`, so retrieval and adapter surfaces can now read one compact stable-prefix versus dynamic-tail plan plus hot-path budget measurements before improvising prompt composition.
@@ -53,6 +55,14 @@ Skopos should prefer exact, compact, low-drift retrieval over broad semantic sea
 2. treat raw files as backing sources, not default first-load context
 3. keep index and scope-card surfaces compact enough to be directly token-friendly
 4. treat search as an optional helper once scale demands it, not the primary architecture
+
+## Setup-Review Rule
+
+1. after init, load compact understanding through `skopos understand` before broad agent work
+2. treat setup review facts as stronger than inferences, and inferences as stronger than assumptions
+3. do not promote assumptions into canonical memory until the user or project evidence confirms them
+4. prefer guided confirmation questions over silent docs rewrites, especially in brownfield projects
+5. let small unrelated edits proceed with a light lane, but surface unresolved setup assumptions before broad architecture, docs, policy, or validation changes
 
 ## Transport Projection Rule
 

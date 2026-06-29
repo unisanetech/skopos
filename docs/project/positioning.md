@@ -9,14 +9,17 @@ Skopos is project intelligence and trust infrastructure for coding agents.
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
   - `vision.md`
+  - `agentic-operating-plan.md`
   - `../architecture/runtime-model.md`
 
 ## Changelog
+
+- `2026-06-29`: Clarified that Skopos is an agent operating layer, not a docs generator, and that explicit project modes plus command-guided prompts are required for serious agentic/vibe-coding workflows.
 
 - `2026-04-12`: Added the workflow-weight discipline to the positioning doc, so Skopos now states explicitly that it should not become a ceremony-heavy process layer while expanding its control plane.
 - `2026-04-09`: Added the explicit v1 support lane so Skopos does not claim more ecosystem breadth than the current implementation supports.
@@ -31,12 +34,14 @@ Skopos belongs in developer tooling, but specifically as:
 2. a compiled project knowledgebase for coding agents
 3. an agent workflow governance layer
 4. a repo-native trust system
+5. a command-guided prompt layer that tells coding agents how to act inside the current project mode
 
 ## Primary Wedge
 
 Skopos should lead with one clear adoption wedge:
 
 1. make coding agents safer and more reliable on existing repos, especially inconsistent brownfield repos
+2. support cleanup/refactor-heavy existing repos without letting agents preserve legacy by default
 
 ## V1 Support Lane
 
@@ -53,6 +58,7 @@ Skopos v1 should not claim broad multi-language support yet.
 Primary user:
 
 1. developers and technical founders already using coding agents on real existing repos
+2. vibe-coding and agentic-coding users who need project memory, cleanup discipline, and proof without manually managing process
 
 Secondary user:
 
@@ -63,6 +69,7 @@ Secondary user:
 1. strongest fit today is agent-heavy brownfield Node and TypeScript repos
 2. fit for other project shapes is conditional, not universal
 3. Skopos should only widen its control plane when the added surface removes more supervision than it adds process weight
+4. existing-project support must split into preservation, cleanup, and greenfield-reset behavior through explicit setup truth
 
 ## Non-Goals
 
@@ -72,3 +79,4 @@ Secondary user:
 4. force cloud dependency for core value
 5. become a generic personal wiki with no repo-governance or trust runtime
 6. become a workflow-ceremony layer that costs more to operate than the supervision it removes
+7. become a passive docs generator that leaves the agent to infer prompts, cleanup policy, and closure rules from scattered markdown

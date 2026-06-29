@@ -8,6 +8,12 @@ export type SkoposProjectArchetype =
 
 export type SkoposRepoMode = 'single' | 'multi-package' | 'monorepo';
 
+export type SkoposProjectMode =
+  | 'brownfield'
+  | 'clean-refactor'
+  | 'greenfield-in-existing-repo'
+  | 'new-project';
+
 export type SkoposScopeStrategy = 'package' | 'domain' | 'service' | 'hybrid';
 
 export type SkoposTrustMode = 'fast' | 'balanced' | 'strict' | 'stabilize';
@@ -27,6 +33,7 @@ export interface SkoposRootConfig {
     archetype: SkoposProjectArchetype;
     repoMode: SkoposRepoMode;
     scopeStrategy: SkoposScopeStrategy;
+    mode?: SkoposProjectMode;
   };
   commands: SkoposCommandMap;
   workspace: {

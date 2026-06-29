@@ -10,6 +10,7 @@ import type {
   SkoposImpactEntry,
   SkoposEnforcementProfileArtifact,
   SkoposDriftReportArtifact,
+  SkoposAgentAnalysisBriefArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
   SkoposResolvedPolicyArtifact,
@@ -44,7 +45,9 @@ export const buildSkoposTrustReport = async ({
   const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
   const policyBriefPath = join(workspaceRoot, '.skopos', 'agent', 'policy-brief.json');
   const memoryStatePath = join(workspaceRoot, '.skopos', 'memory', 'state.json');
+  const agentAnalysisBriefPath = join(workspaceRoot, '.skopos', 'understanding', 'agent-analysis-brief.json');
   const communicationBriefPath = join(workspaceRoot, '.skopos', 'agent', 'communication-brief.json');
+  const fallbackRegistryPath = join(workspaceRoot, '.skopos', 'fallbacks', 'registry.json');
   const { bootstrap } = await loadSkoposQueryState({
     cwd: workspaceRoot,
   });
@@ -53,6 +56,7 @@ export const buildSkoposTrustReport = async ({
   const driftReport = await loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath);
   const memoryState = await loadJsonArtifact<SkoposMemoryStateArtifact>(memoryStatePath);
   const communicationBrief = await loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(communicationBriefPath);
+  const agentAnalysisBrief = await loadJsonArtifact<SkoposAgentAnalysisBriefArtifact>(agentAnalysisBriefPath);
   const availablePolicyPacks = await loadPolicyPacksIfAvailable(workspaceRoot);
 
   const docsRoot = bootstrap.recommendedConfig.docs.root;
@@ -108,6 +112,10 @@ export const buildSkoposTrustReport = async ({
     memoryState,
     communicationBrief,
   });
+  const projectModeCoverage = await buildProjectModeCoverageSummary({
+    projectMode: bootstrap.recommendedConfig.project.mode,
+    fallbackRegistryPath,
+  });
 
   const checks: SkoposTrustCheck[] = [
     createCheck(
@@ -161,6 +169,8 @@ export const buildSkoposTrustReport = async ({
         ? `Declared canonical overrides are active: ${appliedOverrides.map((entry) => `${entry.key}=${entry.value}`).join(', ')}.`
         : 'No declared canonical overrides are currently active.',
     ),
+    createCheck('project-mode', projectModeCoverage.projectMode.status, projectModeCoverage.projectMode.summary),
+    createCheck('fallback-policy', projectModeCoverage.fallbackPolicy.status, projectModeCoverage.fallbackPolicy.summary),
     createCheck('accepted-policy', acceptedPolicyCoverage.acceptedPolicy.status, acceptedPolicyCoverage.acceptedPolicy.summary),
     createCheck('policy-brief', acceptedPolicyCoverage.policyBrief.status, acceptedPolicyCoverage.policyBrief.summary),
     createCheck('policy-source-freshness', acceptedPolicyCoverage.sourceFreshness.status, acceptedPolicyCoverage.sourceFreshness.summary),
@@ -168,6 +178,7 @@ export const buildSkoposTrustReport = async ({
     createCheck('memory-map', memoryCoverage.memoryMap.status, memoryCoverage.memoryMap.summary),
     createCheck('memory-roles', memoryCoverage.memoryRoles.status, memoryCoverage.memoryRoles.summary),
     createCheck('agent-communication', memoryCoverage.communication.status, memoryCoverage.communication.summary),
+    createCheck('understanding-depth', buildUnderstandingDepthStatus(agentAnalysisBrief), buildUnderstandingDepthSummary(agentAnalysisBrief)),
     createCheck('active-mission', activeMissionCoverage.status, activeMissionCoverage.summary),
     createCheck(
       'workflow-questions',
@@ -211,6 +222,75 @@ export const buildSkoposTrustReport = async ({
     unresolvedAssumptions,
     findings: bootstrap.detected.findings,
     detected: bootstrap.detected,
+  };
+};
+
+
+const buildUnderstandingDepthStatus = (
+  artifact: SkoposAgentAnalysisBriefArtifact | null,
+): SkoposTrustCheckStatus => {
+  if (!artifact) {
+    return 'warn';
+  }
+
+  return artifact.analysisStatus === 'agent-reviewed' ? 'pass' : 'warn';
+};
+
+const buildUnderstandingDepthSummary = (
+  artifact: SkoposAgentAnalysisBriefArtifact | null,
+): string => {
+  if (!artifact) {
+    return 'Agent-guided understanding brief is missing. Run `skopos understand .` before broad agent work.';
+  }
+
+  if (artifact.analysisStatus === 'agent-reviewed') {
+    return 'Agent-reviewed project understanding docs are present.';
+  }
+
+  const missing = artifact.durableOutputs
+    .filter((entry) => entry.required && entry.status !== 'present')
+    .map((entry) => entry.path);
+
+  return `Project understanding is scanner-only. Have an agent follow .skopos/understanding/agent-analysis-brief.json and create/update: ${missing.join(', ')}.`;
+};
+
+const buildProjectModeCoverageSummary = async ({
+  projectMode,
+  fallbackRegistryPath,
+}: {
+  projectMode: string | undefined;
+  fallbackRegistryPath: string;
+}): Promise<{
+  projectMode: { status: SkoposTrustCheckStatus; summary: string };
+  fallbackPolicy: { status: SkoposTrustCheckStatus; summary: string };
+}> => {
+  const cleanupMode = projectMode === 'clean-refactor' || projectMode === 'greenfield-in-existing-repo';
+  const fallbackRegistryExists = await pathExists(fallbackRegistryPath);
+
+  return {
+    projectMode: projectMode
+      ? {
+          status: 'pass',
+          summary: `Project mode is confirmed as ${projectMode}.`,
+        }
+      : {
+          status: 'warn',
+          summary:
+            'Project mode is not confirmed. Run `skopos setup review .` and answer `project.mode` before broad agent work.',
+        },
+    fallbackPolicy:
+      cleanupMode && !fallbackRegistryExists
+        ? {
+            status: 'warn',
+            summary:
+              'Cleanup-oriented mode is active, but no fallback metadata registry exists yet. Track durable fallbacks with owner, reason, affected surface, and removal condition or compatibility note.',
+          }
+        : {
+            status: 'pass',
+            summary: cleanupMode
+              ? 'Cleanup-oriented mode has fallback metadata available.'
+              : 'Fallback metadata is not required for the current project mode.',
+          },
   };
 };
 
@@ -296,6 +376,17 @@ const ACTIVE_MISSION_TRACKED_CATEGORIES = new Set<SkoposImpactEntry['category']>
   'package-source',
   'root-config',
   'workspace-file',
+]);
+
+const FRESH_ONBOARDING_REQUIRED_PATH = 'skopos.config.yaml';
+const FRESH_ONBOARDING_TRACKED_PATHS = new Set([
+  '.cursor/rules/project.mdc',
+  '.github/copilot-instructions.md',
+  '.gitignore',
+  'AGENTS.md',
+  'CLAUDE.md',
+  'docs/00-start-here.md',
+  FRESH_ONBOARDING_REQUIRED_PATH,
 ]);
 
 interface ActiveMissionCoverageSummary {
@@ -619,6 +710,14 @@ const buildActiveMissionCoverageSummary = async (
       };
     }
 
+    if (isFreshSkoposOnboardingChangeSet(trackedChangedPaths)) {
+      return {
+        status: 'pass',
+        summary:
+          'Fresh Skopos onboarding files are present. Review and commit the generated setup files when ready.',
+      };
+    }
+
     const missionArtifacts = await loadMissionArtifacts(workspaceRoot);
     const activeClaimedMissions = missionArtifacts.filter(
       (mission) => mission.state === 'active' && typeof mission.coordination.claimedBy?.actorId === 'string',
@@ -658,6 +757,10 @@ const buildActiveMissionCoverageSummary = async (
     };
   }
 };
+
+const isFreshSkoposOnboardingChangeSet = (trackedChangedPaths: string[]): boolean =>
+  trackedChangedPaths.includes(FRESH_ONBOARDING_REQUIRED_PATH) &&
+  trackedChangedPaths.every((path) => FRESH_ONBOARDING_TRACKED_PATHS.has(path));
 
 const summarizePaths = (paths: string[]): string => {
   const preview = paths.slice(0, 3).join(', ');

@@ -9,15 +9,20 @@ Skopos should make coding agents project-aware, decision-aware, and trust-aware 
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-06-29`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
   - `positioning.md`
+  - `agentic-operating-plan.md`
   - `roadmap.md`
   - `../architecture/trust-and-closure-model.md`
 
 ## Changelog
+
+- `2026-06-29`: Clarified that Skopos is a role-based project memory and agent operating layer: human docs hold durable truth, `.skopos/**` compiles fast machine state, and commands guide coding agents through work.
+
+- `2026-06-29`: Extended the vision with explicit project modes and command-guided agent briefs, so Skopos can support brownfield preservation, clean refactor, greenfield-in-existing-repo, and new-project workflows without relying on repeated user reminders.
 
 - `2026-04-12`: Extended the vision with token-control discipline, so the default retrieval and transport path must stay compact enough not to waste context windows on raw JSON, stale docs, or replayed operational logs.
 - `2026-04-12`: Added the supervision-cost and workflow-weight discipline, so new Skopos features now need to prove that they reduce user supervision more than they increase workflow ceremony.
@@ -42,6 +47,10 @@ Developers should be able to keep their existing coding tools, bring their own L
 9. preserves recent accepted direction across context compaction without making prompts transcript-heavy
 10. keeps workflow weight lower than the supervision burden it replaces
 11. keeps default retrieval, runtime transport, and long-running execution compact enough that agent context is spent on decisions and implementation rather than operational replay
+12. records the project operating mode so existing repos can be treated as brownfield, clean-refactor, greenfield-in-existing-repo, or new-project work instead of collapsing every repo into one behavior
+13. guides the coding agent through command-generated briefs that explain what to read, what to ask, what to edit, what to avoid, what to check, and how to close
+14. maps project truth by required memory role instead of forcing every repo into one docs tree
+15. keeps tool-specific instruction files compact by pointing agents to the right project memory instead of copying every rule everywhere
 
 ## Success Criteria
 
@@ -58,3 +67,6 @@ Skopos succeeds when:
 9. new accepted work can correctly stay `do-now`, `do-next`, `defer`, or `interrupt-current` through compiled state instead of ad hoc chat ordering
 10. new control-plane layers do not turn Skopos into a ceremony-heavy process product
 11. the agent loop stays inside compact working budgets because Skopos loads briefs, active canonicals, and compact handoffs before broader docs, logs, or raw artifacts
+12. cleanup/refactor-heavy work removes obsolete paths instead of adding duplicate hybrid systems when the selected project mode calls for no-legacy execution
+13. users no longer need to repeatedly tell agents to "follow Skopos"; the default command flow carries the operating contract into the agent path
+14. existing projects with good docs are respected, existing projects with messy docs get clear cleanup recommendations, and weak-doc projects get concrete memory-building tasks

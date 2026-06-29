@@ -921,6 +921,15 @@ export const buildCompactNextLines = (result: SkoposNextRunResult): string[] => 
     `Summary: ${result.summary}`,
     `Code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `Trust: ${result.trust.trustLevel} / ${result.trust.readiness}`,
+    ...(result.setupReview
+      ? [
+          `Setup review: ${result.setupReview.readiness}`,
+          `Setup questions: ${result.setupReview.openQuestionCount} open, ${result.setupReview.answeredQuestionCount} answered`,
+          ...(result.setupReview.openQuestionCount > 0
+            ? [`Setup next: ${result.setupReview.nextCommand}`]
+            : []),
+        ]
+      : []),
     ...buildProjectKnowledgeGuidanceLines(result.projectKnowledge),
     ...buildMissionProgressLines({
       mission: result.mission,
@@ -937,6 +946,16 @@ export const buildCompactNextLines = (result: SkoposNextRunResult): string[] => 
 
   if (result.blockingQuestions.length > 0) {
     lines.push(...buildGuidedWorkflowQuestionLines(result.blockingQuestions));
+  }
+
+  if (result.setupReview && result.setupReview.openQuestions.length > 0) {
+    lines.push(
+      'Setup questions:',
+      ...result.setupReview.openQuestions.slice(0, 3).map(
+        (question) =>
+          `- ${question.id}: ${question.question} (answer with: skopos setup answer ${question.id} ${question.recommendedOptionId} ${result.workspaceRoot})`,
+      ),
+    );
   }
 
   lines.push('Next step:', buildNextStep(result));

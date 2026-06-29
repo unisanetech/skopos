@@ -14,6 +14,7 @@ export * from './contracts/skopos-drift-report.js';
 export * from './contracts/skopos-duplicate-reference.js';
 export * from './contracts/skopos-enforcement-profile.js';
 export * from './contracts/skopos-eval.js';
+export * from './contracts/skopos-fallback-registry.js';
 export * from './contracts/skopos-graph.js';
 export * from './contracts/skopos-gates.js';
 export * from './contracts/skopos-impact-report.js';

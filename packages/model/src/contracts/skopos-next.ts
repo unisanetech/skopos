@@ -1,5 +1,6 @@
 import type { SkoposMissionArtifact, SkoposMissionItem } from './skopos-plan.js';
 import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
+import type { SkoposUnderstandingSetupReviewArtifact } from './skopos-understanding.js';
 import type { SkoposTrustReport } from './skopos-trust-report.js';
 import type {
   SkoposWorkflowQuestionArtifact,
@@ -26,6 +27,14 @@ export interface SkoposNextRunResult {
   recommendationsWrite: 'written' | 'dry-run';
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
   recommendations: SkoposWorkflowRecommendationArtifact;
+  setupReview?: {
+    path: string;
+    readiness: SkoposUnderstandingSetupReviewArtifact['readiness'];
+    openQuestionCount: number;
+    answeredQuestionCount: number;
+    nextCommand: string;
+    openQuestions: SkoposUnderstandingSetupReviewArtifact['openConfirmationQuestions'];
+  };
   projectKnowledge: SkoposProjectKnowledgeGuidance;
   recommendedAction?: SkoposWorkflowRecommendationEntry;
   nextCommand?: string;

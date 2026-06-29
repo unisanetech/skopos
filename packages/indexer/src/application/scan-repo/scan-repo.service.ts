@@ -246,13 +246,17 @@ const extractCommandMap = (rootPackageJson: Record<string, unknown> | null): Sko
     return scriptName ? `pnpm ${scriptName}` : undefined;
   };
 
-  return {
+  const commands: SkoposCommandMap = {
     dev: resolveScriptCommand(['dev']),
     build: resolveScriptCommand(['build']),
     test: resolveScriptCommand(['test']),
     typecheck: resolveScriptCommand(['typecheck', 'check-types']),
     lint: resolveScriptCommand(['lint']),
   };
+
+  return Object.fromEntries(
+    Object.entries(commands).filter(([, command]) => typeof command === 'string'),
+  ) as SkoposCommandMap;
 };
 
 const collectInstructionFiles = async ({

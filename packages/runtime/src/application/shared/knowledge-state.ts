@@ -9,6 +9,7 @@ import type {
   SkoposAgentPromptBriefArtifact,
   SkoposAgentProgramBriefArtifact,
   SkoposAgentTrustBriefArtifact,
+  SkoposAgentAnalysisBriefArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposArchitectureReport,
   SkoposBootstrapArtifact,
@@ -34,6 +35,8 @@ import type {
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposUnderstandingSetupReviewArtifact,
+  SkoposUnderstandingSetupAnswersArtifact,
   SkoposMemoryStateArtifact,
   SkoposWorkflowRunArtifact,
 } from '@skopos/model';
@@ -218,6 +221,9 @@ const buildSkoposKnowledgeIndex = async (
   const tokenTelemetry = await loadJsonArtifact<SkoposTokenTelemetryArtifact>(
     join(workspaceRoot, '.skopos', 'agent', 'token-telemetry.json'),
   );
+  const agentAnalysisBrief = await loadJsonArtifact<SkoposAgentAnalysisBriefArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'agent-analysis-brief.json'),
+  );
   const repoSummary = await loadJsonArtifact<SkoposRepoUnderstandingSummaryArtifact>(
     join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json'),
   );
@@ -226,6 +232,12 @@ const buildSkoposKnowledgeIndex = async (
   );
   const hotspots = await loadJsonArtifact<SkoposImplementationHotspotsArtifact>(
     join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json'),
+  );
+  const setupReview = await loadJsonArtifact<SkoposUnderstandingSetupReviewArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json'),
+  );
+  const setupAnswers = await loadJsonArtifact<SkoposUnderstandingSetupAnswersArtifact>(
+    join(workspaceRoot, '.skopos', 'understanding', 'setup-answers.json'),
   );
   const discussionIndex = await loadJsonArtifact<SkoposDiscussionIndexArtifact>(
     join(workspaceRoot, '.skopos', 'discussions', 'index.json'),
@@ -432,6 +444,13 @@ const buildSkoposKnowledgeIndex = async (
     [id: string, title: string, summary: string, path: string, artifact: { updatedAt?: string } | null]
   > = [
     [
+      'understanding-agent-analysis-brief',
+      'Agent analysis brief',
+      agentAnalysisBrief?.summary ?? 'Agent-guided project analysis instructions and durable output checklist.',
+      '.skopos/understanding/agent-analysis-brief.json',
+      agentAnalysisBrief,
+    ],
+    [
       'understanding-repo-summary',
       'Repo understanding',
       repoSummary?.summary ?? 'Compact synthesized project orientation.',
@@ -451,6 +470,20 @@ const buildSkoposKnowledgeIndex = async (
       hotspots?.summary ?? 'Compact implementation hotspot inventory.',
       '.skopos/understanding/hotspots.json',
       hotspots,
+    ],
+    [
+      'understanding-setup-review',
+      'Setup review',
+      setupReview?.summary ?? 'Facts, inferences, assumptions, and setup questions after init.',
+      '.skopos/understanding/setup-review.json',
+      setupReview,
+    ],
+    [
+      'understanding-setup-answers',
+      'Setup answers',
+      setupAnswers?.summary ?? 'Confirmed setup-review answers.',
+      '.skopos/understanding/setup-answers.json',
+      setupAnswers,
     ],
   ];
 

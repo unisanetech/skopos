@@ -25,6 +25,7 @@ import {
 } from '@skopos/instructions';
 import type {
   SkoposDocsScaffoldArtifact,
+  SkoposFallbackRegistryArtifact,
   SkoposGitignoreScaffoldArtifact,
   SkoposInitMode,
   SkoposInitResult,
@@ -67,6 +68,7 @@ export const initSkoposProject = async ({
   const diagnosisPath = join(workspaceRoot, '.skopos', 'diagnosis.json');
   const architecturePath = join(workspaceRoot, '.skopos', 'architecture.json');
   const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
+  const fallbackRegistryPath = join(workspaceRoot, '.skopos', 'fallbacks', 'registry.json');
   const indexPath = join(workspaceRoot, '.skopos', 'index.json');
   const logPath = join(workspaceRoot, '.skopos', 'log.jsonl');
   const symbolsPath = join(workspaceRoot, '.skopos', 'references', 'symbols.json');
@@ -92,6 +94,7 @@ export const initSkoposProject = async ({
     projectName: bootstrap.recommendedConfig.project.name,
     docsRoot: bootstrap.recommendedConfig.docs.root,
     startHerePath: bootstrap.recommendedConfig.docs.startHerePath,
+    commands: bootstrap.recommendedConfig.commands,
     dryRun,
   });
   const gitignoreScaffold = await scaffoldGitignore({
@@ -192,6 +195,14 @@ export const initSkoposProject = async ({
     artifact: enforcement,
     dryRun,
   });
+  const fallbackRegistry = buildFallbackRegistryArtifact({
+    projectMode: bootstrap.recommendedConfig.project.mode,
+  });
+  const fallbackRegistryWrite = await writeJsonArtifact({
+    artifactPath: fallbackRegistryPath,
+    artifact: fallbackRegistry,
+    dryRun,
+  });
   const symbolsWrite = await writeJsonArtifact({
     artifactPath: symbolsPath,
     artifact: references.symbols,
@@ -254,6 +265,7 @@ export const initSkoposProject = async ({
       diagnosisPath,
       architecturePath,
       enforcementPath,
+      fallbackRegistryPath,
       symbolsPath,
       duplicatesPath,
       contradictionsPath,
@@ -300,6 +312,7 @@ export const initSkoposProject = async ({
     diagnosisPath,
     architecturePath,
     enforcementPath,
+    fallbackRegistryPath,
     indexPath,
     logPath,
     workspaceGraphPath,
@@ -356,6 +369,7 @@ export const initSkoposProject = async ({
     diagnosisWrite,
     architectureWrite,
     enforcementWrite,
+    fallbackRegistryWrite,
     indexWrite: indexWrite.write,
     memoryWrite: memoryState.memoryWrite,
     communicationBriefWrite: memoryState.communicationBriefWrite,
@@ -367,6 +381,30 @@ export const initSkoposProject = async ({
     diagnosis,
     architecture,
     enforcement,
+    fallbackRegistry,
+  };
+};
+
+const buildFallbackRegistryArtifact = ({
+  projectMode,
+}: {
+  projectMode?: SkoposFallbackRegistryArtifact['projectMode'];
+}): SkoposFallbackRegistryArtifact => {
+  const now = new Date().toISOString();
+
+  return {
+    schemaVersion: 1,
+    id: 'fallback-registry',
+    type: 'fallback-registry',
+    status: 'generated',
+    authority: 'generated',
+    summary: 'Registry of accepted durable fallbacks and compatibility exceptions for agent cleanup work.',
+    generatedAt: now,
+    updatedAt: now,
+    projectMode,
+    policy:
+      'If an agent keeps a fallback, shim, duplicate path, or compatibility layer, it must be recorded here with an owner, reason, affected surface, and removal condition or compatibility note. Empty entries means no durable fallbacks are currently accepted.',
+    entries: [],
   };
 };
 
@@ -375,12 +413,14 @@ const scaffoldDocsStartHere = async ({
   projectName,
   docsRoot,
   startHerePath,
+  commands,
   dryRun,
 }: {
   workspaceRoot: string;
   projectName: string;
   docsRoot: string;
   startHerePath?: string;
+  commands: Record<string, string | undefined>;
   dryRun: boolean;
 }): Promise<SkoposDocsScaffoldArtifact> => {
   const relativePath = startHerePath ?? join(docsRoot, '00-start-here.md');
@@ -395,6 +435,7 @@ const scaffoldDocsStartHere = async ({
           buildStartHereContents({
             projectName,
             docsRoot,
+            commands,
             links: await collectStartHereLinks({
               workspaceRoot,
               docsRoot,
@@ -428,6 +469,7 @@ const scaffoldDocsStartHere = async ({
       buildStartHereContents({
         projectName,
         docsRoot,
+        commands,
         links: await collectStartHereLinks({
           workspaceRoot,
           docsRoot,
@@ -455,14 +497,16 @@ interface StartHereLink {
 const buildStartHereContents = ({
   projectName,
   docsRoot,
+  commands,
   links,
 }: {
   projectName: string;
   docsRoot: string;
+  commands: Record<string, string | undefined>;
   links: StartHereLink[];
 }): string => `# ${projectName} Start Here
 
-This is the first page humans and coding agents should read before changing the project.
+This is the first page to read before changing the project. It points agents to the existing project rules, docs, and validation commands without replacing the current documentation.
 
 ## Read First
 
@@ -470,19 +514,28 @@ ${formatStartHereLinks(links)}
 
 ## What To Keep Here
 
-- The current product goal
-- The main architecture and folder rules
-- The commands that prove a change is safe
-- The durable decisions future agents should not forget
+- Links to the most important project docs.
+- Notes about where project rules live when they are not obvious.
+- Updates only when the project source of truth changes.
 
 ## Validation
 
-List the commands developers and agents should run before finishing work. If the project already has these commands in \`package.json\`, keep this section short and link to the existing guide.
+${formatStartHereCommands(commands)}
 
 ## Docs Home
 
-Keep durable project docs under \`${docsRoot}/\`. Link the important pages above so agents do not scan random files first.
+Durable project docs should stay under \`${docsRoot}/\` unless the team chooses another source of truth. Keep this page as a small router, not a second copy of every rule.
 `;
+
+const formatStartHereCommands = (commands: Record<string, string | undefined>): string => {
+  const entries = Object.entries(commands).filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()));
+
+  if (entries.length === 0) {
+    return 'No validation commands were detected yet. Confirm the project commands before broad agent work.';
+  }
+
+  return entries.map(([name, command]) => `- ${name}: \`${command}\``).join('\n');
+};
 
 const formatStartHereLinks = (links: StartHereLink[]): string => {
   if (links.length === 0) {

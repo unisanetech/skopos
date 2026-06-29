@@ -5,6 +5,7 @@ import type {
   SkoposEnforcementProfileArtifact,
   SkoposToolAdapterSummary,
 } from './skopos-enforcement-profile.js';
+import type { SkoposFallbackRegistryArtifact } from './skopos-fallback-registry.js';
 import type { SkoposGraphKind } from './skopos-graph.js';
 import type { SkoposRootConfig } from './skopos-root-config.js';
 import type { SkoposScanSummary } from './skopos-scan-summary.js';
@@ -88,6 +89,7 @@ export interface SkoposInitResult {
   diagnosisPath: string;
   architecturePath: string;
   enforcementPath: string;
+  fallbackRegistryPath?: string;
   indexPath: string;
   logPath: string;
   workspaceGraphPath: string;
@@ -103,6 +105,7 @@ export interface SkoposInitResult {
   diagnosisWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   architectureWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   enforcementWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
+  fallbackRegistryWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   indexWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   memoryWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   communicationBriefWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
@@ -114,4 +117,5 @@ export interface SkoposInitResult {
   diagnosis: SkoposDiagnosisReport;
   architecture: SkoposArchitectureReport;
   enforcement: SkoposEnforcementProfileArtifact;
+  fallbackRegistry?: SkoposFallbackRegistryArtifact;
 }

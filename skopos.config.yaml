@@ -4,6 +4,7 @@ project:
   archetype: library
   repoMode: monorepo
   scopeStrategy: package
+  mode: clean-refactor
 commands:
   dev: pnpm dev
   build: pnpm build
