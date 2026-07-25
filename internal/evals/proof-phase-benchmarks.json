@@ -161,6 +161,14 @@
       "scope": "@fixture/api",
       "category": "batch-execution",
       "priority": "must-win"
+    },
+    {
+      "id": "agent-native-adoption-matrix",
+      "fixture": "large-monorepo",
+      "goal": "adopt one Skopos workflow authority across complex, small, messy, and alternate-docs projects",
+      "scope": "workspace",
+      "category": "agent-native-adoption",
+      "priority": "must-win"
     }
   ]
 }

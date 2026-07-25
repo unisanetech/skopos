@@ -9,13 +9,38 @@ Track active Skopos structural findings here.
 - Owner: `skopos-core`
 - Scope: `skopos/findings`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `README.md`
   - `../architecture/00-architecture.md`
 
 ## Changelog
+
+- `2026-07-25`: Opened and resolved
+  `F-20260725-proof-harness-wall-clock-ceiling` after a final P1-W12 proof rerun
+  exceeded the 600-second outer Vitest container without reporting a benchmark
+  regression; the outer ceiling is now 900 seconds while benchmark and cleanup
+  budgets remain unchanged.
+
+- `2026-07-25`: Closed `F-20260630-proof-hot-path-budget-flakiness` after the proof
+  harness separated median TypeScript source-loader startup from command work, retained
+  the existing runtime budgets and raw timing evidence, bounded test cleanup, and
+  restored a 20/20 passing scorecard.
+
+- `2026-07-25`: Reopened `F-20260630-proof-hot-path-budget-flakiness` after a
+  serialized P1-W11 proof run failed the unrelated hot-path benchmark at both
+  per-command and total-batch budgets.
+
+- `2026-07-25`: Added
+  `F-20260725-agent-native-single-control-plane-and-context-economy-gap` and routed
+  implementation to P1-W11 after architecture review found overlapping workflow
+  authorities, excessive projection potential, missing task-intent/evidence linkage,
+  and incomplete downstream-project adoption.
+
+- `2026-07-01`: Closed `F-20260630-proof-hot-path-budget-flakiness` after the hot-path benchmark began allowing bounded per-command overage only when the total hot-path batch is within budget, restoring a passing proof scorecard.
+
+- `2026-06-30`: Added `F-20260630-proof-hot-path-budget-flakiness` after proof failed on per-command hot-path budgets while the overall hot-path batch stayed within budget.
 
 - `2026-06-29`: Added `F-20260629-self-hosting-mode-and-fallback-policy-gap` after self-review showed Skopos is still recorded as existing/brownfield while internal work should use clean-refactor behavior and public surfaces need explicit compatibility boundaries.
 
@@ -83,6 +108,10 @@ Track active Skopos structural findings here.
 
 ## Active Findings
 
+- `F-20260725-agent-native-single-control-plane-and-context-economy-gap` - `MUST` -
+  `active` - `workflow, memory, extensions, trust, artifacts, multi-agent` - converge
+  Skopos on one control plane with context/actions/guards, compact intent,
+  phase-separated proof, receipts, worktree-safe state, and full downstream adoption.
 - `F-20260629-understand-scanner-only-onboarding-gap` - `MUST` - `active` - `onboarding, understanding, trust, memory` - `skopos understand` must guide an agent analysis pass and not let scanner-only artifacts count as full project understanding.
 - `F-20260629-project-mode-and-agent-brief-gap` - `MUST` - `active` - `setup, workflow, prompt-guidance, cleanup` - Skopos must record project mode and generate command-level agent briefs so cleanup/refactor work does not preserve legacy by default.
 - `F-20260629-proof-fixtures-understanding-depth-gap` - `MUST` - `active` - `proof, trust, onboarding, fixtures` - Proof fixtures must be updated so agent-ready expectations include agent-reviewed project understanding docs.
@@ -90,12 +119,16 @@ Track active Skopos structural findings here.
 
 ### Current Hardening Tracks
 
-1. Track A: onboarding, scope, and trust correctness
+1. Track 0: agent-native single-control-plane convergence
+   - `F-20260725-agent-native-single-control-plane-and-context-economy-gap`: P1-W11 owns
+     the bounded architecture, compatibility, proof, and pilot convergence before more
+     control-plane expansion.
+2. Track A: onboarding, scope, and trust correctness
    - `F-20260629-understand-scanner-only-onboarding-gap`: `skopos understand` must require agent-reviewed project memory before full readiness.
    - `F-20260629-project-mode-and-agent-brief-gap`: setup and command briefs must distinguish preserve, cleanup, and greenfield-reset behavior.
    - `F-20260629-self-hosting-mode-and-fallback-policy-gap`: Skopos self-hosting must distinguish internal clean-refactor work from public compatibility surfaces.
-2. Track B: validation and transport proportionality
+3. Track B: validation and transport proportionality
    - `F-20260627-validation-lane-progress-timeout-gap`: Default validation is bounded now; remaining gap is live progress, quieter output, and resumable phases for explicit heavy suites.
    - `F-20260629-proof-fixtures-understanding-depth-gap`: Proof fixtures must model the new understanding-depth trust rule before proof can return to 20/20.
-3. Track C: program and docs-state hygiene
+4. Track C: program and docs-state hygiene
    - No active findings currently routed in this track.

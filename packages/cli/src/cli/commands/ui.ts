@@ -19,8 +19,25 @@ interface ParsedUiArgs {
   json: boolean;
 }
 
+const UI_HELP_FLAGS = new Set(['--help', '-h']);
+const UI_SUBCOMMANDS = new Set(['render', 'build', 'serve', 'dev']);
+
 export const runUiCommand = async (args: string[]): Promise<void> => {
   const [subcommand, ...rest] = args;
+
+  if (!subcommand || UI_HELP_FLAGS.has(subcommand)) {
+    printUiHelp();
+    return;
+  }
+
+  if (rest.some((argument) => UI_HELP_FLAGS.has(argument))) {
+    if (!UI_SUBCOMMANDS.has(subcommand)) {
+      throw new Error(`Unknown Skopos ui subcommand: ${subcommand}`);
+    }
+
+    printUiHelp(subcommand);
+    return;
+  }
 
   if (subcommand === 'render') {
     const parsed = parseUiArgs(rest);
@@ -190,10 +207,73 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
     return;
   }
 
-  if (!subcommand) {
-    throw new Error(`Unknown Skopos ui subcommand: ${subcommand ?? '(missing)'}`);
-  }
   throw new Error(`Unknown Skopos ui subcommand: ${subcommand}`);
+};
+
+const printUiHelp = (subcommand?: string): void => {
+  const linesBySubcommand: Record<string, string[]> = {
+    render: [
+      'Skopos UI render',
+      '',
+      'Usage:',
+      '  skopos ui render [target] [--output <path>] [--dry-run] [--json]',
+      '',
+      'Use this when you need the legacy static portal artifact.',
+    ],
+    build: [
+      'Skopos UI build',
+      '',
+      'Usage:',
+      '  skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]',
+      '',
+      'Use this when you need a built routed console app on disk.',
+    ],
+    serve: [
+      'Skopos UI serve',
+      '',
+      'Usage:',
+      '  skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]',
+      '',
+      'Use this for a snapshot preview. Restart it after docs or .skopos state changes.',
+      'For live project-state refresh while working, use: skopos ui dev [target].',
+    ],
+    dev: [
+      'Skopos UI dev',
+      '',
+      'Usage:',
+      '  skopos ui dev [target] [--host <host>] [--port <port>] [--json]',
+      '',
+      'Use this as the normal live workspace UI while working. It refreshes workspace state as docs and .skopos artifacts change.',
+    ],
+  };
+
+  if (subcommand) {
+    writeLines(linesBySubcommand[subcommand]);
+    return;
+  }
+
+  writeLines([
+    'Skopos UI commands',
+    '',
+    'Usage:',
+    '  skopos ui render [target] [--output <path>] [--dry-run] [--json]',
+    '  skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]',
+    '  skopos ui dev [target] [--host <host>] [--port <port>] [--json]',
+    '  skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]',
+    '',
+    'Common choice:',
+    '  skopos ui dev . --host 127.0.0.1 --port 4174',
+    '',
+    'Mode guide:',
+    '  dev    live workspace UI; use while coding or reviewing changing Skopos state',
+    '  serve  snapshot preview; restart after state changes',
+    '  build  write the routed console app to disk',
+    '  render write the legacy static portal artifact',
+    '',
+    'For subcommand details, run:',
+    '  skopos ui dev --help',
+    '  skopos ui serve --help',
+  ]);
 };
 
 const parseUiArgs = (args: string[]): ParsedUiArgs => {

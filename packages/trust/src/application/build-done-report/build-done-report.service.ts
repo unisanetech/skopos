@@ -1,6 +1,7 @@
 import { access, readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
+import { loadSkoposWorkflowManifests } from '@skopos/indexer';
 import type {
   SkoposDoneReport,
   SkoposDriftReportArtifact,
@@ -20,6 +21,11 @@ import {
 } from '../../adapters/workflow-run-artifact.adapter.js';
 import { buildSkoposImpactReport } from '../build-impact-report/build-impact-report.service.js';
 import { buildSkoposTrustReport } from '../build-trust-report/build-trust-report.service.js';
+import { validateSkoposWorkflowReceipt } from '../workflow-receipts/workflow-receipt.service.js';
+import {
+  resolveSkoposWorkspaceIdentity,
+  taskIdentityMatchesWorkspace,
+} from '../workspace-identity/workspace-identity.service.js';
 
 export interface BuildSkoposDoneReportOptions {
   cwd: string;
@@ -45,9 +51,13 @@ export const buildSkoposDoneReport = async ({
     }),
   ]);
   const missionArtifact = mission ? await loadMissionArtifact(workspaceRoot, mission) : null;
+  const workspaceIdentity = await resolveSkoposWorkspaceIdentity(workspaceRoot);
   const pendingMissionItems =
     missionArtifact?.items.filter((item) => item.status !== 'complete') ?? [];
-  const workflowQuestionsArtifact = await loadWorkflowQuestionsArtifact(workspaceRoot);
+  const workflowQuestionsArtifact = await loadWorkflowQuestionsArtifact(
+    workspaceRoot,
+    missionArtifact?.taskIdentity,
+  );
   const openWorkflowQuestions = filterOpenWorkflowQuestions({
     artifact: workflowQuestionsArtifact,
     missionId: missionArtifact?.id,
@@ -69,6 +79,11 @@ export const buildSkoposDoneReport = async ({
     : undefined;
   const policyDrift = await loadPolicyDriftReport(workspaceRoot);
   const openMustPolicyDriftCount = policyDrift?.counts.openMustCount ?? 0;
+  const taskIdentityCheck = buildTaskIdentityCheck({
+    missionArtifact,
+    missionEval,
+    workspaceIdentity,
+  });
 
   const checks: SkoposTrustCheck[] = [
     createCheck(
@@ -133,7 +148,9 @@ export const buildSkoposDoneReport = async ({
       'mission-eval',
       !missionArtifact
         ? 'pass'
-        : missionEval?.evaluationStatus === 'complete' &&
+        : missionEval &&
+            isClosureEvalArtifact(missionEval) &&
+            missionEval.evaluationStatus === 'complete' &&
             missionEval.pendingItemIds.length === 0 &&
             missionEval.blockingQuestionIds.length === 0
           ? 'pass'
@@ -143,6 +160,7 @@ export const buildSkoposDoneReport = async ({
         missionEval,
       }),
     ),
+    taskIdentityCheck,
     createCheck(
       'mission-evidence',
       !missionArtifact
@@ -198,9 +216,14 @@ export const buildSkoposDoneReport = async ({
     );
   }
 
-  if (missionArtifact && (!missionEval || missionEval.evaluationStatus !== 'complete')) {
+  if (
+    missionArtifact &&
+    (!missionEval ||
+      !isClosureEvalArtifact(missionEval) ||
+      missionEval.evaluationStatus !== 'complete')
+  ) {
     requiredActions.push(
-      `Run \`skopos eval ${workspaceRoot} --mission ${missionArtifact.id}${requestedActorId ? ` --actor ${requestedActorId}` : claimedByActorId ? ` --actor ${claimedByActorId}` : ''}\` before closure.`,
+      `Run \`skopos eval ${workspaceRoot} --mission ${missionArtifact.id}${requestedActorId ? ` --actor ${requestedActorId}` : claimedByActorId ? ` --actor ${claimedByActorId}` : ''} --phase closure\` before closure.`,
     );
   }
 
@@ -256,12 +279,81 @@ export const buildSkoposDoneReport = async ({
           missionId: missionArtifact.id,
           evalPath: missionEvalPath,
           evaluationStatus: missionEval?.evaluationStatus,
+          executionPhase: missionEval?.executionPhase,
           blockingQuestionIds: missionEval?.blockingQuestionIds ?? [],
           pendingItemIds: missionEval?.pendingItemIds ?? [],
         }
       : undefined,
     workflowEvidence,
   };
+};
+
+const buildTaskIdentityCheck = ({
+  missionArtifact,
+  missionEval,
+  workspaceIdentity,
+}: {
+  missionArtifact: Awaited<ReturnType<typeof loadMissionArtifact>> | null;
+  missionEval: SkoposEvalArtifact | null;
+  workspaceIdentity: Awaited<ReturnType<typeof resolveSkoposWorkspaceIdentity>>;
+}): SkoposTrustCheck => {
+  if (!missionArtifact) {
+    return createCheck(
+      'task-identity',
+      'pass',
+      'No explicit mission task identity was requested for this closure check.',
+    );
+  }
+
+  if (!missionArtifact.taskIdentity) {
+    return createCheck(
+      'task-identity',
+      'warn',
+      `Mission ${missionArtifact.id} predates task/worktree identity and is evaluated through compatibility behavior.`,
+    );
+  }
+
+  if (
+    !taskIdentityMatchesWorkspace({
+      taskIdentity: missionArtifact.taskIdentity,
+      workspace: workspaceIdentity,
+    })
+  ) {
+    return createCheck(
+      'task-identity',
+      'fail',
+      `Mission ${missionArtifact.id} belongs to a different branch or worktree and cannot be closed here.`,
+    );
+  }
+
+  if (missionEval && !missionEval.taskIdentity) {
+    return createCheck(
+      'task-identity',
+      'fail',
+      `Eval evidence for task-aware mission ${missionArtifact.id} does not carry task/worktree identity.`,
+    );
+  }
+
+  if (
+    missionEval?.taskIdentity &&
+    (missionEval.taskIdentity.taskId !== missionArtifact.taskIdentity.taskId ||
+      !taskIdentityMatchesWorkspace({
+        taskIdentity: missionEval.taskIdentity,
+        workspace: workspaceIdentity,
+      }))
+  ) {
+    return createCheck(
+      'task-identity',
+      'fail',
+      `Eval evidence for ${missionArtifact.id} belongs to a different task, branch, or worktree.`,
+    );
+  }
+
+  return createCheck(
+    'task-identity',
+    'pass',
+    `Mission ${missionArtifact.id} and its eval evidence match worktree ${workspaceIdentity.worktreeId}.`,
+  );
 };
 
 const resolveActorId = (actor?: string): string | undefined => {
@@ -362,6 +454,10 @@ const buildMissionEvalSummary = ({
     return `Mission ${missionArtifact.id} has no eval artifact yet. Run \`skopos eval\` before closure.`;
   }
 
+  if (!isClosureEvalArtifact(missionEval)) {
+    return `Mission ${missionArtifact.id} latest eval is for ${missionEval.executionPhase} and cannot certify closure. Run \`skopos eval --phase closure\`.`;
+  }
+
   if (missionEval.evaluationStatus !== 'complete') {
     return `Mission ${missionArtifact.id} eval status is ${missionEval.evaluationStatus}. Pending eval items: ${missionEval.pendingItemIds.join(', ') || 'none'}.`;
   }
@@ -372,6 +468,11 @@ const buildMissionEvalSummary = ({
 
   return `Mission ${missionArtifact.id} has complete eval-backed closure evidence.`;
 };
+
+const isClosureEvalArtifact = (
+  evalArtifact: SkoposEvalArtifact | null,
+): boolean =>
+  evalArtifact !== null && (evalArtifact.executionPhase ?? 'closure') === 'closure';
 
 interface BuildWorkflowEvidenceOptions {
   workspaceRoot: string;
@@ -387,6 +488,9 @@ const buildWorkflowEvidence = async ({
   }
 
   const runArtifacts = await loadWorkflowRunArtifacts(workspaceRoot);
+  const manifests = await loadSkoposWorkflowManifests({
+    cwd: workspaceRoot,
+  });
 
   return Promise.all(
     requiredWorkflows.map(async (workflow) => {
@@ -399,6 +503,39 @@ const buildWorkflowEvidence = async ({
           ...workflow,
           status: 'fail',
           summary: 'No successful workflow run evidence was found for this required workflow.',
+        };
+      }
+
+      const manifest = manifests.find((entry) => entry.id === workflow.id);
+      if (!manifest) {
+        return {
+          ...workflow,
+          status: 'fail',
+          summary: 'The required workflow manifest is no longer registered.',
+        };
+      }
+
+      const receiptValidation = latestSuccessfulRun.receipt
+        ? await validateSkoposWorkflowReceipt({
+            workspaceRoot,
+            manifest,
+            artifact: latestSuccessfulRun,
+          })
+        : {
+            status: 'legacy' as const,
+            summary: 'The successful workflow run predates source-bound receipts.',
+          };
+      if (receiptValidation.status === 'stale') {
+        return {
+          ...workflow,
+          status: 'fail',
+          summary: receiptValidation.summary,
+          receiptStatus: receiptValidation.status,
+          receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+          receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
+          latestSuccessfulRunId: latestSuccessfulRun.id,
+          latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
+          latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
         };
       }
 
@@ -423,18 +560,26 @@ const buildWorkflowEvidence = async ({
           status: 'fail',
           summary:
             'The workflow ran successfully, but one or more declared outputs are missing from the workspace.',
+          receiptStatus: receiptValidation.status,
+          receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+          receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
           latestSuccessfulRunId: latestSuccessfulRun.id,
           latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
           latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
         };
       }
 
-      if (Number.isFinite(latestRunAt) && latestRunAt < latestChangedAt) {
+      if (
+        receiptValidation.status === 'legacy' &&
+        Number.isFinite(latestRunAt) &&
+        latestRunAt < latestChangedAt
+      ) {
         return {
           ...workflow,
           status: 'fail',
           summary:
             'The latest successful workflow run is older than the changed surfaces that require it.',
+          receiptStatus: receiptValidation.status,
           latestSuccessfulRunId: latestSuccessfulRun.id,
           latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
           latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
@@ -445,7 +590,12 @@ const buildWorkflowEvidence = async ({
         ...workflow,
         status: 'pass',
         summary:
-          'A fresh successful workflow run exists for the changed surfaces that require this workflow.',
+          receiptValidation.status === 'valid'
+            ? 'A valid source-bound workflow receipt exists for the changed surfaces that require this workflow.'
+            : 'A fresh legacy workflow run exists for the changed surfaces; rerun to gain source-bound reuse.',
+        receiptStatus: receiptValidation.status,
+        receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+        receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
         latestSuccessfulRunId: latestSuccessfulRun.id,
         latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
         latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,

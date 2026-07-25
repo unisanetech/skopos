@@ -1,5 +1,7 @@
 export * from './application/init/init.service.js';
+export * from './application/agent-native/agent-native-operating-model.service.js';
 export * from './application/shared/memory-state.js';
+export * from './application/skills/skills.service.js';
 export * from './application/mission/mission.service.js';
 export * from './application/overrides/overrides.service.js';
 export * from './application/policies/policies.service.js';
@@ -35,6 +37,7 @@ export const skoposRuntimeCommands = [
   'context',
   'plan',
   'policies',
+  'skills',
   'program',
   'mission',
   'overrides',

@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 
 import type {
   SkoposBackgroundEvalRunResult,
+  SkoposEvalExecutionPhase,
   SkoposJobArtifact,
   SkoposJobShowRunResult,
   SkoposWorkflowQuestionArtifact,
@@ -25,6 +26,7 @@ export interface EnqueueSkoposEvalBackgroundJobRuntimeOptions {
   mission?: string;
   actor?: string;
   dryRun?: boolean;
+  executionPhase?: SkoposEvalExecutionPhase;
 }
 
 export interface RunSkoposEvalBackgroundJobRuntimeOptions {
@@ -42,6 +44,7 @@ export const enqueueSkoposEvalBackgroundJobRuntime = async ({
   mission,
   actor,
   dryRun = false,
+  executionPhase = 'closure',
 }: EnqueueSkoposEvalBackgroundJobRuntimeOptions): Promise<SkoposBackgroundEvalRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = requireJobActorId(actor);
@@ -71,7 +74,8 @@ export const enqueueSkoposEvalBackgroundJobRuntime = async ({
     jobState: 'queued',
     requestedByActorId: actorId,
     missionId: missionArtifact.id,
-    command: `skopos eval ${workspaceRoot} --mission ${missionArtifact.id} --actor ${actorId} --compact --json`,
+    executionPhase,
+    command: `skopos eval ${workspaceRoot} --mission ${missionArtifact.id} --actor ${actorId} --phase ${executionPhase} --compact --json`,
     pollCommand,
     createdAt,
   };
@@ -186,6 +190,7 @@ export const runSkoposEvalBackgroundJobRuntime = async ({
       cwd: workspaceRoot,
       mission: runningJob.missionId,
       actor: runningJob.requestedByActorId,
+      executionPhase: runningJob.executionPhase ?? 'closure',
     });
     const finishedAt = new Date().toISOString();
     const succeededJob: SkoposJobArtifact = {

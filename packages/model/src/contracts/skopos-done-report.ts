@@ -22,6 +22,7 @@ export interface SkoposWorkflowQuestionClosureEvidence {
 export interface SkoposMissionEvalClosureEvidence {
   missionId: string;
   evaluationStatus?: SkoposEvalArtifact['evaluationStatus'];
+  executionPhase?: SkoposEvalArtifact['executionPhase'];
   evalPath?: string;
   blockingQuestionIds: string[];
   pendingItemIds: string[];

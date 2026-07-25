@@ -4,6 +4,7 @@ import type { SkoposDecisionQuestion } from './skopos-decision-question.js';
 import type { SkoposResolvedScope } from './skopos-scope-lite.js';
 import type { SkoposConfidence } from './skopos-scan-summary.js';
 import type { SkoposWorkflowRequirement } from './skopos-workflow.js';
+import type { SkoposTaskIdentity } from './skopos-task-identity.js';
 
 export interface SkoposPlanStep {
   id: string;
@@ -63,6 +64,7 @@ export interface SkoposMissionSliceLink {
 
 export interface SkoposMissionArtifact extends SkoposArtifactEnvelope<'mission'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   planId: string;
   parentMissionId?: string;
   state: 'planned' | 'active' | 'blocked' | 'complete';
@@ -80,6 +82,7 @@ export interface SkoposMissionArtifact extends SkoposArtifactEnvelope<'mission'>
 
 export interface SkoposPlanArtifact extends SkoposArtifactEnvelope<'plan'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   goal: string;
   title: string;
   summary: string;

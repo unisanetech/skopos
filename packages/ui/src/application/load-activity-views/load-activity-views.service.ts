@@ -105,7 +105,7 @@ const buildWorkflowRunSummary = (
     id: string;
     workflowId: string;
     workflowTitle: string;
-    runStatus: 'succeeded' | 'failed' | 'dry-run';
+    runStatus: SkoposUiWorkflowRunSummary['runStatus'];
     outputPaths: string[];
     runByActorId?: string;
     finishedAt?: string;

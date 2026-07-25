@@ -22,6 +22,9 @@ import type {
   SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
+  SkoposResolvedSkillArtifact,
+  SkoposSkillHostProjectionArtifact,
+  SkoposSkillRecommendationArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopesLiteArtifact,
@@ -85,6 +88,7 @@ export const buildSkoposUiConsoleState = async ({
     understanding,
     memoryView,
     policyReview,
+    skillReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
   ] =
@@ -109,6 +113,7 @@ export const buildSkoposUiConsoleState = async ({
       loadUnderstandingView(workspaceRoot),
       loadMemoryView(workspaceRoot),
       loadPolicyReviewView(workspaceRoot),
+      loadSkillReviewView(workspaceRoot),
       loadDiscussionHandoffView(workspaceRoot),
       loadDiscussionCheckpointViews(workspaceRoot),
     ]);
@@ -151,6 +156,7 @@ export const buildSkoposUiConsoleState = async ({
     understanding,
     memoryView,
     policyReview,
+    skillReview,
     latestDiscussionHandoff,
     discussionCheckpoints,
     docsLinks,
@@ -160,6 +166,52 @@ export const buildSkoposUiConsoleState = async ({
   return {
     ...stateWithoutSearch,
     searchIndex: buildSkoposConsoleSearchIndex(stateWithoutSearch),
+  };
+};
+
+const loadSkillReviewView = async (
+  workspaceRoot: string,
+): Promise<SkoposUiConsoleState['skillReview']> => {
+  const resolvedPath = join(workspaceRoot, '.skopos', 'skills', 'resolved.json');
+  const recommendationsPath = join(
+    workspaceRoot,
+    '.skopos',
+    'skills',
+    'recommendations.json',
+  );
+  const projectionDirectory = join(workspaceRoot, '.skopos', 'skills', 'projections');
+  const [resolved, recommendations, projectionNames] = await Promise.all([
+    loadJsonArtifact<SkoposResolvedSkillArtifact>(resolvedPath),
+    loadJsonArtifact<SkoposSkillRecommendationArtifact>(recommendationsPath),
+    readdir(projectionDirectory).catch(() => [] as string[]),
+  ]);
+  const projections = (
+    await Promise.all(
+      projectionNames
+        .filter((name) => name.endsWith('.json'))
+        .sort()
+        .map(async (name) => {
+          const artifactPath = join(projectionDirectory, name);
+          const projection =
+            await loadJsonArtifact<SkoposSkillHostProjectionArtifact>(artifactPath);
+          return projection ? { artifactPath, projection } : undefined;
+        }),
+    )
+  ).filter(
+    (
+      entry,
+    ): entry is {
+      artifactPath: string;
+      projection: SkoposSkillHostProjectionArtifact;
+    } => Boolean(entry),
+  );
+  if (!resolved && !recommendations && projections.length === 0) return undefined;
+  return {
+    resolved: resolved ? { artifactPath: resolvedPath, skills: resolved } : undefined,
+    recommendations: recommendations
+      ? { artifactPath: recommendationsPath, recommendations }
+      : undefined,
+    projections,
   };
 };
 

@@ -1,4 +1,4 @@
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
 import { buildSkoposTrustReport } from '@skopos/trust';
@@ -23,7 +23,6 @@ import {
 import { refreshSkoposDiscussionResumeArtifacts } from '../shared/discussion-lifecycle.js';
 import { resolveCurrentMissionRuntime } from '../shared/current-mission.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
-import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import {
   buildWorkflowQuestionsSummary,
   buildWorkflowRecommendationsArtifact,
@@ -31,11 +30,17 @@ import {
   getBlockingWorkflowQuestions,
   getNextPendingMissionItem,
   isImplementationAllowed,
-  loadWorkflowQuestionsArtifact,
-  loadWorkflowRecommendationsArtifact,
-  QUESTIONS_ARTIFACT_PATH,
-  RECOMMENDATIONS_ARTIFACT_PATH,
 } from '../workflow-router/workflow-router-state.service.js';
+import {
+  loadWorkflowQuestionsForMission,
+  resolveMissionTaskIdentity,
+  writeWorkflowQuestionsState,
+  writeWorkflowRecommendationsState,
+} from '../workflow-router/workflow-router-task-state.service.js';
+import {
+  buildSkoposCompactTaskBriefRuntime,
+  writeSkoposCurrentTaskProjections,
+} from '../agent-native/agent-native-operating-model.service.js';
 
 export interface BuildSkoposNextRuntimeOptions {
   cwd: string;
@@ -52,14 +57,21 @@ export const buildSkoposNextRuntime = async ({
 }: BuildSkoposNextRuntimeOptions): Promise<SkoposNextRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
-  const loadedQuestions = await loadOptionalWorkflowQuestionsArtifact(workspaceRoot);
-  const loadedRecommendations = await loadOptionalWorkflowRecommendationsArtifact(workspaceRoot);
-  const currentMission = await resolveCurrentMissionRuntime({
+  const resolvedMission = await resolveCurrentMissionRuntime({
     workspaceRoot,
     mission,
     actorId,
-    questions: loadedQuestions,
-    recommendations: loadedRecommendations,
+  });
+  const taskIdentity = await resolveMissionTaskIdentity({
+    workspaceRoot,
+    mission: resolvedMission,
+    actorId,
+  });
+  const currentMission = { ...resolvedMission, taskIdentity };
+  const loadedQuestions = await loadWorkflowQuestionsForMission({
+    workspaceRoot,
+    mission: currentMission,
+    actorId,
   });
   const questions = loadedQuestions
     ? filterWorkflowQuestionsForMission({
@@ -70,19 +82,26 @@ export const buildSkoposNextRuntime = async ({
         workspaceRoot,
         mission: currentMission,
       });
+  const questionsState = await writeWorkflowQuestionsState({
+    workspaceRoot,
+    artifact: { ...questions, taskIdentity },
+    dryRun,
+  });
   const recommendations = buildWorkflowRecommendationsArtifact({
     workspaceRoot,
     actorId,
     planId: currentMission.planId,
     mission: currentMission,
     questions,
+    taskIdentity,
   });
-  const recommendationsPath = join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH);
-  const recommendationsWrite = await writeJsonArtifact({
-    artifactPath: recommendationsPath,
+  const recommendationsState = await writeWorkflowRecommendationsState({
+    workspaceRoot,
     artifact: recommendations,
     dryRun,
   });
+  const recommendationsPath = recommendationsState.compatibilityPath;
+  const recommendationsWrite = recommendationsState.write;
   const blockingQuestions = getBlockingWorkflowQuestions(questions);
   const codeAllowed = isImplementationAllowed({
     mission: currentMission,
@@ -103,6 +122,18 @@ export const buildSkoposNextRuntime = async ({
     workspaceRoot,
     trustLevel: trustReport.trustLevel,
     readiness: trustReport.readiness,
+    dryRun,
+  });
+  const taskBrief = await buildSkoposCompactTaskBriefRuntime({
+    cwd: workspaceRoot,
+    mission: currentMission,
+    questions,
+    phase: resolveExecutionPhase(nextItem),
+  });
+  const compactArtifacts = await writeSkoposCurrentTaskProjections({
+    workspaceRoot,
+    mission: currentMission,
+    brief: taskBrief,
     dryRun,
   });
   const summary = buildSummary({
@@ -135,10 +166,15 @@ export const buildSkoposNextRuntime = async ({
     summary,
     relatedArtifactPaths: [
       resolveMissionPath(workspaceRoot, currentMission.id),
-      join(workspaceRoot, QUESTIONS_ARTIFACT_PATH),
+      questionsState.authorityPath,
+      questionsState.compatibilityPath,
+      recommendationsState.authorityPath,
       recommendationsPath,
       projectKnowledge.memoryPath,
       projectKnowledge.communicationBriefPath,
+      compactArtifacts.projectPath,
+      compactArtifacts.taskPath,
+      compactArtifacts.briefPath,
     ],
     metadata: {
       actorId: actorId ?? null,
@@ -164,15 +200,23 @@ export const buildSkoposNextRuntime = async ({
     actorId,
     summary,
     codeAllowed,
+    taskState: {
+      authorityDirectory: dirname(questionsState.authorityPath),
+      questionsPath: questionsState.authorityPath,
+      recommendationsPath: recommendationsState.authorityPath,
+      compatibilityQuestionsPath: questionsState.compatibilityPath,
+      compatibilityRecommendationsPath: recommendationsState.compatibilityPath,
+    },
     missionId: currentMission.id,
     missionPath: resolveMissionPath(workspaceRoot, currentMission.id),
     mission: currentMission,
-    questionsPath: join(workspaceRoot, QUESTIONS_ARTIFACT_PATH),
+    questionsPath: questionsState.compatibilityPath,
     questions,
     blockingQuestions,
     recommendationsPath,
     recommendationsWrite,
     executionSurface: recommendations.executionSurface,
+    taskBrief,
     recommendations,
     setupReview: setupReview
       ? {
@@ -198,6 +242,20 @@ export const buildSkoposNextRuntime = async ({
   };
 };
 
+const resolveExecutionPhase = (
+  nextItem: SkoposMissionArtifact['items'][number] | undefined,
+): 'iteration' | 'stabilization' | 'closure' => {
+  if (!nextItem) {
+    return 'closure';
+  }
+
+  if (nextItem.kind === 'docs' || nextItem.kind === 'workflow') {
+    return 'stabilization';
+  }
+
+  return 'iteration';
+};
+
 const loadOptionalJson = async <T>(artifactPath: string): Promise<T | undefined> => {
   try {
     return JSON.parse(await readFile(artifactPath, 'utf8')) as T;
@@ -212,26 +270,6 @@ const loadOptionalJson = async <T>(artifactPath: string): Promise<T | undefined>
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>
   typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';
-
-const loadOptionalWorkflowQuestionsArtifact = async (
-  workspaceRoot: string,
-): Promise<SkoposWorkflowQuestionArtifact | undefined> => {
-  try {
-    return await loadWorkflowQuestionsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
-};
-
-const loadOptionalWorkflowRecommendationsArtifact = async (
-  workspaceRoot: string,
-): Promise<{ generatedForMissionId?: string } | undefined> => {
-  try {
-    return await loadWorkflowRecommendationsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
-};
 
 const buildEmptyWorkflowQuestionsArtifact = ({
   workspaceRoot,
@@ -252,6 +290,7 @@ const buildEmptyWorkflowQuestionsArtifact = ({
   updatedAt: mission.updatedAt,
   generatedAt: mission.generatedAt ?? mission.updatedAt,
   workspaceRoot,
+  taskIdentity: mission.taskIdentity,
   generatedForPlanId: mission.planId,
   generatedForMissionId: mission.id,
   entries: [],

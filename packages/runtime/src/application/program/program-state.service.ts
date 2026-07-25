@@ -23,9 +23,12 @@ import { resolveMissionPath } from '../mission/mission.service.js';
 import { resolveCurrentMissionRuntime } from '../shared/current-mission.js';
 import {
   getBlockingWorkflowQuestions,
-  loadWorkflowQuestionsArtifact,
-  loadWorkflowRecommendationsArtifact,
 } from '../workflow-router/workflow-router-state.service.js';
+import {
+  loadWorkflowQuestionsForMission,
+  loadWorkflowRecommendationsForMission,
+  resolveMissionTaskIdentity,
+} from '../workflow-router/workflow-router-task-state.service.js';
 
 export const PROGRAM_STATE_ARTIFACT_PATH = '.skopos/program/state.json';
 
@@ -62,12 +65,34 @@ export const buildSkoposProgramState = async ({
   const trust = await buildSkoposTrustReport({
     cwd: resolvedWorkspaceRoot,
   });
-  const [questions, recommendations, currentMission, activeFindings] = await Promise.all([
-    loadOptionalWorkflowQuestionsArtifact(resolvedWorkspaceRoot),
-    loadOptionalWorkflowRecommendationsArtifact(resolvedWorkspaceRoot),
+  const [resolvedCurrentMission, activeFindings] = await Promise.all([
     resolveOptionalCurrentMissionRuntime(resolvedWorkspaceRoot, actorId),
     loadActiveProgramFindingSources(resolvedWorkspaceRoot),
   ]);
+  const currentMission = resolvedCurrentMission
+    ? {
+        ...resolvedCurrentMission,
+        taskIdentity: await resolveMissionTaskIdentity({
+          workspaceRoot: resolvedWorkspaceRoot,
+          mission: resolvedCurrentMission,
+          actorId,
+        }),
+      }
+    : undefined;
+  const [questions, recommendations] = currentMission
+    ? await Promise.all([
+        loadWorkflowQuestionsForMission({
+          workspaceRoot: resolvedWorkspaceRoot,
+          mission: currentMission,
+          actorId,
+        }),
+        loadWorkflowRecommendationsForMission({
+          workspaceRoot: resolvedWorkspaceRoot,
+          mission: currentMission,
+          actorId,
+        }),
+      ])
+    : [undefined, undefined];
   const currentMissionEval = currentMission
     ? await loadOptionalEvalArtifact({
         workspaceRoot: resolvedWorkspaceRoot,
@@ -164,6 +189,7 @@ export const buildSkoposProgramState = async ({
     updatedAt: timestamp,
     generatedAt: timestamp,
     workspaceRoot: resolvedWorkspaceRoot,
+    taskIdentity: currentMission?.taskIdentity,
     items,
     sequence,
     obligations,
@@ -816,26 +842,6 @@ const buildProgramStateSummary = ({
   }
 
   return 'No active mission or queued program item currently requires action.';
-};
-
-const loadOptionalWorkflowQuestionsArtifact = async (
-  workspaceRoot: string,
-): Promise<SkoposWorkflowQuestionArtifact | undefined> => {
-  try {
-    return await loadWorkflowQuestionsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
-};
-
-const loadOptionalWorkflowRecommendationsArtifact = async (
-  workspaceRoot: string,
-): Promise<SkoposWorkflowRecommendationArtifact | undefined> => {
-  try {
-    return await loadWorkflowRecommendationsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
 };
 
 const loadOptionalEvalArtifact = async ({

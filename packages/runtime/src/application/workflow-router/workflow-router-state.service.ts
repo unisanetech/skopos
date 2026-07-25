@@ -10,10 +10,12 @@ import type {
   SkoposWorkflowQuestionEntry,
   SkoposWorkflowRecommendationArtifact,
   SkoposWorkflowRecommendationEntry,
+  SkoposTaskIdentity,
 } from '@skopos/model';
 
 export const QUESTIONS_ARTIFACT_PATH = '.skopos/questions.json';
 export const RECOMMENDATIONS_ARTIFACT_PATH = '.skopos/recommendations.json';
+export const TASK_STATE_ARTIFACT_ROOT = '.skopos/tasks';
 
 export const buildWorkflowQuestionsArtifact = ({
   workspaceRoot,
@@ -22,6 +24,7 @@ export const buildWorkflowQuestionsArtifact = ({
   decisionQuestions,
   planPath,
   missionPath,
+  taskIdentity,
 }: {
   workspaceRoot: string;
   planId: string;
@@ -29,6 +32,7 @@ export const buildWorkflowQuestionsArtifact = ({
   decisionQuestions: SkoposDecisionQuestion[];
   planPath: string;
   missionPath: string;
+  taskIdentity?: SkoposTaskIdentity;
 }): SkoposWorkflowQuestionArtifact => {
   const timestamp = new Date().toISOString();
 
@@ -45,6 +49,7 @@ export const buildWorkflowQuestionsArtifact = ({
     updatedAt: timestamp,
     generatedAt: timestamp,
     workspaceRoot,
+    taskIdentity,
     generatedForPlanId: planId,
     generatedForMissionId: missionId,
     entries: decisionQuestions.map((question) =>
@@ -64,12 +69,14 @@ export const buildWorkflowRecommendationsArtifact = ({
   planId,
   mission,
   questions,
+  taskIdentity = mission.taskIdentity,
 }: {
   workspaceRoot: string;
   actorId?: string;
   planId: string;
   mission: SkoposMissionArtifact;
   questions: SkoposWorkflowQuestionArtifact;
+  taskIdentity?: SkoposTaskIdentity;
 }): SkoposWorkflowRecommendationArtifact => {
   const timestamp = new Date().toISOString();
   const entries: SkoposWorkflowRecommendationEntry[] = [];
@@ -144,6 +151,7 @@ export const buildWorkflowRecommendationsArtifact = ({
     updatedAt: timestamp,
     generatedAt: timestamp,
     workspaceRoot,
+    taskIdentity,
     generatedForPlanId: planId,
     generatedForMissionId: mission.id,
     executionSurface,
@@ -230,16 +238,70 @@ export const getNextPendingMissionItem = (
 
 export const loadWorkflowQuestionsArtifact = async (
   workspaceRoot: string,
+  taskIdentity?: SkoposTaskIdentity,
 ): Promise<SkoposWorkflowQuestionArtifact> => {
-  const contents = await readFile(join(workspaceRoot, QUESTIONS_ARTIFACT_PATH), 'utf8');
+  const contents = await readFile(
+    taskIdentity
+      ? resolveTaskQuestionsArtifactPath(workspaceRoot, taskIdentity)
+      : join(workspaceRoot, QUESTIONS_ARTIFACT_PATH),
+    'utf8',
+  );
   return JSON.parse(contents) as SkoposWorkflowQuestionArtifact;
 };
 
 export const loadWorkflowRecommendationsArtifact = async (
   workspaceRoot: string,
+  taskIdentity?: SkoposTaskIdentity,
 ): Promise<SkoposWorkflowRecommendationArtifact> => {
-  const contents = await readFile(join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH), 'utf8');
+  const contents = await readFile(
+    taskIdentity
+      ? resolveTaskRecommendationsArtifactPath(workspaceRoot, taskIdentity)
+      : join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH),
+    'utf8',
+  );
   return JSON.parse(contents) as SkoposWorkflowRecommendationArtifact;
+};
+
+export const resolveTaskStateArtifactDirectory = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string =>
+  join(
+    workspaceRoot,
+    TASK_STATE_ARTIFACT_ROOT,
+    safeTaskStateSegment(taskIdentity.worktreeId),
+    safeTaskStateSegment(taskIdentity.taskId),
+  );
+
+export const resolveTaskQuestionsArtifactPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string => join(resolveTaskStateArtifactDirectory(workspaceRoot, taskIdentity), 'questions.json');
+
+export const resolveTaskRecommendationsArtifactPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string =>
+  join(resolveTaskStateArtifactDirectory(workspaceRoot, taskIdentity), 'recommendations.json');
+
+export const resolveTaskProgramStateArtifactPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string => join(resolveTaskStateArtifactDirectory(workspaceRoot, taskIdentity), 'program.json');
+
+export const resolveTaskProgramBriefArtifactPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string => join(resolveTaskStateArtifactDirectory(workspaceRoot, taskIdentity), 'program-brief.json');
+
+const safeTaskStateSegment = (value: string): string => {
+  if (value === '.') {
+    return '%2E';
+  }
+  if (value === '..') {
+    return '%2E%2E';
+  }
+  return encodeURIComponent(value) || 'task';
 };
 
 export const resolveWorkflowQuestionArtifact = ({

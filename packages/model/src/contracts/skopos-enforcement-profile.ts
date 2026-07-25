@@ -48,6 +48,30 @@ export interface SkoposToolAdapterSummary {
   workflowRouterCoverage: SkoposToolAdapterWorkflowRouterCoverage;
 }
 
+export type SkoposHostProjectionSupport =
+  | 'native'
+  | 'wrapper'
+  | 'manual';
+
+export interface SkoposHostProjection {
+  hostId: string;
+  displayName: string;
+  instructionPath: string;
+  instructionProjection: 'canonical' | 'mirror' | 'adapter-guide';
+  adapterPath?: string;
+  generatedFiles: string[];
+  support: SkoposHostProjectionSupport;
+  enforcementRuleIds: string[];
+}
+
+export interface SkoposHostProjectionModel {
+  schemaVersion: 1;
+  authority: 'skopos-project-model';
+  instructionSourcePath: string;
+  enforcementRuleIds: string[];
+  hosts: SkoposHostProjection[];
+}
+
 export interface SkoposEnforcementProfileArtifact extends SkoposArtifactEnvelope<'enforcement'> {
   workspaceRoot: string;
   instructionSourcePath: string;
@@ -56,4 +80,5 @@ export interface SkoposEnforcementProfileArtifact extends SkoposArtifactEnvelope
   approvalRequiredWorkflowCount: number;
   rules: SkoposEnforcementRule[];
   toolAdapters: SkoposToolAdapterSummary[];
+  hostProjectionModel: SkoposHostProjectionModel;
 }

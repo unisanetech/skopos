@@ -10,6 +10,7 @@ import {
   type SkoposPlanPackageValidationSurface,
 } from '@skopos/planner';
 import { buildSkoposContext, loadSkoposQueryState } from '@skopos/query';
+import { buildSkoposTaskIdentity, resolveSkoposWorkspaceIdentity } from '@skopos/trust';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -66,12 +67,25 @@ export const buildSkoposPlanRuntime = async ({
     recommendedWorkflows,
     packageValidationSurfaces,
   });
-  const { planArtifact, missionArtifact } = buildSkoposPlanArtifacts({
+  const artifacts = buildSkoposPlanArtifacts({
     plan,
     actorId: resolvePlanActorId(actor),
     parentPlanId,
     parentMissionId,
   });
+  const taskIdentity = buildSkoposTaskIdentity({
+    workspace: await resolveSkoposWorkspaceIdentity(workspaceRoot),
+    taskId: artifacts.missionArtifact.id,
+    actorId: resolvePlanActorId(actor),
+  });
+  const planArtifact = {
+    ...artifacts.planArtifact,
+    taskIdentity,
+  };
+  const missionArtifact = {
+    ...artifacts.missionArtifact,
+    taskIdentity,
+  };
   const missionGraph = buildSkoposMissionGraph({
     workspaceRoot,
     plan: planArtifact,

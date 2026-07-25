@@ -9,7 +9,7 @@ Skopos should support project-registered workflow extensions so agents can use r
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-04-12`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `config-model.md`
@@ -18,6 +18,14 @@ Skopos should support project-registered workflow extensions so agents can use r
   - `trust-and-closure-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Added the versioned provider data contract and boundary validators.
+  Runtime provider discovery, configuration, and command invocation remain unimplemented.
+
+- `2026-07-25`: Simplified extension around context, actions, and guards; made automatic
+  detection and checked-in configuration the default; reserved a small
+  describe/brief/verify provider protocol for dynamic projects; and prohibited project
+  integrations from creating a parallel workflow authority.
 
 - `2026-04-12`: Updated the workflow extension model after `skopos next` landed, so project workflows now sit behind an implemented `start` plus `next` plus `decide` router baseline and the remaining control-plane gap is `eval` plus final closure enforcement.
 - `2026-04-11`: Clarified the next router split so project workflows stay as registered execution lanes while `skopos start`, `skopos next`, `skopos decide`, and `skopos eval` become the control plane that decides when those workflows are needed.
@@ -42,6 +50,46 @@ It should not rely on:
 1. arbitrary unregistered shell commands
 2. hidden scripts with unknown side effects
 3. multiple unnamed paths for the same project workflow
+
+## Simplified Extension Contract
+
+Skopos exposes three extension primitives:
+
+1. context: project truth and task-relevant guidance
+2. action: a governed capability the agent or Skopos may invoke
+3. guard: deterministic prevention, approval, validation, or closure proof
+
+Workflows, policy packs, gate packs, skills, integrations, and host adapters are
+packaging/projection concepts over these primitives. They must not become separate daily
+workflow models.
+
+Extension progresses through:
+
+1. automatic detection
+2. small checked-in configuration
+3. an optional provider command for dynamic project intelligence
+
+The provider protocol is intentionally narrow:
+
+1. `describe`
+2. `brief`
+3. `verify`
+
+Providers publish project-specific context, actions, guards, and proof. Skopos remains
+the only admission, task-state, iteration, and closure authority.
+
+Protocol version 1 is implemented as an additive model and validation boundary:
+
+1. `describe` declares provider identity/version, source paths, context, actions, guards,
+   supported methods, and an explicit Skopos-owned authority boundary
+2. `brief` returns a task-relevant subset of capabilities already declared by that
+   provider
+3. `verify` returns individual command, artifact, or source-observation evidence; it
+   cannot return or own a Skopos closure result
+4. validators reject authority capture, duplicate or conflicting ids, undeclared brief
+   capabilities, and passing/failing evidence without a command, path, or source digest
+5. no provider discovery, configuration, subprocess invocation, or provider CLI is
+   implemented by this contract slice
 
 ## Workflow Manifest Model
 
@@ -102,6 +150,11 @@ Each workflow manifest should define:
 14. `requiredForDone`
 15. `recommendedAfter`
 16. `owner`
+
+Future action manifests should converge freeform command strings toward structured
+executable/argument fields and additionally declare phase, risk applicability, evidence,
+estimated cost, and concurrency group where useful. Public manifest changes require
+schema versioning and migration notes.
 
 ## Recommended Categories
 

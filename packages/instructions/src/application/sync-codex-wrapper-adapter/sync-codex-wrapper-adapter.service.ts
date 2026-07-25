@@ -1,9 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import type { SkoposHostProjectionModel } from '@skopos/model';
+
 export interface SyncCodexWrapperAdapterOptions {
   cwd: string;
   dryRun?: boolean;
+  projectionModel?: SkoposHostProjectionModel;
 }
 
 export interface CodexWrapperAdapterWrite {
@@ -24,6 +27,7 @@ const README_RELATIVE_PATH = '.skopos/tooling/codex/README.md';
 export const syncCodexWrapperAdapter = async ({
   cwd,
   dryRun = false,
+  projectionModel,
 }: SyncCodexWrapperAdapterOptions): Promise<SyncCodexWrapperAdapterResult> => {
   const workspaceRoot = resolve(cwd);
   const manifestPath = join(workspaceRoot, MANIFEST_RELATIVE_PATH);
@@ -32,7 +36,7 @@ export const syncCodexWrapperAdapter = async ({
   const files = [
     {
       path: manifestPath,
-      contents: renderCodexManifest(),
+      contents: renderCodexManifest(projectionModel),
     },
     {
       path: entrypointPath,
@@ -64,7 +68,7 @@ export const syncCodexWrapperAdapter = async ({
   };
 };
 
-const renderCodexManifest = (): string =>
+const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): string =>
   `${JSON.stringify(
     {
       schemaVersion: 1,
@@ -73,6 +77,15 @@ const renderCodexManifest = (): string =>
       supportTier: 'wrapper-mediated',
       summary:
         'Wrapper-mediated discussion-memory adapter for Codex hosts using the shared skopos discuss runtime.',
+      projectModel: projectionModel
+        ? {
+            path: '.skopos/enforcement.json',
+            authority: projectionModel.authority,
+            enforcementRuleIds:
+              projectionModel.hosts.find((host) => host.hostId === 'codex')
+                ?.enforcementRuleIds ?? [],
+          }
+        : undefined,
       entrypoint: ENTRYPOINT_RELATIVE_PATH,
       events: {
         sessionStart: {

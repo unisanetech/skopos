@@ -2,6 +2,7 @@ import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type { SkoposMissionArtifact } from './skopos-plan.js';
 import type { SkoposProofReportArtifact } from './skopos-proof-report.js';
 import type { SkoposTrustReport } from './skopos-trust-report.js';
+import type { SkoposTaskIdentity, SkoposTaskStatePaths } from './skopos-task-identity.js';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
@@ -15,10 +16,12 @@ import type { SkoposWorkflowRequirementEvidence } from './skopos-workflow.js';
 
 export type SkoposEvalStatus = 'complete' | 'needs-review' | 'blocked';
 export type SkoposEvalCheckRunStatus = 'pass' | 'fail' | 'skipped' | 'timed-out';
-export type SkoposEvalProofStatus = 'pass' | 'fail' | 'missing';
+export type SkoposEvalProofStatus = 'pass' | 'fail' | 'missing' | 'not-required';
+export type SkoposEvalExecutionPhase = 'iteration' | 'stabilization' | 'closure';
 
 export interface SkoposEvalCheckRun {
   command: string;
+  executionPhase?: SkoposEvalExecutionPhase;
   status: SkoposEvalCheckRunStatus;
   summary: string;
   exitCode: number | null;
@@ -43,12 +46,16 @@ export interface SkoposEvalProofEvidence {
 
 export interface SkoposEvalArtifact extends SkoposArtifactEnvelope<'eval'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   actorId?: string;
   missionId: string;
   missionTitle: string;
   missionPath: string;
   planId: string;
   codeAllowed: boolean;
+  executionPhase?: SkoposEvalExecutionPhase;
+  changedPaths?: string[];
+  selectedCheckCommands?: string[];
   evaluationStatus: SkoposEvalStatus;
   blockingQuestionIds: string[];
   pendingItemIds: string[];
@@ -62,6 +69,7 @@ export interface SkoposEvalRunResult {
   workspaceRoot: string;
   actorId?: string;
   summary: string;
+  taskState?: SkoposTaskStatePaths;
   missionId: string;
   missionPath: string;
   missionWrite: 'written' | 'dry-run';

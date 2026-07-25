@@ -1,9 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import type { SkoposHostProjectionModel } from '@skopos/model';
+
 export interface SyncClaudeCodeHookAdapterOptions {
   cwd: string;
   dryRun?: boolean;
+  projectionModel?: SkoposHostProjectionModel;
 }
 
 export interface ClaudeCodeHookAdapterWrite {
@@ -28,12 +31,13 @@ const STOP_HOOK_RELATIVE_PATH = '.skopos/tooling/claude-code/hooks/stop-hook.mjs
 export const syncClaudeCodeHookAdapter = async ({
   cwd,
   dryRun = false,
+  projectionModel,
 }: SyncClaudeCodeHookAdapterOptions): Promise<SyncClaudeCodeHookAdapterResult> => {
   const workspaceRoot = resolve(cwd);
   const files = [
     {
       path: join(workspaceRoot, SETTINGS_RELATIVE_PATH),
-      contents: renderClaudeCodeSettings(),
+      contents: renderClaudeCodeSettings(projectionModel),
     },
     {
       path: join(workspaceRoot, SESSION_START_HOOK_RELATIVE_PATH),
@@ -83,9 +87,19 @@ export const syncClaudeCodeHookAdapter = async ({
   };
 };
 
-const renderClaudeCodeSettings = (): string =>
+const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): string =>
   `${JSON.stringify(
     {
+      skoposProjection: projectionModel
+        ? {
+            schemaVersion: projectionModel.schemaVersion,
+            authority: projectionModel.authority,
+            projectModelPath: '.skopos/enforcement.json',
+            enforcementRuleIds:
+              projectionModel.hosts.find((host) => host.hostId === 'claude-code')
+                ?.enforcementRuleIds ?? [],
+          }
+        : undefined,
       hooks: {
         SessionStart: [
           {

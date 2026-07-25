@@ -9,6 +9,7 @@ import {
   buildSkoposPlanRuntime,
   buildSkoposStartRuntime,
 } from '@skopos/runtime';
+import type { SkoposEvalExecutionPhase } from '@skopos/model';
 
 import {
   buildCompactBackgroundEvalLines,
@@ -60,6 +61,7 @@ interface ParsedEvalArgs {
   actor?: string;
   dryRun: boolean;
   checkTimeoutMs?: number;
+  executionPhase: SkoposEvalExecutionPhase;
   background: boolean;
   compact: boolean;
   summary: boolean;
@@ -88,6 +90,12 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `Summary: ${result.summary}`,
     `Goal: ${result.goal}`,
     `Scope: ${result.scope.scope.id}`,
+    ...(result.taskBrief
+      ? [
+          `Task contract: ${result.taskBrief.task.acceptanceCriteria.length} acceptance criteria, ${result.taskBrief.task.openDecisions.length} open decisions, ${result.taskBrief.task.requiredProof.length} proof requirements`,
+          `Project model: ${result.taskBrief.context.selectedCount} context, ${result.taskBrief.actions.selectedCount} actions, ${result.taskBrief.guards.selectedCount} guards`,
+        ]
+      : []),
     'Next step:',
     result.nextCommand ?? result.recommendedAction?.command ?? 'Review the questions below before editing code.',
     '',
@@ -109,6 +117,12 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `- code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `- execution surface: ${result.executionSurface.kind}`,
     `  reason: ${result.executionSurface.reason}`,
+    ...(result.taskBrief
+      ? [
+          `- execution phase: ${result.taskBrief.phase}`,
+          `- risk lane: ${result.taskBrief.riskLane}`,
+        ]
+      : []),
     `- plan: ${result.planPath}`,
     `- mission: ${result.missionPath} [${result.missionState}]`,
     `- questions: ${result.questionsPath} (${result.questionsWrite})`,
@@ -250,6 +264,7 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
       mission: parsed.mission,
       actor: parsed.actor,
       dryRun: parsed.dryRun,
+      executionPhase: parsed.executionPhase,
     });
     const output = parsed.compact ? buildCompactBackgroundEvalOutput(result) : result;
 
@@ -298,6 +313,7 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
     actor: parsed.actor,
     dryRun: parsed.dryRun,
     checkTimeoutMs: parsed.checkTimeoutMs,
+    executionPhase: parsed.executionPhase,
   });
   const output = parsed.compact ? buildCompactEvalOutput(result) : result;
 
@@ -331,6 +347,7 @@ export const runEvalCommand = async (args: string[]): Promise<void> => {
     `  reason: ${result.executionSurface.reason}`,
     `- mission path: ${result.missionPath} (${result.missionWrite})`,
     `- eval: ${result.evalPath} (${result.evalWrite})`,
+    `- execution phase: ${result.eval.executionPhase ?? 'closure'}`,
     `- recommendations: ${result.recommendationsPath} (${result.recommendationsWrite})`,
     `- status: ${result.eval.evaluationStatus}`,
     `- trust: ${result.eval.trust.trustLevel} / ${result.eval.trust.readiness}`,
@@ -681,6 +698,7 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
   let actor: string | undefined;
   let dryRun = false;
   let checkTimeoutMs: number | undefined;
+  let executionPhase: SkoposEvalExecutionPhase = 'closure';
   let background = false;
   let compact = false;
   let summary = false;
@@ -749,6 +767,21 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
       continue;
     }
 
+    if (argument === '--phase') {
+      const nextValue = args[index + 1];
+      if (!nextValue || nextValue.startsWith('-')) {
+        throw new Error('Missing value for --phase.');
+      }
+      executionPhase = parseEvalExecutionPhase(nextValue);
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--phase=')) {
+      executionPhase = parseEvalExecutionPhase(argument.slice('--phase='.length));
+      continue;
+    }
+
     if (argument === '--mission') {
       const nextValue = args[index + 1];
       if (!nextValue || nextValue.startsWith('-')) {
@@ -799,7 +832,27 @@ const parseEvalArgs = (args: string[]): ParsedEvalArgs => {
     throw new Error('Field selection requires --json.');
   }
 
-  return { cwd, mission, actor, dryRun, checkTimeoutMs, background, compact, summary, fields, json };
+  return {
+    cwd,
+    mission,
+    actor,
+    dryRun,
+    checkTimeoutMs,
+    executionPhase,
+    background,
+    compact,
+    summary,
+    fields,
+    json,
+  };
+};
+
+const parseEvalExecutionPhase = (value: string): SkoposEvalExecutionPhase => {
+  if (value === 'iteration' || value === 'stabilization' || value === 'closure') {
+    return value;
+  }
+
+  throw new Error('--phase must be iteration, stabilization, or closure.');
 };
 
 const parseNonNegativeInteger = (value: string, flagName: string): number => {

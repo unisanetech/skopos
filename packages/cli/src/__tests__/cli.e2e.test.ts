@@ -50,6 +50,21 @@ describe('skopos cli e2e', { timeout: 90000 }, () => {
     );
   });
 
+  it('prints discoverable UI subcommand help', () => {
+    const uiHelp = runCliText(['ui', '--help']);
+    expect(uiHelp).toContain('Skopos UI commands');
+    expect(uiHelp).toContain('skopos ui dev [target]');
+    expect(uiHelp).toContain('skopos ui serve [target]');
+
+    const devHelp = runCliText(['ui', 'dev', '--help']);
+    expect(devHelp).toContain('Skopos UI dev');
+    expect(devHelp).toContain('live workspace UI');
+
+    const serveHelp = runCliText(['ui', 'serve', '--help']);
+    expect(serveHelp).toContain('Skopos UI serve');
+    expect(serveHelp).toContain('snapshot preview');
+  });
+
   it('initializes a workspace and writes generated bootstrap artifacts', async () => {
     const workspaceDir = await createTempWorkspace();
     const result = runCliJson<{

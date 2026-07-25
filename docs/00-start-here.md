@@ -9,7 +9,7 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 - Owner: `skopos-core`
 - Scope: `skopos/docs`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `project/overview.md`
@@ -23,6 +23,7 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
   - `project/policy-pack-and-stack-intelligence-plan.md`
   - `project/implementation-checklist.md`
   - `architecture/00-architecture.md`
+  - `architecture/agent-native-operating-model.md`
   - `architecture/package-boundaries.md`
   - `architecture/runtime-model.md`
   - `architecture/retrieval-and-query-strategy.md`
@@ -43,8 +44,20 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
   - `decisions/036-project-modes-and-command-guided-agent-briefs.md`
   - `decisions/037-role-based-memory-and-agent-operating-layer.md`
   - `decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
+  - `decisions/039-agent-native-single-control-plane-and-project-adoption-contract.md`
+  - `decisions/040-project-adapted-skill-packs-as-capability-projections.md`
 
 ## Changelog
+
+- `2026-07-25`: Added Decision 040 and P1-W12 for project-adapted, task-selective
+  skill packs that compile into the existing context/action/guard model.
+
+- `2026-07-25`: Added the agent-native single-control-plane decision and operating
+  model. P1-W11 now owns convergence toward context/actions/guards, compact task intent,
+  progressive context, phase-separated proof, receipts, worktree-safe state, and full
+  downstream-project adoption without parallel LLM workflows.
+
+- `2026-06-30`: Added the command-discovery rule and common command surface so agents check docs/help before grepping source for Skopos command usage.
 
 - `2026-06-29`: Added the Skopos self-hosting mode and compatibility-boundary decision so internal work follows clean-refactor behavior while public surfaces keep explicit compatibility discipline.
 
@@ -103,28 +116,31 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 10. `project/implementation-checklist.md`
 11. `runbooks/local-development.md`
 12. `architecture/00-architecture.md`
-13. `architecture/package-boundaries.md`
-14. `architecture/runtime-model.md`
-15. `architecture/docs-governance.md`
-16. `architecture/retrieval-and-query-strategy.md`
-17. `architecture/trust-and-closure-model.md`
-18. `architecture/decision-escalation-model.md`
-19. `architecture/config-model.md`
-20. `architecture/artifact-model.md`
-21. `architecture/workflow-extension-model.md`
-22. `decisions/018-self-hosting-workflow-contract.md`
-23. `decisions/019-compiled-reference-layer-and-agent-memory-baseline.md`
-24. `decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-25. `decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
-26. `decisions/022-program-router-sequencing-and-obligation-contract.md`
-27. `decisions/029-policy-pack-stack-intelligence-and-memory-contract.md`
-28. `decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
-29. `decisions/034-post-init-setup-review-and-confirmed-understanding-contract.md`
-30. `decisions/035-agent-guided-project-understanding-contract.md`
-31. `decisions/036-project-modes-and-command-guided-agent-briefs.md`
-32. `decisions/037-role-based-memory-and-agent-operating-layer.md`
-33. `decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
-34. `findings/registry.md`
+13. `architecture/agent-native-operating-model.md`
+14. `architecture/package-boundaries.md`
+15. `architecture/runtime-model.md`
+16. `architecture/docs-governance.md`
+17. `architecture/retrieval-and-query-strategy.md`
+18. `architecture/trust-and-closure-model.md`
+19. `architecture/decision-escalation-model.md`
+20. `architecture/config-model.md`
+21. `architecture/artifact-model.md`
+22. `architecture/workflow-extension-model.md`
+23. `decisions/018-self-hosting-workflow-contract.md`
+24. `decisions/019-compiled-reference-layer-and-agent-memory-baseline.md`
+25. `decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
+26. `decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
+27. `decisions/022-program-router-sequencing-and-obligation-contract.md`
+28. `decisions/029-policy-pack-stack-intelligence-and-memory-contract.md`
+29. `decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
+30. `decisions/034-post-init-setup-review-and-confirmed-understanding-contract.md`
+31. `decisions/035-agent-guided-project-understanding-contract.md`
+32. `decisions/036-project-modes-and-command-guided-agent-briefs.md`
+33. `decisions/037-role-based-memory-and-agent-operating-layer.md`
+34. `decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
+35. `decisions/039-agent-native-single-control-plane-and-project-adoption-contract.md`
+36. `decisions/040-project-adapted-skill-packs-as-capability-projections.md`
+37. `findings/registry.md`
 
 ## Self-Hosting Mode
 
@@ -142,7 +158,10 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 12. Treat the `projectKnowledge` block from `skopos start` and `skopos next` as the first context hint before loading broader docs.
 13. Use `skopos mission item complete <mission-id> <item-id> . --actor <id>` when a checklist item is genuinely done, so the UI, mission JSON, and next-step router stay aligned.
 14. Use `skopos decide <question-id> <option-id>` whenever `skopos start` or `skopos next` returns a blocking workflow question instead of clearing the blocker only in chat context.
-15. Use `skopos eval . --mission <id> --actor <id>` after implementation when the current mission reaches validation and proof.
+15. Use the existing eval authority by phase: `--phase iteration` for changed-scope
+    feedback, `--phase stabilization` to review owner-generator evidence, and
+    `--phase closure` once for final checks and proof. Omitting `--phase` remains
+    backward-compatible closure behavior.
 16. Use `skopos ui dev .` while actively changing project state; use `skopos ui serve .` only when a static snapshot preview is enough.
 17. Treat the router `executionSurface` guidance as advisory workflow hygiene: stay `artifact-only` by default and only add a temporary workpack doc when the reported coordination signals justify it.
 18. The first low-noise program-router slice now exists through `.skopos/program/state.json`, `skopos program sync`, and `skopos program next`.
@@ -150,22 +169,56 @@ Use this file as the minimum deterministic entrypoint for contributors and codin
 20. Discussion continuity remains the adjacent memory slice: checkpoints and handoffs still need to feed the program router so accepted direction survives compaction and new-thread continuation without replaying raw chat.
 21. Routed UI adoption is still pending, so `overview`, `mission detail`, `trust`, and the search dock do not yet surface the full program-state guidance directly.
 
+## Command Discovery
+
+Agents should not need to search source files to learn normal Skopos commands. Check these surfaces first:
+
+1. `AGENTS.md`
+2. this file
+3. `project/workflows.md`
+4. `skopos --help`
+5. subcommand help, for example `skopos ui --help` or `skopos ui dev --help`
+
+Source search is a fallback when the documented surface is missing, stale, or unclear.
+
+Common commands:
+
+1. `skopos knowledge . --compact`
+2. `skopos setup review .`
+3. `skopos understand . --actor <id>`
+4. `skopos program next . --compact --json`
+5. `skopos start "<goal>" . --actor <id>`
+6. `skopos next . --actor <id>`
+7. `skopos trust . --actor <id> --compact`
+8. `skopos ui dev . --host 127.0.0.1 --port <port>`
+9. `skopos ui serve . --host 127.0.0.1 --port <port>`
+10. `skopos ui render .`
+11. `skopos instructions sync . --actor <id>`
+12. `skopos workflows list .`
+13. `skopos workflows run <workflow-id> . --actor <id>`
+14. `skopos eval . --mission <mission-id> --actor <id> --phase iteration`
+15. `skopos eval . --mission <mission-id> --actor <id> --phase stabilization`
+16. `skopos eval . --mission <mission-id> --actor <id> --phase closure`
+
 ## Immediate Build Priorities
 
-1. Fix proof/readiness correctness so scanner-only understanding cannot pass as agent-ready.
-2. Keep Skopos core generic and project-agnostic.
-3. Implement durable project modes: `brownfield`, `clean-refactor`, `greenfield-in-existing-repo`, and `new-project`.
-4. Add a no-legacy cleanup policy for cleanup/refactor modes.
-5. Make Skopos self-hosting use clean-refactor behavior internally while public CLI/package/schema surfaces keep compatibility discipline.
-6. Make memory roles first-class so existing docs are mapped before Skopos suggests new docs.
-7. Upgrade `skopos understand` into agent-led project analysis that produces reviewed project memory.
-8. Make `skopos next` and related commands return practical agent prompt briefs.
-9. Show project mode, memory readiness, open assumptions, findings, cleanup obligations, current lane, and next action in the UI.
-10. Prove the full flow through new-project, brownfield-preserve, clean-refactor, and Skopos-on-Skopos pilots.
-11. Use instruction mirror sync rather than hand-editing tool-specific instruction files.
-12. Run Skopos against the Skopos subtree itself through Skopos-native plan, mission, workflow, trust, and finding state.
-13. Use `skopos start` to route self-hosted feature and proof-phase batch execution, including linked slice missions when the generated mission proves too broad.
-14. Keep the first program-router slice stable while discussion-memory inputs and routed UI adoption land on top of it.
-15. Turn structural friction into findings or benchmark gaps.
-16. Build policy-pack and stack-intelligence work from real schemas, proof fixtures, accepted decisions, and drift gates rather than placeholder pack content.
-17. Keep docs concise and archive-aware from day one.
+1. Execute P1-W11 before broader control-plane expansion: converge on one Skopos
+   authority, context/actions/guards, compact task intent, phase-separated proof,
+   receipts, worktree-safe state, and portable downstream-project adoption.
+2. Fix proof/readiness correctness so scanner-only understanding cannot pass as agent-ready.
+3. Keep Skopos core generic and project-agnostic.
+4. Implement durable project modes: `brownfield`, `clean-refactor`, `greenfield-in-existing-repo`, and `new-project`.
+5. Add a no-legacy cleanup policy for cleanup/refactor modes.
+6. Make Skopos self-hosting use clean-refactor behavior internally while public CLI/package/schema surfaces keep compatibility discipline.
+7. Make memory roles first-class so existing docs are mapped before Skopos suggests new docs.
+8. Upgrade `skopos understand` into agent-led project analysis that produces reviewed project memory.
+9. Make `skopos next` and related commands return practical agent prompt briefs.
+10. Show project mode, memory readiness, open assumptions, findings, cleanup obligations, current lane, and next action in the UI.
+11. Prove the full flow through new-project, brownfield-preserve, clean-refactor, and Skopos-on-Skopos pilots.
+12. Use instruction mirror sync rather than hand-editing tool-specific instruction files.
+13. Run Skopos against the Skopos subtree itself through Skopos-native plan, mission, workflow, trust, and finding state.
+14. Use `skopos start` to route self-hosted feature and proof-phase batch execution, including linked slice missions when the generated mission proves too broad.
+15. Keep the first program-router slice stable while discussion-memory inputs and routed UI adoption land on top of it.
+16. Turn structural friction into findings or benchmark gaps.
+17. Build policy-pack and stack-intelligence work from real schemas, proof fixtures, accepted decisions, and drift gates rather than placeholder pack content.
+18. Keep docs concise and archive-aware from day one.

@@ -1,6 +1,8 @@
 import type { SkoposMissionArtifact, SkoposPlanRunResult } from './skopos-plan.js';
+import type { SkoposCompactTaskBrief } from './skopos-agent-native-operating-model.js';
 import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
 import type { SkoposResolvedScope } from './skopos-scope-lite.js';
+import type { SkoposTaskStatePaths } from './skopos-task-identity.js';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
@@ -18,6 +20,7 @@ export interface SkoposStartRunResult {
   actorId?: string;
   scope: SkoposResolvedScope;
   codeAllowed: boolean;
+  taskState?: SkoposTaskStatePaths;
   planId: string;
   planPath: string;
   missionId: string;
@@ -30,6 +33,7 @@ export interface SkoposStartRunResult {
   recommendationsPath: string;
   recommendationsWrite: 'written' | 'dry-run';
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
+  taskBrief?: SkoposCompactTaskBrief;
   recommendations: SkoposWorkflowRecommendationArtifact;
   projectKnowledge: SkoposProjectKnowledgeGuidance;
   blockingQuestions: SkoposWorkflowQuestionEntry[];

@@ -1,4 +1,4 @@
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 import type { SkoposProgramSyncRunResult } from '@skopos/model';
 
@@ -16,6 +16,12 @@ import {
   buildSkoposProgramState,
   PROGRAM_STATE_ARTIFACT_PATH,
 } from './program-state.service.js';
+import {
+  resolveTaskProgramBriefArtifactPath,
+  resolveTaskProgramStateArtifactPath,
+  resolveTaskQuestionsArtifactPath,
+  resolveTaskRecommendationsArtifactPath,
+} from '../workflow-router/workflow-router-state.service.js';
 
 export interface BuildSkoposProgramSyncRuntimeOptions {
   cwd: string;
@@ -36,11 +42,21 @@ export const buildSkoposProgramSyncRuntime = async ({
       actorId,
     });
   const statePath = join(workspaceRoot, PROGRAM_STATE_ARTIFACT_PATH);
+  const authorityStatePath = artifact.taskIdentity
+    ? resolveTaskProgramStateArtifactPath(workspaceRoot, artifact.taskIdentity)
+    : statePath;
   const stateWrite = await writeJsonArtifact({
-    artifactPath: statePath,
+    artifactPath: authorityStatePath,
     artifact,
     dryRun,
   });
+  if (authorityStatePath !== statePath) {
+    await writeJsonArtifact({
+      artifactPath: statePath,
+      artifact,
+      dryRun,
+    });
+  }
   const summary = buildProgramSyncSummary({
     currentMission,
     doNowItem,
@@ -48,22 +64,34 @@ export const buildSkoposProgramSyncRuntime = async ({
     recommendedAction,
     currentDisposition: artifact.sequence.interruptRecommendation.decision,
   });
+  const programBrief = buildSkoposAgentProgramBrief({
+    workspaceRoot,
+    result: {
+      summary,
+      state: artifact,
+      currentMissionId: currentMission?.id,
+      doNowItem,
+      doNextItem,
+      recommendedAction,
+      nextCommand: recommendedAction?.command,
+    },
+  });
+  const compatibilityProgramBriefPath = join(workspaceRoot, PROGRAM_BRIEF_ARTIFACT_PATH);
+  const authorityProgramBriefPath = artifact.taskIdentity
+    ? resolveTaskProgramBriefArtifactPath(workspaceRoot, artifact.taskIdentity)
+    : compatibilityProgramBriefPath;
   await writeSkoposAgentBrief({
-    artifactPath: join(workspaceRoot, PROGRAM_BRIEF_ARTIFACT_PATH),
-    artifact: buildSkoposAgentProgramBrief({
-      workspaceRoot,
-      result: {
-        summary,
-        state: artifact,
-        currentMissionId: currentMission?.id,
-        doNowItem,
-        doNextItem,
-        recommendedAction,
-        nextCommand: recommendedAction?.command,
-      },
-    }),
+    artifactPath: authorityProgramBriefPath,
+    artifact: programBrief,
     dryRun,
   });
+  if (authorityProgramBriefPath !== compatibilityProgramBriefPath) {
+    await writeSkoposAgentBrief({
+      artifactPath: compatibilityProgramBriefPath,
+      artifact: programBrief,
+      dryRun,
+    });
+  }
   await refreshSkoposDiscussionResumeArtifacts({
     workspaceRoot,
     dryRun,
@@ -74,7 +102,12 @@ export const buildSkoposProgramSyncRuntime = async ({
     eventKind: 'program-sync',
     status: dryRun ? 'dry-run' : 'succeeded',
     summary,
-    relatedArtifactPaths: [statePath],
+    relatedArtifactPaths: [
+      authorityStatePath,
+      statePath,
+      authorityProgramBriefPath,
+      compatibilityProgramBriefPath,
+    ],
     metadata: {
       actorId: actorId ?? null,
       currentMissionId: currentMission?.id ?? null,
@@ -93,6 +126,26 @@ export const buildSkoposProgramSyncRuntime = async ({
     workspaceRoot,
     actorId,
     summary,
+    taskState: artifact.taskIdentity
+      ? {
+          authorityDirectory: dirname(authorityStatePath),
+          questionsPath: resolveTaskQuestionsArtifactPath(workspaceRoot, artifact.taskIdentity),
+          recommendationsPath: resolveTaskRecommendationsArtifactPath(
+            workspaceRoot,
+            artifact.taskIdentity,
+          ),
+          compatibilityQuestionsPath: join(workspaceRoot, '.skopos', 'questions.json'),
+          compatibilityRecommendationsPath: join(
+            workspaceRoot,
+            '.skopos',
+            'recommendations.json',
+          ),
+          programStatePath: authorityStatePath,
+          programBriefPath: authorityProgramBriefPath,
+          compatibilityProgramStatePath: statePath,
+          compatibilityProgramBriefPath,
+        }
+      : undefined,
     statePath,
     stateWrite,
     state: artifact,

@@ -1,12 +1,17 @@
 import { access, readFile, readdir } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 
 import { loadSkoposConfig } from '@skopos/config';
 import { loadSkoposWorkflowManifests } from '@skopos/indexer';
-import { buildSkoposTrustReport } from '@skopos/trust';
+import {
+  buildSkoposImpactReport,
+  buildSkoposTrustReport,
+  validateSkoposWorkflowReceipt,
+} from '@skopos/trust';
 import type {
   SkoposEvalArtifact,
   SkoposEvalCheckRun,
+  SkoposEvalExecutionPhase,
   SkoposEvalProofEvidence,
   SkoposEvalRunResult,
   SkoposMissionArtifact,
@@ -17,6 +22,10 @@ import type {
   SkoposWorkflowRequirementEvidence,
 } from '@skopos/model';
 
+import {
+  selectSkoposEvalCheckCommands,
+  selectSkoposEvalWorkflowIds,
+} from '../agent-native/phase-execution.js';
 import { resolveMissionPath } from '../mission/mission.service.js';
 import {
   appendSkoposOperationalLogEntry,
@@ -38,11 +47,13 @@ import {
   buildWorkflowRecommendationsArtifact,
   filterWorkflowQuestionsForMission,
   getBlockingWorkflowQuestions,
-  loadWorkflowQuestionsArtifact,
-  loadWorkflowRecommendationsArtifact,
-  QUESTIONS_ARTIFACT_PATH,
-  RECOMMENDATIONS_ARTIFACT_PATH,
 } from '../workflow-router/workflow-router-state.service.js';
+import {
+  loadWorkflowQuestionsForMission,
+  resolveMissionTaskIdentity,
+  writeWorkflowQuestionsState,
+  writeWorkflowRecommendationsState,
+} from '../workflow-router/workflow-router-task-state.service.js';
 
 export interface BuildSkoposEvalRuntimeOptions {
   cwd: string;
@@ -50,6 +61,7 @@ export interface BuildSkoposEvalRuntimeOptions {
   actor?: string;
   dryRun?: boolean;
   checkTimeoutMs?: number;
+  executionPhase?: SkoposEvalExecutionPhase;
 }
 
 const DEFAULT_EVAL_CHECK_TIMEOUT_MS = 120_000;
@@ -60,17 +72,25 @@ export const buildSkoposEvalRuntime = async ({
   actor,
   dryRun = false,
   checkTimeoutMs = DEFAULT_EVAL_CHECK_TIMEOUT_MS,
+  executionPhase = 'closure',
 }: BuildSkoposEvalRuntimeOptions): Promise<SkoposEvalRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = requireActorId(actor);
-  const loadedQuestions = await loadOptionalWorkflowQuestionsArtifact(workspaceRoot);
-  const loadedRecommendations = await loadOptionalWorkflowRecommendationsArtifact(workspaceRoot);
-  const currentMission = await resolveCurrentMissionRuntime({
+  const resolvedMission = await resolveCurrentMissionRuntime({
     workspaceRoot,
     mission,
     actorId,
-    questions: loadedQuestions,
-    recommendations: loadedRecommendations,
+  });
+  const taskIdentity = await resolveMissionTaskIdentity({
+    workspaceRoot,
+    mission: resolvedMission,
+    actorId,
+  });
+  const currentMission = { ...resolvedMission, taskIdentity };
+  const loadedQuestions = await loadWorkflowQuestionsForMission({
+    workspaceRoot,
+    mission: currentMission,
+    actorId,
   });
   const questions = loadedQuestions
     ? filterWorkflowQuestionsForMission({
@@ -86,29 +106,54 @@ export const buildSkoposEvalRuntime = async ({
     mission: currentMission,
     questions,
   });
+  const workflows = await loadSkoposWorkflowManifests({
+    cwd: workspaceRoot,
+  });
+  const changedScopeImpact =
+    executionPhase === 'iteration'
+      ? await buildSkoposImpactReport({
+          cwd: workspaceRoot,
+        })
+      : undefined;
+  const changedPaths = changedScopeImpact?.changedPaths ?? [];
+  const selectedCheckCommands = selectSkoposEvalCheckCommands({
+    executionPhase,
+    missionChecks: currentMission.recommendedChecks,
+    changedScopeChecks: changedScopeImpact?.recommendedChecks,
+  });
+  const selectedWorkflowIds = selectSkoposEvalWorkflowIds({
+    executionPhase,
+    missionWorkflowIds: currentMission.recommendedWorkflowIds,
+    workflows,
+  });
   const checkRuns = evaluationAllowed
     ? await runMissionChecks({
         workspaceRoot,
-        mission: currentMission,
+        commands: selectedCheckCommands,
+        executionPhase,
         dryRun,
         checkTimeoutMs,
       })
     : buildSkippedCheckRuns({
-        mission: currentMission,
+        commands: selectedCheckCommands,
+        executionPhase,
         reason:
           'Evaluation is blocked until the active mission is claimed and all blocking workflow questions are resolved.',
       });
-  const workflows = await loadSkoposWorkflowManifests({
-    cwd: workspaceRoot,
-  });
   const workflowEvidence = await buildMissionWorkflowEvidence({
     workspaceRoot,
-    mission: currentMission,
+    workflowIds: selectedWorkflowIds,
     workflows,
   });
-  const proof = await buildProofEvidence({
-    workspaceRoot,
-  });
+  const proof =
+    executionPhase === 'closure'
+      ? await buildProofEvidence({
+          workspaceRoot,
+        })
+      : buildPhaseDeferredProofEvidence({
+          workspaceRoot,
+          executionPhase,
+        });
   const proofRequiredForDone = await resolveRequireProofForDone({
     workspaceRoot,
     workflows,
@@ -119,6 +164,7 @@ export const buildSkoposEvalRuntime = async ({
   });
   const evaluationStatus = deriveEvaluationStatus({
     evaluationAllowed,
+    executionPhase,
     blockingQuestions,
     checkRuns,
     workflowEvidence,
@@ -132,6 +178,7 @@ export const buildSkoposEvalRuntime = async ({
     questions,
     actorId,
     updatedAt: evaluatedAt,
+    executionPhase,
     checkRuns,
     workflowEvidence,
     evaluationStatus,
@@ -142,6 +189,7 @@ export const buildSkoposEvalRuntime = async ({
     planId: updatedMission.planId,
     mission: updatedMission,
     questions,
+    taskIdentity,
   });
   const recommendedAction = recommendations.entries.find((entry) => entry.status === 'open');
   const pendingItemIds = updatedMission.items
@@ -150,6 +198,7 @@ export const buildSkoposEvalRuntime = async ({
   const summary = buildSummary({
     mission: updatedMission,
     evaluationStatus,
+    executionPhase,
     checkRuns,
     workflowEvidence,
     proof,
@@ -171,6 +220,9 @@ export const buildSkoposEvalRuntime = async ({
     pendingItemIds,
     summary,
     generatedAt: evaluatedAt,
+    executionPhase,
+    changedPaths,
+    selectedCheckCommands,
   });
   const missionWrite = await writeJsonArtifact({
     artifactPath: missionPath,
@@ -183,12 +235,18 @@ export const buildSkoposEvalRuntime = async ({
     artifact: evalArtifact,
     dryRun,
   });
-  const recommendationsPath = join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH);
-  const recommendationsWrite = await writeJsonArtifact({
-    artifactPath: recommendationsPath,
+  const questionsState = await writeWorkflowQuestionsState({
+    workspaceRoot,
+    artifact: { ...questions, taskIdentity },
+    dryRun,
+  });
+  const recommendationsState = await writeWorkflowRecommendationsState({
+    workspaceRoot,
     artifact: recommendations,
     dryRun,
   });
+  const recommendationsPath = recommendationsState.compatibilityPath;
+  const recommendationsWrite = recommendationsState.write;
   await writeSkoposAgentBrief({
     artifactPath: resolveAgentEvalBriefArtifactPath(workspaceRoot, updatedMission.id),
     artifact: buildSkoposAgentEvalBrief({
@@ -223,12 +281,20 @@ export const buildSkoposEvalRuntime = async ({
     eventKind: 'eval',
     status: dryRun ? 'dry-run' : evaluationStatus === 'blocked' ? 'failed' : 'succeeded',
     summary,
-    relatedArtifactPaths: [missionPath, evalPath, recommendationsPath],
+    relatedArtifactPaths: [
+      missionPath,
+      evalPath,
+      questionsState.authorityPath,
+      questionsState.compatibilityPath,
+      recommendationsState.authorityPath,
+      recommendationsPath,
+    ],
     metadata: {
       actorId,
       missionId: updatedMission.id,
       planId: updatedMission.planId,
       evaluationStatus,
+      executionPhase,
       codeAllowed: evaluationAllowed,
       blockingQuestionCount: blockingQuestions.length,
       checkPassCount: checkRuns.filter((entry) => entry.status === 'pass').length,
@@ -249,6 +315,13 @@ export const buildSkoposEvalRuntime = async ({
     workspaceRoot,
     actorId,
     summary,
+    taskState: {
+      authorityDirectory: dirname(questionsState.authorityPath),
+      questionsPath: questionsState.authorityPath,
+      recommendationsPath: recommendationsState.authorityPath,
+      compatibilityQuestionsPath: questionsState.compatibilityPath,
+      compatibilityRecommendationsPath: recommendationsState.compatibilityPath,
+    },
     missionId: updatedMission.id,
     missionPath,
     missionWrite,
@@ -256,7 +329,7 @@ export const buildSkoposEvalRuntime = async ({
     evalPath,
     evalWrite,
     eval: evalArtifact,
-    questionsPath: join(workspaceRoot, QUESTIONS_ARTIFACT_PATH),
+    questionsPath: questionsState.compatibilityPath,
     questions,
     blockingQuestions,
     recommendationsPath,
@@ -283,6 +356,9 @@ const buildEvalArtifact = ({
   pendingItemIds,
   summary,
   generatedAt,
+  executionPhase,
+  changedPaths,
+  selectedCheckCommands,
 }: {
   workspaceRoot: string;
   actorId: string;
@@ -298,6 +374,9 @@ const buildEvalArtifact = ({
   pendingItemIds: string[];
   summary: string;
   generatedAt: string;
+  executionPhase: SkoposEvalExecutionPhase;
+  changedPaths: string[];
+  selectedCheckCommands: string[];
 }): SkoposEvalArtifact => ({
   schemaVersion: 1,
   id: `eval-${mission.id}`,
@@ -308,6 +387,7 @@ const buildEvalArtifact = ({
   updatedAt: generatedAt,
   generatedAt,
   workspaceRoot,
+  taskIdentity: mission.taskIdentity,
   actorId,
   missionId: mission.id,
   missionTitle: mission.title,
@@ -317,6 +397,9 @@ const buildEvalArtifact = ({
     mission,
     questions,
   }),
+  executionPhase,
+  changedPaths,
+  selectedCheckCommands,
   evaluationStatus,
   blockingQuestionIds: blockingQuestions.map((entry) => entry.id),
   pendingItemIds,
@@ -346,6 +429,7 @@ const buildUpdatedMission = ({
   questions,
   actorId,
   updatedAt,
+  executionPhase,
   checkRuns,
   workflowEvidence,
   evaluationStatus,
@@ -354,6 +438,7 @@ const buildUpdatedMission = ({
   questions: SkoposWorkflowQuestionArtifact;
   actorId: string;
   updatedAt: string;
+  executionPhase: SkoposEvalExecutionPhase;
   checkRuns: SkoposEvalCheckRun[];
   workflowEvidence: SkoposWorkflowRequirementEvidence[];
   evaluationStatus: SkoposEvalArtifact['evaluationStatus'];
@@ -376,6 +461,30 @@ const buildUpdatedMission = ({
           ...item,
           status: 'complete',
         };
+      }
+
+      if (executionPhase === 'iteration') {
+        return item;
+      }
+
+      if (executionPhase === 'stabilization') {
+        if (item.id === 'step-run-workflows' && workflowEvidence.length > 0) {
+          return {
+            ...item,
+            status: workflowsPassed ? 'complete' : 'pending',
+          };
+        }
+
+        if (item.kind === 'workflow' && item.id.startsWith('workflow-')) {
+          return {
+            ...item,
+            status: workflowPassIds.has(item.id.slice('workflow-'.length))
+              ? 'complete'
+              : item.status,
+          };
+        }
+
+        return item;
       }
 
       if (
@@ -451,6 +560,7 @@ const isDecisionItemResolved = ({
 
 const deriveEvaluationStatus = ({
   evaluationAllowed,
+  executionPhase,
   blockingQuestions,
   checkRuns,
   workflowEvidence,
@@ -459,6 +569,7 @@ const deriveEvaluationStatus = ({
   trustLevel,
 }: {
   evaluationAllowed: boolean;
+  executionPhase: SkoposEvalExecutionPhase;
   blockingQuestions: Array<{ id: string }>;
   checkRuns: SkoposEvalCheckRun[];
   workflowEvidence: SkoposWorkflowRequirementEvidence[];
@@ -478,15 +589,22 @@ const deriveEvaluationStatus = ({
     return 'needs-review';
   }
 
-  if (proof.status === 'fail' || trustLevel === 'low') {
+  if (trustLevel === 'low') {
     return 'blocked';
   }
 
-  if (
-    workflowEvidence.some((entry) => entry.status === 'fail') ||
-    (proofRequiredForDone && proof.status === 'missing')
-  ) {
+  if (workflowEvidence.some((entry) => entry.status === 'fail')) {
     return 'needs-review';
+  }
+
+  if (executionPhase === 'closure') {
+    if (proof.status === 'fail') {
+      return 'blocked';
+    }
+
+    if (proofRequiredForDone && proof.status === 'missing') {
+      return 'needs-review';
+    }
   }
 
   return 'complete';
@@ -495,6 +613,7 @@ const deriveEvaluationStatus = ({
 const buildSummary = ({
   mission,
   evaluationStatus,
+  executionPhase,
   checkRuns,
   workflowEvidence,
   proof,
@@ -502,6 +621,7 @@ const buildSummary = ({
 }: {
   mission: SkoposMissionArtifact;
   evaluationStatus: SkoposEvalArtifact['evaluationStatus'];
+  executionPhase: SkoposEvalExecutionPhase;
   checkRuns: SkoposEvalCheckRun[];
   workflowEvidence: SkoposWorkflowRequirementEvidence[];
   proof: SkoposEvalProofEvidence;
@@ -513,27 +633,31 @@ const buildSummary = ({
   const failedWorkflowEvidence = workflowEvidence.filter((entry) => entry.status === 'fail').length;
   const proofSummary =
     proof.status === 'missing' && !proofRequiredForDone ? 'optional-proof missing' : `proof ${proof.status}`;
+  const phaseLabel = executionPhase === 'closure' ? 'Eval' : `Eval ${executionPhase}`;
 
-  return `Eval ${evaluationStatus} for ${mission.id} with ${passingChecks} passing checks, ${failedChecks} failed checks, ${timedOutChecks} timed-out checks, ${failedWorkflowEvidence} workflow evidence gaps, and ${proofSummary}.`;
+  return `${phaseLabel} ${evaluationStatus} for ${mission.id} with ${passingChecks} passing checks, ${failedChecks} failed checks, ${timedOutChecks} timed-out checks, ${failedWorkflowEvidence} workflow evidence gaps, and ${proofSummary}.`;
 };
 
 const runMissionChecks = async ({
   workspaceRoot,
-  mission,
+  commands,
+  executionPhase,
   dryRun,
   checkTimeoutMs,
 }: {
   workspaceRoot: string;
-  mission: SkoposMissionArtifact;
+  commands: string[];
+  executionPhase: SkoposEvalExecutionPhase;
   dryRun: boolean;
   checkTimeoutMs: number;
 }): Promise<SkoposEvalCheckRun[]> => {
   const runs: SkoposEvalCheckRun[] = [];
 
-  for (const command of mission.recommendedChecks) {
+  for (const command of commands) {
     if (dryRun) {
       runs.push({
         command,
+        executionPhase,
         status: 'skipped',
         summary: 'Check execution skipped because eval ran in dry-run mode.',
         exitCode: null,
@@ -548,6 +672,7 @@ const runMissionChecks = async ({
     });
     runs.push({
       command,
+      executionPhase,
       status: execution.timedOut ? 'timed-out' : execution.exitCode === 0 ? 'pass' : 'fail',
       summary:
         execution.timedOut
@@ -580,14 +705,17 @@ const formatTimeout = (timeoutMs: number): string => {
 };
 
 const buildSkippedCheckRuns = ({
-  mission,
+  commands,
+  executionPhase,
   reason,
 }: {
-  mission: SkoposMissionArtifact;
+  commands: string[];
+  executionPhase: SkoposEvalExecutionPhase;
   reason: string;
 }): SkoposEvalCheckRun[] =>
-  mission.recommendedChecks.map((command) => ({
+  commands.map((command) => ({
     command,
+    executionPhase,
     status: 'skipped',
     summary: reason,
     exitCode: null,
@@ -595,21 +723,21 @@ const buildSkippedCheckRuns = ({
 
 const buildMissionWorkflowEvidence = async ({
   workspaceRoot,
-  mission,
+  workflowIds,
   workflows,
 }: {
   workspaceRoot: string;
-  mission: SkoposMissionArtifact;
+  workflowIds: string[];
   workflows: SkoposWorkflowManifest[];
 }): Promise<SkoposWorkflowRequirementEvidence[]> => {
-  if (mission.recommendedWorkflowIds.length === 0) {
+  if (workflowIds.length === 0) {
     return [];
   }
 
   const runArtifacts = await loadWorkflowRunArtifacts(workspaceRoot);
 
   return Promise.all(
-    mission.recommendedWorkflowIds.map(async (workflowId) => {
+    workflowIds.map(async (workflowId) => {
       const workflow = workflows.find((entry) => entry.id === workflowId);
       if (!workflow) {
         return {
@@ -654,6 +782,25 @@ const buildMissionWorkflowEvidence = async ({
         } satisfies SkoposWorkflowRequirementEvidence;
       }
 
+      const receiptValidation = await validateSkoposWorkflowReceipt({
+        workspaceRoot,
+        manifest: workflow,
+        artifact: latestSuccessfulRun,
+      });
+      if (receiptValidation.status === 'stale') {
+        return {
+          ...baseEvidence,
+          status: 'fail',
+          summary: receiptValidation.summary,
+          receiptStatus: receiptValidation.status,
+          receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+          receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
+          latestSuccessfulRunId: latestSuccessfulRun.id,
+          latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
+          latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
+        } satisfies SkoposWorkflowRequirementEvidence;
+      }
+
       const outputsPresent = await Promise.all(
         baseEvidence.outputPaths.map(async (outputPath) => {
           try {
@@ -671,6 +818,9 @@ const buildMissionWorkflowEvidence = async ({
           status: 'fail',
           summary:
             'The workflow has successful run evidence, but one or more declared outputs are missing.',
+          receiptStatus: receiptValidation.status,
+          receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+          receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
           latestSuccessfulRunId: latestSuccessfulRun.id,
           latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
           latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
@@ -680,7 +830,13 @@ const buildMissionWorkflowEvidence = async ({
       return {
         ...baseEvidence,
         status: 'pass',
-        summary: 'A successful workflow run exists for this mission workflow.',
+        summary:
+          receiptValidation.status === 'valid'
+            ? 'A valid source-bound workflow receipt exists for this mission workflow.'
+            : 'A legacy successful workflow run exists; source-bound reuse requires a new receipt.',
+        receiptStatus: receiptValidation.status,
+        receiptExecutionKey: latestSuccessfulRun.receipt?.executionKey,
+        receiptSourceDigest: latestSuccessfulRun.receipt?.sourceState.digest,
         latestSuccessfulRunId: latestSuccessfulRun.id,
         latestSuccessfulRunAt: latestSuccessfulRun.finishedAt ?? latestSuccessfulRun.updatedAt,
         latestSuccessfulRunByActorId: latestSuccessfulRun.runByActorId,
@@ -711,6 +867,18 @@ const hasRegisteredProofWorkflow = (workflows: SkoposWorkflowManifest[]): boolea
       workflow.command.includes('proof') ||
       workflow.outputs.some((outputPath) => outputPath.includes('.skopos/proof')),
   );
+
+const buildPhaseDeferredProofEvidence = ({
+  workspaceRoot,
+  executionPhase,
+}: {
+  workspaceRoot: string;
+  executionPhase: Exclude<SkoposEvalExecutionPhase, 'closure'>;
+}): SkoposEvalProofEvidence => ({
+  path: relative(workspaceRoot, join(workspaceRoot, '.skopos', 'proof', 'latest-report.json')),
+  status: 'not-required',
+  summary: `Final proof is not required during ${executionPhase}; closure remains the only final proof phase.`,
+});
 
 const buildProofEvidence = async ({
   workspaceRoot,
@@ -771,26 +939,6 @@ const loadWorkflowRunArtifacts = async (
   }
 };
 
-const loadOptionalWorkflowQuestionsArtifact = async (
-  workspaceRoot: string,
-): Promise<SkoposWorkflowQuestionArtifact | undefined> => {
-  try {
-    return await loadWorkflowQuestionsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
-};
-
-const loadOptionalWorkflowRecommendationsArtifact = async (
-  workspaceRoot: string,
-): Promise<{ generatedForMissionId?: string } | undefined> => {
-  try {
-    return await loadWorkflowRecommendationsArtifact(workspaceRoot);
-  } catch {
-    return undefined;
-  }
-};
-
 const buildEmptyWorkflowQuestionsArtifact = ({
   workspaceRoot,
   mission,
@@ -810,6 +958,7 @@ const buildEmptyWorkflowQuestionsArtifact = ({
   updatedAt: mission.updatedAt,
   generatedAt: mission.generatedAt ?? mission.updatedAt,
   workspaceRoot,
+  taskIdentity: mission.taskIdentity,
   generatedForPlanId: mission.planId,
   generatedForMissionId: mission.id,
   entries: [],

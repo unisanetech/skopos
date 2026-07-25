@@ -2,7 +2,7 @@
 title: Agentic Operating Plan
 status: active
 owner: skopos-core
-lastUpdated: 2026-06-29
+lastUpdated: 2026-07-25
 ---
 
 # Agentic Operating Plan
@@ -24,6 +24,55 @@ Skopos works through three layers:
 | Command-guided agent briefs | Practical instructions for what the coding agent should read, ask, edit, check, remember, and close. |
 
 The docs are the durable truth. The generated state is the fast machine layer. The commands are the operating guide for agents.
+
+## Agent-Native Convergence
+
+The target model is intentionally smaller than the current implemented command and
+artifact surface:
+
+```text
+user intent
+  -> compact task contract
+  -> context + actions + guards
+  -> agent implementation
+  -> changed-scope feedback
+  -> stabilization
+  -> acceptance-linked final proof
+  -> promoted memory delta
+```
+
+Skopos must not reproduce planning, question asking, tool selection, failure recovery, or
+subagent coordination already performed by the coding agent. It persists those states
+only when risk, duration, interruption, or multi-agent coordination justifies durable
+tracking.
+
+The current `start`/`next`/`eval`/`trust`/`done` surface remains implemented truth during
+convergence. P1-W11 owns migration toward a smaller public workflow; docs must distinguish
+target direction from commands available today.
+
+## Context, Actions, And Guards
+
+| Primitive | Responsibility |
+| --- | --- |
+| Context | Compact authoritative project and task truth |
+| Action | Discoverable project capability with safety, inputs, outputs, phase, and evidence |
+| Guard | Deterministic prevention, approval, validation, and closure enforcement |
+
+Complex projects adopt Skopos as the one workflow control plane and contribute only
+their project-specific context, actions, and guards. Generic gaps improve Skopos;
+domain-specific grammar remains in the project.
+
+## Task And Evidence Discipline
+
+1. protect user intent with goal, scope, acceptance criteria, non-goals, constraints,
+   open decisions, and proof
+2. load context progressively and return deltas after the first brief
+3. distinguish declared, accepted, observed, inferred, proposed, and historical truth
+4. retrieve negative knowledge such as retired and rejected patterns
+5. map acceptance criteria to deterministic and behavioral evidence
+6. bind expensive proof receipts to source/config/provider/environment freshness
+7. isolate active state by task, branch, worktree, and actor
+8. promote only accepted project-memory changes after closure
 
 ## Who Skopos Helps
 
@@ -396,6 +445,10 @@ Skopos is working when agents consistently:
 9. close only with proof
 
 ## Changelog
+
+- `2026-07-25`: Added the agent-native convergence target, context/action/guard model,
+  task-intent contract, authority and negative knowledge, phase-separated proof,
+  receipts, worktree isolation, and single-control-plane downstream adoption.
 
 - 2026-06-29: Added the Skopos self-hosting policy: internal work uses clean-refactor behavior while public surfaces use compatibility discipline.
 - 2026-06-29: Added the role-based memory model and three-layer Skopos operating model after reviewing current coding-agent instruction and memory patterns.

@@ -1,4 +1,5 @@
 import type { SkoposMissionArtifact } from './skopos-plan.js';
+import type { SkoposTaskStatePaths } from './skopos-task-identity.js';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
@@ -16,6 +17,7 @@ export interface SkoposDecideRunResult {
   selectedOptionId: string;
   summary: string;
   codeAllowed: boolean;
+  taskState?: SkoposTaskStatePaths;
   questionsPath: string;
   questionsWrite: 'written' | 'dry-run';
   questions: SkoposWorkflowQuestionArtifact;

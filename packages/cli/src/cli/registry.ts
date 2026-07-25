@@ -19,6 +19,7 @@ import {
 } from './commands/router.js';
 import { runScanCommand } from './commands/scan.js';
 import { runSetupCommand } from './commands/setup.js';
+import { runSkillsCommand } from './commands/skills.js';
 import { runTrustCommand } from './commands/trust.js';
 import { runUnderstandCommand } from './commands/understanding.js';
 import { runUiCommand } from './commands/ui.js';
@@ -41,6 +42,7 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   overrides: runOverridesCommand,
   gates: runGatesCommand,
   policies: runPoliciesCommand,
+  skills: runSkillsCommand,
   workflows: runWorkflowsCommand,
   mission: runMissionCommand,
   jobs: runJobsCommand,

@@ -259,6 +259,15 @@ export function RulesView(): React.JSX.Element {
           value={openDriftCount > 0 ? `${openDriftCount} open drift` : 'no open drift'}
           tone={openDriftCount > 0 ? 'danger' : 'positive'}
         />,
+        <StatusPill
+          key="skills"
+          value={`${state.skillReview?.resolved?.skills.acceptedSkills.length ?? 0} skills`}
+          tone={
+            (state.skillReview?.resolved?.skills.acceptedSkills.length ?? 0) > 0
+              ? 'positive'
+              : 'neutral'
+          }
+        />,
       ]}
       aside={
         <RulesInspectorAside
@@ -270,10 +279,73 @@ export function RulesView(): React.JSX.Element {
       <RulesGuidanceCard context={context} />
       <RulesSummaryCard context={context} />
       <AcceptedPacksCard packs={context.acceptedPacks} />
+      <SkillPacksCard skillReview={state.skillReview} />
       <RuleDriftCard context={context} />
       <LocalExceptionsCard context={context} />
       <ActiveRulesCard context={context} />
     </ReviewPage>
+  );
+}
+
+function SkillPacksCard({
+  skillReview,
+}: {
+  skillReview: ReturnType<typeof requireConsoleState>['skillReview'];
+}): React.JSX.Element {
+  const accepted = skillReview?.resolved?.skills.acceptedSkills ?? [];
+  const recommendations =
+    skillReview?.recommendations?.recommendations.recommendations ?? [];
+  const projectionCount = skillReview?.projections.length ?? 0;
+
+  return (
+    <Card
+      title="Task skills"
+      description="Accepted skills add compact project guidance and select existing actions and guards. They do not create another workflow or closure authority."
+    >
+      {accepted.length > 0 ? (
+        <div className="border-y border-[var(--line)]">
+          {accepted.map((skill, index) => {
+            const recommendation = recommendations.find(
+              (entry) => entry.packId === skill.packId,
+            );
+            return (
+              <div
+                key={skill.packId}
+                className={`py-3.5 ${index > 0 ? 'border-t border-[var(--line)]' : ''}`}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="skopos-caption font-medium tracking-[-0.01em]">
+                    {recommendation?.displayName ?? skill.packId}
+                  </p>
+                  <StatusPill value="accepted" tone="positive" />
+                </div>
+                <p className="skopos-helper-copy mt-1.5">
+                  {skill.bindingId} · {skill.version} · projected to {projectionCount}{' '}
+                  host{projectionCount === 1 ? '' : 's'}
+                </p>
+                <p className="skopos-caption-muted mt-1.5">{skill.reason}</p>
+              </div>
+            );
+          })}
+        </div>
+      ) : recommendations.length > 0 ? (
+        <div className="border-y border-[var(--line)] py-3.5">
+          <p className="skopos-caption font-medium">
+            {recommendations.filter((entry) => entry.recommendation === 'adopt').length}{' '}
+            ready to adopt
+          </p>
+          <p className="skopos-helper-copy mt-1.5">
+            Review the project binding and approve adoption explicitly before task
+            selection can use a skill.
+          </p>
+        </div>
+      ) : (
+        <EmptyMessage
+          title="No skill recommendation"
+          description="Run the skill recommendation command after project sources, actions, and guards are mapped."
+        />
+      )}
+    </Card>
   );
 }
 

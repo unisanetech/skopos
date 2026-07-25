@@ -9,7 +9,7 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `no`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -25,6 +25,11 @@ Skopos should be built in phases so the runtime becomes usable early without ove
   - `../decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
 
 ## Changelog
+
+- `2026-07-25`: Made P1-W11 the next architecture convergence priority: simplify Skopos
+  into one agent-native project control plane with context/actions/guards, task intent,
+  authority-aware memory, phase-separated validation, proof receipts, worktree-safe
+  state, and complete downstream-project adoption.
 
 - `2026-06-29`: Added Skopos self-hosting mode and fallback policy to the roadmap so internal work uses clean-refactor behavior while public distribution surfaces stay compatibility-protected.
 
@@ -178,6 +183,22 @@ Skopos should be built in phases so the runtime becomes usable early without ove
 - `2026-04-09`: Added the first phased roadmap to keep implementation order constrained and value-sequenced.
 
 ## Current Focus
+
+- Converge the agent-native single control plane before adding broader workflow,
+  program, discussion, pack, or UI surface:
+  - protect task intent through compact goal/scope/acceptance/non-goal/constraint/proof
+    contracts
+  - compile current concepts into context, actions, and guards
+  - make light work avoid mission ceremony while retaining durable workpacks for
+    long-running or coordinated work
+  - separate admission, changed iteration, stabilization, and one final closure
+  - add source-bound receipts and exact-command ownership
+  - make current state task/worktree aware
+  - add authority, memory promotion, and negative-knowledge contracts
+  - let complex projects fully adopt Skopos and contribute domain capabilities without a
+    parallel LLM workflow
+  - prove portability on Skopos, a complex monorepo, a small project, and a messy
+    brownfield project
 
 - Restore proof and readiness correctness before adding broader agentic surfaces:
   - update proof fixtures so scanner-only project understanding stays `needs-review`

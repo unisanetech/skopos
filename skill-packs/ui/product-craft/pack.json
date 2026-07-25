@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-pack.ui.product-craft",
+  "type": "skill-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Task-selective product UI craft guidance backed by project sources, actions, guards, research, and visual proof.",
+  "updatedAt": "2026-07-25",
+  "packId": "ui.product-craft",
+  "family": "ui-craft",
+  "variant": "product-ui",
+  "version": "0.1.0",
+  "displayName": "Product UI Craft",
+  "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, actions, guards, or closure authority.",
+  "plainLanguageSummary": "Use this for customer-facing pages and product screens that need real design judgment, complete states, human copy, responsive behavior, and visual evidence.",
+  "authorityBoundary": {
+    "workflowAuthority": "skopos",
+    "taskStateAuthority": "skopos",
+    "closureAuthority": "skopos"
+  },
+  "bestFor": [
+    "Customer-facing web pages",
+    "Authenticated product screens",
+    "New or substantially redesigned frontend flows"
+  ],
+  "notFor": [
+    "Backend-only changes",
+    "Generated frontend artifacts",
+    "Mechanical token renames with no visual behavior change"
+  ],
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "riskLanes": ["light", "normal", "workpack"],
+  "appliesWhen": [
+    {
+      "id": "signal.frontend-surface",
+      "summary": "The task changes a browser-rendered route, page, screen, form, navigation surface, or interactive component.",
+      "confidence": "high",
+      "evidence": [
+        "Task goal contains page, screen, form, interface, dashboard, responsive, accessibility, copy, or design",
+        "Changed paths match a project-bound frontend scope"
+      ]
+    },
+    {
+      "id": "signal.ui-quality-risk",
+      "summary": "The project has accepted UI findings or repeated visual, responsive, copy, accessibility, or rendering-boundary corrections.",
+      "confidence": "medium",
+      "evidence": [
+        "Accepted finding or failure-pattern evidence matches a declared skill failure signal",
+        "The same relevant guard or review finding occurred in more than one task"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.generated-output",
+      "summary": "Generated or vendored UI output must be changed through its owner rather than manually polished.",
+      "confidence": "high",
+      "evidence": [
+        "The target path is generated, vendored, built, or distribution output",
+        "An owning generator action exists"
+      ]
+    },
+    {
+      "id": "anti.no-renderable-surface",
+      "summary": "The task has no browser-rendered or user-interface surface.",
+      "confidence": "high",
+      "evidence": [
+        "The task is limited to backend, infrastructure, data, or documentation internals"
+      ]
+    }
+  ],
+  "selection": {
+    "maximumContextTokens": 1350,
+    "maximumModules": 3,
+    "requirePositiveSignal": true,
+    "blockOnMatchingAntiSignal": true
+  },
+  "requiredProjectRoles": {
+    "context": ["brand-doctrine", "design-tokens", "component-catalog"],
+    "recommendedContext": [
+      "approved-screen-precedents",
+      "domain-language",
+      "ui-failure-patterns"
+    ],
+    "actions": ["responsive-visual-capture"],
+    "recommendedActions": ["accessibility-audit", "focused-frontend-tests"],
+    "guards": ["frontend-type-safety"],
+    "recommendedGuards": [
+      "design-token-drift",
+      "accessibility-proof",
+      "client-boundary-review"
+    ]
+  },
+  "contextModules": [
+    {
+      "id": "ui-craft.hierarchy-and-brand",
+      "title": "Hierarchy and brand",
+      "summary": "Establish user priority, information hierarchy, brand expression, and token-driven composition before decoration.",
+      "path": "guidance/hierarchy-and-brand.md",
+      "triggers": ["page", "screen", "layout", "visual", "brand", "dashboard"],
+      "appliesTo": ["frontend", "ui", "design"],
+      "importance": "recommended",
+      "estimatedTokens": 450
+    },
+    {
+      "id": "ui-craft.responsive-and-states",
+      "title": "Responsive behavior and complete states",
+      "summary": "Adapt interaction and information hierarchy by content constraints while proving loading, empty, error, permission, success, and recovery states.",
+      "path": "guidance/responsive-and-states.md",
+      "triggers": ["responsive", "mobile", "table", "form", "navigation", "state"],
+      "appliesTo": ["frontend", "ui", "responsive", "forms"],
+      "importance": "recommended",
+      "estimatedTokens": 450
+    },
+    {
+      "id": "ui-craft.react-and-copy",
+      "title": "React boundaries and human interface copy",
+      "summary": "Keep client rendering narrow, preserve project component boundaries, and replace technical or repetitive interface language with task-centered copy.",
+      "path": "guidance/react-and-copy.md",
+      "triggers": ["react", "next", "client", "server", "copy", "label", "error"],
+      "appliesTo": ["frontend", "react", "next", "copy"],
+      "importance": "recommended",
+      "estimatedTokens": 450
+    },
+    {
+      "id": "ui-craft.anti-slop-review",
+      "title": "Anti-slop visual review",
+      "summary": "Review rendered evidence for generic visual treatment, repeated copy, token drift, missing states, overflow, and weak interaction hierarchy.",
+      "path": "guidance/anti-slop-review.md",
+      "triggers": ["review", "polish", "visual proof", "closure", "screenshot"],
+      "appliesTo": ["frontend", "ui", "review"],
+      "importance": "on-demand",
+      "estimatedTokens": 450
+    }
+  ],
+  "failureSignals": [
+    {
+      "id": "failure.raw-visual-values",
+      "summary": "Raw color, spacing, radius, or shadow values recur where project tokens exist.",
+      "evidenceKinds": ["guard-failure", "review-finding", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.client-boundary-expansion",
+      "summary": "Small interactive behavior repeatedly expands the client-rendered component tree.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.generic-ui-copy",
+      "summary": "Interfaces repeatedly expose technical terms, duplicate headings, or unnecessary explanatory text.",
+      "evidenceKinds": ["finding", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.mobile-compression",
+      "summary": "Desktop layouts repeatedly compress or overflow instead of adapting to content and interaction constraints.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    }
+  ],
+  "adaptationQuestions": [
+    "Which project sources own brand doctrine, tokens, and component behavior?",
+    "Which rendered screens are explicitly approved precedents, and why?",
+    "Which actions produce responsive and accessibility evidence?",
+    "Which terms are preferred or prohibited in customer-facing interfaces?"
+  ],
+  "rubricPath": "rubrics/product-ui-review.json",
+  "researchSources": [
+    {
+      "id": "w3c.wcag",
+      "title": "WCAG 2 overview",
+      "kind": "normative-standard",
+      "url": "https://www.w3.org/WAI/standards-guidelines/wcag/",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["accessibility requirements and conformance framing"]
+    },
+    {
+      "id": "w3c.aria-apg",
+      "title": "ARIA Authoring Practices Guide",
+      "kind": "official-documentation",
+      "url": "https://www.w3.org/WAI/ARIA/apg/",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["keyboard and accessible interaction patterns"]
+    },
+    {
+      "id": "react.server-components",
+      "title": "React Server Components",
+      "kind": "official-documentation",
+      "url": "https://react.dev/reference/rsc/server-components",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2026-10-25",
+      "supports": ["server and client component composition"]
+    },
+    {
+      "id": "next.server-client-components",
+      "title": "Next.js Server and Client Components",
+      "kind": "official-documentation",
+      "url": "https://nextjs.org/docs/app/getting-started/server-and-client-components",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2026-10-25",
+      "supports": ["Next.js rendering-boundary decisions"]
+    },
+    {
+      "id": "webdev.responsive",
+      "title": "Responsive web design basics",
+      "kind": "supporting-research",
+      "url": "https://web.dev/articles/responsive-web-design-basics",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["content-led responsive layout and device capability"]
+    }
+  ],
+  "proofFixtureIds": [
+    "ui-product-craft-good-screen",
+    "ui-product-craft-drift-generic-slop",
+    "ui-product-craft-drift-client-boundary",
+    "ui-product-craft-drift-mobile-overflow"
+  ]
+}

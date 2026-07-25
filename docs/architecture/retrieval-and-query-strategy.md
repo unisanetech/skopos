@@ -9,7 +9,7 @@ Skopos should prefer exact, compact, low-drift retrieval over broad semantic sea
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-04-13`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `artifact-model.md`
@@ -18,6 +18,10 @@ Skopos should prefer exact, compact, low-drift retrieval over broad semantic sea
   - `../findings/registry.md`
 
 ## Changelog
+
+- `2026-07-25`: Added task-contract-first retrieval, explicit authority/provenance,
+  negative knowledge, progressive L0-L5 loading, and compact delta transport after the
+  initial brief.
 
 - `2026-06-29`: Added the setup-review retrieval rule so post-init project understanding loads facts, inferences, assumptions, and confirmation questions before treating synthesized knowledge as trusted memory.
 - `2026-04-17`: Tightened the default search lane so historical docs are no longer merely down-ranked; they are now excluded from normal search results and only re-enter when the query explicitly asks for archive or historical material.
@@ -40,6 +44,34 @@ Skopos should prefer exact, compact, low-drift retrieval over broad semantic sea
 5. expand to targeted durable references only when the active compact and canonical lane is insufficient
 6. reach back to historical docs or raw sources only when compiled knowledge is missing, stale, explicitly requested, or too low-confidence
 7. use semantic fallback only when exact and linked retrieval fail
+
+## Task-Contract-First Rule
+
+Before broad implementation, resolve the current task's goal, scope, acceptance
+criteria, non-goals, constraints, open decisions, and required proof. Project memory
+explains how the repository works; the task contract explains what the user wants now.
+Do not let discovery of adjacent issues silently widen accepted intent.
+
+## Progressive Context Levels
+
+1. L0: compact root instructions
+2. L1: current task brief
+3. L2: relevant scope card
+4. L3: targeted active canonical docs
+5. L4: relevant source, symbols, and relationship slices
+6. L5: historical sources only when current truth is insufficient or history is
+   explicitly requested
+
+After the initial brief, prefer compact deltas. Do not replay the whole brief, trust
+report, mission, or transcript when only one state field changed.
+
+## Authority And Negative Knowledge
+
+1. rank declared and accepted truth above observed, inferred, and proposed content
+2. keep provenance and confidence visible in every compact projection
+3. never promote agent synthesis into canonical memory merely because it was written
+4. retrieve relevant retired APIs, rejected patterns, known failure modes, and temporary
+   exceptions alongside the canonical positive pattern
 
 ## Ranking Rules
 

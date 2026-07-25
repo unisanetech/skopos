@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest';
 const workspaceRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 const cliPackageRoot = fileURLToPath(new URL('../..', import.meta.url));
 
-describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
+describe('skopos CLI release install smoke', { timeout: 300000 }, () => {
   it('installs the packed CLI into a fresh project and runs the installed binary', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'skopos-release-smoke-'));
     const packDirectory = join(tempRoot, 'pack');
@@ -104,6 +104,102 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
         'clean-code.maintainability.gate.vague-name-scan',
       );
 
+      await writeExternalSkillFixture(projectDirectory);
+      const skillsOutput = JSON.parse(
+        execFileSync('pnpm', ['exec', 'skopos', 'skills', 'list', '.', '--json'], {
+          cwd: projectDirectory,
+          encoding: 'utf8',
+        }),
+      ) as {
+        packs?: Array<{ packId?: string }>;
+        bindings?: Array<{ bindingId?: string }>;
+      };
+      expect(skillsOutput.packs?.map((pack) => pack.packId)).toContain(
+        'ui.product-craft',
+      );
+      expect(skillsOutput.bindings?.map((binding) => binding.bindingId)).toContain(
+        'external.ui.product-craft',
+      );
+
+      const skillRecommendations = JSON.parse(
+        execFileSync(
+          'pnpm',
+          ['exec', 'skopos', 'skills', 'recommend', '.', '--json'],
+          {
+            cwd: projectDirectory,
+            encoding: 'utf8',
+          },
+        ),
+      ) as {
+        recommendations?: Array<{
+          packId?: string;
+          recommendation?: string;
+          missingRequiredRoles?: string[];
+        }>;
+      };
+      expect(skillRecommendations.recommendations).toContainEqual(
+        expect.objectContaining({
+          packId: 'ui.product-craft',
+          recommendation: 'adopt',
+          missingRequiredRoles: [],
+        }),
+      );
+
+      const skillApply = JSON.parse(
+        execFileSync(
+          'pnpm',
+          [
+            'exec',
+            'skopos',
+            'skills',
+            'apply',
+            'ui.product-craft',
+            '.',
+            '--binding',
+            'external.ui.product-craft',
+            '--actor',
+            'release-smoke',
+            '--reason',
+            'Portable skill adoption smoke proof.',
+            '--json',
+          ],
+          {
+            cwd: projectDirectory,
+            encoding: 'utf8',
+          },
+        ),
+      ) as {
+        artifact?: { acceptedSkills?: Array<{ packId?: string }> };
+        projectionWrites?: Array<{ status?: string }>;
+      };
+      expect(skillApply.artifact?.acceptedSkills?.map((skill) => skill.packId)).toEqual([
+        'ui.product-craft',
+      ]);
+      expect(skillApply.projectionWrites).toHaveLength(5);
+      expect(skillApply.projectionWrites?.every((write) => write.status === 'written')).toBe(
+        true,
+      );
+
+      const skillTrust = JSON.parse(
+        execFileSync('pnpm', ['exec', 'skopos', 'trust', '.', '--json'], {
+          cwd: projectDirectory,
+          encoding: 'utf8',
+        }),
+      ) as {
+        checks?: Array<{ id?: string; status?: string }>;
+      };
+      expect(
+        skillTrust.checks?.filter((check) =>
+          ['accepted-skills', 'skill-bindings', 'skill-projections'].includes(
+            check.id ?? '',
+          ),
+        ),
+      ).toEqual([
+        expect.objectContaining({ id: 'accepted-skills', status: 'pass' }),
+        expect.objectContaining({ id: 'skill-bindings', status: 'pass' }),
+        expect.objectContaining({ id: 'skill-projections', status: 'pass' }),
+      ]);
+
       const uiBuildOutput = JSON.parse(
         execFileSync('pnpm', ['exec', 'skopos', 'ui', 'build', '.', '--json'], {
           cwd: projectDirectory,
@@ -146,6 +242,22 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
           'utf8',
         ),
       ) as { packId?: string };
+      const installedProductUiSkillPack = JSON.parse(
+        await readFile(
+          join(
+            projectDirectory,
+            'node_modules',
+            '@skopos',
+            'cli',
+            'dist',
+            'skill-packs',
+            'ui',
+            'product-craft',
+            'pack.json',
+          ),
+          'utf8',
+        ),
+      ) as { packId?: string };
       const installedUiApp = await readFile(
         join(projectDirectory, 'node_modules', '@skopos', 'cli', 'dist', 'ui-app', 'index.html'),
         'utf8',
@@ -160,6 +272,7 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
       expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
       expect(installedLicense).toContain('Apache License');
       expect(installedCleanCodePack.packId).toBe('clean-code.maintainability');
+      expect(installedProductUiSkillPack.packId).toBe('ui.product-craft');
       expect(installedUiApp).toContain('__SKOPOS_UI_STATE__');
 
       const npmExecProjectDirectory = join(tempRoot, 'npm-exec-project');
@@ -210,6 +323,84 @@ describe('skopos CLI release install smoke', { timeout: 180000 }, () => {
     }
   });
 });
+
+const writeExternalSkillFixture = async (projectDirectory: string): Promise<void> => {
+  await Promise.all([
+    mkdir(join(projectDirectory, 'docs'), { recursive: true }),
+    mkdir(join(projectDirectory, 'src', 'components'), { recursive: true }),
+    mkdir(join(projectDirectory, 'tools', 'skopos', 'skills'), { recursive: true }),
+    mkdir(join(projectDirectory, 'tools', 'skopos', 'workflows'), { recursive: true }),
+  ]);
+  await Promise.all([
+    writeFile(join(projectDirectory, 'docs', 'brand.md'), '# External brand\n', 'utf8'),
+    writeFile(join(projectDirectory, 'src', 'styles.css'), ':root {}\n', 'utf8'),
+    writeFile(
+      join(projectDirectory, 'tools', 'skopos', 'workflows', 'ui-capture.yaml'),
+      [
+        'id: ui.capture',
+        'title: Capture responsive UI evidence',
+        'description: Capture project-owned responsive UI evidence.',
+        'category: quality-check',
+        'scope:',
+        '  - workspace',
+        'command: pnpm test',
+        'cwd: .',
+        'inputs:',
+        '  - src',
+        'outputs: []',
+        'affects: []',
+        'safety: read-only',
+        'requiresApproval: false',
+        'whenToUse: Run for relevant UI changes.',
+        'requiredForDone: false',
+        'recommendedAfter: []',
+        'owner: external-project',
+        '',
+      ].join('\n'),
+      'utf8',
+    ),
+    writeFile(
+      join(
+        projectDirectory,
+        'tools',
+        'skopos',
+        'skills',
+        'ui.product-craft.json',
+      ),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          id: 'project-skill-binding.external.ui.product-craft',
+          type: 'project-skill-binding',
+          status: 'active',
+          authority: 'canonical',
+          summary: 'External-project Product UI Craft binding.',
+          updatedAt: '2026-07-25',
+          bindingId: 'external.ui.product-craft',
+          packId: 'ui.product-craft',
+          packVersion: '0.1.0',
+          lifecycle: 'adapted',
+          sourceBindings: {
+            'brand-doctrine': ['docs/brand.md'],
+            'design-tokens': ['src/styles.css'],
+            'component-catalog': ['src/components'],
+          },
+          actionBindings: {
+            'responsive-visual-capture': 'ui.capture',
+          },
+          guardBindings: {
+            'frontend-type-safety':
+              'clean-code.maintainability.gate.vague-name-scan',
+          },
+          adaptationNotes: ['External project sources remain canonical.'],
+        },
+        null,
+        2,
+      )}\n`,
+      'utf8',
+    ),
+  ]);
+};
 
 const packCli = (packDirectory: string): string => {
   const output = execFileSync('pnpm', ['pack', '--pack-destination', packDirectory], {

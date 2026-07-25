@@ -18,6 +18,7 @@ interface ParsedWorkflowArgs {
   workflow?: string;
   dryRun: boolean;
   approve: boolean;
+  force: boolean;
   actor?: string;
   json: boolean;
 }
@@ -82,6 +83,7 @@ export const runWorkflowsCommand = async (args: string[]): Promise<void> => {
       dryRun: parsed.dryRun,
       approve: parsed.approve,
       actor: parsed.actor,
+      force: parsed.force,
     });
 
     if (parsed.json) {
@@ -97,6 +99,12 @@ export const runWorkflowsCommand = async (args: string[]): Promise<void> => {
       `- safety: ${result.workflowSafety}`,
       `- actor: ${result.runByActorId ?? '(none)'}`,
     ];
+
+    if (result.receipt) {
+      lines.push(`- receipt: ${result.reusedFromRunId ? 'reused' : 'recorded'}`);
+      lines.push(`  execution key: ${result.receipt.executionKey}`);
+      lines.push(`  source digest: ${result.receipt.sourceState.digest}`);
+    }
 
     if (result.outputPaths.length > 0) {
       lines.push('- outputs:');
@@ -137,6 +145,7 @@ const parseWorkflowArgs = (args: string[]): ParsedWorkflowArgs => {
   let workflow: string | undefined;
   let dryRun = false;
   let approve = false;
+  let force = false;
   let actor: string | undefined;
   let json = false;
   let targetProvided = false;
@@ -156,6 +165,11 @@ const parseWorkflowArgs = (args: string[]): ParsedWorkflowArgs => {
 
     if (argument === '--approve') {
       approve = true;
+      continue;
+    }
+
+    if (argument === '--force') {
+      force = true;
       continue;
     }
 
@@ -191,5 +205,5 @@ const parseWorkflowArgs = (args: string[]): ParsedWorkflowArgs => {
     targetProvided = true;
   }
 
-  return { cwd, workflow, dryRun, approve, actor, json };
+  return { cwd, workflow, dryRun, approve, force, actor, json };
 };

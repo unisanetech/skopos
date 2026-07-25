@@ -2,6 +2,10 @@ import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { buildSkoposMissionGraph } from '@skopos/planner';
+import {
+  resolveSkoposWorkspaceIdentity,
+  taskIdentityMatchesWorkspace,
+} from '@skopos/trust';
 import type {
   SkoposMissionArtifact,
   SkoposMissionSliceLink,
@@ -64,6 +68,7 @@ export const claimSkoposMissionRuntime = async ({
     cwd: workspaceRoot,
     mission,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, existingMission);
   const actorId = requireMissionActorId(actor);
   const activeClaim = existingMission.coordination.claimedBy;
 
@@ -131,6 +136,7 @@ export const releaseSkoposMissionRuntime = async ({
     cwd: workspaceRoot,
     mission,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, existingMission);
   const actorId = requireMissionActorId(actor);
   const activeClaim = existingMission.coordination.claimedBy;
 
@@ -194,6 +200,7 @@ export const completeSkoposMissionRuntime = async ({
     cwd: workspaceRoot,
     mission,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, existingMission);
   const actorId = resolveMissionActorId(actor);
   const activeClaim = existingMission.coordination.claimedBy;
 
@@ -272,6 +279,7 @@ export const completeSkoposMissionItemRuntime = async ({
     cwd: workspaceRoot,
     mission,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, existingMission);
   const actorId = requireMissionActorId(actor);
   const activeClaim = existingMission.coordination.claimedBy;
   const targetItem = existingMission.items.find((item) => item.id === itemId);
@@ -362,6 +370,7 @@ export const sliceSkoposMissionRuntime = async ({
     cwd: workspaceRoot,
     mission,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, parentMission);
   const activeClaim = parentMission.coordination.claimedBy;
 
   if (parentMission.state === 'complete') {
@@ -593,6 +602,7 @@ const syncParentMissionLinkFromChildMission = async ({
     cwd: workspaceRoot,
     mission: mission.parentMissionId,
   });
+  await assertMissionMatchesCurrentWorkspace(workspaceRoot, parentMission);
   const matchingLinkedSlice = (parentMission.linkedSlices ?? []).find(
     (entry) => entry.missionId === mission.id,
   );
@@ -660,4 +670,20 @@ const writeMissionArtifact = async (
     artifactPath: missionPath,
     artifact: mission,
   });
+};
+
+const assertMissionMatchesCurrentWorkspace = async (
+  workspaceRoot: string,
+  mission: SkoposMissionArtifact,
+): Promise<void> => {
+  if (!mission.taskIdentity) {
+    return;
+  }
+
+  const workspace = await resolveSkoposWorkspaceIdentity(workspaceRoot);
+  if (!taskIdentityMatchesWorkspace({ taskIdentity: mission.taskIdentity, workspace })) {
+    throw new Error(
+      `Mission ${mission.id} belongs to branch ${mission.taskIdentity.branch ?? '(detached)'} in worktree ${mission.taskIdentity.worktreeId}, not the current branch/worktree.`,
+    );
+  }
 };

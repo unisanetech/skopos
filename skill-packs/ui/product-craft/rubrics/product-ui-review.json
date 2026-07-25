@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "rubric.ui.product-craft",
+  "scale": {
+    "minimum": 0,
+    "maximum": 3,
+    "labels": {
+      "0": "missing or harmful",
+      "1": "material correction required",
+      "2": "acceptable with bounded improvements",
+      "3": "strong and evidence-backed"
+    }
+  },
+  "dimensions": [
+    "user-task clarity",
+    "information hierarchy and brand fit",
+    "token and component consistency",
+    "responsive adaptation",
+    "state and recovery completeness",
+    "accessibility and keyboard behavior",
+    "human interface copy",
+    "frontend rendering boundaries",
+    "rendered proof quality"
+  ],
+  "blockingConditions": [
+    "A required Skopos guard fails",
+    "A critical state or recovery action is missing",
+    "Critical content overflows or becomes unreachable",
+    "The primary flow cannot be completed with a keyboard",
+    "Customer-facing copy exposes sensitive or technical implementation detail",
+    "Required rendered evidence is absent"
+  ],
+  "authority": "manual-proof-input",
+  "closureAuthority": "skopos"
+}

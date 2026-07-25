@@ -9,13 +9,20 @@ Use this folder for durable Skopos architectural and product decisions.
 - Owner: `skopos-core`
 - Scope: `skopos/decisions`
 - Canonical: `yes`
-- Last Updated: `2026-06-27`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `../architecture/00-architecture.md`
   - `../project/vision.md`
 
 ## Changelog
+
+- `2026-07-25`: Added decision 040 for project-adapted skill packs as
+  task-selective projections over the existing pack and context/action/guard system.
+
+- `2026-07-25`: Added decision 039 for the agent-native single-control-plane,
+  context/action/guard, downstream adoption, phase-separated proof, and compact
+  authority-aware memory contract.
 
 - `2026-06-27`: Added decision 033 for the Memory Map and Agent Workflow Intelligence contract that maps project truth by role before scaffolding docs and guides coding-agent communication across the full workflow.
 - `2026-06-27`: Added decision 032 for the workflow-recording preflight guard that prevents non-light work from bypassing mission, decision, and finding memory.

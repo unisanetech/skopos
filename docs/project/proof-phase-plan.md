@@ -9,18 +9,25 @@ Use this plan to prove that Skopos improves agent behavior on real repos before 
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-04-10`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `positioning.md`
   - `roadmap.md`
   - `system-ui-plan.md`
   - `missing-decisions-checklist.md`
+  - `execution/P1-W11-agent-native-single-control-plane-convergence.md`
+  - `../architecture/agent-native-operating-model.md`
   - `../findings/registry.md`
   - `../decisions/001-brownfield-first-proof-and-v1-scope.md`
   - `../decisions/002-artifact-policy-freshness-and-overrides.md`
+  - `../decisions/039-agent-native-single-control-plane-and-project-adoption-contract.md`
 
 ## Changelog
+
+- `2026-07-25`: Added the P1-W11 cross-project proof contract for compact task intent,
+  phase-separated checks, source-bound receipts, task/worktree isolation, memory
+  authority, and complete downstream-project adoption without a second control plane.
 
 - `2026-04-10`: Updated the proof-phase plan to allow the focused system UI batch after the scorecard stays passing, keeping broader presentation polish deferred while routing pilot-readiness UI work through `system-ui-plan.md`.
 - `2026-04-10`: Updated the proof-phase plan to add a before-versus-after brownfield comparison lane, so Skopos now proves that stabilization work produces a measurable repo-health and trust delta instead of only interpreting isolated snapshots.
@@ -62,7 +69,10 @@ Use this plan to prove that Skopos improves agent behavior on real repos before 
 
 ## Goal
 
-Prove that Skopos measurably reduces bad agent behavior on brownfield repos before adding broader UI or graph surface area.
+Prove that Skopos measurably improves agent outcomes across clean, complex, and
+brownfield projects before broader product-surface expansion. The proof must measure
+task success, supervision, context cost, repeated work, scope drift, memory authority,
+and false closure—not only artifact production or generic check status.
 
 ## Must-Win Workflows
 
@@ -72,6 +82,14 @@ Prove that Skopos measurably reduces bad agent behavior on brownfield repos befo
    - agent should not amplify the wrong pattern and should escalate ambiguity correctly
 3. workflow-sensitive change:
    - agent should infer required project workflows and closure should fail if they are missing
+4. compact light task:
+   - agent should preserve intent and prove the change without mandatory mission ceremony
+5. complex-project adoption:
+   - project-specific capabilities should run through Skopos without a parallel task or
+     closure authority
+6. parallel work:
+   - task/worktree state and proof should remain isolated until one owned integration
+     closure
 
 ## Fixture Matrix
 
@@ -84,6 +102,11 @@ Prove that Skopos measurably reduces bad agent behavior on brownfield repos befo
 7. override-heavy repo where human canonical choices must outrank heuristic inference
 8. boundary-aware workspace where internal, proof, and generated roots must stay out of active package discovery
 9. self-hosted tooling workspace that mirrors the real Skopos dogfooding shape with registered maintenance workflows
+10. small project that proves low-ceremony task context and focused closure
+11. complex governed monorepo that contributes project-specific context, actions, and
+    guards
+12. brownfield project with strong docs in a non-Skopos tree that proves role mapping
+    without forced path conformity
 
 Current implemented fixture mapping:
 
@@ -141,6 +164,19 @@ Current durable proof report destination:
 19. batch-mission slicing quality so wide proof batches can narrow into linked child slice missions without falling back to ad hoc execution notes
 20. self-hosted dogfooding quality so a realistic Skopos-on-Skopos repo shape stays trust-ready, workflow-aware, and portal-renderable under proof harness pressure
 21. before-versus-after brownfield comparison quality so stabilization work produces an observable health and trust delta instead of only a better-looking static fixture
+22. acceptance-criterion coverage so closure evidence proves the requested behavior
+    rather than only generic repository health
+23. phase discipline so admission, changed iteration, stabilization, and final closure
+    do not rerun the same expensive action without invalidation
+24. receipt correctness so relevant source, configuration, provider, environment, or
+    freshness changes invalidate reused proof
+25. context economy so compact task and scope context beat broad replay without reducing
+    task success
+26. task/worktree isolation so parallel work cannot overwrite current intent or proof
+27. authority quality so inferred or proposed knowledge cannot self-promote and relevant
+    negative knowledge remains retrievable
+28. adoption quality so complex projects can retire a parallel LLM workflow while
+    preserving their domain-specific capabilities
 
 ## Scoring Contract
 
@@ -208,12 +244,16 @@ It currently verifies:
 
 ## Next Proof Work
 
-1. expand fixture and benchmark realism without changing the meaning of “pass” casually
-2. evolve the proof baseline deliberately when benchmark scope changes, instead of letting score drift silently
-3. pressure invalidation correctness further so stale compiled state is refreshed only when source truth really changed
-4. pressure broader concurrent-run behavior beyond mission ownership, override ownership, and workflow-run attribution now that mutable workflow state and mutable shared truth both have first-pass coordination rules
-5. use the Skopos subtree itself as a controlled dogfooding workspace and turn any friction into proof findings or benchmark gaps
-6. keep pressure on linked batch-to-slice execution and self-hosting friction so future proof work stays inside Skopos artifacts instead of drifting back into ad hoc execution
+1. execute the P1-W11 proof matrix before retiring existing workflow or artifact surfaces
+2. add the small-project, complex-adopter, and alternate-docs-tree fixtures
+3. measure context size, repeated action count, elapsed proof cost, user intervention,
+   acceptance coverage, scope drift, and false closure before and after convergence
+4. expand fixture and benchmark realism without changing the meaning of “pass” casually
+5. evolve the proof baseline deliberately when benchmark scope changes, instead of letting score drift silently
+6. pressure invalidation correctness further so stale compiled state is refreshed only when source truth really changed
+7. pressure broader concurrent-run behavior beyond mission ownership, override ownership, and workflow-run attribution now that mutable workflow state and mutable shared truth both have first-pass coordination rules
+8. use the Skopos subtree itself as a controlled dogfooding workspace and turn any friction into proof findings or benchmark gaps
+9. keep pressure on linked batch-to-slice execution and self-hosting friction so future proof work stays inside Skopos artifacts instead of drifting back into ad hoc execution
 
 ## Deferred Until After Proof
 

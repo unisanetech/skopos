@@ -9,7 +9,7 @@ Skopos is project intelligence and trust infrastructure for coding agents.
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -18,6 +18,10 @@ Skopos is project intelligence and trust infrastructure for coding agents.
   - `../architecture/runtime-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Positioned Skopos as the agent-native project operating and memory layer:
+  one adoptable control plane that gives coding agents compact context, project actions,
+  deterministic guards, and evidence without replacing their native reasoning.
 
 - `2026-06-29`: Clarified that Skopos is an agent operating layer, not a docs generator, and that explicit project modes plus command-guided prompts are required for serious agentic/vibe-coding workflows.
 
@@ -35,6 +39,8 @@ Skopos belongs in developer tooling, but specifically as:
 3. an agent workflow governance layer
 4. a repo-native trust system
 5. a command-guided prompt layer that tells coding agents how to act inside the current project mode
+6. an agent-native project operating layer that complex projects can adopt as their one
+   workflow and closure authority
 
 ## Primary Wedge
 
@@ -80,3 +86,8 @@ Secondary user:
 5. become a generic personal wiki with no repo-governance or trust runtime
 6. become a workflow-ceremony layer that costs more to operate than the supervision it removes
 7. become a passive docs generator that leaves the agent to infer prompts, cleanup policy, and closure rules from scattered markdown
+8. reproduce general planning, tool use, subagent orchestration, or reasoning already
+   provided by modern coding agents
+9. sit beside a downstream project's LLM workflow as a second task and closure authority
+10. expose a large plugin lifecycle when automatic detection, configuration, or a small
+    provider protocol is sufficient

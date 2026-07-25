@@ -1,9 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import type { SkoposHostProjectionModel } from '@skopos/model';
+
 export interface SyncManualHostAdapterOptions {
   cwd: string;
   dryRun?: boolean;
+  projectionModel?: SkoposHostProjectionModel;
 }
 
 export interface ManualHostAdapterWrite {
@@ -21,13 +24,14 @@ const GUIDE_RELATIVE_PATH = '.skopos/tooling/manual-hosts/README.md';
 export const syncManualHostAdapter = async ({
   cwd,
   dryRun = false,
+  projectionModel,
 }: SyncManualHostAdapterOptions): Promise<SyncManualHostAdapterResult> => {
   const workspaceRoot = resolve(cwd);
   const guidePath = join(workspaceRoot, GUIDE_RELATIVE_PATH);
   const files = [
     {
       path: guidePath,
-      contents: renderManualHostGuide(),
+      contents: renderManualHostGuide(projectionModel),
     },
   ];
   const writes: ManualHostAdapterWrite[] = [];
@@ -50,7 +54,17 @@ export const syncManualHostAdapter = async ({
   };
 };
 
-const renderManualHostGuide = (): string => `# Manual Host Adapter
+const renderManualHostGuide = (projectionModel?: SkoposHostProjectionModel): string => `# Manual Host Adapter
+
+## Projection Source
+
+${
+  projectionModel
+    ? `- Project model: \`.skopos/enforcement.json\`
+- Authority: \`${projectionModel.authority}\`
+- Enforcement rules: ${projectionModel.enforcementRuleIds.map((ruleId) => `\`${ruleId}\``).join(', ')}`
+    : '- Compatibility mode: load `.skopos/enforcement.json` when it is available.'
+}
 
 Use this guide when your coding tool does not have a generated Skopos adapter yet.
 

@@ -1,12 +1,21 @@
 import { access, readFile, stat } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
-import { checkInstructionMirrorParity } from '@skopos/instructions';
-import { loadSkoposPolicyPacks } from '@skopos/indexer';
+import {
+  checkInstructionMirrorParity,
+  validateSkoposHostProjectionModel,
+} from '@skopos/instructions';
+import {
+  buildSkoposCombinedSkillSourceDigest,
+  buildSkoposSkillSourceDigest,
+  loadSkoposPolicyPacks,
+  loadSkoposWorkflowManifests,
+} from '@skopos/indexer';
 import { loadSkoposQueryState } from '@skopos/query';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
+  SkoposCompactProjectArtifact,
   SkoposImpactEntry,
   SkoposEnforcementProfileArtifact,
   SkoposDriftReportArtifact,
@@ -14,17 +23,25 @@ import type {
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
   SkoposResolvedPolicyArtifact,
+  SkoposResolvedGatesArtifact,
+  SkoposResolvedSkillArtifact,
+  SkoposProjectSkillBinding,
+  SkoposSkillHostProjectionArtifact,
+  SkoposSkillHostProjectionEntry,
+  SkoposSkillPackManifest,
   SkoposReadiness,
   SkoposTrustCheck,
   SkoposTrustCheckStatus,
   SkoposTrustLevel,
   SkoposTrustReport,
 } from '@skopos/model';
+import { SKOPOS_SKILL_PROJECTION_HOST_IDS } from '@skopos/model';
 
 import { loadEvalArtifact } from '../../adapters/eval-artifact.adapter.js';
 import { loadMissionArtifacts } from '../../adapters/mission-artifact.adapter.js';
 import { loadWorkflowQuestionsArtifact } from '../../adapters/workflow-router-artifact.adapter.js';
 import { buildSkoposImpactReport } from '../build-impact-report/build-impact-report.service.js';
+import { validateSkoposCompactProjectArtifact } from '../artifact-lifecycle/artifact-lifecycle.service.js';
 
 export interface BuildSkoposTrustReportOptions {
   cwd: string;
@@ -41,7 +58,9 @@ export const buildSkoposTrustReport = async ({
   const scopesLitePath = join(workspaceRoot, '.skopos', 'scopes-lite.json');
   const architecturePath = join(workspaceRoot, '.skopos', 'architecture.json');
   const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
+  const compactProjectPath = join(workspaceRoot, '.skopos', 'project.json');
   const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'policies', 'resolved.json');
+  const resolvedSkillsPath = join(workspaceRoot, '.skopos', 'skills', 'resolved.json');
   const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
   const policyBriefPath = join(workspaceRoot, '.skopos', 'agent', 'policy-brief.json');
   const memoryStatePath = join(workspaceRoot, '.skopos', 'memory', 'state.json');
@@ -52,7 +71,10 @@ export const buildSkoposTrustReport = async ({
     cwd: workspaceRoot,
   });
   const enforcement = await loadJsonArtifact<SkoposEnforcementProfileArtifact>(enforcementPath);
+  const compactProject =
+    await loadJsonArtifact<SkoposCompactProjectArtifact>(compactProjectPath);
   const resolvedPolicy = await loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath);
+  const resolvedSkills = await loadJsonArtifact<SkoposResolvedSkillArtifact>(resolvedSkillsPath);
   const driftReport = await loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath);
   const memoryState = await loadJsonArtifact<SkoposMemoryStateArtifact>(memoryStatePath);
   const communicationBrief = await loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(communicationBriefPath);
@@ -83,6 +105,7 @@ export const buildSkoposTrustReport = async ({
     ? await checkInstructionMirrorParity({
         cwd: workspaceRoot,
         instructionSourcePath: canonicalInstructionSource,
+        projectionModel: enforcement?.hostProjectionModel,
       })
     : null;
   const mirrorIssues =
@@ -97,6 +120,19 @@ export const buildSkoposTrustReport = async ({
     ignoreMissionEvalForMissionId,
   });
   const workflowRouterAdapterCoverage = buildWorkflowRouterAdapterCoverageSummary(enforcement);
+  const hostProjectionParity = enforcement
+    ? validateSkoposHostProjectionModel(enforcement)
+    : {
+        status: 'fail' as const,
+        diagnostics: ['Enforcement profile is unavailable.'],
+      };
+  const hostProjectionStatus =
+    !enforcement ||
+    (hostProjectionParity.diagnostics.length === 1 &&
+      hostProjectionParity.diagnostics[0] ===
+        'Host projection model is missing from the enforcement profile.')
+      ? 'warn'
+      : hostProjectionParity.status;
   const acceptedPolicyCoverage = await buildAcceptedPolicyCoverageSummary({
     workspaceRoot,
     resolvedPolicy,
@@ -116,6 +152,17 @@ export const buildSkoposTrustReport = async ({
     projectMode: bootstrap.recommendedConfig.project.mode,
     fallbackRegistryPath,
   });
+  const skillPackCoverage = await buildSkillPackCoverageSummary({
+    workspaceRoot,
+    resolvedSkills,
+    resolvedSkillsPath,
+  });
+  const artifactLifecycle = compactProject
+    ? validateSkoposCompactProjectArtifact(compactProject)
+    : {
+        status: 'fail' as const,
+        diagnostics: ['Compact project artifact is not generated yet.'],
+      };
 
   const checks: SkoposTrustCheck[] = [
     createCheck(
@@ -175,6 +222,9 @@ export const buildSkoposTrustReport = async ({
     createCheck('policy-brief', acceptedPolicyCoverage.policyBrief.status, acceptedPolicyCoverage.policyBrief.summary),
     createCheck('policy-source-freshness', acceptedPolicyCoverage.sourceFreshness.status, acceptedPolicyCoverage.sourceFreshness.summary),
     createCheck('policy-drift', driftCoverage.status, driftCoverage.summary),
+    createCheck('accepted-skills', skillPackCoverage.acceptedSkills.status, skillPackCoverage.acceptedSkills.summary),
+    createCheck('skill-bindings', skillPackCoverage.bindings.status, skillPackCoverage.bindings.summary),
+    createCheck('skill-projections', skillPackCoverage.projections.status, skillPackCoverage.projections.summary),
     createCheck('memory-map', memoryCoverage.memoryMap.status, memoryCoverage.memoryMap.summary),
     createCheck('memory-roles', memoryCoverage.memoryRoles.status, memoryCoverage.memoryRoles.summary),
     createCheck('agent-communication', memoryCoverage.communication.status, memoryCoverage.communication.summary),
@@ -197,6 +247,26 @@ export const buildSkoposTrustReport = async ({
       'workflow-router-adapters',
       workflowRouterAdapterCoverage.status,
       workflowRouterAdapterCoverage.summary,
+    ),
+    createCheck(
+      'host-projection-parity',
+      hostProjectionStatus,
+      hostProjectionParity.status === 'pass'
+        ? 'All host projections derive from the current Skopos project model.'
+        : `${hostProjectionParity.diagnostics.join(' ')}${
+            hostProjectionStatus === 'warn'
+              ? ' Regenerate instructions to migrate this legacy profile.'
+              : ''
+          }`,
+    ),
+    createCheck(
+      'artifact-lifecycle',
+      compactProject ? artifactLifecycle.status : 'warn',
+      artifactLifecycle.status === 'pass'
+        ? 'Compact project, current-task, receipt, compatibility, and cache lifecycles are staged without a second workflow authority.'
+        : `${artifactLifecycle.diagnostics.join(' ')}${
+            compactProject ? '' : ' Run `skopos start` or `skopos next` to generate it.'
+          }`,
     ),
     createCheck(
       'scan-findings',
@@ -486,6 +556,240 @@ const buildMemoryCoverageSummary = ({
         : 'Agent communication guidance is missing. Refresh Skopos memory to generate it.',
     },
   };
+};
+
+interface SkillPackCoverageSummary {
+  acceptedSkills: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  bindings: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+  projections: {
+    status: SkoposTrustCheckStatus;
+    summary: string;
+  };
+}
+
+const buildSkillPackCoverageSummary = async ({
+  workspaceRoot,
+  resolvedSkills,
+  resolvedSkillsPath,
+}: {
+  workspaceRoot: string;
+  resolvedSkills: SkoposResolvedSkillArtifact | null;
+  resolvedSkillsPath: string;
+}): Promise<SkillPackCoverageSummary> => {
+  if (!resolvedSkills || resolvedSkills.acceptedSkills.length === 0) {
+    const localPacksExist = await pathExists(join(workspaceRoot, 'skill-packs'));
+    return {
+      acceptedSkills: {
+        status: localPacksExist ? 'warn' : 'pass',
+        summary: localPacksExist
+          ? 'Project skill packs are available but none are accepted. Run `skopos skills recommend .` before broad matching work.'
+          : 'No project skill packs are accepted or locally registered.',
+      },
+      bindings: {
+        status: 'pass',
+        summary: 'Skill binding validation is not required until a skill pack is accepted.',
+      },
+      projections: {
+        status: 'pass',
+        summary: 'Skill host projection parity is not required until a skill pack is accepted.',
+      },
+    };
+  }
+
+  const [workflows, resolvedGates] = await Promise.all([
+    loadSkoposWorkflowManifests({ cwd: workspaceRoot }),
+    loadJsonArtifact<SkoposResolvedGatesArtifact>(
+      join(workspaceRoot, '.skopos', 'gates', 'resolved.json'),
+    ),
+  ]);
+  const actionIds = new Set(workflows.map((workflow) => workflow.id));
+  const guardIds = new Set((resolvedGates?.gates ?? []).map((guard) => guard.id));
+  const bindingDiagnostics: string[] = [];
+  const expectedSkills: SkoposSkillHostProjectionEntry[] = [];
+
+  for (const accepted of resolvedSkills.acceptedSkills) {
+    const [pack, binding] = await Promise.all([
+      loadJsonArtifact<SkoposSkillPackManifest>(resolve(workspaceRoot, accepted.sourcePath)),
+      loadJsonArtifact<SkoposProjectSkillBinding>(
+        resolve(workspaceRoot, accepted.bindingPath),
+      ),
+    ]);
+    if (!pack) {
+      bindingDiagnostics.push(`Accepted skill ${accepted.packId} is missing ${accepted.sourcePath}.`);
+      continue;
+    }
+    if (!binding) {
+      bindingDiagnostics.push(
+        `Accepted skill ${accepted.packId} is missing ${accepted.bindingPath}.`,
+      );
+      continue;
+    }
+    if (pack.packId !== accepted.packId || pack.version !== accepted.version) {
+      bindingDiagnostics.push(
+        `Accepted skill ${accepted.packId} no longer matches its recorded pack id and version.`,
+      );
+    }
+    if (
+      binding.bindingId !== accepted.bindingId ||
+      binding.packId !== pack.packId ||
+      binding.packVersion !== pack.version
+    ) {
+      bindingDiagnostics.push(
+        `Accepted skill ${accepted.packId} no longer matches binding ${accepted.bindingId}.`,
+      );
+    }
+    const boundActionIds = [...new Set(Object.values(binding.actionBindings))].sort();
+    const boundGuardIds = [...new Set(Object.values(binding.guardBindings))].sort();
+    for (const actionId of boundActionIds) {
+      if (!actionIds.has(actionId)) {
+        bindingDiagnostics.push(
+          `Accepted skill ${accepted.packId} references unknown action ${actionId}.`,
+        );
+      }
+    }
+    for (const guardId of boundGuardIds) {
+      if (!guardIds.has(guardId)) {
+        bindingDiagnostics.push(
+          `Accepted skill ${accepted.packId} references unknown guard ${guardId}.`,
+        );
+      }
+    }
+    const packDirectory = dirname(accepted.sourcePath);
+    const sourcePaths = [
+      accepted.sourcePath,
+      accepted.bindingPath,
+      join(packDirectory, pack.rubricPath),
+      ...pack.contextModules.map((module) => join(packDirectory, module.path)),
+      ...pack.researchSources
+        .map((source) => source.path)
+        .filter((path): path is string => Boolean(path))
+        .map((path) => join(packDirectory, path)),
+      ...Object.values(binding.sourceBindings).flat(),
+    ];
+    const digest = await buildSkoposSkillSourceDigest({
+      cwd: workspaceRoot,
+      sourcePaths,
+    });
+    if (digest.missingPaths.length > 0) {
+      bindingDiagnostics.push(
+        `Accepted skill ${accepted.packId} has missing project sources: ${digest.missingPaths.join(', ')}.`,
+      );
+    }
+    expectedSkills.push({
+      packId: pack.packId,
+      version: pack.version,
+      bindingId: binding.bindingId,
+      selectedBy: 'skopos-task-admission',
+      moduleIds: pack.contextModules.map((module) => module.id),
+      capabilities: {
+        actionIds: boundActionIds,
+        guardIds: boundGuardIds,
+      },
+      sourcePaths: digest.sourcePaths,
+      sourceDigest: digest.digest,
+    });
+  }
+
+  expectedSkills.sort((left, right) => left.packId.localeCompare(right.packId));
+  const expectedPackIds = expectedSkills.map((skill) => skill.packId);
+  const expectedSourceDigest = buildSkoposCombinedSkillSourceDigest(expectedSkills);
+  const projectionDiagnostics: string[] = [];
+  for (const hostId of SKOPOS_SKILL_PROJECTION_HOST_IDS) {
+    const projectionPath = join(
+      workspaceRoot,
+      '.skopos',
+      'skills',
+      'projections',
+      `${hostId}.json`,
+    );
+    const projection =
+      await loadJsonArtifact<SkoposSkillHostProjectionArtifact>(projectionPath);
+    if (!projection) {
+      projectionDiagnostics.push(`Skill projection ${hostId} is missing.`);
+      continue;
+    }
+    if (
+      projection.hostId !== hostId ||
+      projection.sourceAuthority !== 'skopos-resolved-skills' ||
+      projection.resolvedSkillsPath !== '.skopos/skills/resolved.json'
+    ) {
+      projectionDiagnostics.push(
+        `Skill projection ${hostId} does not derive from the resolved Skopos skill source.`,
+      );
+    }
+    if (!sameStrings(projection.acceptedSkillPackIds, expectedPackIds)) {
+      projectionDiagnostics.push(
+        `Skill projection ${hostId} carries different accepted pack ids.`,
+      );
+    }
+    if (projection.sourceDigest !== expectedSourceDigest) {
+      projectionDiagnostics.push(
+        `Skill projection ${hostId} is stale against current pack, binding, capability, or source content.`,
+      );
+    }
+    if (
+      JSON.stringify(normalizeSkillProjectionEntries(projection.skills)) !==
+      JSON.stringify(normalizeSkillProjectionEntries(expectedSkills))
+    ) {
+      projectionDiagnostics.push(
+        `Skill projection ${hostId} does not preserve pack, binding, capability, and source parity.`,
+      );
+    }
+  }
+
+  return {
+    acceptedSkills: {
+      status: 'pass',
+      summary: `Accepted skill state is recorded at \`${resolvedSkillsPath.replace(`${workspaceRoot}/`, '')}\` with ${resolvedSkills.acceptedSkills.length} pack${resolvedSkills.acceptedSkills.length === 1 ? '' : 's'}.`,
+    },
+    bindings: {
+      status: bindingDiagnostics.length === 0 ? 'pass' : 'fail',
+      summary:
+        bindingDiagnostics.length === 0
+          ? 'Accepted skill bindings resolve current project sources and existing actions and guards.'
+          : bindingDiagnostics.join(' '),
+    },
+    projections: {
+      status:
+        bindingDiagnostics.length === 0 && projectionDiagnostics.length === 0
+          ? 'pass'
+          : 'fail',
+      summary:
+        bindingDiagnostics.length === 0 && projectionDiagnostics.length === 0
+          ? 'All skill host projections preserve the current accepted source and capability digest.'
+          : [...bindingDiagnostics, ...projectionDiagnostics].join(' '),
+    },
+  };
+};
+
+const normalizeSkillProjectionEntries = (
+  entries: SkoposSkillHostProjectionEntry[],
+): SkoposSkillHostProjectionEntry[] =>
+  entries
+    .map((entry) => ({
+      ...entry,
+      moduleIds: [...entry.moduleIds],
+      capabilities: {
+        actionIds: [...entry.capabilities.actionIds].sort(),
+        guardIds: [...entry.capabilities.guardIds].sort(),
+      },
+      sourcePaths: [...entry.sourcePaths].sort(),
+    }))
+    .sort((left, right) => left.packId.localeCompare(right.packId));
+
+const sameStrings = (left: string[], right: string[]): boolean => {
+  const normalizedLeft = [...new Set(left)].sort();
+  const normalizedRight = [...new Set(right)].sort();
+  return (
+    normalizedLeft.length === normalizedRight.length &&
+    normalizedLeft.every((entry, index) => entry === normalizedRight[index])
+  );
 };
 
 const buildPolicyDriftCoverageSummary = ({
@@ -798,6 +1102,7 @@ const findCompletedMissionCoverage = async ({
         const evalArtifact = await loadEvalArtifact(workspaceRoot, mission.id);
         if (
           !evalArtifact ||
+          (evalArtifact.executionPhase ?? 'closure') !== 'closure' ||
           evalArtifact.evaluationStatus !== 'complete' ||
           evalArtifact.pendingItemIds.length > 0 ||
           evalArtifact.blockingQuestionIds.length > 0
@@ -939,6 +1244,13 @@ const buildMissionEvalPressure = async ({
     return {
       status: 'warn',
       summary: `Mission ${missionId} is ready for closure, but no eval artifact exists yet.`,
+    };
+  }
+
+  if ((evalArtifact.executionPhase ?? 'closure') !== 'closure') {
+    return {
+      status: 'warn',
+      summary: `Mission ${missionId} latest eval is for ${evalArtifact.executionPhase}; closure evidence still requires \`skopos eval --phase closure\`.`,
     };
   }
 

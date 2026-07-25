@@ -3,6 +3,7 @@ import type {
   SkoposDecisionEscalationClass,
   SkoposDecisionOption,
 } from './skopos-decision-question.js';
+import type { SkoposTaskIdentity } from './skopos-task-identity.js';
 
 export type SkoposWorkflowQuestionStatus = 'open' | 'resolved';
 
@@ -28,6 +29,7 @@ export interface SkoposWorkflowQuestionEntry {
 
 export interface SkoposWorkflowQuestionArtifact extends SkoposArtifactEnvelope<'questions'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   generatedForPlanId?: string;
   generatedForMissionId?: string;
   entries: SkoposWorkflowQuestionEntry[];

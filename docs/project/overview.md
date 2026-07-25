@@ -9,7 +9,7 @@ Skopos is a local-first SDK that turns a repo into an agent-safe working environ
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `vision.md`
@@ -18,8 +18,13 @@ Skopos is a local-first SDK that turns a repo into an agent-safe working environ
   - `roadmap.md`
   - `human-guidance-and-developer-experience-plan.md`
   - `../architecture/00-architecture.md`
+  - `../architecture/agent-native-operating-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Converged the overview on one agent-native control plane and the compact
+  context/action/guard model. The coding agent reasons and implements; Skopos protects
+  intent, project truth, capabilities, deterministic proof, and memory promotion.
 
 - `2026-06-29`: Added the agentic operating direction: explicit project modes, command-guided agent prompts, and cleanup/refactor behavior are now part of the core Skopos promise.
 
@@ -43,6 +48,7 @@ Skopos is:
 4. a docs and instruction governance runtime
 5. a trust and drift-control layer for agent-produced changes
 6. a command-guided agent operating layer that tells coding agents how to work in the selected project mode
+7. the single adoptable project workflow and closure authority for coding agents
 
 Skopos is not:
 
@@ -51,6 +57,18 @@ Skopos is not:
 3. a replacement for Codex or Claude Code
 4. a generic wiki
 5. a personal-notes product with no workflow or trust model
+6. a second coding agent that reproduces general planning and reasoning
+7. a peer workflow stacked beside another project-specific LLM control plane
+
+## Smallest Public Model
+
+1. context: what the agent needs to know
+2. actions: what the project allows the agent to do
+3. guards: what must be prevented, approved, or proven
+
+Workflows, packs, integrations, skills, and host adapters compile into those three
+concepts. The canonical detail is
+`docs/architecture/agent-native-operating-model.md`.
 
 ## Core Promise
 
@@ -95,6 +113,12 @@ That rule is the restraint layer on top of the roadmap:
 8. keep default command transport and retrieval compact enough that normal self-hosted workflow does not burn context windows on operational replay
 9. present the compiled truth in human language before asking users to inspect raw artifacts
 10. generate command-level agent briefs that explain reads, lane, risks, do/do-not guidance, checks, and closure expectations
+11. preserve current task intent through compact goal, scope, acceptance, non-goal,
+    constraint, decision, and proof fields
+12. keep admission, changed iteration, stabilization, and final closure separate so
+    expensive proof has one execution owner
+13. let downstream projects contribute domain-specific context, actions, and guards
+    without maintaining parallel task state or closure
 
 ## Operating Loop Diagram
 

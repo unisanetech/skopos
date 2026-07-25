@@ -38,6 +38,7 @@ import {
 import { refreshSkoposMemoryState } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
+import { writeSkoposCompactProjectProjection } from '../agent-native/artifact-lifecycle.js';
 
 export interface InitSkoposProjectOptions {
   cwd: string;
@@ -195,6 +196,10 @@ export const initSkoposProject = async ({
     artifact: enforcement,
     dryRun,
   });
+  const compactProject = await writeSkoposCompactProjectProjection({
+    workspaceRoot,
+    dryRun,
+  });
   const fallbackRegistry = buildFallbackRegistryArtifact({
     projectMode: bootstrap.recommendedConfig.project.mode,
   });
@@ -221,14 +226,17 @@ export const initSkoposProject = async ({
   await syncClaudeCodeHookAdapter({
     cwd: workspaceRoot,
     dryRun,
+    projectionModel: enforcement.hostProjectionModel,
   });
   await syncCodexWrapperAdapter({
     cwd: workspaceRoot,
     dryRun,
+    projectionModel: enforcement.hostProjectionModel,
   });
   await syncManualHostAdapter({
     cwd: workspaceRoot,
     dryRun,
+    projectionModel: enforcement.hostProjectionModel,
   });
   const workspaceGraphWrite = await writeJsonArtifact({
     artifactPath: workspaceGraphPath,
@@ -265,6 +273,7 @@ export const initSkoposProject = async ({
       diagnosisPath,
       architecturePath,
       enforcementPath,
+      compactProject.projectPath,
       fallbackRegistryPath,
       symbolsPath,
       duplicatesPath,
@@ -305,6 +314,7 @@ export const initSkoposProject = async ({
 
   return {
     configPath,
+    projectPath: compactProject.projectPath,
     bootstrapPath,
     memoryPath: memoryState.memoryPath,
     communicationBriefPath: memoryState.communicationBriefPath,
@@ -364,6 +374,7 @@ export const initSkoposProject = async ({
     gitignoreScaffold,
     instructionScaffold,
     configWrite,
+    projectWrite: compactProject.write,
     bootstrapWrite,
     scopesLiteWrite,
     diagnosisWrite,

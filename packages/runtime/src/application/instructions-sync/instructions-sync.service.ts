@@ -37,32 +37,38 @@ export const syncSkoposInstructions = async ({
   const existingConfig = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
   const instructionSourcePath =
     existingConfig?.agents.canonicalInstructions ?? 'AGENTS.md';
-  const [workflows, result, claudeAdapter, codexAdapter, manualHostAdapter] = await Promise.all([
-    loadSkoposWorkflowManifests({
-      cwd: workspaceRoot,
-    }),
+  const workflows = await loadSkoposWorkflowManifests({
+    cwd: workspaceRoot,
+  });
+  const enforcement = buildSkoposEnforcementProfile({
+    cwd: workspaceRoot,
+    workflows,
+    instructionSourcePath,
+  });
+  const projectionModel = enforcement.hostProjectionModel;
+  const [result, claudeAdapter, codexAdapter, manualHostAdapter] = await Promise.all([
     syncInstructionMirrors({
       cwd: workspaceRoot,
       dryRun,
       instructionSourcePath,
+      projectionModel,
     }),
     syncClaudeCodeHookAdapter({
       cwd: workspaceRoot,
       dryRun,
+      projectionModel,
     }),
     syncCodexWrapperAdapter({
       cwd: workspaceRoot,
       dryRun,
+      projectionModel,
     }),
     syncManualHostAdapter({
       cwd: workspaceRoot,
       dryRun,
+      projectionModel,
     }),
   ]);
-  const enforcement = buildSkoposEnforcementProfile({
-    cwd: workspaceRoot,
-    workflows,
-  });
   const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
   await writeJsonArtifact({
     artifactPath: enforcementPath,

@@ -1,7 +1,9 @@
 import type { SkoposMissionArtifact, SkoposMissionItem } from './skopos-plan.js';
+import type { SkoposCompactTaskBrief } from './skopos-agent-native-operating-model.js';
 import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
 import type { SkoposUnderstandingSetupReviewArtifact } from './skopos-understanding.js';
 import type { SkoposTrustReport } from './skopos-trust-report.js';
+import type { SkoposTaskStatePaths } from './skopos-task-identity.js';
 import type {
   SkoposWorkflowQuestionArtifact,
   SkoposWorkflowQuestionEntry,
@@ -17,6 +19,7 @@ export interface SkoposNextRunResult {
   actorId?: string;
   summary: string;
   codeAllowed: boolean;
+  taskState?: SkoposTaskStatePaths;
   missionId: string;
   missionPath: string;
   mission: SkoposMissionArtifact;
@@ -26,6 +29,7 @@ export interface SkoposNextRunResult {
   recommendationsPath: string;
   recommendationsWrite: 'written' | 'dry-run';
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
+  taskBrief?: SkoposCompactTaskBrief;
   recommendations: SkoposWorkflowRecommendationArtifact;
   setupReview?: {
     path: string;

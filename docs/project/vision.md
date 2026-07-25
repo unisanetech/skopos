@@ -9,7 +9,7 @@ Skopos should make coding agents project-aware, decision-aware, and trust-aware 
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -19,6 +19,11 @@ Skopos should make coding agents project-aware, decision-aware, and trust-aware 
   - `../architecture/trust-and-closure-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Simplified the product vision around one agent-native project control
+  plane: the coding agent owns reasoning and implementation while Skopos owns compact
+  project/task context, discoverable actions, deterministic guards, and trustworthy
+  evidence. Added full downstream-project adoption as a core success criterion.
 
 - `2026-06-29`: Clarified that Skopos is a role-based project memory and agent operating layer: human docs hold durable truth, `.skopos/**` compiles fast machine state, and commands guide coding agents through work.
 
@@ -51,6 +56,14 @@ Developers should be able to keep their existing coding tools, bring their own L
 13. guides the coding agent through command-generated briefs that explain what to read, what to ask, what to edit, what to avoid, what to check, and how to close
 14. maps project truth by required memory role instead of forcing every repo into one docs tree
 15. keeps tool-specific instruction files compact by pointing agents to the right project memory instead of copying every rule everywhere
+16. gives every adopting project one workflow and closure authority instead of stacking
+    Skopos beside another LLM workflow
+17. keeps current task intent, non-goals, acceptance criteria, and proof distinct from
+    durable project memory
+18. lets capable coding agents reason and coordinate natively while Skopos supplies
+    context, actions, guards, and evidence
+19. lets demanding projects improve generic Skopos capabilities without embedding their
+    domain architecture in Skopos core
 
 ## Success Criteria
 
@@ -70,3 +83,9 @@ Skopos succeeds when:
 12. cleanup/refactor-heavy work removes obsolete paths instead of adding duplicate hybrid systems when the selected project mode calls for no-legacy execution
 13. users no longer need to repeatedly tell agents to "follow Skopos"; the default command flow carries the operating contract into the agent path
 14. existing projects with good docs are respected, existing projects with messy docs get clear cleanup recommendations, and weak-doc projects get concrete memory-building tasks
+15. an adopting project can retire its parallel LLM workflow and use Skopos as the one
+    daily admission, iteration, and closure control plane
+16. task acceptance criteria can be traced to evidence without repeatedly running the
+    same expensive proof
+17. parallel agents and worktrees retain isolated task state and integrate through one
+    owned final closure

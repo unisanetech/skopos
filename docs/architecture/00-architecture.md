@@ -9,15 +9,21 @@ This is the canonical architecture baseline for Skopos itself.
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-04-10`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `package-boundaries.md`
   - `runtime-model.md`
   - `config-model.md`
   - `artifact-model.md`
+  - `agent-native-operating-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Adopted the agent-native single-control-plane architecture. Skopos now
+  treats context, actions, and guards as the smallest public model; separates task
+  admission, iteration, stabilization, and closure; and lets downstream projects supply
+  domain-specific capabilities without maintaining a parallel LLM workflow.
 
 - `2026-06-24`: Removed the repo-specific Unisane adapter from the active Skopos package model now that Skopos lives as a standalone project.
 - `2026-04-10`: Updated the architecture baseline to make public-versus-internal surface classification explicit and to require config-driven workspace-ignore policy so proof and development roots do not contaminate compiled active package state.
@@ -76,3 +82,15 @@ This is the canonical architecture baseline for Skopos itself.
 11. large-repo mode should prefer explicit subtree-targeted compiled slices before broader full-workspace recompilation
 12. config-driven workspace-ignore policy must keep internal, proof-only, and generated roots out of active package discovery when they are not real product scopes
 13. the full repo used to build Skopos may be larger than the public SDK contract, and compiled workspace state must preserve that distinction instead of flattening everything into one package family
+14. Skopos is the single workflow and memory control plane for an adopting project;
+    project providers contribute context, actions, and guards but do not own parallel
+    task admission or closure
+15. let the coding agent own general reasoning, planning, tool use, and subagent
+    coordination; Skopos owns project truth, capabilities, deterministic enforcement,
+    and evidence
+16. execution phase and risk are independent: admission, iteration, stabilization, and
+    closure must not collapse into repeated final proof
+17. task intent, acceptance criteria, non-goals, and constraints must stay distinct from
+    durable project memory
+18. generated projections must justify their supervision or retrieval value and must
+    not multiply merely because another command or host needs a different view

@@ -187,6 +187,15 @@ const buildEvalNextStep = (result: SkoposEvalRunResult): string => {
     return result.nextCommand;
   }
 
+  const executionPhase = result.eval.executionPhase ?? 'closure';
+  if (result.eval.evaluationStatus === 'complete' && executionPhase === 'iteration') {
+    return 'Continue the mission; run stabilization once owner generators are ready.';
+  }
+
+  if (result.eval.evaluationStatus === 'complete' && executionPhase === 'stabilization') {
+    return 'Run `skopos eval --phase closure` once the source state is stable.';
+  }
+
   if (result.eval.evaluationStatus === 'complete') {
     return 'Run `skopos done` to verify closure.';
   }
@@ -609,6 +618,7 @@ export const buildCompactDoneOutput = (report: SkoposDoneReport) =>
       ? {
           missionId: report.missionEval.missionId,
           evaluationStatus: report.missionEval.evaluationStatus,
+          executionPhase: report.missionEval.executionPhase ?? 'closure',
           blockingQuestionIds: report.missionEval.blockingQuestionIds,
           pendingItemIds: report.missionEval.pendingItemIds,
         }
@@ -627,6 +637,10 @@ export const buildCompactEvalOutput = (result: SkoposEvalRunResult) =>
     actorId: result.actorId,
     missionId: result.missionId,
     summary: result.summary,
+    executionPhase: result.eval.executionPhase ?? 'closure',
+    changedPathCount: result.eval.changedPaths?.length ?? 0,
+    selectedCheckCommands:
+      result.eval.selectedCheckCommands ?? result.eval.checkRuns.map((check) => check.command),
     evaluationStatus: result.eval.evaluationStatus,
     executionSurface: result.executionSurface.kind,
     checkCounts: summarizeEvalChecks(result.eval.checkRuns),
@@ -657,7 +671,10 @@ export const buildCompactEvalOutput = (result: SkoposEvalRunResult) =>
     },
     progress: summarizeCompactMissionProgress(result.mission, {
       blockingQuestionCount: result.blockingQuestions.length,
-      evalStatus: result.eval.evaluationStatus,
+      evalStatus:
+        (result.eval.executionPhase ?? 'closure') === 'closure'
+          ? result.eval.evaluationStatus
+          : undefined,
     }),
     trust: {
       trustLevel: result.eval.trust.trustLevel,
@@ -809,6 +826,7 @@ export const buildCompactEvalLines = (result: SkoposEvalRunResult): string[] => 
     'Skopos eval',
     `Status: ${describeReviewStatus(result.eval.evaluationStatus)}`,
     `Mission: ${result.missionId}`,
+    `Phase: ${result.eval.executionPhase ?? 'closure'}`,
     `Summary: ${result.summary}`,
     `Checks: ${counts.pass} pass, ${counts.fail} fix, ${counts.timedOut} timed out, ${counts.skipped} skipped`,
     `Proof: ${result.eval.proof.status}`,
@@ -817,7 +835,10 @@ export const buildCompactEvalLines = (result: SkoposEvalRunResult): string[] => 
       mission: result.mission,
       blockingQuestionCount: result.blockingQuestions.length,
       findingCount: countTrustFindings(result.eval.trust),
-      evalStatus: result.eval.evaluationStatus,
+      evalStatus:
+        (result.eval.executionPhase ?? 'closure') === 'closure'
+          ? result.eval.evaluationStatus
+          : undefined,
       nextStep: buildEvalNextStep(result),
     }),
   ];
@@ -919,6 +940,15 @@ export const buildCompactNextLines = (result: SkoposNextRunResult): string[] => 
     `Status: ${describeNextStatus(result)}`,
     `Mission: ${result.missionId}`,
     `Summary: ${result.summary}`,
+    ...(result.taskBrief
+      ? [
+          `Task: ${result.taskBrief.task.goal}`,
+          `Scope: ${result.taskBrief.task.scope.scope.id}`,
+          `Phase: ${result.taskBrief.phase} / ${result.taskBrief.riskLane}`,
+          `Contract: ${result.taskBrief.task.acceptanceCriteria.length} acceptance criteria, ${result.taskBrief.task.openDecisions.length} open decisions, ${result.taskBrief.task.requiredProof.length} proof requirements`,
+          `Capabilities: ${result.taskBrief.context.selectedCount} context, ${result.taskBrief.actions.selectedCount} actions, ${result.taskBrief.guards.selectedCount} guards`,
+        ]
+      : []),
     `Code allowed: ${result.codeAllowed ? 'yes' : 'no'}`,
     `Trust: ${result.trust.trustLevel} / ${result.trust.readiness}`,
     ...(result.setupReview

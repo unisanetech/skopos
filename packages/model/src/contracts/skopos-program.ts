@@ -1,5 +1,6 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type { SkoposReadiness, SkoposTrustLevel } from './skopos-trust-report.js';
+import type { SkoposTaskIdentity } from './skopos-task-identity.js';
 
 export type SkoposProgramItemSourceKind =
   | 'mission'
@@ -128,6 +129,7 @@ export interface SkoposProgramRecommendedAction {
 
 export interface SkoposProgramStateArtifact extends SkoposArtifactEnvelope<'program-state'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   items: SkoposProgramItem[];
   sequence: SkoposProgramSequence;
   obligations: SkoposProgramObligation[];

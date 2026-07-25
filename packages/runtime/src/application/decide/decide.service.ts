@@ -1,4 +1,4 @@
-import { join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import type {
   SkoposDecideRunResult,
@@ -6,10 +6,7 @@ import type {
   SkoposWorkflowQuestionArtifact,
 } from '@skopos/model';
 
-import {
-  loadSkoposMissionRuntime,
-  resolveMissionPath,
-} from '../mission/mission.service.js';
+import { resolveMissionPath } from '../mission/mission.service.js';
 import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
@@ -20,16 +17,20 @@ import {
   writeSkoposAgentBrief,
 } from '../shared/agent-briefs.js';
 import { refreshSkoposDiscussionLifecycleArtifacts } from '../shared/discussion-lifecycle.js';
+import { resolveCurrentMissionRuntime } from '../shared/current-mission.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import {
   buildWorkflowRecommendationsArtifact,
   getBlockingWorkflowQuestions,
   isImplementationAllowed,
-  loadWorkflowQuestionsArtifact,
-  QUESTIONS_ARTIFACT_PATH,
-  RECOMMENDATIONS_ARTIFACT_PATH,
   resolveWorkflowQuestionArtifact,
 } from '../workflow-router/workflow-router-state.service.js';
+import {
+  loadWorkflowQuestionsForMission,
+  resolveMissionTaskIdentity,
+  writeWorkflowQuestionsState,
+  writeWorkflowRecommendationsState,
+} from '../workflow-router/workflow-router-task-state.service.js';
 
 export interface BuildSkoposDecideRuntimeOptions {
   cwd: string;
@@ -48,7 +49,24 @@ export const buildSkoposDecideRuntime = async ({
 }: BuildSkoposDecideRuntimeOptions): Promise<SkoposDecideRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = requireActorId(actor);
-  const existingQuestions = await loadWorkflowQuestionsArtifact(workspaceRoot);
+  const resolvedMission = await resolveCurrentMissionRuntime({
+    workspaceRoot,
+    actorId,
+  });
+  const taskIdentity = await resolveMissionTaskIdentity({
+    workspaceRoot,
+    mission: resolvedMission,
+    actorId,
+  });
+  const mission = { ...resolvedMission, taskIdentity };
+  const existingQuestions = await loadWorkflowQuestionsForMission({
+    workspaceRoot,
+    mission,
+    actorId,
+  });
+  if (!existingQuestions) {
+    throw new Error(`No workflow questions exist for mission ${mission.id}.`);
+  }
   const resolvedAt = new Date().toISOString();
   const { artifact: questions, resolvedQuestion } = resolveWorkflowQuestionArtifact({
     artifact: existingQuestions,
@@ -56,11 +74,6 @@ export const buildSkoposDecideRuntime = async ({
     optionId,
     actorId,
     resolvedAt,
-  });
-  const mission = await loadLinkedMission({
-    workspaceRoot,
-    questions,
-    resolvedQuestionId: questionId,
   });
   const updatedMission = buildUpdatedMission({
     mission,
@@ -75,19 +88,22 @@ export const buildSkoposDecideRuntime = async ({
     planId: updatedMission.planId,
     mission: updatedMission,
     questions,
+    taskIdentity,
   });
-  const questionsPath = join(workspaceRoot, QUESTIONS_ARTIFACT_PATH);
-  const questionsWrite = await writeJsonArtifact({
-    artifactPath: questionsPath,
-    artifact: questions,
+  const questionsState = await writeWorkflowQuestionsState({
+    workspaceRoot,
+    artifact: { ...questions, taskIdentity },
     dryRun,
   });
-  const recommendationsPath = join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH);
-  const recommendationsWrite = await writeJsonArtifact({
-    artifactPath: recommendationsPath,
+  const questionsPath = questionsState.compatibilityPath;
+  const questionsWrite = questionsState.write;
+  const recommendationsState = await writeWorkflowRecommendationsState({
+    workspaceRoot,
     artifact: recommendations,
     dryRun,
   });
+  const recommendationsPath = recommendationsState.compatibilityPath;
+  const recommendationsWrite = recommendationsState.write;
   const missionPath = resolveMissionPath(workspaceRoot, updatedMission.id);
   const missionWrite = await writeJsonArtifact({
     artifactPath: missionPath,
@@ -129,7 +145,13 @@ export const buildSkoposDecideRuntime = async ({
     eventKind: 'decision',
     status: dryRun ? 'dry-run' : 'succeeded',
     summary,
-    relatedArtifactPaths: [questionsPath, recommendationsPath, missionPath],
+    relatedArtifactPaths: [
+      questionsState.authorityPath,
+      questionsPath,
+      recommendationsState.authorityPath,
+      recommendationsPath,
+      missionPath,
+    ],
     metadata: {
       actorId,
       questionId,
@@ -153,6 +175,13 @@ export const buildSkoposDecideRuntime = async ({
     selectedOptionId: optionId,
     summary,
     codeAllowed,
+    taskState: {
+      authorityDirectory: dirname(questionsState.authorityPath),
+      questionsPath: questionsState.authorityPath,
+      recommendationsPath: recommendationsState.authorityPath,
+      compatibilityQuestionsPath: questionsPath,
+      compatibilityRecommendationsPath: recommendationsPath,
+    },
     questionsPath,
     questionsWrite,
     questions,
@@ -167,29 +196,6 @@ export const buildSkoposDecideRuntime = async ({
     missionPath,
     missionWrite,
   };
-};
-
-const loadLinkedMission = async ({
-  workspaceRoot,
-  questions,
-  resolvedQuestionId,
-}: {
-  workspaceRoot: string;
-  questions: SkoposWorkflowQuestionArtifact;
-  resolvedQuestionId: string;
-}): Promise<SkoposMissionArtifact> => {
-  const resolvedQuestion = questions.entries.find((entry) => entry.id === resolvedQuestionId);
-  const missionId = resolvedQuestion?.linkedMissionId ?? questions.generatedForMissionId;
-  if (!missionId) {
-    throw new Error(
-      `Workflow question ${resolvedQuestionId} is not linked to a mission, so Skopos cannot update the active execution state.`,
-    );
-  }
-
-  return loadSkoposMissionRuntime({
-    cwd: workspaceRoot,
-    mission: missionId,
-  });
 };
 
 const buildUpdatedMission = ({

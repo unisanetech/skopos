@@ -1,8 +1,14 @@
-import { mkdir, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { loadSkoposWorkflowManifests } from '@skopos/indexer';
 import type { SkoposWorkflowManifest, SkoposWorkflowRunArtifact } from '@skopos/model';
+import {
+  buildSkoposWorkflowReceipt,
+  finalizeSkoposWorkflowReceipt,
+  validateSkoposWorkflowReceipt,
+} from '@skopos/trust';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -10,6 +16,7 @@ import {
 } from '../shared/knowledge-state.js';
 import { executeSkoposShellCommand } from '../shared/execute-shell-command.js';
 import { pathExists } from '../shared/path-exists.js';
+import { writeSkoposReceiptProjection } from '../agent-native/artifact-lifecycle.js';
 
 export interface ListSkoposWorkflowsRuntimeOptions {
   cwd: string;
@@ -23,6 +30,7 @@ export interface RunSkoposWorkflowRuntimeOptions extends ShowSkoposWorkflowRunti
   dryRun?: boolean;
   approve?: boolean;
   actor?: string;
+  force?: boolean;
 }
 
 export const listSkoposWorkflowsRuntime = async ({
@@ -57,6 +65,7 @@ export const runSkoposWorkflowRuntime = async ({
   dryRun = false,
   approve = false,
   actor,
+  force = false,
 }: RunSkoposWorkflowRuntimeOptions): Promise<SkoposWorkflowRunArtifact> => {
   const workspaceRoot = resolve(cwd);
   const manifest = await showSkoposWorkflowRuntime({
@@ -75,7 +84,7 @@ export const runSkoposWorkflowRuntime = async ({
       ? resolveWorkflowActorId(actor)
       : requireWorkflowActorId(actor, manifest.id);
 
-  const runId = `run-${formatTimestamp(new Date())}-${slugify(manifest.id)}`;
+  const runId = `run-${formatTimestamp(new Date())}-${slugify(manifest.id)}-${randomUUID().slice(0, 8)}`;
   const runPath = join(workspaceRoot, '.skopos', 'runs', `${runId}.json`);
 
   if (dryRun) {
@@ -111,6 +120,91 @@ export const runSkoposWorkflowRuntime = async ({
   }
 
   const startedAt = new Date().toISOString();
+  const receipt = await buildSkoposWorkflowReceipt({
+    workspaceRoot,
+    manifest,
+    runId,
+    actorId,
+    capturedAt: startedAt,
+  });
+  const existingRuns = await loadWorkflowRunArtifacts(workspaceRoot);
+  const exactRuns = existingRuns.filter(
+    (artifact) => artifact.receipt?.executionKey === receipt.executionKey,
+  );
+  const activeRun = exactRuns.find(
+    (artifact) =>
+      artifact.runStatus === 'running' &&
+      Date.parse(artifact.receipt?.owner.leaseExpiresAt ?? '') > Date.now(),
+  );
+  if (activeRun) {
+    throw new Error(
+      `Workflow ${manifest.id} already has exact execution owner ${activeRun.id} for this source state.`,
+    );
+  }
+
+  if (!force && (manifest.safety === 'read-only' || manifest.outputs.length > 0)) {
+    for (const existingRun of exactRuns.filter((artifact) => artifact.runStatus === 'succeeded')) {
+      const validation = await validateSkoposWorkflowReceipt({
+        workspaceRoot,
+        manifest,
+        artifact: existingRun,
+      });
+      if (validation.status === 'valid') {
+        const existingRunPath = join(
+          workspaceRoot,
+          '.skopos',
+          'runs',
+          `${existingRun.id}.json`,
+        );
+        const receiptProjectionPath = await writeSkoposReceiptProjection({
+          workspaceRoot,
+          authorityRunPath: existingRunPath,
+          artifact: existingRun,
+        });
+        await appendSkoposOperationalLogEntry({
+          workspaceRoot,
+          eventKind: 'workflow-run',
+          status: 'succeeded',
+          summary: `Reused source-bound workflow receipt ${existingRun.id} for ${manifest.id}.`,
+          relatedArtifactPaths: [
+            existingRunPath,
+            ...(receiptProjectionPath ? [receiptProjectionPath] : []),
+            manifest.sourcePath,
+            ...existingRun.outputPaths,
+          ],
+          metadata: {
+            workflowId: manifest.id,
+            workflowSafety: manifest.safety,
+            actorId: actorId ?? null,
+            reusedRunId: existingRun.id,
+            receiptExecutionKey: receipt.executionKey,
+          },
+        });
+        await refreshSkoposKnowledgeIndex({
+          workspaceRoot,
+        });
+        return {
+          ...existingRun,
+          summary: `${manifest.id} reused source-bound receipt ${existingRun.id}.`,
+          reusedFromRunId: existingRun.id,
+        };
+      }
+    }
+  }
+
+  const runningArtifact = buildWorkflowRunArtifact({
+    id: runId,
+    workspaceRoot,
+    manifest,
+    runStatus: 'running',
+    exitCode: null,
+    startedAt,
+    outputPaths: [],
+    runByActorId: actorId,
+    receipt,
+  });
+  await writeRunArtifact(runPath, runningArtifact);
+
   const workflowCwd = resolve(workspaceRoot, manifest.cwd);
   const execution = await executeSkoposShellCommand({
     command: manifest.command,
@@ -126,6 +220,14 @@ export const runSkoposWorkflowRuntime = async ({
       }),
     )
   ).filter((value): value is string => Boolean(value));
+  const finalizedReceipt =
+    execution.exitCode === 0
+      ? await finalizeSkoposWorkflowReceipt({
+          workspaceRoot,
+          manifest,
+          receipt,
+        })
+      : receipt;
   const artifact = buildWorkflowRunArtifact({
     id: runId,
     workspaceRoot,
@@ -138,21 +240,34 @@ export const runSkoposWorkflowRuntime = async ({
     stdoutExcerpt: execution.stdoutExcerpt,
     stderrExcerpt: execution.stderrExcerpt,
     runByActorId: actorId,
+    receipt: finalizedReceipt,
   });
 
   await writeRunArtifact(runPath, artifact);
+  const receiptProjectionPath = await writeSkoposReceiptProjection({
+    workspaceRoot,
+    authorityRunPath: runPath,
+    artifact,
+  });
   await appendSkoposOperationalLogEntry({
     workspaceRoot,
     eventKind: 'workflow-run',
     status: execution.exitCode === 0 ? 'succeeded' : 'failed',
     summary: `Workflow ${manifest.id} ${execution.exitCode === 0 ? 'completed' : 'failed'}.`,
-    relatedArtifactPaths: [runPath, manifest.sourcePath, ...outputPaths],
+    relatedArtifactPaths: [
+      runPath,
+      ...(receiptProjectionPath ? [receiptProjectionPath] : []),
+      manifest.sourcePath,
+      ...outputPaths,
+    ],
     metadata: {
       workflowId: manifest.id,
       workflowSafety: manifest.safety,
       requiresApproval: manifest.requiresApproval,
       exitCode: execution.exitCode,
       actorId: actorId ?? null,
+      receiptExecutionKey: finalizedReceipt.executionKey,
+      receiptSourceDigest: finalizedReceipt.sourceState.digest,
     },
   });
   await refreshSkoposKnowledgeIndex({
@@ -180,6 +295,7 @@ interface BuildWorkflowRunArtifactInput {
   stdoutExcerpt?: string;
   stderrExcerpt?: string;
   runByActorId?: string;
+  receipt?: SkoposWorkflowRunArtifact['receipt'];
 }
 
 const buildWorkflowRunArtifact = ({
@@ -194,6 +310,7 @@ const buildWorkflowRunArtifact = ({
   stdoutExcerpt,
   stderrExcerpt,
   runByActorId,
+  receipt,
 }: BuildWorkflowRunArtifactInput): SkoposWorkflowRunArtifact => ({
   schemaVersion: 1,
   id,
@@ -217,6 +334,7 @@ const buildWorkflowRunArtifact = ({
   startedAt,
   finishedAt,
   outputPaths,
+  receipt,
   stdoutExcerpt,
   stderrExcerpt,
 });
@@ -248,6 +366,30 @@ const writeRunArtifact = async (
 ): Promise<void> => {
   await mkdir(dirname(runPath), { recursive: true });
   await writeFile(runPath, JSON.stringify(artifact, null, 2), 'utf8');
+};
+
+const loadWorkflowRunArtifacts = async (
+  workspaceRoot: string,
+): Promise<SkoposWorkflowRunArtifact[]> => {
+  const runsRoot = join(workspaceRoot, '.skopos', 'runs');
+
+  try {
+    const entries = await readdir(runsRoot);
+    const artifacts = await Promise.all(
+      entries
+        .filter((entry) => entry.endsWith('.json'))
+        .map(async (entry) =>
+          JSON.parse(await readFile(join(runsRoot, entry), 'utf8')) as SkoposWorkflowRunArtifact,
+        ),
+    );
+    return artifacts.sort((left, right) => {
+      const leftTime = Date.parse(left.finishedAt ?? left.updatedAt ?? left.generatedAt ?? '');
+      const rightTime = Date.parse(right.finishedAt ?? right.updatedAt ?? right.generatedAt ?? '');
+      return rightTime - leftTime;
+    });
+  } catch {
+    return [];
+  }
 };
 
 const formatTimestamp = (now: Date): string =>

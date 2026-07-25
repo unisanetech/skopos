@@ -18,6 +18,9 @@ import type {
   SkoposMemoryStateArtifact,
   SkoposResolvedGatesArtifact,
   SkoposResolvedPolicyArtifact,
+  SkoposResolvedSkillArtifact,
+  SkoposSkillHostProjectionArtifact,
+  SkoposSkillRecommendationArtifact,
   SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopeLite,
@@ -216,6 +219,21 @@ export interface SkoposUiConsolePolicyReviewView {
   }>;
 }
 
+export interface SkoposUiConsoleSkillReviewView {
+  resolved?: {
+    artifactPath: string;
+    skills: SkoposResolvedSkillArtifact;
+  };
+  recommendations?: {
+    artifactPath: string;
+    recommendations: SkoposSkillRecommendationArtifact;
+  };
+  projections: Array<{
+    artifactPath: string;
+    projection: SkoposSkillHostProjectionArtifact;
+  }>;
+}
+
 export interface SkoposUiConsoleUnderstandingView {
   summaryPath: string;
   featureInventoryPath: string;
@@ -253,6 +271,7 @@ export interface SkoposUiConsoleState {
   scopes: SkoposUiConsoleScopeView[];
   adapterSupport?: SkoposUiConsoleAdapterSupportView;
   policyReview?: SkoposUiConsolePolicyReviewView;
+  skillReview?: SkoposUiConsoleSkillReviewView;
   understanding?: SkoposUiConsoleUnderstandingView;
   memoryView?: SkoposUiConsoleMemoryView;
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;

@@ -10,6 +10,8 @@ export * from './application/build-scope-relations-graph/build-scope-relations-g
 export * from './application/build-workspace-graph/build-workspace-graph.service.js';
 export * from './application/load-overrides/load-overrides.service.js';
 export * from './application/load-policy-packs/load-policy-packs.service.js';
+export * from './application/load-skill-packs/load-skill-packs.service.js';
+export * from './application/skill-source-digest/skill-source-digest.service.js';
 export * from './application/load-workflow-manifests/load-workflow-manifests.service.js';
 export * from './application/match-workflows/match-workflows.service.js';
 export * from './application/scan-repo/scan-repo.service.js';

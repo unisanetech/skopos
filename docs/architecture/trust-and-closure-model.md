@@ -9,7 +9,7 @@ Skopos should make “done” evidence-backed rather than summary-backed.
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `runtime-model.md`
@@ -17,6 +17,13 @@ Skopos should make “done” evidence-backed rather than summary-backed.
   - `decision-escalation-model.md`
 
 ## Changelog
+
+- `2026-07-25`: Implemented source-bound workflow receipt validation, completed-run
+  reuse, and active exact-command ownership in the existing workflow/eval/done path.
+
+- `2026-07-25`: Added acceptance-criterion-to-evidence closure, phase-separated proof,
+  source-bound receipts, exact-command ownership, task/worktree identity, and the rule
+  that one adopting project has one Skopos closure authority.
 
 - `2026-06-29`: Clarified that first-time Skopos onboarding files are allowed to pass active-mission coverage when they are only the expected generated setup surfaces.
 - `2026-04-12`: Reconciled stale advisory decision drift during eval, so older missions no longer keep `decision-*` items pending in `.skopos/evals/*.json` after the linked workflow question has disappeared or already resolved for that mission.
@@ -147,3 +154,35 @@ The next trust increment should also support:
 8. required mutating workflow evidence should carry actor attribution so humans and agents can see who produced the latest successful proof
 9. unresolved `must-ask` workflow questions must block closure instead of remaining advisory
 10. required eval outputs must be explicit closure inputs when the change class is structural, risky, or otherwise marked high-impact
+11. closure must map material task acceptance criteria to evidence; generic green
+    typecheck/test status alone cannot certify unrelated behavioral claims
+12. admission and iteration evidence cannot silently substitute for the selected final
+    risk-lane closure
+13. exact duplicate actions have one execution owner for one stable source state
+14. reusable receipts must bind action, relevant source/configuration, provider or
+    extension version, environment requirements, outputs, and freshness
+15. task and proof identity must be worktree-aware so parallel agents cannot certify or
+    overwrite one another's source state
+16. downstream project integrations contribute proof but do not create a second closure
+    authority beside Skopos
+
+Current workflow evidence behavior is additive:
+
+1. new workflow runs write source-bound receipts into `.skopos/runs/*.json`
+2. eval and done fail a receipt when relevant inputs, workflow/config sources, exact
+   command, environment, or stable outputs no longer match
+3. an active matching receipt owns execution until completion or lease expiry
+4. a valid completed receipt may satisfy an exact duplicate read-only or output-bearing
+   action without rerunning it
+5. legacy receipts use the earlier timestamp compatibility check until migration
+   guidance retires that fallback
+
+## Proof Phases
+
+1. admission validates intent, scope, authority, open decisions, and applicable guards
+2. iteration runs affected-scope and focused behavior checks
+3. stabilization runs owner generators and refreshes derived knowledge once
+4. closure runs the selected final lane once against stable source and records receipts
+
+Risk selects the final proof floor. It does not justify running final proof during every
+earlier phase.

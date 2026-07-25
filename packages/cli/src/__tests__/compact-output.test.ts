@@ -370,6 +370,7 @@ describe('compact output projections', () => {
       'Skopos eval',
       'Status: Review needed',
       'Mission: mission-1',
+      'Phase: closure',
       'Summary: Evaluation still needs proof.',
       'Checks: 1 pass, 1 fix, 0 timed out, 0 skipped',
       'Proof: fail',

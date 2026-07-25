@@ -3,7 +3,7 @@
   "id": "proof-phase-baseline-v1",
   "definitionSetId": "proof-phase-benchmarks",
   "requiredStatus": "pass",
-  "benchmarkCount": 20,
+  "benchmarkCount": 21,
   "minimumWeightedPassRate": 1,
   "benchmarks": [
     {
@@ -105,9 +105,19 @@
       "id": "batch-mission-slicing",
       "requiredStatus": "pass",
       "minimumWeightedPassRate": 1
+    },
+    {
+      "id": "agent-native-adoption-matrix",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
     }
   ],
   "categories": [
+    {
+      "category": "agent-native-adoption",
+      "requiredStatus": "pass",
+      "minimumWeightedPassRate": 1
+    },
     {
       "category": "batch-execution",
       "requiredStatus": "pass",

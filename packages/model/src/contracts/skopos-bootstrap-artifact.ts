@@ -82,6 +82,7 @@ export interface SkoposGitignoreScaffoldArtifact {
 
 export interface SkoposInitResult {
   configPath: string;
+  projectPath?: string;
   bootstrapPath: string;
   memoryPath?: string;
   communicationBriefPath?: string;
@@ -100,6 +101,7 @@ export interface SkoposInitResult {
   gitignoreScaffold?: SkoposGitignoreScaffoldArtifact;
   instructionScaffold?: SkoposInstructionScaffoldArtifact;
   configWrite: SkoposWriteStatus;
+  projectWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   bootstrapWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   scopesLiteWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   diagnosisWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;

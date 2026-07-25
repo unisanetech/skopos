@@ -1,4 +1,5 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
+import type { SkoposTaskIdentity } from './skopos-task-identity.js';
 
 export type SkoposWorkflowRecommendationPriority = 'high' | 'medium' | 'low';
 export type SkoposWorkflowRecommendationStatus = 'open' | 'completed' | 'dismissed';
@@ -39,6 +40,7 @@ export interface SkoposWorkflowRecommendationEntry {
 export interface SkoposWorkflowRecommendationArtifact
   extends SkoposArtifactEnvelope<'recommendations'> {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   generatedForPlanId?: string;
   generatedForMissionId?: string;
   executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;

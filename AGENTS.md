@@ -8,8 +8,9 @@ This file is the canonical instruction source for the standalone Skopos workspac
 2. `docs/project/proof-phase-plan.md`
 3. `docs/project/implementation-checklist.md`
 4. `docs/architecture/runtime-model.md`
-5. `docs/architecture/config-model.md`
-6. `docs/architecture/artifact-model.md`
+5. `docs/architecture/agent-native-operating-model.md`
+6. `docs/architecture/config-model.md`
+7. `docs/architecture/artifact-model.md`
 
 ## Standalone Governance
 
@@ -23,6 +24,13 @@ This file is the canonical instruction source for the standalone Skopos workspac
 2. Do not hand-edit generated instruction mirrors or runtime-managed `.skopos/**` derived artifacts.
 3. During the current proof phase, prioritize brownfield reliability, closure quality, and self-hosting friction discovery over new UI or graph surface expansion.
 4. If `AGENTS.md` changes, regenerate mirrors with `pnpm instructions:sync`.
+5. Before grepping source to discover command usage, check this file, `docs/00-start-here.md`, `docs/project/workflows.md`, and `skopos --help` or subcommand help. Source grep is a fallback when docs/help are missing or unclear.
+6. Treat Skopos as the single project workflow and closure authority. Project-specific
+   integrations contribute context, actions, and guards; they do not create a parallel
+   LLM workflow.
+7. Let coding agents own general reasoning and implementation. Add Skopos state only
+   when it protects project truth, task intent, deterministic enforcement, recovery, or
+   trustworthy evidence.
 
 ## Canonical Command Surface
 
@@ -33,6 +41,31 @@ This file is the canonical instruction source for the standalone Skopos workspac
 5. `pnpm skopos:init`
 6. `pnpm skopos:trust`
 7. `pnpm skopos:ui`
+8. `pnpm skopos:ui:dev`
+9. `pnpm skopos:ui:serve`
+
+## Common Skopos Commands
+
+Use `skopos --help` for the full CLI surface and `skopos <command> --help` where supported. In this self-hosted repo, package scripts wrap the local source CLI; in installed projects, use `skopos` directly.
+
+1. Load compact project knowledge: `skopos knowledge . --compact`
+2. Review setup questions: `skopos setup review .`
+3. Build project understanding: `skopos understand . --actor <id>`
+4. See the next action: `skopos program next . --compact --json`
+5. Start tracked work: `skopos start "<goal>" . --actor <id>`
+6. Continue tracked work: `skopos next . --actor <id>`
+7. Check trust/readiness: `skopos trust . --actor <id> --compact`
+8. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
+9. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
+10. Render static UI artifact: `skopos ui render .`
+11. Sync agent instructions: `skopos instructions sync . --actor <id>`
+12. List workflows: `skopos workflows list .`
+13. Run a workflow: `skopos workflows run <workflow-id> . --actor <id>`
+14. Validate changed scope: `skopos eval . --mission <mission-id> --actor <id> --phase iteration`
+15. Review owner stabilization: `skopos eval . --mission <mission-id> --actor <id> --phase stabilization`
+16. Validate final closure: `skopos eval . --mission <mission-id> --actor <id> --phase closure`
+17. Review project skill packs: `skopos skills recommend .`
+18. Accept a project-bound skill: `skopos skills apply <pack-id> . --binding <binding-id> --actor <id> --reason <text>`
 
 <!-- skopos:policy:start -->
 ## Skopos Accepted Policy

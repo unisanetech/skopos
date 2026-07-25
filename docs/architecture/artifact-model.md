@@ -9,7 +9,7 @@ Skopos should produce a stable, versioned local artifact family for both humans 
 - Owner: `skopos-core`
 - Scope: `skopos/architecture`
 - Canonical: `yes`
-- Last Updated: `2026-06-24`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `config-model.md`
@@ -19,6 +19,24 @@ Skopos should produce a stable, versioned local artifact family for both humans 
   - `../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md`
 
 ## Changelog
+
+- `2026-07-25`: Implemented the staged compact artifact lifecycle projection at
+  `.skopos/project.json`, current task/brief projections under `.skopos/current/`, and
+  source-bound receipt projections under `.skopos/receipts/`. Existing workflow
+  artifacts remain authoritative until cross-project migration and recovery proof pass.
+
+- `2026-07-25`: Recorded the host-neutral projection model inside
+  `.skopos/enforcement.json`; host instruction and adapter files remain generated views
+  of that existing authority.
+
+- `2026-07-25`: Upgraded existing workflow-run artifacts with source-bound receipt
+  state, exact-command execution keys, stable-output hashes, and expiring execution
+  ownership; no second receipt artifact family was added.
+
+- `2026-07-25`: Added the compact target artifact model: task/worktree-aware current
+  state, source-bound proof receipts, authority-aware project knowledge, and disposable
+  high-churn cache. Existing artifact families remain current compatibility surfaces
+  until the P1-W11 convergence and migration proof retire overlap.
 
 - `2026-06-24`: Added the implemented `.skopos/policies/role-mapping.json` artifact so accepted packs can persist local folder-to-role mappings for brownfield projects instead of treating different good structures as drift.
 - `2026-06-24`: Added `.skopos/policies/role-mapping-decisions.json` so users can confirm, ignore, or manually set local role mappings without editing generated mapping output.
@@ -151,6 +169,54 @@ Skopos should produce a stable, versioned local artifact family for both humans 
 11. program-control artifacts should compile accepted work, sequencing, and obligations into one low-noise shared surface instead of fragmenting that state across multiple manual planning documents by default
 12. agent-facing brief artifacts should project canonical truth into compact token-budgeted summaries instead of becoming a second manually authored source of truth
 13. authored intelligence pack sources are product source truth and should be reviewed like docs plus schema-backed configuration, not edited through generated-state commands
+14. active task artifacts must be task-, branch-, and worktree-aware rather than one
+    mutable workspace-global current state
+15. proof receipts must bind exact action identity to relevant source, configuration,
+    provider, environment, and freshness inputs
+16. derived high-churn projections should live in disposable cache unless they have a
+    distinct durable authority or recovery purpose
+17. inferred and proposed memory cannot self-promote into declared or accepted project
+    truth
+
+## Compact Target State
+
+P1-W11 converges the default artifact experience toward:
+
+```text
+.skopos/
+├── project.json
+├── index.json
+├── current/
+│   ├── brief.json
+│   └── task.json
+├── receipts/
+└── cache/
+```
+
+This is a target ownership model, not permission to delete current public artifacts
+without migration proof. Existing plans, missions, questions, recommendations, evals,
+discussion state, graphs, and agent briefs should either:
+
+1. compile into the compact project/task/receipt model
+2. remain an explicitly justified advanced artifact with distinct lifecycle
+3. move to disposable cache
+4. retire after compatibility and recovery proof
+
+The first migration stage is additive:
+
+1. `init` generates `.skopos/project.json` as a lifecycle map, not a second project or
+   workflow authority
+2. `.skopos/current/task.json` and `.skopos/current/brief.json` point to the active
+   task/worktree mission authority and may be regenerated at any time
+3. `.skopos/receipts/<execution-key>.json` points to the authoritative
+   `.skopos/runs/<run-id>.json`; it does not replace run history yet
+4. existing compatibility and advanced-history paths remain readable and writable by
+   their current commands
+5. agent briefs, discussions, graphs, proof snapshots, recommendations, and the
+   operational log are classified as disposable cache candidates, but are not moved
+   until all readers use a lifecycle-aware resolver and regeneration proof passes
+6. each retained or cache-candidate family carries an explicit removal condition so a
+   later clean-refactor cannot convert “compact” into silent data loss
 
 ## Workflow Artifact Rule
 
@@ -177,6 +243,12 @@ Skopos should produce a stable, versioned local artifact family for both humans 
    - the bounded Skopos policy section in `AGENTS.md` is generated from resolved policy so host agents can load current policy without opening full pack docs
 6. workflow run evidence under `.skopos/runs/*.json` is runtime-managed workflow state and should be written by Skopos, not hand-edited
    - mutating workflow runs should carry actor attribution when the evidence is meant to support trust or closure
+   - new executions first persist `running` ownership, then finalize the same artifact
+     as `succeeded` or `failed`
+   - source-bound receipts hash the exact action/command, declared input state,
+     workflow/config sources, non-secret environment identity, and stable outputs
+   - legacy run artifacts remain readable, but only a valid source-bound receipt can be
+     reused to skip an exact duplicate execution
 7. unresolved workflow questions under `.skopos/questions.json` are runtime-managed decision state and should be rewritten by Skopos rather than hand-edited
    - questions should carry actor attribution and linked mission or plan ids when available
 8. bounded next-action guidance under `.skopos/recommendations.json` is runtime-managed recommendation state and should be regenerated by Skopos rather than hand-edited

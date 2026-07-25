@@ -2,6 +2,10 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { SkoposMissionArtifact, SkoposWorkflowQuestionArtifact } from '@skopos/model';
+import {
+  resolveSkoposWorkspaceIdentity,
+  taskIdentityMatchesWorkspace,
+} from '@skopos/trust';
 
 import { loadSkoposMissionRuntime } from '../mission/mission.service.js';
 
@@ -18,11 +22,14 @@ export const resolveCurrentMissionRuntime = async ({
   questions?: SkoposWorkflowQuestionArtifact;
   recommendations?: { generatedForMissionId?: string };
 }): Promise<SkoposMissionArtifact> => {
+  const workspaceIdentity = await resolveSkoposWorkspaceIdentity(workspaceRoot);
   if (mission) {
-    return loadSkoposMissionRuntime({
+    const explicitMission = await loadSkoposMissionRuntime({
       cwd: workspaceRoot,
       mission,
     });
+    assertMissionMatchesWorkspace(explicitMission, workspaceIdentity);
+    return explicitMission;
   }
 
   const candidateMissionIds = [
@@ -32,17 +39,30 @@ export const resolveCurrentMissionRuntime = async ({
 
   for (const missionId of candidateMissionIds) {
     try {
-      return await loadSkoposMissionRuntime({
+      const candidate = await loadSkoposMissionRuntime({
         cwd: workspaceRoot,
         mission: missionId,
       });
+      assertMissionMatchesWorkspace(candidate, workspaceIdentity);
+      return candidate;
     } catch {
       continue;
     }
   }
 
   const missions = await loadMissionArtifacts(workspaceRoot);
-  const currentCandidateMissions = filterSupersededActiveMissions(missions);
+  const identityMatchedMissions = missions.filter(
+    (entry) =>
+      entry.taskIdentity &&
+      taskIdentityMatchesWorkspace({
+        taskIdentity: entry.taskIdentity,
+        workspace: workspaceIdentity,
+      }),
+  );
+  const legacyMissions = missions.filter((entry) => !entry.taskIdentity);
+  const currentCandidateMissions = filterSupersededActiveMissions(
+    identityMatchedMissions.length > 0 ? identityMatchedMissions : legacyMissions,
+  );
   const activeClaimedMissions = currentCandidateMissions
     .filter(
       (entry) =>
@@ -63,6 +83,20 @@ export const resolveCurrentMissionRuntime = async ({
   }
 
   throw new Error('No active mission could be resolved. Pass --mission <id> or start new work first.');
+};
+
+const assertMissionMatchesWorkspace = (
+  mission: SkoposMissionArtifact,
+  workspace: Awaited<ReturnType<typeof resolveSkoposWorkspaceIdentity>>,
+): void => {
+  if (
+    mission.taskIdentity &&
+    !taskIdentityMatchesWorkspace({ taskIdentity: mission.taskIdentity, workspace })
+  ) {
+    throw new Error(
+      `Mission ${mission.id} belongs to branch ${mission.taskIdentity.branch ?? '(detached)'} in worktree ${mission.taskIdentity.worktreeId}, not the current branch/worktree.`,
+    );
+  }
 };
 
 const loadMissionArtifacts = async (workspaceRoot: string): Promise<SkoposMissionArtifact[]> => {

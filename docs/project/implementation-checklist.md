@@ -9,7 +9,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
 - Owner: `skopos-core`
 - Scope: `skopos/project`
 - Canonical: `yes`
-- Last Updated: `2026-06-29`
+- Last Updated: `2026-07-25`
 - Review Cycle: `per workpack`
 - Related Docs:
   - `overview.md`
@@ -29,6 +29,7 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `../architecture/artifact-model.md`
   - `../architecture/retrieval-and-query-strategy.md`
   - `../architecture/trust-and-closure-model.md`
+  - `../architecture/agent-native-operating-model.md`
   - `../architecture/decision-escalation-model.md`
   - `../decisions/033-memory-map-and-agent-workflow-intelligence-contract.md`
   - `../decisions/036-project-modes-and-command-guided-agent-briefs.md`
@@ -36,6 +37,11 @@ Use this checklist to keep Skopos build work aligned with the agreed product vis
   - `../decisions/038-skopos-self-hosting-mode-and-compatibility-boundaries.md`
 
 ## Changelog
+
+- `2026-07-25`: Added P1-W11 as the next architecture convergence: one Skopos control
+  plane, context/actions/guards, compact task contracts, progressive context,
+  authority-aware memory, phase-separated proof, receipts, worktree isolation, and
+  complete downstream-project adoption without parallel LLM workflows.
 
 - `2026-06-29`: Added Skopos self-hosting mode cleanup to the implementation sequence: internals should use clean-refactor behavior while public CLI/package/schema surfaces keep compatibility discipline.
 
@@ -556,6 +562,12 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
   - one canonical instruction source
 - Keep the core generic and project-agnostic.
 - Keep project-specific logic outside the Skopos core package family.
+- Keep Skopos as the single workflow and closure authority in an adopting project.
+- Let coding agents own general reasoning and coordination; do not add Skopos artifacts
+  or commands merely to mirror native agent state.
+- Present context, actions, and guards as the smallest public mental model.
+- Admit generic capabilities to core only after proof on meaningfully different project
+  shapes.
 
 ## Knowledge Checklist
 
@@ -761,6 +773,14 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
 - Persist unresolved workflow questions and bounded recommendations as runtime artifacts instead of leaving them only in terminal output.
 - Persist accepted direction through compact checkpoints and handoffs instead of transcript replay.
 - Make `done` evidence-based, not summary-based.
+- Separate admission, affected iteration, stabilization, and final closure.
+- Persist a task contract only when risk, duration, interruption, or coordination
+  justifies it.
+- Bind reusable command receipts to relevant source/configuration/provider/environment
+  identity and freshness.
+- Make active task state branch- and worktree-aware.
+- Let project providers describe context, actions, guards, and proof without owning
+  parallel task routing.
 
 ## Quality Checklist
 
@@ -796,6 +816,16 @@ Do not open broad “improve Skopos” batches. Split them until one bounded fai
 - Keep cross-chat continuity compact enough that resume context does not become token-hungry.
 
 ## Current Build Order
+
+Before continuing the numbered build order, execute P1-W11:
+
+- model compact task intent and brief
+- compile workflows/packs/gates into context, actions, and guards
+- separate execution phases and deduplicate final proof
+- add proof receipts and worktree-safe task state
+- add authority, promotion, negative knowledge, and acceptance-linked evidence
+- prove automatic/config/provider extension and complete complex-project adoption
+- converge artifacts and public commands with explicit compatibility migration
 
 1. Lock docs, architecture, and package boundaries.
 2. Implement root config schema and generated artifact contracts.

@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "project-skill-binding.skopos.ui.product-craft",
+  "type": "project-skill-binding",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
+  "updatedAt": "2026-07-25",
+  "bindingId": "skopos.ui.product-craft",
+  "packId": "ui.product-craft",
+  "packVersion": "0.1.0",
+  "lifecycle": "adapted",
+  "sourceBindings": {
+    "brand-doctrine": ["docs/project/vision.md", "docs/project/system-ui-plan.md"],
+    "design-tokens": [
+      "packages/ui/src/app/styles.css",
+      "packages/ui/src/app/layout-tokens.ts"
+    ],
+    "component-catalog": ["packages/ui/src"],
+    "approved-screen-precedents": ["packages/ui/src/screens"],
+    "domain-language": ["docs/project/glossary.md"],
+    "ui-failure-patterns": ["docs/findings", "docs/failure-patterns"]
+  },
+  "actionBindings": {
+    "responsive-visual-capture": "ui.build-console-app",
+    "focused-frontend-tests": "quality.run-proof-phase"
+  },
+  "guardBindings": {
+    "frontend-type-safety": "architecture.mid-app.gate.typecheck",
+    "accessibility-proof": "clean-code.maintainability.gate.focused-behavior-proof"
+  },
+  "adaptationNotes": [
+    "Existing Skopos UI code is supporting precedent, not automatic canonical design truth.",
+    "The routed console remains the product surface; generated portal output is derived evidence.",
+    "Visual rubric evidence cannot replace Skopos eval and done closure."
+  ]
+}

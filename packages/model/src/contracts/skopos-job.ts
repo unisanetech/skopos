@@ -1,4 +1,5 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
+import type { SkoposEvalExecutionPhase } from './skopos-eval.js';
 
 export type SkoposJobKind = 'eval';
 export type SkoposJobState = 'queued' | 'running' | 'succeeded' | 'failed';
@@ -9,6 +10,7 @@ export interface SkoposJobArtifact extends SkoposArtifactEnvelope<'job'> {
   jobState: SkoposJobState;
   requestedByActorId?: string;
   missionId?: string;
+  executionPhase?: SkoposEvalExecutionPhase;
   command: string;
   pollCommand: string;
   createdAt: string;

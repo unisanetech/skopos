@@ -38,7 +38,10 @@ export const buildSkoposProgramNextRuntime = async ({
     eventKind: 'program-next',
     status: dryRun ? 'dry-run' : 'succeeded',
     summary,
-    relatedArtifactPaths: [synced.statePath],
+    relatedArtifactPaths: [
+      synced.taskState?.programStatePath ?? synced.statePath,
+      synced.statePath,
+    ],
     metadata: {
       actorId: actorId ?? null,
       currentMissionId: synced.currentMissionId ?? null,
@@ -56,6 +59,7 @@ export const buildSkoposProgramNextRuntime = async ({
     workspaceRoot,
     actorId,
     summary,
+    taskState: synced.taskState,
     statePath: resolve(workspaceRoot, PROGRAM_STATE_ARTIFACT_PATH),
     stateWrite: synced.stateWrite,
     state: synced.state,
