@@ -36,9 +36,6 @@ export const createDefaultSkoposConfig = ({
     ...(projectMode ? { mode: projectMode } : {}),
   },
   commands: sanitizeCommandMap(commands),
-  validation: {
-    mode: 'commands',
-  },
   workspace: {
     ignore: [],
   },

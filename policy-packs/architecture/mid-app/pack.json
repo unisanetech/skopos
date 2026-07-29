@@ -333,11 +333,11 @@
   ],
   "guards": {
     "required": [
-      "pnpm typecheck"
+      "quality.typecheck"
     ],
     "recommended": [
-      "pnpm test",
-      "pnpm build"
+      "quality.test",
+      "quality.build"
     ]
   },
   "agentPrompts": {

@@ -14,6 +14,7 @@ import type {
   SkoposReadinessArtifact,
   SkoposReadinessTarget,
   SkoposObservationEvidenceArtifact,
+  SkoposTaskActionEvidenceLink,
   SkoposVerificationArtifact,
   SkoposVerificationPhase,
   SkoposProjectReadinessArtifact,
@@ -69,18 +70,22 @@ export const verifySkoposTaskRuntime = async ({
   impact.ignoredPreExistingPaths = taskChanges.ignoredPreExistingPaths;
   const requiredActions = dedupeActions(impact.requiredActions);
   const requiredActionIds = new Set(requiredActions.map((action) => action.id));
-  const [manifests, runs, observations] = await Promise.all([
+  const [manifests, runs, observations, actionLinks, memoryCatalog] = await Promise.all([
     loadSkoposActionManifests({ cwd: workspaceRoot }),
     loadActionRuns(workspaceRoot),
     loadObservationEvidence(workspaceRoot, task.taskIdentity),
+    loadTaskActionEvidenceLinks(workspaceRoot, task.taskIdentity),
+    buildSkoposDocumentCatalog({ cwd: workspaceRoot }),
   ]);
+  const manifestIds = new Set(manifests.map((manifest) => manifest.id));
+  const taskRuns = selectTaskLinkedActionRuns(runs, actionLinks);
   const actionEvidence = await Promise.all(
     requiredActions.map((requirement) =>
       evaluateActionEvidence({
         workspaceRoot,
         requirement,
         manifests,
-        runs,
+        runs: taskRuns,
       }),
     ),
   );
@@ -122,10 +127,11 @@ export const verifySkoposTaskRuntime = async ({
         );
       });
       const covered =
-        actionsCovered &&
-        guardsCovered &&
-        (applicableActionIds.length + requirement.guardIds.length > 0 ||
-          Boolean(linkedObservation));
+        requirement.evidence === 'agent-observation'
+          ? Boolean(linkedObservation) && guardsCovered
+          : actionsCovered &&
+            guardsCovered &&
+            applicableActionIds.length + requirement.guardIds.length > 0;
       return {
         requirementId: requirement.id,
         acceptanceCriterion: requirement.acceptanceCriterion,
@@ -138,6 +144,25 @@ export const verifySkoposTaskRuntime = async ({
       };
     });
   const blockers = [
+    ...memoryCatalog.issues.map(
+      (issue) => `Project Memory ${issue.path}: ${issue.summary}`,
+    ),
+    ...impact.matchedGuards
+      .filter((guard) => guard.strength === 'prohibited')
+      .map(
+        (guard) =>
+          `Guard ${guard.id} prohibits changes to ${guard.matchedPaths.join(', ')}.`,
+      ),
+    ...impact.matchedGuards
+      .filter((guard) => guard.strength === 'required')
+      .flatMap((guard) =>
+        guard.requiredActionIds
+          .filter((actionId) => !manifestIds.has(actionId))
+          .map(
+            (actionId) =>
+              `Guard ${guard.id} requires missing Action provider ${actionId}.`,
+          ),
+      ),
     ...actionEvidence
       .filter((entry) => entry.status === 'fail')
       .map((entry) => entry.summary),
@@ -295,6 +320,14 @@ export const recordSkoposObservationEvidenceRuntime = async ({
     dryRun,
   });
   return artifact;
+};
+
+export const selectTaskLinkedActionRuns = (
+  runs: SkoposActionRunArtifact[],
+  actionLinks: SkoposTaskActionEvidenceLink[],
+): SkoposActionRunArtifact[] => {
+  const linkedRunIds = new Set(actionLinks.map((link) => link.runId));
+  return runs.filter((run) => linkedRunIds.has(run.id));
 };
 
 export const assessSkoposTaskReadinessRuntime = async ({
@@ -593,12 +626,43 @@ const loadObservationEvidence = async (
   const root = join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'evidence');
   try {
     const entries = await readdir(root);
-    return Promise.all(
+    const artifacts = await Promise.all(
       entries
         .filter((entry) => entry.endsWith('.json'))
         .map(async (entry) =>
-          JSON.parse(await readFile(join(root, entry), 'utf8')) as SkoposObservationEvidenceArtifact,
+          JSON.parse(await readFile(join(root, entry), 'utf8')) as
+            | SkoposObservationEvidenceArtifact
+            | SkoposTaskActionEvidenceLink,
         ),
+    );
+    return artifacts.filter(
+      (artifact): artifact is SkoposObservationEvidenceArtifact =>
+        artifact.type === 'observation-evidence',
+    );
+  } catch {
+    return [];
+  }
+};
+
+const loadTaskActionEvidenceLinks = async (
+  workspaceRoot: string,
+  taskIdentity: Parameters<typeof resolveSkoposTaskDirectory>[1],
+): Promise<SkoposTaskActionEvidenceLink[]> => {
+  const root = join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'evidence');
+  try {
+    const entries = await readdir(root);
+    const artifacts = await Promise.all(
+      entries
+        .filter((entry) => entry.endsWith('.json'))
+        .map(async (entry) =>
+          JSON.parse(await readFile(join(root, entry), 'utf8')) as
+            | SkoposObservationEvidenceArtifact
+            | SkoposTaskActionEvidenceLink,
+        ),
+    );
+    return artifacts.filter(
+      (artifact): artifact is SkoposTaskActionEvidenceLink =>
+        artifact.type === 'task-action-evidence-link',
     );
   } catch {
     return [];

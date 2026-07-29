@@ -27,7 +27,6 @@ export interface SkoposImpactReport {
   changed: SkoposImpactEntry[];
   affectedScopes: SkoposScopeLite[];
   recommendedCommands: string[];
-  recommendedChecks: string[];
   matchedGuards: SkoposGuardMatch[];
   requiredActions: SkoposActionRequirement[];
   warnings: string[];

@@ -234,12 +234,12 @@ const selectGuards = ({
     .filter(
       (guard) =>
         guard.phases.includes(phase) &&
-        (guard.requiredness === 'required' || selectedIds.has(guard.id)),
+        selectedIds.has(guard.id),
     )
     .sort(
       (left, right) =>
-        Number(right.requiredness === 'required') -
-          Number(left.requiredness === 'required') ||
+        Number(right.requiredness !== 'recommended') -
+          Number(left.requiredness !== 'recommended') ||
         left.id.localeCompare(right.id),
     )
     .slice(0, COMPACT_GUARD_LIMIT);

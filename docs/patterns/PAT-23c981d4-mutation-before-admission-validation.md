@@ -24,7 +24,7 @@ appliesTo:
   - concurrent-agents
   - security
   - reliability
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../architecture/runtime-model.md
   - ../architecture/artifact-model.md
@@ -32,7 +32,7 @@ relatedDocs:
   - ../guides/bootstrap-a-project.md
   - PAT-4e27c8a1-retired-contracts-preserved-by-tests.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: when an admission or initialization write path changes
 ---
 
@@ -40,6 +40,7 @@ reviewCycle: when an admission or initialization write path changes
 
 ## Changelog
 
+- `2026-07-30`: Repaired the related convergence finding link after archival.
 - `2026-07-28`: Extended the Pattern to Task activation after plan-to-claim proof
   exposed an active Task being published before its exact question and recommendation
   projections existed. A valid activation now materializes the complete admission

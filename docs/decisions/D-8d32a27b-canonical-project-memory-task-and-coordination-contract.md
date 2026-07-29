@@ -11,7 +11,7 @@ provenance: accepted
 view: target
 date: 2026-07-28
 implementationStatus: partial
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../domains/product/vision.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -21,7 +21,7 @@ relatedDocs:
   - ../architecture/config-model.md
   - ../architecture/docs-governance.md
   - ../patterns/README.md
-  - ../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: per implementation phase
 ---
 
@@ -29,6 +29,12 @@ reviewCycle: per implementation phase
 
 ## Changelog
 
+- `2026-07-30`: Fixed the validation authority boundary. Goal prose and root command
+  names never select proof. Tracked Guards match declared/current Task impact and
+  require explicit project Actions or agent observations. Accepted Policies reference
+  stable Guard ids but cannot invent commands. Reusable Action Runs enter a Task only
+  through an attributable Task Evidence Link, and Verify also consumes native Project
+  Memory integrity.
 - `2026-07-29`: Finalized the simplification boundary: light, standard, and detailed
   are lanes of one canonical Task rather than separate Mission or Workpack lifecycle
   objects. A detailed Task preserves phases, checklist, decisions, risks, claims,

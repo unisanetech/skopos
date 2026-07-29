@@ -26,8 +26,8 @@
     "focused-frontend-tests": "quality.run-proof-phase"
   },
   "guardBindings": {
-    "frontend-type-safety": "architecture.mid-app.guard.typecheck",
-    "accessibility-proof": "clean-code.maintainability.guard.focused-behavior-proof"
+    "frontend-type-safety": "quality.typecheck",
+    "accessibility-proof": "quality.focused-behavior-proof"
   },
   "adaptationNotes": [
     "Existing Skopos UI code is supporting precedent, not automatic canonical design truth.",

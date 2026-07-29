@@ -224,12 +224,7 @@ describe('declared Scope registry', () => {
         affectedScopeIds: expect.arrayContaining(['example-api']),
       }),
     );
-    expect(impact.recommendedChecks).toEqual([
-      'pnpm --filter @example/api typecheck',
-      'pnpm --filter @example/api test',
-      'pnpm --filter @example/api build',
-      'pnpm --filter @example/api lint',
-    ]);
+    expect(impact.requiredActions).toEqual([]);
   });
 
   it('fails closed when declared aliases or relationships are ambiguous', async () => {

@@ -3,7 +3,12 @@ import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 
 import { loadSkoposActionManifests } from '@skopos/indexer';
-import type { SkoposActionManifest, SkoposActionRunArtifact } from '@skopos/model';
+import type {
+  SkoposActionManifest,
+  SkoposActionRunArtifact,
+  SkoposActionRunResult,
+  SkoposTaskActionEvidenceLink,
+} from '@skopos/model';
 import {
   buildSkoposEvidence,
   finalizeSkoposEvidence,
@@ -16,6 +21,8 @@ import {
 } from '../shared/knowledge-state.js';
 import { executeSkoposShellCommand } from '../shared/execute-shell-command.js';
 import { pathExists } from '../shared/path-exists.js';
+import { showSkoposTaskRuntime } from '../task/task.service.js';
+import { resolveSkoposTaskDirectory } from '../task/task-paths.js';
 
 export interface ListSkoposActionsRuntimeOptions {
   cwd: string;
@@ -30,6 +37,7 @@ export interface RunSkoposActionRuntimeOptions extends ShowSkoposActionRuntimeOp
   approve?: boolean;
   actor?: string;
   force?: boolean;
+  taskId?: string;
 }
 
 export const listSkoposActionsRuntime = async ({
@@ -65,7 +73,8 @@ export const runSkoposActionRuntime = async ({
   approve = false,
   actor,
   force = false,
-}: RunSkoposActionRuntimeOptions): Promise<SkoposActionRunArtifact> => {
+  taskId,
+}: RunSkoposActionRuntimeOptions): Promise<SkoposActionRunResult> => {
   const workspaceRoot = resolve(cwd);
   const manifest = await showSkoposActionRuntime({
     cwd: workspaceRoot,
@@ -115,7 +124,7 @@ export const runSkoposActionRuntime = async ({
     await refreshSkoposKnowledgeIndex({
       workspaceRoot,
     });
-    return artifact;
+    return { run: artifact };
   }
 
   const startedAt = new Date().toISOString();
@@ -176,11 +185,17 @@ export const runSkoposActionRuntime = async ({
         await refreshSkoposKnowledgeIndex({
           workspaceRoot,
         });
-        return {
+        const reusedRun = {
           ...existingRun,
           summary: `${manifest.id} reused source-bound Evidence ${existingRun.id}.`,
           reusedFromRunId: existingRun.id,
         };
+        return attachActionRunToTask({
+          workspaceRoot,
+          taskId,
+          actor,
+          run: reusedRun,
+        });
       }
     }
   }
@@ -221,7 +236,7 @@ export const runSkoposActionRuntime = async ({
           evidence,
         })
       : evidence;
-  const artifact = buildActionRunArtifact({
+  let artifact = buildActionRunArtifact({
     id: runId,
     workspaceRoot,
     manifest,
@@ -267,7 +282,70 @@ export const runSkoposActionRuntime = async ({
     );
   }
 
-  return artifact;
+  const settledEvidence = await finalizeSkoposEvidence({
+    workspaceRoot,
+    manifest,
+    evidence: finalizedEvidence,
+  });
+  artifact = {
+    ...artifact,
+    evidence: settledEvidence,
+  };
+  await writeRunArtifact(runPath, artifact);
+
+  return attachActionRunToTask({
+    workspaceRoot,
+    taskId,
+    actor,
+    run: artifact,
+  });
+};
+
+const attachActionRunToTask = async ({
+  workspaceRoot,
+  taskId,
+  actor,
+  run,
+}: {
+  workspaceRoot: string;
+  taskId?: string;
+  actor?: string;
+  run: SkoposActionRunArtifact;
+}): Promise<SkoposActionRunResult> => {
+  if (!taskId) {
+    return { run };
+  }
+  const actorId = requireActionActorId(actor, run.actionId);
+  const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const linkedAt = new Date().toISOString();
+  const link: SkoposTaskActionEvidenceLink = {
+    schemaVersion: 1,
+    id: `${task.id}.action-evidence.${slugify(run.actionId)}.${run.id}`,
+    type: 'task-action-evidence-link',
+    status: 'generated',
+    authority: 'generated',
+    summary: `Task ${task.id} links Action Evidence ${run.id} for ${run.actionId}.`,
+    generatedAt: linkedAt,
+    updatedAt: linkedAt,
+    workspaceRoot,
+    taskId: task.id,
+    actionId: run.actionId,
+    runId: run.id,
+    linkedAt,
+    linkedByActorId: actorId,
+  };
+  const linkPath = join(
+    resolveSkoposTaskDirectory(workspaceRoot, task.taskIdentity),
+    'evidence',
+    `${link.id}.json`,
+  );
+  await mkdir(dirname(linkPath), { recursive: true });
+  await writeFile(linkPath, `${JSON.stringify(link, null, 2)}\n`, 'utf8');
+  return {
+    run,
+    taskEvidenceLink: link,
+    taskEvidenceLinkPath: linkPath,
+  };
 };
 
 interface BuildActionRunArtifactInput {

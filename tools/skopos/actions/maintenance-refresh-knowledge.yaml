@@ -12,18 +12,20 @@ inputs:
   - skopos.config.yaml
   - AGENTS.md
   - packages
-  - docs
-  - tools/skopos/actions
+  - docs/00-start-here.md
+  - docs/architecture
+  - docs/decisions
+  - docs/domains
+  - docs/findings
+  - docs/guides
+  - docs/operations
+  - docs/patterns
+  - docs/standards
+  - tools/skopos
 outputs:
-  - .skopos/index/bootstrap.json
-  - .skopos/index/scopes.json
-  - .skopos/index/diagnosis.json
-  - .skopos/index/architecture.json
-  - .skopos/index/enforcement.json
-  - .skopos/index/memory.json
-  - .skopos/runs/operations.jsonl
+  - .skopos/index
 affects:
-  - .skopos
+  - .skopos/index
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing the Skopos subtree workspace shape, root config, docs routing, or declared Actions.

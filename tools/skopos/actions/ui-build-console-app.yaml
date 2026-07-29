@@ -8,8 +8,6 @@ scope:
 command: pnpm skopos:ui:app
 cwd: .
 inputs:
-  - .skopos
-  - docs
   - packages/ui
   - packages/cli
 outputs:

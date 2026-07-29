@@ -1,0 +1,25 @@
+id: quality.typecheck
+title: Typecheck the Skopos workspace
+description: Run the project-owned TypeScript proof across all Skopos packages.
+category: quality-check
+scope:
+  - workspace
+command: pnpm typecheck
+cwd: .
+inputs:
+  - packages
+  - package.json
+  - pnpm-lock.yaml
+  - pnpm-workspace.yaml
+  - tsconfig.base.json
+outputs: []
+affects: []
+safety: read-only
+requiresApproval: false
+whenToUse: Run when changed TypeScript or project configuration can affect compile-time correctness.
+phases:
+  - closure
+risks:
+  - standard
+  - high-impact
+owner: skopos-core

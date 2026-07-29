@@ -1,0 +1,20 @@
+id: quality.focused-behavior-proof
+title: Behavior changes require focused proof
+description: Require an explicit agent observation describing focused behavioral proof for changed implementation or test surfaces.
+owner: skopos-core
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - packages/**
+    - fixtures/**
+    - internal/evals/**
+  phases:
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds: []
+  evidence: agent-observation

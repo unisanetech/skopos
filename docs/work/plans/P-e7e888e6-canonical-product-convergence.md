@@ -9,8 +9,8 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phase-1-in-progress
-lastUpdated: 2026-07-28
+implementationStatus: phase-5-in-progress
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../domains/product/vision.md
@@ -21,7 +21,7 @@ relatedDocs:
   - ../../architecture/docs-governance.md
   - ../archive/P-067e15c4-proof-and-benchmarking.md
   - ../archive/T-62a045f9-project-memory-self-adoption.md
-  - ../../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: per phase
 ---
 
@@ -29,6 +29,12 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-07-30`: Converged validation on one tracked Guard and Action path: removed
+  command/action mode switching, raw Plan/Impact check lists, task-goal Action
+  guessing, and policy-label package-script guessing. Added stable policy Guard ids,
+  explicit missing-provider diagnostics, Task-derived Guard/Action requirements,
+  Task Action Evidence Links, and native Memory integrity in Verify. Remaining Phase 5
+  work includes full Action effect/concurrency contracts and cross-language fixtures.
 - `2026-07-28`: Completed and archived Task T-62a045f9 after its final generic-product
   audit and source-bound closure proof. The remaining generic Profile, promotion,
   restructuring, and adoption-Readiness work stays open under this Plan.
@@ -549,7 +555,10 @@ Give every project one capability and enforcement model.
 1. implement Profile inheritance
 2. implement Action manifests under `tools/skopos/actions/**`
 3. implement Guard sources under `tools/skopos/guards/**`
-4. compile root scripts and package scripts into detected Actions
+4. detect root and package scripts as integration candidates, then create explicit
+   reviewed Actions; never make detected scripts executable authority automatically
+   — completed with non-authoritative proposals, digest-bound approval, tracked
+   Action/Guard application, collision refusal, and provider validation
 5. bind accepted project Policies and Skills
 6. implement the selection pipeline from impact to Evidence
 7. define Action effects:
@@ -582,10 +591,11 @@ Give every project one capability and enforcement model.
    selection, execution, run-artifact, and Evidence core; Task routing fields remain
    in later deletion items
 3. `skopos workflows` — completed; no compatibility command remains
-4. gate-pack execution authority
-5. command/action validation mode
+4. gate-pack execution authority — completed; accepted Policies now reference stable
+   Guard ids and project manifests own enforcement
+5. command/action validation mode — completed; Actions are the only executable model
 6. `requiredForDone`
-7. shell guessing fallback
+7. shell guessing fallback — completed for Plan, Impact, and policy Guard resolution
 8. workflow-specific question/recommendation/evidence types — Evidence core completed;
    question and recommendation authority remains
 9. prototype `describe` / `brief` / `verify` provider schemas, version fields, exports,

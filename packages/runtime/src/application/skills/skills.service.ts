@@ -5,6 +5,7 @@ import {
   loadSkoposProjectSkillBindings,
   loadSkoposSkillPackCatalog,
   loadSkoposActionManifests,
+  loadSkoposGuardManifests,
   buildSkoposCombinedSkillSourceDigest,
   buildSkoposSkillSourceDigest,
 } from '@skopos/indexer';
@@ -19,7 +20,6 @@ import type {
   SkoposSkillHostProjectionEntry,
   SkoposProjectSkillBinding,
   SkoposProjectLifecycle,
-  SkoposResolvedGuardsArtifact,
   SkoposResolvedSkillArtifact,
   SkoposSelectedSkill,
   SkoposSkillRecommendationArtifact,
@@ -35,7 +35,6 @@ export const SKILL_RECOMMENDATIONS_ARTIFACT_PATH = '.skopos/index/skills/recomme
 export const RESOLVED_SKILLS_ARTIFACT_PATH = '.skopos/index/skills/resolved.json';
 export const SKILL_PROJECTIONS_ARTIFACT_DIRECTORY = '.skopos/index/skills/projections';
 
-const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
 
 export const listSkoposSkillPacksRuntime = async ({
   cwd,
@@ -649,9 +648,7 @@ const loadOperatingModelCapabilities = async (
 ): Promise<SkoposAgentNativeOperatingModel> => {
   const [actions, guards] = await Promise.all([
     loadSkoposActionManifests({ cwd: workspaceRoot }),
-    readJsonIfExists<SkoposResolvedGuardsArtifact>(
-      join(workspaceRoot, RESOLVED_GUARDS_ARTIFACT_PATH),
-    ),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
   ]);
   return {
     schemaVersion: 1,
@@ -659,7 +656,7 @@ const loadOperatingModelCapabilities = async (
     actions: actions.map((action) => ({
       id: action.id,
     })) as SkoposAgentNativeOperatingModel['actions'],
-    guards: (guards?.guards ?? []).map((guard) => ({
+    guards: guards.map((guard) => ({
       id: guard.id,
     })) as SkoposAgentNativeOperatingModel['guards'],
     diagnostics: [],

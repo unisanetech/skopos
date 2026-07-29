@@ -1,0 +1,20 @@
+id: knowledge.refresh
+title: Operating-model declarations require refreshed local knowledge
+description: Require the project-owned knowledge refresh Action after changing Skopos configuration, Actions, Guards, or Skill bindings.
+owner: skopos-core
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - skopos.config.yaml
+    - tools/skopos/**
+  phases:
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - maintenance.refresh-knowledge
+  evidence: source-bound-action

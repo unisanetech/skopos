@@ -57,14 +57,6 @@ export const skoposRootConfigSchema = z
       })
       .strict(),
     commands: skoposCommandMapSchema,
-    validation: z
-      .object({
-        mode: z.enum(['commands', 'actions']),
-      })
-      .strict()
-      .default({
-        mode: 'commands',
-      }),
     workspace: z
       .object({
         ignore: z.array(workspaceRelativePathSchema('workspace ignore path')),

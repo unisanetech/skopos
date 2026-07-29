@@ -4,12 +4,12 @@ import { join, resolve } from 'node:path';
 import {
   buildSkoposDocumentCatalog,
   loadSkoposActionManifests,
+  loadSkoposGuardManifests,
 } from '@skopos/indexer';
 import type {
   SkoposCompactTaskBrief,
   SkoposExecutionPhase,
   SkoposMemoryStateArtifact,
-  SkoposResolvedGuardsArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposTaskArtifact,
   SkoposTaskQuestionArtifact,
@@ -24,7 +24,6 @@ import {
 import { selectSkoposSkillsForTaskRuntime } from '../skills/skills.service.js';
 
 const RESOLVED_POLICY_ARTIFACT_PATH = '.skopos/index/policies/resolved.json';
-const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
 const MEMORY_STATE_ARTIFACT_PATH = '.skopos/index/roles.json';
 
 export {
@@ -73,9 +72,7 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
     readJsonIfExists<SkoposResolvedPolicyArtifact>(
       join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH),
     ),
-    readJsonIfExists<SkoposResolvedGuardsArtifact>(
-      join(workspaceRoot, RESOLVED_GUARDS_ARTIFACT_PATH),
-    ),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
     readJsonIfExists<SkoposMemoryStateArtifact>(
       join(workspaceRoot, MEMORY_STATE_ARTIFACT_PATH),
     ),

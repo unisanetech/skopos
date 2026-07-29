@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -30,6 +30,9 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-07-30`: Made project capability onboarding a reviewed integration: discovery
+  produces local candidates, explicit digest-bound approval precedes tracked
+  Action/Guard writes, and activation validates providers.
 - `2026-07-29`: Promoted the clean first-release architecture built around Project
   Memory, Task, Action, Guard, Evidence, Work Queue, and Readiness.
 
@@ -121,3 +124,5 @@ baseline is cooperative and therefore reports `preventiveSafety: false`.
 8. no Unisane-specific architecture in Skopos core
 9. generated artifacts never masquerade as hand-authored truth
 10. retrieval is Scope- and Task-selective, not a broad documentation dump
+11. detected commands remain proposals until reviewed approval creates tracked
+    declarations and provider validation activates them

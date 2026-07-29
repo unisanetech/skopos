@@ -1,7 +1,12 @@
-import { access, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 
+import {
+  loadSkoposActionManifests,
+  loadSkoposGuardManifests,
+} from '@skopos/indexer';
 import type {
+  SkoposGuardManifest,
   SkoposPolicyPackManifest,
   SkoposResolvedGuard,
   SkoposResolvedGuardsArtifact,
@@ -29,9 +34,10 @@ export interface ResolveSkoposGuardsRuntimeResult {
   actorId?: string;
 }
 
-interface PackageJsonShape {
-  packageManager?: string;
-  scripts?: Record<string, string>;
+export interface PolicyGuardRequirement {
+  guardId: string;
+  packId: string;
+  strength: 'required' | 'recommended';
 }
 
 export const resolveSkoposGuardsRuntime = async ({
@@ -42,28 +48,37 @@ export const resolveSkoposGuardsRuntime = async ({
 }: ResolveSkoposGuardsRuntimeOptions): Promise<ResolveSkoposGuardsRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
   const artifactPath = join(workspaceRoot, RESOLVED_GUARDS_ARTIFACT_PATH);
-  const [packageJson, packs] = await Promise.all([
-    readPackageJson(workspaceRoot),
+  const [packs, manifests, actions] = await Promise.all([
     listSkoposPolicyPacksRuntime({ cwd: workspaceRoot }),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
   ]);
   const resolvedPolicy =
     providedPolicy ??
     (await resolveSkoposPolicyRuntime({ cwd: workspaceRoot, dryRun }))?.policy;
-  const acceptedPackIds = new Set(resolvedPolicy?.acceptedPacks.map((pack) => pack.packId) ?? []);
-  const activePacks = resolvedPolicy
-    ? packs.filter((pack) => acceptedPackIds.has(pack.packId))
-    : [];
-  const detectedScripts = Object.keys(packageJson?.scripts ?? {}).sort((left, right) =>
-    left.localeCompare(right),
+  const acceptedPackIds = new Set(
+    resolvedPolicy?.acceptedPacks.map((pack) => pack.packId) ?? [],
   );
-  const packageManager = detectPackageManager(packageJson);
-  const guards = activePacks.flatMap((pack) =>
-    buildPackGuards({
-      pack,
-      packageManager,
-      scripts: packageJson?.scripts ?? {},
-    }),
+  const requirements = collectPolicyGuardRequirements(
+    packs.filter((pack) => acceptedPackIds.has(pack.packId)),
   );
+  const manifestById = new Map(manifests.map((manifest) => [manifest.id, manifest]));
+  const actionIds = new Set(actions.map((action) => action.id));
+  const requirementById = new Map(requirements.map((entry) => [entry.guardId, entry]));
+  const allGuardIds = new Set([
+    ...manifests.map((manifest) => manifest.id),
+    ...requirements.map((requirement) => requirement.guardId),
+  ]);
+  const guards = [...allGuardIds]
+    .map((guardId) =>
+      projectGuardAvailability({
+        guardId,
+        manifest: manifestById.get(guardId),
+        requirement: requirementById.get(guardId),
+        actionIds,
+      }),
+    )
+    .sort((left, right) => left.id.localeCompare(right.id));
   const missingRequired = guards.filter(
     (guard) => guard.strength === 'required' && guard.status === 'missing',
   );
@@ -73,16 +88,16 @@ export const resolveSkoposGuardsRuntime = async ({
   const now = resolvedPolicy?.updatedAt ?? '1970-01-01T00:00:00.000Z';
   const artifact: SkoposResolvedGuardsArtifact = {
     schemaVersion: 1,
-    id: 'skopos.resolved-guards',
+    id: 'skopos.guard-availability',
     type: 'resolved-guards',
     status: 'generated',
     authority: 'generated',
     generatedAt: now,
     updatedAt: now,
-    summary: `Resolved ${guards.length} Guard${guards.length === 1 ? '' : 's'} from ${activePacks.length} policy pack${activePacks.length === 1 ? '' : 's'}.`,
+    summary: `Projected availability for ${guards.length} declared or policy-required Guard${guards.length === 1 ? '' : 's'}.`,
     workspaceRoot,
-    packageManager,
-    detectedScripts,
+    packageManager: 'project-actions',
+    detectedScripts: [],
     guards,
     missingRecommended,
     missingRequired,
@@ -102,186 +117,92 @@ export const resolveSkoposGuardsRuntime = async ({
   };
 };
 
-const buildPackGuards = ({
-  pack,
-  packageManager,
-  scripts,
-}: {
-  pack: SkoposPolicyPackManifest;
-  packageManager: string;
-  scripts: Record<string, string>;
-}): SkoposResolvedGuard[] => [
-  ...(pack.guards?.required ?? []).map((label) =>
-    resolveManifestGuard({
-      pack,
-      packId: pack.packId,
-      label,
-      strength: 'required',
-      severity: 'must',
-      packageManager,
-      scripts,
-    }),
-  ),
-  ...(pack.guards?.recommended ?? []).map((label) =>
-    resolveManifestGuard({
-      pack,
-      packId: pack.packId,
-      label,
-      strength: 'recommended',
-      severity: 'should',
-      packageManager,
-      scripts,
-    }),
-  ),
-];
+const collectPolicyGuardRequirements = (
+  packs: SkoposPolicyPackManifest[],
+): PolicyGuardRequirement[] => {
+  const requirements = new Map<string, PolicyGuardRequirement>();
+  for (const pack of packs) {
+    for (const guardId of pack.guards?.recommended ?? []) {
+      requirements.set(guardId, {
+        guardId,
+        packId: pack.packId,
+        strength: 'recommended',
+      });
+    }
+    for (const guardId of pack.guards?.required ?? []) {
+      requirements.set(guardId, {
+        guardId,
+        packId: pack.packId,
+        strength: 'required',
+      });
+    }
+  }
+  return [...requirements.values()];
+};
 
-const resolveManifestGuard = ({
-  pack,
-  packId,
-  label,
-  strength,
-  severity,
-  packageManager,
-  scripts,
+export const projectGuardAvailability = ({
+  guardId,
+  manifest,
+  requirement,
+  actionIds,
 }: {
-  pack: SkoposPolicyPackManifest;
-  packId: string;
-  label: string;
-  strength: 'required' | 'recommended';
-  severity: 'must' | 'should';
-  packageManager: string;
-  scripts: Record<string, string>;
+  guardId: string;
+  manifest?: SkoposGuardManifest;
+  requirement?: PolicyGuardRequirement;
+  actionIds: ReadonlySet<string>;
 }): SkoposResolvedGuard => {
-  const native = resolveNativeGuard({ pack, label, strength, severity });
-  if (native) {
-    return native;
+  if (!manifest) {
+    return {
+      id: guardId,
+      packId: requirement?.packId ?? 'project',
+      label: guardId,
+      kind: 'project-action',
+      strength: requirement?.strength ?? 'required',
+      status: 'missing',
+      severity: requirement?.strength === 'recommended' ? 'should' : 'must',
+      summary: `Accepted policy requires Guard ${guardId}, but the project has not declared it.`,
+      missingReason: `Declare Guard ${guardId} under the configured Guard source and bind it to explicit project Actions or observation Evidence.`,
+    };
   }
 
-  const candidateNames = commandCandidates(label);
-  const matchedScript = candidateNames.find((scriptName) => scripts[scriptName]);
-  const normalizedLabel = normalizeGuardLabel(label);
+  const missingActionIds = manifest.requires.actionIds.filter(
+    (actionId) => !actionIds.has(actionId),
+  );
+  const manual =
+    manifest.requires.evidence === 'agent-observation' &&
+    manifest.requires.actionIds.length === 0;
+  const status =
+    missingActionIds.length > 0
+      ? 'missing'
+      : manual
+        ? 'manual'
+        : 'available';
 
   return {
-    id: `${packId}.guard.${normalizedLabel}`,
-    packId,
-    label,
-    kind: 'project-action',
-    strength,
-    status: matchedScript ? 'available' : 'missing',
-    severity,
-    summary: matchedScript
-      ? `Project has a ${matchedScript} script for ${label}.`
-      : `Project does not expose a script for ${label}.`,
-    command: matchedScript ? `${packageManager} ${matchedScript}` : undefined,
-    matchedScript,
-    missingReason: matchedScript
-      ? undefined
-      : `Add or document a ${label} command if this proof matters for the project.`,
+    id: manifest.id,
+    packId: requirement?.packId ?? manifest.owner,
+    label: manifest.title,
+    kind: manual ? 'agent-observation' : 'project-action',
+    strength:
+      manifest.strength === 'recommended'
+        ? 'recommended'
+        : requirement?.strength ?? 'required',
+    status,
+    severity:
+      manifest.strength === 'recommended' && requirement?.strength !== 'required'
+        ? 'should'
+        : 'must',
+    summary:
+      status === 'missing'
+        ? `Guard ${manifest.id} references missing Action provider${missingActionIds.length === 1 ? '' : 's'}: ${missingActionIds.join(', ')}.`
+        : manifest.description,
+    actionId:
+      manifest.requires.actionIds.length === 1
+        ? manifest.requires.actionIds[0]
+        : undefined,
+    missingReason:
+      status === 'missing'
+        ? `Declare the missing Action provider${missingActionIds.length === 1 ? '' : 's'}: ${missingActionIds.join(', ')}.`
+        : undefined,
   };
-};
-
-const resolveNativeGuard = ({
-  pack,
-  label,
-  strength,
-  severity,
-}: {
-  pack: SkoposPolicyPackManifest;
-  label: string;
-  strength: 'required' | 'recommended';
-  severity: 'must' | 'should';
-}): SkoposResolvedGuard | undefined => {
-  if (pack.packId !== 'clean-code.maintainability') {
-    return undefined;
-  }
-
-  const normalized = normalizeGuardLabel(label);
-  const summaries: Record<string, string> = {
-    'large-file-scan': 'Flag touched source files that may be doing too many jobs.',
-    'long-function-scan': 'Flag functions that may be hard to read or test.',
-    'vague-name-scan': 'Look for names like misc, helpers, manager, thing, or data when a specific name is possible.',
-    'helper-bucket-scan': 'Look for shared helpers that appear unrelated or speculative.',
-    'comment-hygiene-scan': 'Look for stale TODOs or comments that repeat obvious code.',
-    'boundary-unknown-scan': 'Look for repeated unknown/data-shape checks inside core logic.',
-    'focused-behavior-proof': 'When behavior changes, the agent must run or add focused proof and record skipped-proof reasons.',
-  };
-  const summary = summaries[normalized];
-
-  if (!summary) {
-    return undefined;
-  }
-
-  return {
-    id: `${pack.packId}.guard.${normalized}`,
-    packId: pack.packId,
-    label,
-    kind: normalized === 'focused-behavior-proof' ? 'agent-observation' : 'skopos-native',
-    strength,
-    status: 'manual',
-    severity,
-    summary,
-  };
-};
-
-const commandCandidates = (label: string): string[] => {
-  const lower = label.toLowerCase();
-
-  if (lower.includes('typecheck') || lower.includes('type check')) {
-    return ['typecheck', 'check-types', 'tsc'];
-  }
-
-  if (lower.includes('format')) {
-    return ['format:check', 'format', 'prettier:check'];
-  }
-
-  if (lower.includes('lint')) {
-    return ['lint', 'eslint'];
-  }
-
-  if (lower.includes('test')) {
-    return ['test', 'test:unit'];
-  }
-
-  if (lower.includes('build')) {
-    return ['build'];
-  }
-
-  return [normalizeGuardLabel(label)];
-};
-
-const normalizeGuardLabel = (label: string): string =>
-  label
-    .toLowerCase()
-    .replace(/^pnpm\s+/, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-
-const detectPackageManager = (packageJson: PackageJsonShape | undefined): string => {
-  const packageManager = packageJson?.packageManager;
-
-  if (packageManager?.startsWith('pnpm')) {
-    return 'pnpm';
-  }
-
-  if (packageManager?.startsWith('yarn')) {
-    return 'yarn';
-  }
-
-  if (packageManager?.startsWith('bun')) {
-    return 'bun';
-  }
-
-  return 'npm run';
-};
-
-const readPackageJson = async (workspaceRoot: string): Promise<PackageJsonShape | undefined> =>
-  readJsonIfExists<PackageJsonShape>(join(workspaceRoot, 'package.json'));
-
-const readJsonIfExists = async <T>(path: string): Promise<T | undefined> => {
-  try {
-    await access(path);
-    return JSON.parse(await readFile(path, 'utf8')) as T;
-  } catch {
-    return undefined;
-  }
 };

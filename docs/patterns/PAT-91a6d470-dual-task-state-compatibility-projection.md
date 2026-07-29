@@ -19,13 +19,13 @@ appliesTo:
   - program-routing
   - session-isolation
   - handoffs
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-30
 relatedDocs:
   - PAT-4e27c8a1-retired-contracts-preserved-by-tests.md
   - ../architecture/agent-native-operating-model.md
   - ../architecture/artifact-model.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: when Task or Session authority changes
 ---
 
@@ -33,6 +33,7 @@ reviewCycle: when Task or Session authority changes
 
 ## Changelog
 
+- `2026-07-30`: Repaired the related convergence finding link after archival.
 - `2026-07-28`: Recorded the canonical recovery boundary: question, recommendation,
   Program-state, and Program-brief state lives only under
   `.skopos/tasks/<worktree-id>/<task-id>/`, and the handoff lives at

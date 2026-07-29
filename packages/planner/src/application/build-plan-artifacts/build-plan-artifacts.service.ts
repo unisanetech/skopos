@@ -40,7 +40,6 @@ export const buildSkoposPlanArtifacts = ({
       confidence: plan.confidence,
       references: plan.references,
       implementationSteps: plan.implementationSteps,
-      recommendedChecks: plan.recommendedChecks,
       recommendedActions: plan.recommendedActions,
       decisionQuestions: plan.decisionQuestions,
       risks: plan.risks,

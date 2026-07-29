@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
@@ -32,6 +32,8 @@ Task acceptance
 
 ## Changelog
 
+- `2026-07-30`: Required explicit Task Action Evidence Links for reusable Action Runs
+  and added native Project Memory integrity to Task verification blockers.
 - `2026-07-29`: Replaced overlapping validation and closure authorities with one
   Action, Guard, Evidence, Verify, and Readiness model.
 
@@ -50,6 +52,11 @@ Evidence becomes stale when a declared source, configuration, command, or releva
 dependency changes. A prior success is reusable only while those bindings remain
 equal.
 
+An Action Run is reusable project-level Evidence. A Task consumes it only through an
+explicit Task Action Evidence Link stored under that Task's local Evidence directory.
+The link records Task id, Action id, run id, actor, and link time. This separates honest
+cross-Task Evidence reuse from accidental global-run leakage.
+
 ## Verify
 
 `skopos verify` evaluates acceptance coverage. It does not run Actions implicitly.
@@ -60,6 +67,7 @@ For each acceptance criterion it explains:
 3. freshness
 4. missing or failed coverage
 5. applicable Guard blockers
+6. native Project Memory integrity issues
 
 Verification may target iteration, stabilization, or closure. Phase selection changes
 the required coverage; it does not create another work object.

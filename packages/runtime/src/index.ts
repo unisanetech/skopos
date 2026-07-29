@@ -17,6 +17,7 @@ export * from './application/coordination/coordination.service.js';
 export * from './application/decide/decide.service.js';
 export * from './application/discussion/discussion.service.js';
 export * from './application/guards/guards.service.js';
+export * from './application/integrations/capability-integrations.service.js';
 export * from './application/impact/impact.service.js';
 export * from './application/plan/plan.service.js';
 export * from './application/resolve/resolve.service.js';
@@ -49,4 +50,5 @@ export const skoposRuntimeCommands = [
   'knowledge',
   'guards',
   'understand',
+  'integrations',
 ] as const;

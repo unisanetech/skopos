@@ -213,13 +213,6 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
     ...result.implementationSteps.map((step) => `  - ${step.title}: ${step.detail}`),
   );
 
-  if (result.recommendedChecks.length > 0) {
-    lines.push('- recommended checks:');
-    for (const check of result.recommendedChecks) {
-      lines.push(`  - ${check}`);
-    }
-  }
-
   if (result.recommendedActions.length > 0) {
     lines.push('- recommended Actions:');
     for (const action of result.recommendedActions) {

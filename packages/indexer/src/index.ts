@@ -16,6 +16,7 @@ export * from './application/skill-source-digest/skill-source-digest.service.js'
 export * from './application/load-action-manifests/load-action-manifests.service.js';
 export * from './application/load-guard-manifests/load-guard-manifests.service.js';
 export * from './application/match-actions/match-actions.service.js';
+export * from './application/discover-capability-candidates/discover-capability-candidates.service.js';
 export * from './application/scan-repo/scan-repo.service.js';
 export * from './application/source-dependency-digest/source-dependency-digest.service.js';
 export * from './application/shared/package-scope-path.policy.js';

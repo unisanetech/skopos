@@ -14,6 +14,7 @@ import type {
   SkoposTaskStep,
 } from '@skopos/model';
 import {
+  buildSkoposImpactReport,
   buildSkoposTaskIdentity,
   captureSkoposTaskChangeScope,
   resolveSkoposWorkspaceIdentity,
@@ -73,6 +74,17 @@ export const prepareSkoposTaskRuntime = async ({
     constraints,
   });
   const resolvedRisk = risk ?? inferTaskRisk(plan);
+  const declaredImpact =
+    ownedPaths.length > 0
+      ? await buildSkoposImpactReport({
+          cwd: workspaceRoot,
+          changedPaths: ownedPaths,
+          phase: 'closure',
+          risk: resolvedRisk,
+        })
+      : undefined;
+  const selectedActions = declaredImpact?.requiredActions ?? [];
+  const selectedGuards = declaredImpact?.matchedGuards ?? [];
   const questions = buildTaskQuestions({
     workspaceRoot,
     taskIdentity,
@@ -87,6 +99,7 @@ export const prepareSkoposTaskRuntime = async ({
     now,
     plan,
     questions,
+    selectedActions,
   });
   const hasBlockingQuestions = questions.entries.some(
     (question) => question.blocking && question.status === 'open',
@@ -123,16 +136,29 @@ export const prepareSkoposTaskRuntime = async ({
       declaredOwnedPaths: ownedPaths,
       capturedAt: now,
     }),
-    steps: buildTaskSteps(plan),
-    selectedActions: plan.recommendedActions,
-    selectedGuardIds: [],
-    evidenceRequirements: contract.acceptanceCriteria.map((acceptanceCriterion, index) => ({
-      id: `acceptance-${index + 1}`,
-      acceptanceCriterion,
-      phase: 'closure',
-      actionIds: [],
-      guardIds: [],
-    })),
+    steps: buildTaskSteps(plan, selectedActions),
+    selectedActions,
+    selectedGuardIds: selectedGuards.map((guard) => guard.id),
+    evidenceRequirements: [
+      ...contract.acceptanceCriteria.map((acceptanceCriterion, index) => ({
+        id: `acceptance-${index + 1}`,
+        acceptanceCriterion,
+        phase: 'closure' as const,
+        actionIds: [],
+        guardIds: [],
+        evidence: 'agent-observation' as const,
+      })),
+      ...selectedGuards
+        .filter((guard) => guard.strength === 'required')
+        .map((guard) => ({
+          id: `guard-${guard.id}`,
+          acceptanceCriterion: `Guard ${guard.id}: ${guard.title}`,
+          phase: 'closure' as const,
+          actionIds: guard.requiredActionIds,
+          guardIds: [guard.id],
+          evidence: guard.evidence,
+        })),
+    ],
     memoryObligations: [],
     questions: questions.entries,
     recommendations: recommendations.entries,
@@ -516,7 +542,10 @@ const inferTaskRisk = (plan: SkoposPlanResult): SkoposTaskRisk => {
 const inferTaskDetail = (risk: SkoposTaskRisk): SkoposTaskDetail =>
   risk === 'high-impact' ? 'detailed' : risk;
 
-const buildTaskSteps = (plan: SkoposPlanResult): SkoposTaskStep[] => [
+const buildTaskSteps = (
+  plan: SkoposPlanResult,
+  selectedActions: SkoposTaskArtifact['selectedActions'],
+): SkoposTaskStep[] => [
   ...plan.decisionQuestions.map((question) => ({
     id: `decision-${question.id}`,
     kind: 'decision' as const,
@@ -531,7 +560,7 @@ const buildTaskSteps = (plan: SkoposPlanResult): SkoposTaskStep[] => [
     detail: step.detail,
     status: 'pending' as const,
   })),
-  ...plan.recommendedActions.map((action) => ({
+  ...selectedActions.map((action) => ({
     id: `action-${action.id}`,
     kind: 'action' as const,
     title: action.title,
@@ -691,7 +720,8 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
     '',
     ...asBulletList(
       task.evidenceRequirements.map(
-        (requirement) => `${requirement.acceptanceCriterion} (${requirement.phase})`,
+        (requirement) =>
+          `${requirement.acceptanceCriterion} (${requirement.phase}, ${requirement.evidence})`,
       ),
       'No Evidence requirement is declared.',
     ),
@@ -873,6 +903,7 @@ const buildTaskRecommendations = ({
   now,
   plan,
   questions,
+  selectedActions,
 }: {
   workspaceRoot: string;
   taskIdentity: SkoposTaskArtifact['taskIdentity'];
@@ -880,6 +911,7 @@ const buildTaskRecommendations = ({
   now: string;
   plan: SkoposPlanResult;
   questions: SkoposTaskQuestionArtifact;
+  selectedActions: SkoposTaskArtifact['selectedActions'];
 }): SkoposTaskRecommendationArtifact => ({
   schemaVersion: 1,
   id: `${taskId}.recommendations`,
@@ -902,7 +934,7 @@ const buildTaskRecommendations = ({
       blocking: question.blocking,
       status: 'open' as const,
     })),
-    ...plan.recommendedActions.map((action) => ({
+    ...selectedActions.map((action) => ({
       id: `run-${action.id}`,
       title: action.title,
       summary: action.reason,

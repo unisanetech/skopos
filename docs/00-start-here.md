@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -18,7 +18,7 @@ relatedDocs:
   - domains/product/positioning.md
   - architecture/00-architecture.md
   - work/archive/P-067e15c4-proof-and-benchmarking.md
-  - findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: when authority or routing changes
 ---
 
@@ -29,6 +29,8 @@ Skopos.
 
 ## Changelog
 
+- `2026-07-30`: Repaired the convergence finding link after its lifecycle move to the
+  findings archive.
 - `2026-07-28`: Rebuilt the router around the canonical Project Memory families,
   removed archived prototype plans from the normal reading path, and added direct
   routes for standards, guides, operations, patterns, findings, and Scope Memory.

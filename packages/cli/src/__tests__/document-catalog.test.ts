@@ -802,8 +802,6 @@ const createWorkspace = async (): Promise<string> => {
         '  scopeStrategy: package',
         '  mode: new-project',
         'commands: {}',
-        'validation:',
-        '  mode: commands',
         'workspace:',
         '  ignore: []',
         'docs:',

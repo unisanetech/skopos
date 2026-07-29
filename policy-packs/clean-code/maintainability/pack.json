@@ -147,19 +147,19 @@
   },
   "guards": {
     "required": [
-      "typecheck",
-      "focused behavior proof"
+      "quality.typecheck",
+      "quality.focused-behavior-proof"
     ],
     "recommended": [
-      "lint",
-      "format check",
-      "test",
-      "large file scan",
-      "long function scan",
-      "vague name scan",
-      "helper bucket scan",
-      "comment hygiene scan",
-      "boundary unknown scan"
+      "quality.lint",
+      "quality.format-check",
+      "quality.test",
+      "quality.large-file-scan",
+      "quality.long-function-scan",
+      "quality.vague-name-scan",
+      "quality.helper-bucket-scan",
+      "quality.comment-hygiene-scan",
+      "quality.boundary-unknown-scan"
     ]
   },
   "agentPrompts": {

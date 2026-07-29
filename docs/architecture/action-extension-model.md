@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - config-model.md
   - runtime-model.md
@@ -28,6 +28,18 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-07-30`: Added the reviewed capability-integration pipeline. Repository
+  commands are detected only as local proposal candidates; a digest-bound approval is
+  required before tracked Action/Guard declarations can be written, and activation
+  fails unless every Guard has its explicit provider.
+- `2026-07-30`: Removed task-goal keyword selection and policy-label command guessing.
+  Tasks now derive Actions only through path-, Scope-, phase-, and risk-matched Guards.
+  Policy packs reference stable Guard capability ids; projects provide the canonical
+  Guard and Action declarations. Action runs remain reusable, while an explicit
+  Task-owned Evidence Link associates a valid run with one Task.
+- `2026-07-30`: Settled successful Action Evidence after Skopos operational logging
+  and knowledge-index bookkeeping, preventing framework-managed projections from
+  invalidating their producing Action immediately.
 - `2026-07-29`: Renamed the internal execution contract and owners to
   `SkoposAction*` and `SkoposEvidence*`, changed generated run artifacts to
   `action-run` with `actionId` and `evidence`, and removed Workflow/Receipt aliases
@@ -78,7 +90,7 @@ The public commands are:
 ```text
 skopos actions list .
 skopos actions show <action-id> .
-skopos actions run <action-id> . --actor <actor>
+skopos actions run <action-id> . --task <task-id> --actor <actor>
 ```
 
 There is no `skopos workflows` compatibility command. Skopos has not launched, so the
@@ -88,6 +100,10 @@ One exact Action invocation for one input state has one execution owner. A dupli
 invocation reuses valid Evidence or reports the current owner. Mutating and destructive
 Actions require actor attribution; approval-sensitive Actions fail closed without
 explicit approval.
+
+Successful runs settle their final source and output state after Skopos completes its
+own operational logging and knowledge-index bookkeeping. Framework bookkeeping must
+not make newly produced Evidence stale.
 
 ## Evidence
 
@@ -105,7 +121,69 @@ timed-out, skipped, stale, or mismatched Action is not passing Evidence.
 
 Generated Action runs use the `action-run` artifact kind. Their canonical identity and
 proof fields are `actionId` and `evidence`; Workflow and Receipt fields are not read or
-written.
+written. A reusable Action run is project-level Evidence; Task verification consumes
+it only through a `task-action-evidence-link` stored in that Task's local Evidence
+directory. Linking records the Task, Action, run, actor, and time without duplicating or
+re-owning the immutable run.
+
+## Policy And Project Binding
+
+Policy packs may require stable Guard ids such as `quality.typecheck`. They do not
+contain shell commands and Skopos does not infer a provider from a package script name.
+The adopter explicitly declares:
+
+```text
+accepted Policy requirement
+  -> project Guard with the same stable id
+  -> explicit project Action id or agent-observation Evidence
+```
+
+A missing Guard declaration or referenced Action provider is a visible blocker.
+Generated Guard indexes report availability for agents and UI; the tracked Guard
+manifest remains the enforcement authority.
+
+## Capability Integration
+
+Skopos helps coding agents convert existing project commands into the canonical model
+without silently promoting discovery into authority:
+
+```text
+configured command or package script
+  -> local candidate proposal
+  -> human/agent review of exact Action and Guard
+  -> digest-bound explicit approval
+  -> tracked declarations
+  -> provider validation
+  -> activation
+```
+
+The public workflow is:
+
+```bash
+skopos integrations propose .
+skopos integrations approve . \
+  --proposal <proposal-digest> \
+  --accept <candidate-id> \
+  --actor <actor> \
+  --reason "<reason>"
+skopos integrations apply . \
+  --approval <approval-digest> \
+  --actor <actor>
+```
+
+Proposal and approval artifacts live under `.skopos/integrations/**`; neither writes
+tracked declarations. `apply` is the only integration operation that may write
+`tools/skopos/actions/**` and `tools/skopos/guards/**`. It accepts only the exact
+digest-bound approval, refuses to overwrite existing declarations, loads the resulting
+manifests through the canonical readers, and fails activation when a Guard references
+a missing Action provider.
+
+Discovery is intentionally broad but suggestion is narrow. Package scripts and
+configured commands may become candidates for any project. Skopos provides complete
+automatic suggestions only for recognized general proof capabilities; unknown or
+project-specific commands remain visible candidates requiring a project-authored
+declaration. Detection never selects a Task Action, satisfies a Policy, or contributes
+Evidence.
 
 ## Readiness Fit
 

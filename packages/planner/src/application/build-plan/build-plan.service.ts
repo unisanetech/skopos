@@ -2,64 +2,11 @@ import type {
   SkoposContextBundle,
   SkoposDecisionQuestion,
   SkoposPlanStep,
-  SkoposCommandName,
   SkoposRootConfig,
   SkoposScanSummary,
   SkoposPlanResult,
   SkoposActionRequirement,
 } from '@skopos/model';
-
-export interface SkoposPlanPackageValidationSurface {
-  scopeId: string;
-  scopeTitle: string;
-  scopeAliases: string[];
-  packageName: string;
-  scripts: string[];
-  matchPhrases: string[];
-}
-
-const DOCS_ONLY_GOAL_PATTERNS = [
-  'docs',
-  'documentation',
-  'readme',
-  'changelog',
-  'runbook',
-  'metadata',
-  'wording',
-  'copy',
-  'instruction',
-  'instructions',
-  'commentary',
-  'spelling',
-  'typo',
-];
-
-const CODE_LIKE_GOAL_PATTERNS = [
-  'api',
-  'endpoint',
-  'route',
-  'schema',
-  'runtime',
-  'service',
-  'adapter',
-  'module',
-  'package',
-  'build',
-  'test',
-  'lint',
-  'typecheck',
-  'proof',
-  'verify',
-  'cli',
-  'ui',
-  'watch',
-  'command',
-  'script',
-  'token',
-  'auth',
-  'security',
-  'privacy',
-];
 
 export interface BuildSkoposPlanOptions {
   workspaceRoot: string;
@@ -68,7 +15,6 @@ export interface BuildSkoposPlanOptions {
   scanSummary: SkoposScanSummary;
   config: SkoposRootConfig;
   recommendedActions?: SkoposActionRequirement[];
-  packageValidationSurfaces?: SkoposPlanPackageValidationSurface[];
 }
 
 export const buildSkoposPlan = ({
@@ -78,7 +24,6 @@ export const buildSkoposPlan = ({
   scanSummary,
   config,
   recommendedActions = [],
-  packageValidationSurfaces = [],
 }: BuildSkoposPlanOptions): SkoposPlanResult => {
   const normalizedGoal = goal.trim();
   const scopeTitle = context.scope.scope.title;
@@ -95,24 +40,16 @@ export const buildSkoposPlan = ({
     scopeKind: context.scope.scope.kind,
     decisionQuestions,
   });
-  const recommendedChecks = buildRecommendedChecks({
-    config,
-    scope: context.scope,
-    goal: normalizedGoal,
-    packageValidationSurfaces,
-  });
   const implementationSteps = buildImplementationSteps({
     goal: normalizedGoal,
     scopeTitle,
     scopeKind: context.scope.scope.kind,
     decisionQuestions,
-    recommendedChecks,
     recommendedActions,
   });
   const nextSteps = buildNextSteps({
     scopeKind: context.scope.scope.kind,
     decisionQuestions,
-    recommendedChecks,
     recommendedActions,
   });
 
@@ -125,7 +62,6 @@ export const buildSkoposPlan = ({
     confidence: scanSummary.confidence,
     references: context.references,
     implementationSteps,
-    recommendedChecks,
     recommendedActions,
     decisionQuestions,
     risks,
@@ -419,156 +355,11 @@ const buildRisks = ({
   return risks;
 };
 
-const COMMAND_NAMES: readonly SkoposCommandName[] = ['typecheck', 'test', 'build', 'lint'];
-
-const PACKAGE_SCRIPT_CANDIDATES: Record<SkoposCommandName, readonly string[]> = {
-  dev: ['dev'],
-  build: ['build'],
-  test: ['test'],
-  typecheck: ['typecheck', 'check-types'],
-  lint: ['lint'],
-};
-
-const buildRecommendedChecks = ({
-  config,
-  scope,
-  goal,
-  packageValidationSurfaces,
-}: {
-  config: SkoposRootConfig;
-  scope: SkoposContextBundle['scope'];
-  goal: string;
-  packageValidationSurfaces?: SkoposPlanPackageValidationSurface[];
-}): string[] => {
-  if (config.validation?.mode === 'actions') {
-    return [];
-  }
-
-  if (isDocsOnlyValidationLane({ scope, goal })) {
-    return [];
-  }
-
-  const packageValidationSurface = resolveValidationSurfaceForPlan({
-    scope,
-    goal,
-    packageValidationSurfaces: packageValidationSurfaces ?? [],
-  });
-
-  if (!packageValidationSurface) {
-    if (scope.scope.kind === 'workspace' && config.project.repoMode === 'single') {
-      return COMMAND_NAMES.flatMap((commandName) => {
-        const configuredCommand = config.commands[commandName];
-        return typeof configuredCommand === 'string' && configuredCommand.trim().length > 0
-          ? [configuredCommand]
-          : [];
-      });
-    }
-
-    return [];
-  }
-
-  return COMMAND_NAMES.flatMap((commandName) => {
-    const configuredCommand = config.commands[commandName];
-    if (typeof configuredCommand !== 'string' || configuredCommand.trim().length === 0) {
-      return [];
-    }
-
-    return (
-      buildScopedValidationCommand({
-        commandName,
-        configuredCommand,
-        packageValidationSurface,
-      })
-    );
-  }).filter((command): command is string => Boolean(command));
-};
-
-const isDocsOnlyValidationLane = ({
-  scope,
-  goal,
-}: {
-  scope: SkoposContextBundle['scope'];
-  goal: string;
-}): boolean => {
-  const normalizedGoal = goal.toLowerCase();
-  return (
-    DOCS_ONLY_GOAL_PATTERNS.some((pattern) => normalizedGoal.includes(pattern)) &&
-    !CODE_LIKE_GOAL_PATTERNS.some((pattern) => normalizedGoal.includes(pattern))
-  );
-};
-
-const buildScopedValidationCommand = ({
-  commandName,
-  configuredCommand,
-  packageValidationSurface,
-}: {
-  commandName: SkoposCommandName;
-  configuredCommand: string;
-  packageValidationSurface?: SkoposPlanPackageValidationSurface;
-}): string | null => {
-  if (!configuredCommand.startsWith('pnpm')) {
-    return null;
-  }
-
-  const packageName = packageValidationSurface?.packageName?.trim();
-  if (!packageName) {
-    return null;
-  }
-
-  const availableScripts = new Set(packageValidationSurface?.scripts ?? []);
-  const scriptName = PACKAGE_SCRIPT_CANDIDATES[commandName].find((candidate) =>
-    availableScripts.has(candidate),
-  );
-  if (scriptName) {
-    return `pnpm --filter ${packageName} ${scriptName}`;
-  }
-
-  const packageFamily = packageName.match(/^(@[^/]+)\//)?.[1];
-  if (!packageFamily) {
-    return null;
-  }
-
-  return `pnpm --recursive --filter ${packageFamily}/* ${commandName}`;
-};
-
-const resolveValidationSurfaceForPlan = ({
-  scope,
-  goal,
-  packageValidationSurfaces,
-}: {
-  scope: SkoposContextBundle['scope'];
-  goal: string;
-  packageValidationSurfaces: SkoposPlanPackageValidationSurface[];
-}): SkoposPlanPackageValidationSurface | undefined => {
-  if (packageValidationSurfaces.length === 0) {
-    return undefined;
-  }
-
-  if (scope.scope.kind !== 'workspace') {
-    return packageValidationSurfaces.find((entry) => entry.scopeId === scope.scope.id);
-  }
-
-  const normalizedGoal = normalizeMatchValue(goal);
-  const matches = packageValidationSurfaces.filter((entry) =>
-    entry.matchPhrases.some((phrase) => normalizedGoal.includes(phrase)),
-  );
-
-  return matches.length === 1 ? matches[0] : undefined;
-};
-
-const normalizeMatchValue = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-
 interface BuildImplementationStepsInput {
   goal: string;
   scopeTitle: string;
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
-  recommendedChecks: string[];
   recommendedActions: SkoposActionRequirement[];
 }
 
@@ -577,7 +368,6 @@ const buildImplementationSteps = ({
   scopeTitle,
   scopeKind,
   decisionQuestions,
-  recommendedChecks,
   recommendedActions,
 }: BuildImplementationStepsInput) => {
   const steps: SkoposPlanStep[] = [];
@@ -594,7 +384,6 @@ const buildImplementationSteps = ({
   if (requiresWorkflowRecordGuard({
     scopeKind,
     decisionQuestions,
-    recommendedChecks,
     recommendedActions,
   })) {
     steps.push({
@@ -633,26 +422,16 @@ const buildImplementationSteps = ({
     });
   }
 
-  if (recommendedChecks.length > 0) {
-    steps.push({
-      id: 'run-checks',
-      title: 'Run canonical validation commands',
-      detail: `Validate with the configured command surface: ${recommendedChecks.join(' | ')}`,
-    });
-  }
-
   return steps;
 };
 
 const buildNextSteps = ({
   scopeKind,
   decisionQuestions,
-  recommendedChecks,
   recommendedActions,
 }: {
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
-  recommendedChecks: string[];
   recommendedActions: SkoposActionRequirement[];
 }): string[] => {
   const nextSteps = ['Review the compact references before making code changes.'];
@@ -664,16 +443,11 @@ const buildNextSteps = ({
   if (requiresWorkflowRecordGuard({
     scopeKind,
     decisionQuestions,
-    recommendedChecks,
     recommendedActions,
   })) {
     nextSteps.push(
       'Before editing, confirm Task risk and detail, then record Task, Decision, Finding, or Plan Memory only when the work requires it.',
     );
-  }
-
-  if (recommendedChecks.length > 0) {
-    nextSteps.push('Use the canonical command surface for validation rather than ad hoc commands.');
   }
 
   if (recommendedActions.length > 0) {
@@ -690,15 +464,12 @@ const buildNextSteps = ({
 const requiresWorkflowRecordGuard = ({
   scopeKind,
   decisionQuestions,
-  recommendedChecks,
   recommendedActions,
 }: {
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
-  recommendedChecks: string[];
   recommendedActions: SkoposActionRequirement[];
 }): boolean =>
   scopeKind === 'workspace' ||
   decisionQuestions.some((question) => question.escalation === 'must-ask') ||
-  recommendedActions.length >= 2 ||
-  recommendedChecks.length >= 4;
+  recommendedActions.length >= 2;

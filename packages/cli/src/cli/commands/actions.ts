@@ -20,6 +20,7 @@ interface ParsedActionArgs {
   approve: boolean;
   force: boolean;
   actor?: string;
+  taskId?: string;
   json: boolean;
 }
 
@@ -84,44 +85,52 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
       approve: parsed.approve,
       actor: parsed.actor,
       force: parsed.force,
+      taskId: parsed.taskId,
     });
+    const run = result.run;
 
     if (parsed.json) {
       writeJsonOutput({
-        actionId: result.actionId,
-        actionTitle: result.actionTitle,
-        actionCategory: result.actionCategory,
-        actionSafety: result.actionSafety,
-        runId: result.id,
-        status: result.runStatus,
-        actorId: result.runByActorId,
-        sourcePath: result.sourcePath,
-        command: result.command,
-        outputPaths: result.outputPaths,
-        evidence: result.evidence,
-        reusedFromRunId: result.reusedFromRunId,
+        actionId: run.actionId,
+        actionTitle: run.actionTitle,
+        actionCategory: run.actionCategory,
+        actionSafety: run.actionSafety,
+        runId: run.id,
+        status: run.runStatus,
+        actorId: run.runByActorId,
+        sourcePath: run.sourcePath,
+        command: run.command,
+        outputPaths: run.outputPaths,
+        evidence: run.evidence,
+        reusedFromRunId: run.reusedFromRunId,
+        taskEvidenceLink: result.taskEvidenceLink,
+        taskEvidenceLinkPath: result.taskEvidenceLinkPath,
       });
       return;
     }
 
     const lines = [
       'Skopos Action run',
-      `- Action: ${result.actionId}`,
-      `- status: ${result.runStatus}`,
-      `- category: ${result.actionCategory}`,
-      `- safety: ${result.actionSafety}`,
-      `- actor: ${result.runByActorId ?? '(none)'}`,
+      `- Action: ${run.actionId}`,
+      `- status: ${run.runStatus}`,
+      `- category: ${run.actionCategory}`,
+      `- safety: ${run.actionSafety}`,
+      `- actor: ${run.runByActorId ?? '(none)'}`,
     ];
 
-    if (result.evidence) {
-      lines.push(`- Evidence: ${result.reusedFromRunId ? 'reused' : 'recorded'}`);
-      lines.push(`  execution key: ${result.evidence.executionKey}`);
-      lines.push(`  source digest: ${result.evidence.sourceState.digest}`);
+    if (run.evidence) {
+      lines.push(`- Evidence: ${run.reusedFromRunId ? 'reused' : 'recorded'}`);
+      lines.push(`  execution key: ${run.evidence.executionKey}`);
+      lines.push(`  source digest: ${run.evidence.sourceState.digest}`);
     }
 
-    if (result.outputPaths.length > 0) {
+    if (result.taskEvidenceLink) {
+      lines.push(`- Task Evidence: linked to ${result.taskEvidenceLink.taskId}`);
+    }
+
+    if (run.outputPaths.length > 0) {
       lines.push('- outputs:');
-      for (const outputPath of result.outputPaths) {
+      for (const outputPath of run.outputPaths) {
         lines.push(`  - ${outputPath}`);
       }
     }
@@ -204,6 +213,7 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
   let approve = false;
   let force = false;
   let actor: string | undefined;
+  let taskId: string | undefined;
   let json = false;
   let targetProvided = false;
 
@@ -245,6 +255,21 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
       continue;
     }
 
+    if (argument === '--task') {
+      const nextValue = args[index + 1];
+      if (!nextValue || nextValue.startsWith('-')) {
+        throw new Error('Missing value for --task.');
+      }
+      taskId = nextValue;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--task=')) {
+      taskId = argument.slice('--task='.length);
+      continue;
+    }
+
     if (argument.startsWith('-')) {
       throw new Error(`Unknown Skopos actions flag: ${argument}`);
     }
@@ -262,5 +287,5 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
     targetProvided = true;
   }
 
-  return { cwd, action, dryRun, approve, force, actor, json };
+  return { cwd, action, dryRun, approve, force, actor, taskId, json };
 };

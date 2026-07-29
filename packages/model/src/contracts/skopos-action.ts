@@ -126,3 +126,19 @@ export interface SkoposActionRunArtifact extends SkoposArtifactEnvelope<'action-
   stdoutExcerpt?: string;
   stderrExcerpt?: string;
 }
+
+export interface SkoposTaskActionEvidenceLink
+  extends SkoposArtifactEnvelope<'task-action-evidence-link'> {
+  workspaceRoot: string;
+  taskId: string;
+  actionId: string;
+  runId: string;
+  linkedAt: string;
+  linkedByActorId: string;
+}
+
+export interface SkoposActionRunResult {
+  run: SkoposActionRunArtifact;
+  taskEvidenceLink?: SkoposTaskActionEvidenceLink;
+  taskEvidenceLinkPath?: string;
+}

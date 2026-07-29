@@ -1,0 +1,23 @@
+id: quality.typecheck
+title: TypeScript changes require typecheck Evidence
+description: Require fresh project-owned typecheck Evidence for TypeScript and relevant project configuration changes.
+owner: skopos-core
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - packages/**
+    - package.json
+    - pnpm-lock.yaml
+    - pnpm-workspace.yaml
+    - tsconfig.base.json
+  phases:
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - quality.typecheck
+  evidence: source-bound-action

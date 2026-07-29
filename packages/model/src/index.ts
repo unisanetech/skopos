@@ -43,3 +43,4 @@ export * from './contracts/skopos-verification.js';
 export * from './contracts/skopos-token-telemetry.js';
 export * from './contracts/skopos-understanding.js';
 export * from './contracts/skopos-action.js';
+export * from './contracts/skopos-capability-integration.js';

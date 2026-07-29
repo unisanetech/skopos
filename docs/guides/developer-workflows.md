@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
@@ -21,6 +21,11 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-07-30`: Added the reviewed project capability-integration workflow. Detection
+  and approval remain local and non-authoritative; only applying an exact approval
+  writes tracked declarations and activation validates Guard providers.
+- `2026-07-30`: Clarified that `actions run --task` creates the Task-owned Evidence
+  Link required by Verify; unlinked project-level Action runs are not Task proof.
 - `2026-07-29`: Replaced prototype commands with the canonical Session, Task, Work
   Queue, Action, Evidence, Verify, and Readiness flow.
 
@@ -76,11 +81,32 @@ skopos actions run <action-id> . --task <task-id> --actor <id>
 
 Actions are selected from Task-owned paths, Scope, phase, risk, and deterministic
 Guards. A root script catalog is discovery input, not a mandatory checklist.
+Accepted policy packs name stable Guard capabilities, while each project explicitly
+declares the Guard and its Action or observation provider.
+
+To integrate existing project commands without guessing authority:
+
+```bash
+skopos integrations propose .
+skopos integrations approve . \
+  --proposal <proposal-digest> \
+  --accept <candidate-id> \
+  --actor <id> \
+  --reason "<why this command is the correct project capability>"
+skopos integrations apply . --approval <approval-digest> --actor <id>
+```
+
+Review the proposed command, working directory, Scope, paths, phase, risk, safety, and
+approval fields before approval. Proposal and approval write only local
+`.skopos/integrations/**` artifacts. Apply writes the reviewed Action/Guard pair,
+refuses collisions, and activates it only after the Guard's explicit provider loads.
+An unrecognized project-specific command remains a candidate; author its declaration
+instead of forcing a generic suggestion.
 
 ## Record And Check Proof
 
-Action execution records Evidence automatically when supported. Explicit observations
-can be recorded with:
+Action execution records reusable Evidence and links it to the named Task. Explicit
+acceptance or Guard observations can be recorded with:
 
 ```bash
 skopos evidence record <task-id> . --acceptance <id> --actor <id> ...

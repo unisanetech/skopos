@@ -183,7 +183,7 @@ export const initSkoposProject = async ({
     actions: actions.map((action) => ({
       id: action.id,
     })) as SkoposAgentNativeOperatingModel['actions'],
-    guards: guardsProjection.artifact.guards.map((guard) => ({
+    guards: guards.map((guard) => ({
       id: guard.id,
     })) as SkoposAgentNativeOperatingModel['guards'],
     diagnostics: [],

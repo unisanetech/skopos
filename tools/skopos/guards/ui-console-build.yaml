@@ -1,0 +1,19 @@
+id: ui.console-build
+title: Console changes require build Evidence
+description: Require the project-owned routed console build after changing the Skopos UI package.
+owner: skopos-ui
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - packages/ui/**
+  phases:
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - ui.build-console-app
+  evidence: source-bound-action

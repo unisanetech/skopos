@@ -15,7 +15,6 @@ import type {
   SkoposImpactEntry,
   SkoposImpactReport,
   SkoposTaskChangeScope,
-  SkoposRootConfig,
   SkoposScopeLite,
   SkoposSourceDependency,
   SkoposActionPhase,
@@ -100,11 +99,6 @@ export const buildSkoposImpactReport = async ({
         .filter((scope): scope is SkoposScopeLite => Boolean(scope)),
     ),
   );
-  const packageValidationSurfaces = await loadPackageValidationSurfaces({
-    workspaceRoot,
-    scopes: scopesLite.scopes,
-  });
-  const recommendedChecks = orderedRecommendedChecks(config, changed, packageValidationSurfaces);
   const guardSelection = matchSkoposRequiredActionsForImpact({
     actions,
     guards,
@@ -137,7 +131,6 @@ export const buildSkoposImpactReport = async ({
     changed,
     affectedScopes,
     recommendedCommands,
-    recommendedChecks,
     matchedGuards: guardSelection.guards,
     requiredActions: guardSelection.actions,
     warnings,
@@ -302,219 +295,6 @@ const uniqueScopes = (scopes: SkoposScopeLite[]): SkoposScopeLite[] => {
     byId.set(scope.id, scope);
   }
   return [...byId.values()];
-};
-
-const orderedRecommendedChecks = (
-  config: SkoposRootConfig,
-  changed: SkoposImpactEntry[],
-  packageValidationSurfaces: SkoposPlanPackageValidationSurface[],
-): string[] => {
-  if (config.validation?.mode === 'actions') {
-    return [];
-  }
-
-  if (isDocsOnlyImpactLane(changed)) {
-    return [];
-  }
-
-  const scopedPackageSurfaces = resolveImpactPackageValidationSurfaces(
-    changed,
-    packageValidationSurfaces,
-  );
-  if (scopedPackageSurfaces.length > 0) {
-    return scopedPackageSurfaces.flatMap((surface) =>
-      (
-        surface.impactRole === 'dependent'
-          ? (['typecheck'] as const)
-          : (['typecheck', 'test', 'build', 'lint'] as const)
-      ).flatMap((commandName) => {
-        const configuredCommand = config.commands[commandName];
-        if (typeof configuredCommand !== 'string' || !configuredCommand.startsWith('pnpm')) {
-          return [];
-        }
-
-        const scriptName = PACKAGE_SCRIPT_CANDIDATES[commandName].find((candidate) =>
-          surface.scripts.includes(candidate),
-        );
-        return scriptName ? `pnpm --filter ${surface.packageName} ${scriptName}` : [];
-      }),
-    );
-  }
-
-  return (['typecheck', 'test', 'build', 'lint'] as const)
-    .map((name) => config.commands[name])
-    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
-};
-
-const isDocsOnlyImpactLane = (changed: SkoposImpactEntry[]): boolean => {
-  if (changed.length === 0) {
-    return false;
-  }
-
-  return changed.every((entry) =>
-    [
-      'docs',
-      'instruction-source',
-      'instruction-mirror',
-      'generated-artifact',
-      'action-artifact',
-    ].includes(entry.category),
-  );
-};
-
-interface SkoposPlanPackageValidationSurface {
-  scopeId: string;
-  packageName: string;
-  scripts: string[];
-  workspaceDependencies: string[];
-  impactRole?: 'owner' | 'dependent';
-}
-
-interface LoadedPackageValidationSurface extends SkoposPlanPackageValidationSurface {
-  dependencyNames: string[];
-}
-
-const PACKAGE_SCRIPT_CANDIDATES = {
-  typecheck: ['typecheck', 'check-types'],
-  test: ['test'],
-  build: ['build'],
-  lint: ['lint'],
-} as const;
-
-const resolveImpactPackageValidationSurfaces = (
-  changed: SkoposImpactEntry[],
-  packageValidationSurfaces: SkoposPlanPackageValidationSurface[],
-): SkoposPlanPackageValidationSurface[] => {
-  const packageScopedEntries = changed.filter((entry) =>
-    ['scope-source', 'package-manifest'].includes(entry.category),
-  );
-  if (packageScopedEntries.length === 0) {
-    return [];
-  }
-
-  const hasBroaderCodeLikeEntries = changed.some((entry) =>
-    ['workspace-file', 'root-config'].includes(entry.category),
-  );
-  if (hasBroaderCodeLikeEntries) {
-    return [];
-  }
-
-  const packageScopeIds = new Set(
-    packageScopedEntries.flatMap((entry) =>
-      entry.affectedScopeIds.filter((scopeId) =>
-        packageValidationSurfaces.some((surface) => surface.scopeId === scopeId),
-      ),
-    ),
-  );
-
-  if (packageScopeIds.size === 0) {
-    return [];
-  }
-
-  const affectedPackageNames = new Set(
-    packageValidationSurfaces
-      .filter((surface) => packageScopeIds.has(surface.scopeId))
-      .map((surface) => surface.packageName),
-  );
-  const ownerPackageNames = new Set(affectedPackageNames);
-  let expanded = true;
-  while (expanded) {
-    expanded = false;
-    for (const surface of packageValidationSurfaces) {
-      if (
-        !affectedPackageNames.has(surface.packageName) &&
-        surface.workspaceDependencies.some((dependency) => affectedPackageNames.has(dependency))
-      ) {
-        affectedPackageNames.add(surface.packageName);
-        expanded = true;
-      }
-    }
-  }
-
-  return packageValidationSurfaces
-    .filter((surface) => affectedPackageNames.has(surface.packageName))
-    .map((surface) => ({
-      ...surface,
-      impactRole: ownerPackageNames.has(surface.packageName)
-        ? ('owner' as const)
-        : ('dependent' as const),
-    }))
-    .sort((left, right) => left.packageName.localeCompare(right.packageName));
-};
-
-const loadPackageValidationSurfaces = async ({
-  workspaceRoot,
-  scopes,
-}: {
-  workspaceRoot: string;
-  scopes: SkoposScopeLite[];
-}): Promise<SkoposPlanPackageValidationSurface[]> => {
-  const projectScopes = scopes.filter((scope) => scope.kind !== 'workspace');
-  const loadedSurfaces = await Promise.all(
-    projectScopes.map(async (scope) => {
-      try {
-        const parsed = JSON.parse(
-          await readFile(join(workspaceRoot, scope.path, 'package.json'), 'utf8'),
-        ) as {
-          name?: unknown;
-          scripts?: Record<string, unknown>;
-          dependencies?: Record<string, unknown>;
-          devDependencies?: Record<string, unknown>;
-          peerDependencies?: Record<string, unknown>;
-          optionalDependencies?: Record<string, unknown>;
-        };
-        const packageName =
-          typeof parsed.name === 'string' && parsed.name.trim().length > 0
-            ? parsed.name.trim()
-            : null;
-        if (!packageName) {
-          return undefined;
-        }
-
-        const scripts = Object.entries(parsed.scripts ?? {})
-          .filter(
-            ([name, command]) =>
-              typeof name === 'string' && typeof command === 'string' && command.trim(),
-          )
-          .map(([name]) => name);
-        if (scripts.length === 0) {
-          return undefined;
-        }
-
-        return {
-          scopeId: scope.id,
-          packageName,
-          scripts,
-          workspaceDependencies: [] as string[],
-          dependencyNames: [
-            ...new Set(
-              [
-                ...Object.keys(parsed.dependencies ?? {}),
-                ...Object.keys(parsed.devDependencies ?? {}),
-                ...Object.keys(parsed.peerDependencies ?? {}),
-                ...Object.keys(parsed.optionalDependencies ?? {}),
-              ],
-            ),
-          ],
-        } satisfies LoadedPackageValidationSurface;
-      } catch {
-        return undefined;
-      }
-    }),
-  );
-  const resolvedSurfaces = loadedSurfaces.filter(
-    (entry): entry is LoadedPackageValidationSurface => Boolean(entry),
-  );
-  const workspacePackageNames = new Set(
-    resolvedSurfaces.map((surface) => surface.packageName),
-  );
-
-  return resolvedSurfaces.map(({ dependencyNames, ...surface }) => ({
-    ...surface,
-    workspaceDependencies: dependencyNames.filter((dependency) =>
-      workspacePackageNames.has(dependency),
-    ),
-  }));
 };
 
 interface BuildRecommendedCommandsInput {

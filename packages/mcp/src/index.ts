@@ -1,11 +1,14 @@
 import {
   assessSkoposTaskReadinessRuntime,
+  applySkoposCapabilityIntegrationsRuntime,
+  approveSkoposCapabilityIntegrationsRuntime,
   buildSkoposContextRuntime,
   buildSkoposSessionContextRuntime,
   buildSkoposStartRuntime,
   buildSkoposWorkQueueRuntime,
   getSkoposCoordinationStatus,
   recordSkoposObservationEvidenceRuntime,
+  proposeSkoposCapabilityIntegrationsRuntime,
   runSkoposActionRuntime,
   showSkoposTaskRuntime,
   verifySkoposTaskRuntime,
@@ -22,6 +25,9 @@ export const skoposMcpToolIds = [
   'skopos_verify',
   'skopos_readiness',
   'skopos_coordination_status',
+  'skopos_integrations_propose',
+  'skopos_integrations_approve',
+  'skopos_integrations_apply',
 ] as const;
 
 export type SkoposMcpToolId = (typeof skoposMcpToolIds)[number];
@@ -73,6 +79,7 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
     cwd: cwdProperty,
     actionId: { type: 'string' },
     actor: { type: 'string' },
+    taskId: { type: 'string' },
   }, ['cwd', 'actionId']),
   tool('skopos_evidence_record', 'Record agent-observation Evidence for a Task requirement or Guard.', {
     cwd: cwdProperty,
@@ -96,6 +103,21 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
   tool('skopos_coordination_status', 'Inspect live Sessions, Task reservations, claims, mutations, and contamination.', {
     cwd: cwdProperty,
   }, ['cwd']),
+  tool('skopos_integrations_propose', 'Detect project capability candidates and emit a non-authoritative proposal without writing tracked Action or Guard declarations.', {
+    cwd: cwdProperty,
+  }, ['cwd']),
+  tool('skopos_integrations_approve', 'Explicitly approve reviewed capability candidates bound to one exact proposal digest; this still writes no tracked declarations.', {
+    cwd: cwdProperty,
+    proposalDigest: { type: 'string' },
+    candidateIds: { type: 'string', description: 'Comma-separated candidate ids from the reviewed proposal.' },
+    actor: { type: 'string' },
+    reason: { type: 'string' },
+  }, ['cwd', 'proposalDigest', 'candidateIds', 'actor', 'reason']),
+  tool('skopos_integrations_apply', 'Write Action and Guard declarations only from an exact approval, then validate every Guard provider.', {
+    cwd: cwdProperty,
+    approvalDigest: { type: 'string' },
+    actor: { type: 'string' },
+  }, ['cwd', 'approvalDigest', 'actor']),
 ];
 
 export const callSkoposMcpTool = async (
@@ -137,6 +159,7 @@ export const callSkoposMcpTool = async (
         cwd,
         action: requiredString(input, 'actionId'),
         actor: optionalString(input, 'actor'),
+        taskId: optionalString(input, 'taskId'),
       });
     case 'skopos_evidence_record':
       return recordSkoposObservationEvidenceRuntime({
@@ -167,6 +190,25 @@ export const callSkoposMcpTool = async (
       });
     case 'skopos_coordination_status':
       return getSkoposCoordinationStatus({ cwd });
+    case 'skopos_integrations_propose':
+      return proposeSkoposCapabilityIntegrationsRuntime({ cwd });
+    case 'skopos_integrations_approve':
+      return approveSkoposCapabilityIntegrationsRuntime({
+        cwd,
+        proposalDigest: requiredString(input, 'proposalDigest'),
+        acceptedCandidateIds: requiredString(input, 'candidateIds')
+          .split(',')
+          .map((candidateId) => candidateId.trim())
+          .filter(Boolean),
+        actor: requiredString(input, 'actor'),
+        reason: requiredString(input, 'reason'),
+      });
+    case 'skopos_integrations_apply':
+      return applySkoposCapabilityIntegrationsRuntime({
+        cwd,
+        approvalDigest: requiredString(input, 'approvalDigest'),
+        actor: requiredString(input, 'actor'),
+      });
   }
 };
 

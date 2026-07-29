@@ -20,13 +20,13 @@ appliesTo:
   - sqlite
   - crash-recovery
   - reliability
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../architecture/runtime-model.md
   - ../architecture/agent-native-operating-model.md
   - ../architecture/artifact-model.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when Task claim, Session lease, or coordination recovery changes
 ---
@@ -35,6 +35,7 @@ reviewCycle: when Task claim, Session lease, or coordination recovery changes
 
 ## Changelog
 
+- `2026-07-30`: Repaired the related convergence finding link after archival.
 - `2026-07-28`: Accepted after the Task-admission repair exposed a separate
   cross-process ownership race: ordered per-file publication can keep admission
   complete without making the ownership decision atomic.

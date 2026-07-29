@@ -190,10 +190,13 @@ export interface SkoposGuard {
   title: string;
   summary: string;
   kind: SkoposGuardKind;
-  requiredness: 'required' | 'recommended';
-  enforcement: 'command' | 'manual-proof' | 'unavailable';
+  requiredness: 'required' | 'recommended' | 'prohibited';
+  enforcement: 'action-evidence' | 'manual-proof' | 'prohibition' | 'unavailable';
   command?: SkoposStructuredCommand;
   unavailableReason?: string;
+  requiredActionIds: string[];
+  evidence: 'source-bound-action' | 'agent-observation';
+  appliesToPaths: string[];
   phases: SkoposExecutionPhase[];
   risks: SkoposTaskRisk[];
   provenance: SkoposProvenanceReference[];

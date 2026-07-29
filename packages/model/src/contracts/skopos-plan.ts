@@ -20,7 +20,6 @@ export interface SkoposPlanResult {
   confidence: SkoposConfidence;
   references: SkoposContextReference[];
   implementationSteps: SkoposPlanStep[];
-  recommendedChecks: string[];
   recommendedActions: SkoposActionRequirement[];
   decisionQuestions: SkoposDecisionQuestion[];
   risks: string[];
@@ -38,7 +37,6 @@ export interface SkoposPlanArtifact extends SkoposArtifactEnvelope<'plan'> {
   confidence: SkoposConfidence;
   references: SkoposContextReference[];
   implementationSteps: SkoposPlanStep[];
-  recommendedChecks: string[];
   recommendedActions: SkoposActionRequirement[];
   decisionQuestions: SkoposDecisionQuestion[];
   risks: string[];

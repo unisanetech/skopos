@@ -1,8 +1,5 @@
 import type {
-  SkoposImpactCategory,
   SkoposImpactEntry,
-  SkoposResolvedScope,
-  SkoposActionCategory,
   SkoposActionManifest,
   SkoposActionRequirement,
   SkoposGuardManifest,
@@ -10,12 +7,6 @@ import type {
   SkoposActionPhase,
   SkoposTaskRisk,
 } from '@skopos/model';
-
-export interface MatchSkoposPlanActionsOptions {
-  actions: SkoposActionManifest[];
-  goal: string;
-  scope: SkoposResolvedScope;
-}
 
 export interface MatchSkoposRequiredActionsForImpactOptions {
   actions: SkoposActionManifest[];
@@ -29,47 +20,6 @@ export interface SkoposImpactGuardSelection {
   guards: SkoposGuardMatch[];
   actions: SkoposActionRequirement[];
 }
-
-const actionCategoryKeywords: Record<SkoposActionCategory, string[]> = {
-  'docs-generator': ['doc', 'docs', 'readme', 'guide', 'instruction', 'mirror'],
-  'docs-validator': ['doc', 'docs', 'readme', 'guide', 'instruction', 'validate'],
-  'reference-generator': ['api', 'endpoint', 'route', 'contract', 'schema', 'sdk', 'reference'],
-  'graph-generator': ['graph', 'diagram', 'architecture', 'relationship', 'dependency'],
-  'quality-check': ['check', 'validate', 'verify', 'quality', 'lint', 'test'],
-  migration: ['migrate', 'migration', 'rename', 'remove', 'delete', 'drop'],
-  maintenance: ['refresh', 'sync', 'generate', 'update', 'maintain'],
-  'domain-tool': ['domain', 'business', 'data', 'model'],
-};
-
-const impactCategoriesByAction: Record<SkoposActionCategory, SkoposImpactCategory[]> = {
-  'docs-generator': ['docs', 'instruction-source', 'instruction-mirror'],
-  'docs-validator': ['docs', 'instruction-source', 'instruction-mirror'],
-  'reference-generator': ['scope-source', 'package-manifest', 'root-config'],
-  'graph-generator': ['scope-source', 'package-manifest', 'docs', 'workspace-file'],
-  'quality-check': ['scope-source', 'package-manifest', 'root-config', 'workspace-file', 'docs'],
-  migration: ['scope-source', 'package-manifest', 'root-config', 'workspace-file'],
-  maintenance: ['scope-source', 'package-manifest', 'root-config', 'workspace-file', 'docs'],
-  'domain-tool': ['scope-source', 'package-manifest', 'workspace-file'],
-};
-
-export const matchSkoposPlanActions = ({
-  actions,
-  goal,
-  scope,
-}: MatchSkoposPlanActionsOptions): SkoposActionRequirement[] => {
-  const normalizedGoal = goal.toLowerCase();
-
-  return actions
-    .filter((action) => matchesPlanAction({ action, normalizedGoal, scope }))
-    .map((action) =>
-      toActionRequirement(
-        action,
-        action.whenToUse?.trim() ||
-          `Registered ${action.category} Action for ${scope.scope.id}.`,
-      ),
-    )
-    .sort(sortActionRequirements);
-};
 
 export const matchSkoposRequiredActionsForImpact = ({
   actions,
@@ -122,7 +72,8 @@ const matchGuardToImpact = (
   }
   const matchedPaths = changed
     .filter((entry) =>
-      guard.appliesTo.paths.some((pattern) => pathPatternMatches(entry.path, pattern)),
+      guard.appliesTo.paths.some((pattern) => pathPatternMatches(entry.path, pattern)) &&
+      guardAppliesToImpactScope(guard, entry),
     )
     .map((entry) => entry.path);
   if (matchedPaths.length === 0) {
@@ -141,124 +92,36 @@ const matchGuardToImpact = (
   };
 };
 
-const matchesPlanAction = ({
-  action,
-  normalizedGoal,
-  scope,
-}: {
-  action: SkoposActionManifest;
-  normalizedGoal: string;
-  scope: SkoposResolvedScope;
-}): boolean => {
-  if (!actionAppliesToScope(action, scope.scope.id, scope.scope.kind)) {
-    return false;
-  }
-
-  if (
-    actionCategoryKeywords[action.category].some((keyword) => normalizedGoal.includes(keyword))
-  ) {
-    return true;
-  }
-
-  return hasManifestTextOverlap(action, normalizedGoal);
-};
-
-const matchesImpactAction = ({
-  action,
-  entry,
-}: {
-  action: SkoposActionManifest;
-  entry: SkoposImpactEntry;
-}): boolean => {
-  if (action.inputs.some((inputPath) => pathPatternMatches(entry.path, inputPath))) {
-    return true;
-  }
-
-  if (action.inputs.length > 0) {
-    return false;
-  }
-
-  if (!actionAppliesToAffectedScopes(action, entry.affectedScopeIds, entry.category)) {
-    return false;
-  }
-
-  if (!impactCategoriesByAction[action.category].includes(entry.category)) {
-    return false;
-  }
-
-  return allowsImpactCategoryFallback(action, entry.category);
-};
-
-const actionAppliesToScope = (
-  action: SkoposActionManifest,
-  scopeId: string,
-  scopeKind: SkoposResolvedScope['scope']['kind'],
+const guardAppliesToImpactScope = (
+  guard: SkoposGuardManifest,
+  entry: SkoposImpactEntry,
 ): boolean =>
-  action.scope.includes('workspace') ||
-  action.scope.includes(scopeId) ||
-  action.scope.includes(scopeKind);
+  guard.scope.includes('workspace') ||
+  entry.affectedScopeIds.some((scopeId) => guard.scope.includes(scopeId)) ||
+  (guard.scope.includes('docs') &&
+    ['docs', 'instruction-source', 'instruction-mirror'].includes(entry.category));
 
-const actionAppliesToAffectedScopes = (
-  action: SkoposActionManifest,
-  affectedScopeIds: string[],
-  category: SkoposImpactCategory,
-): boolean =>
-  action.scope.includes('workspace') ||
-  affectedScopeIds.some((scopeId) => action.scope.includes(scopeId)) ||
-  (action.scope.includes('docs') &&
-    ['docs', 'instruction-source', 'instruction-mirror'].includes(category));
-
-const allowsImpactCategoryFallback = (
-  action: SkoposActionManifest,
-  category: SkoposImpactCategory,
-): boolean => {
-  if (category === 'docs') {
-    return action.scope.includes('docs');
+const pathPatternMatches = (changedPath: string, pattern: string): boolean => {
+  const normalizedPath = changedPath.replaceAll('\\', '/').replace(/^\.\/+/, '');
+  const normalizedPattern = pattern.replaceAll('\\', '/').replace(/^\.\/+/, '');
+  if (!/[*?]/.test(normalizedPattern)) {
+    return (
+      normalizedPath === normalizedPattern ||
+      normalizedPath.startsWith(`${normalizedPattern}/`) ||
+      normalizedPattern.startsWith(`${normalizedPath}/`)
+    );
   }
 
-  if (category === 'instruction-source' || category === 'instruction-mirror') {
-    return action.scope.includes('docs');
-  }
-
-  return true;
-};
-
-const pathPatternMatches = (changedPath: string, pattern: string): boolean =>
-  changedPath === pattern ||
-  changedPath.startsWith(`${pattern}/`) ||
-  pattern.startsWith(`${changedPath}/`);
-
-const hasManifestTextOverlap = (
-  action: SkoposActionManifest,
-  normalizedGoal: string,
-): boolean => {
-  const manifestText =
-    `${action.title} ${action.description} ${action.whenToUse ?? ''}`.toLowerCase();
-  const goalTerms = normalizedGoal
-    .split(/[^a-z0-9]+/g)
-    .map((term) => term.trim())
-    .filter((term) => term.length >= 4);
-
-  return goalTerms.some((term) => manifestText.includes(term));
-};
-
-const buildImpactActionReason = (
-  action: SkoposActionManifest,
-  matchedEntries: SkoposImpactEntry[],
-): string => {
-  const inputMatchedEntries = matchedEntries.filter((entry) =>
-    action.inputs.some((inputPath) => pathPatternMatches(entry.path, inputPath)),
-  );
-
-  if (inputMatchedEntries.length > 0) {
-    const matchedPaths = inputMatchedEntries.map((entry) => entry.path);
-    const visiblePaths = matchedPaths.slice(0, 5);
-    const remainingCount = matchedPaths.length - visiblePaths.length;
-    return `Action Evidence is required because registered input paths changed: ${visiblePaths.join(', ')}${remainingCount > 0 ? `, and ${remainingCount} more path${remainingCount === 1 ? '' : 's'}` : ''}.`;
-  }
-
-  const affectedScopes = [...new Set(matchedEntries.flatMap((entry) => entry.affectedScopeIds))];
-  return `${action.category} Action Evidence is required because changed surfaces match ${affectedScopes.join(', ')} and ${action.category} impact rules.`;
+  const expression = normalizedPattern
+    .split('**')
+    .map((segment) =>
+      segment
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '[^/]*')
+        .replace(/\?/g, '[^/]'),
+    )
+    .join('.*');
+  return new RegExp(`^${expression}$`).test(normalizedPath);
 };
 
 const toActionRequirement = (

@@ -18,12 +18,12 @@ appliesTo:
   - templates
   - self-hosting
   - release-readiness
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-30
 relatedDocs:
   - README.md
   - ../architecture/docs-governance.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../findings/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when self-adoption or release proof changes
 ---
@@ -32,6 +32,7 @@ reviewCycle: when self-adoption or release proof changes
 
 ## Changelog
 
+- `2026-07-30`: Repaired the related convergence finding link after archival.
 - `2026-07-28`: Added the removed Finding-registry reader as a self-adoption
   example: declaring metadata-derived indexes is incomplete while runtime routing
   still parses a manual registry.

@@ -58,8 +58,6 @@ project:
   scopeStrategy: domain
   mode: clean-refactor
 commands: {}
-validation:
-  mode: commands
 workspace:
   ignore: []
 docs:
@@ -181,8 +179,6 @@ project:
   scopeStrategy: package
   mode: clean-refactor
 commands: {}
-validation:
-  mode: commands
 workspace:
   ignore: []
 docs:
@@ -355,8 +351,6 @@ project:
   scopeStrategy: package
   mode: clean-refactor
 commands: {}
-validation:
-  mode: commands
 workspace:
   ignore: []
 docs:

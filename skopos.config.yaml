@@ -10,8 +10,6 @@ commands:
   build: pnpm build
   test: pnpm test
   typecheck: pnpm typecheck
-validation:
-  mode: commands
 workspace:
   ignore:
     - policy-packs

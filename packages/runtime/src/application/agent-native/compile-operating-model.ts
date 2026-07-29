@@ -9,8 +9,7 @@ import type {
   SkoposMemoryDecisionSnapshot,
   SkoposMemoryStateArtifact,
   SkoposPolicyRule,
-  SkoposResolvedGuard,
-  SkoposResolvedGuardsArtifact,
+  SkoposGuardManifest,
   SkoposResolvedPolicyArtifact,
   SkoposActionManifest,
   SkoposTaskRisk,
@@ -19,14 +18,13 @@ import { isSkoposAdoptedProjectMemoryDocument } from '@skopos/indexer';
 
 import { parseSkoposStructuredCommand } from './structured-command.js';
 
-const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
 const MEMORY_STATE_ARTIFACT_PATH = '.skopos/index/roles.json';
 const ALL_RISKS: SkoposTaskRisk[] = ['light', 'standard', 'high-impact'];
 
 export interface CompileSkoposAgentNativeOperatingModelOptions {
   actions?: SkoposActionManifest[];
   policy?: SkoposResolvedPolicyArtifact;
-  guards?: SkoposResolvedGuardsArtifact;
+  guards?: SkoposGuardManifest[];
   knowledge?: SkoposKnowledgeEntry[];
   memory?: SkoposMemoryStateArtifact;
 }
@@ -101,7 +99,7 @@ export const compileSkoposAgentNativeOperatingModel = ({
       ...compiledKnowledge.map(compileKnowledgeContext),
     ],
     actions,
-    guards: guards?.guards.map(compileResolvedGuard) ?? [],
+    guards: guards?.map((guard) => compileGuard(guard, actionManifests)) ?? [],
     diagnostics,
   };
 };
@@ -261,39 +259,50 @@ const compileAction = (
   };
 };
 
-const compileResolvedGuard = (guard: SkoposResolvedGuard): SkoposGuard => {
-  const command = guard.command
-    ? parseSkoposStructuredCommand(guard.command, '.')
-    : undefined;
+const compileGuard = (
+  guard: SkoposGuardManifest,
+  actions: SkoposActionManifest[],
+): SkoposGuard => {
+  const actionIds = new Set(actions.map((action) => action.id));
+  const missingActionIds = guard.requires.actionIds.filter(
+    (actionId) => !actionIds.has(actionId),
+  );
   const enforcement =
-    guard.status === 'missing'
+    missingActionIds.length > 0
       ? 'unavailable'
-      : command
-        ? 'command'
-        : 'manual-proof';
+      : guard.strength === 'prohibited'
+        ? 'prohibition'
+        : guard.requires.evidence === 'source-bound-action'
+          ? 'action-evidence'
+          : 'manual-proof';
 
   return {
     id: guard.id,
-    title: guard.label,
-    summary: guard.summary,
-    kind: guard.kind === 'agent-observation' ? 'evidence' : 'verification',
+    title: guard.title,
+    summary: guard.description,
+    kind:
+      guard.strength === 'prohibited'
+        ? 'prevention'
+        : guard.requires.evidence === 'agent-observation'
+          ? 'evidence'
+          : 'verification',
     requiredness: guard.strength,
     enforcement,
-    command,
     unavailableReason:
-      guard.status === 'missing'
-        ? guard.missingReason ?? 'The project does not expose this Guard.'
-        : guard.command && !command
-          ? 'The Guard command cannot be represented as a structured executable plus arguments.'
-          : undefined,
-    phases: ['closure'],
-    risks: ALL_RISKS,
+      missingActionIds.length > 0
+        ? `Missing Action provider${missingActionIds.length === 1 ? '' : 's'}: ${missingActionIds.join(', ')}.`
+        : undefined,
+    requiredActionIds: guard.requires.actionIds,
+    evidence: guard.requires.evidence,
+    appliesToPaths: guard.appliesTo.paths,
+    phases: guard.appliesTo.phases ?? ['closure'],
+    risks: guard.appliesTo.risks ?? ALL_RISKS,
     provenance: [
       {
-        authority: 'accepted',
+        authority: 'declared',
         sourceKind: 'guard',
         sourceId: guard.id,
-        path: RESOLVED_GUARDS_ARTIFACT_PATH,
+        path: guard.sourcePath,
       },
     ],
   };

@@ -45,21 +45,11 @@ export function PlanDetailInspectorAside({
       </SidebarCard>
       <SidebarCard
         title="Validation"
-        badge={String(
-          planView.plan.recommendedChecks.length + planView.plan.recommendedActions.length,
-        )}
+        badge={String(planView.plan.recommendedActions.length)}
         collapsible
         defaultOpen={false}
       >
         <div className="grid gap-3">
-          <ReviewRow
-            label="Checks"
-            value={
-              planView.plan.recommendedChecks.length > 0
-                ? planView.plan.recommendedChecks.join(' · ')
-                : 'No recommended checks'
-            }
-          />
           <ReviewRow
             label="Actions"
             value={

@@ -25,8 +25,6 @@ export type SkoposPrivacyMode = 'local-only' | 'metadata-sync' | 'enterprise';
 export type SkoposCommandName = 'dev' | 'build' | 'test' | 'typecheck' | 'lint';
 
 export type SkoposCommandMap = Partial<Record<SkoposCommandName, string>>;
-export type SkoposValidationMode = 'commands' | 'actions';
-
 export interface SkoposRootConfig {
   schemaVersion: 1;
   project: {
@@ -37,9 +35,6 @@ export interface SkoposRootConfig {
     mode?: SkoposProjectMode;
   };
   commands: SkoposCommandMap;
-  validation?: {
-    mode: SkoposValidationMode;
-  };
   workspace: {
     ignore: string[];
   };

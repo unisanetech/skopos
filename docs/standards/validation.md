@@ -11,7 +11,7 @@ provenance: declared
 view: current
 appliesTo:
   - workspace
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-30
 relatedDocs:
   - ../guides/developer-workflows.md
   - ../architecture/00-architecture.md
@@ -21,10 +21,17 @@ reviewCycle: when owning truth changes
 
 # Skopos Validation Standard
 
-This page records the validation commands and when agents should use them.
+This page records the project capability catalog and the rule for selecting proof.
 
 ## Changelog
 
+- `2026-07-30`: Added the capability-integration boundary: detected commands are
+  candidates only, tracked Action/Guard declarations require digest-bound approval,
+  and provider validation is mandatory before activation.
+- `2026-07-30`: Removed the fixed standard/high-impact command checklist. Commands are
+  project-owned capabilities exposed as Actions; deterministic Guards select the
+  smallest sufficient Actions from Task impact. Verification consumes only
+  Task-linked Evidence.
 - `2026-07-28`: Classified validation guidance as a workspace standard and repaired
   its workflow and architecture authority links.
 - `2026-06-29`: Added durable validation guidance for agent-guided Skopos understanding.
@@ -50,16 +57,28 @@ Use focused checks before full checks when iterating:
 
 Focused checks do not replace the broader lane when the change touches shared contracts or release behavior.
 
-## Task Closure Checks
+## Task Closure
 
-For standard or high-impact Tasks, closure should include:
+For every Task:
 
-1. `pnpm typecheck`
-2. `pnpm test`
-3. `pnpm build`
-4. applicable Actions from the Task, such as instruction sync or UI render
-5. `skopos verify <task-id> . --phase closure --actor <actor>`
-6. `skopos readiness <task-id> . --for close --actor <actor>`
+1. inspect the Task-selected Guards and Actions
+2. run only the selected Actions with `--task <task-id>`
+3. record the acceptance or Guard observations the Task requests
+4. run `skopos verify <task-id> . --phase closure --actor <actor>`
+5. run `skopos readiness <task-id> . --for close --actor <actor>`
+
+Typecheck, test, build, lint, docs checks, release checks, and project-specific gates
+are not a universal sequence. They run when an applicable project Guard selects their
+declared Action.
+
+## Integrating Project Checks
+
+Existing project scripts are discovery input, not Evidence or enforcement. Use
+`skopos integrations propose|approve|apply` to review and bind a script. The proposal
+must expose the exact Action and Guard fields, approval must bind their digest and
+candidate ids, and application must validate every Guard provider. Missing providers,
+changed proposal content, changed approval content, or declaration collisions fail
+closed.
 
 ## Release Readiness Checks
 
@@ -84,3 +103,4 @@ Choose checks by touched surface:
 6. release touched: release check, smoke, pack/install test
 
 Do not claim a command passed unless it actually ran in the current workstream.
+Do not treat an unlinked global Action run as Task Evidence.

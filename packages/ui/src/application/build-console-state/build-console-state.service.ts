@@ -583,7 +583,6 @@ const buildTrackedPlanViews = (
         confidence: scope.confidence,
         references: [],
         implementationSteps: [],
-        recommendedChecks: [],
         recommendedActions: [],
         decisionQuestions: [],
         risks: [],

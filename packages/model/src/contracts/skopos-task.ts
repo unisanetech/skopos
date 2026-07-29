@@ -82,6 +82,7 @@ export interface SkoposTaskEvidenceRequirement {
   phase: 'admission' | 'iteration' | 'stabilization' | 'closure';
   actionIds: string[];
   guardIds: string[];
+  evidence: 'source-bound-action' | 'agent-observation';
 }
 
 export interface SkoposTaskMemoryObligation {
