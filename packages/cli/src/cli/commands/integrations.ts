@@ -16,6 +16,8 @@ interface ParsedIntegrationArgs {
   acceptedCandidateIds: string[];
   actor?: string;
   reason?: string;
+  actionManifestPath?: string;
+  guardManifestPath?: string;
   dryRun: boolean;
   json: boolean;
 }
@@ -61,6 +63,8 @@ export const runIntegrationsCommand = async (args: string[]): Promise<void> => {
       acceptedCandidateIds: parsed.acceptedCandidateIds,
       actor: parsed.actor,
       reason: parsed.reason,
+      actionManifestPath: parsed.actionManifestPath,
+      guardManifestPath: parsed.guardManifestPath,
       dryRun: parsed.dryRun,
     });
     if (parsed.json) {
@@ -116,6 +120,8 @@ const parseIntegrationArgs = (args: string[]): ParsedIntegrationArgs => {
   const acceptedCandidateIds: string[] = [];
   let actor: string | undefined;
   let reason: string | undefined;
+  let actionManifestPath: string | undefined;
+  let guardManifestPath: string | undefined;
   let dryRun = false;
   let json = false;
   let targetProvided = false;
@@ -155,6 +161,16 @@ const parseIntegrationArgs = (args: string[]): ParsedIntegrationArgs => {
       index += 1;
       continue;
     }
+    if (argument === '--action-manifest') {
+      actionManifestPath = requireValue(args, index, argument);
+      index += 1;
+      continue;
+    }
+    if (argument === '--guard-manifest') {
+      guardManifestPath = requireValue(args, index, argument);
+      index += 1;
+      continue;
+    }
     if (argument.startsWith('-')) {
       throw new Error(`Unknown Skopos integrations flag: ${argument}`);
     }
@@ -177,6 +193,8 @@ const parseIntegrationArgs = (args: string[]): ParsedIntegrationArgs => {
     acceptedCandidateIds,
     actor,
     reason,
+    actionManifestPath,
+    guardManifestPath,
     dryRun,
     json,
   };

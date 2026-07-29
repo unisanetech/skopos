@@ -1,4 +1,4 @@
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 
 import type { SkoposActionManifest } from '@skopos/model';
 import { z } from 'zod';
@@ -50,6 +50,26 @@ export interface LoadSkoposActionManifestsOptions {
   manifestDirs?: string[];
 }
 
+export const loadSkoposActionManifestFile = async ({
+  cwd,
+  manifestPath,
+}: {
+  cwd: string;
+  manifestPath: string;
+}): Promise<SkoposActionManifest> => {
+  const absolutePath = isAbsolute(manifestPath)
+    ? manifestPath
+    : join(cwd, manifestPath);
+  const contents = await readTextFile(absolutePath);
+  if (!contents) {
+    throw new Error(`Skopos Action manifest does not exist or is empty: ${manifestPath}`);
+  }
+  return {
+    ...actionManifestSchema.parse(YAML.parse(contents)),
+    sourcePath: relative(cwd, absolutePath) || absolutePath,
+  };
+};
+
 export const loadSkoposActionManifests = async ({
   cwd,
   manifestDirs = ['tools/skopos/actions'],
@@ -65,11 +85,12 @@ export const loadSkoposActionManifests = async ({
         continue;
       }
 
-      const parsed = actionManifestSchema.parse(YAML.parse(contents));
-      manifests.push({
-        ...parsed,
-        sourcePath: relative(cwd, manifestPath) || manifestPath,
-      });
+      manifests.push(
+        await loadSkoposActionManifestFile({
+          cwd,
+          manifestPath,
+        }),
+      );
     }
   }
 

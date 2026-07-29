@@ -1,4 +1,4 @@
-import { join, relative } from 'node:path';
+import { isAbsolute, join, relative } from 'node:path';
 
 import type { SkoposGuardManifest } from '@skopos/model';
 import YAML from 'yaml';
@@ -43,6 +43,26 @@ export interface LoadSkoposGuardManifestsOptions {
   manifestDirs?: string[];
 }
 
+export const loadSkoposGuardManifestFile = async ({
+  cwd,
+  manifestPath,
+}: {
+  cwd: string;
+  manifestPath: string;
+}): Promise<SkoposGuardManifest> => {
+  const absolutePath = isAbsolute(manifestPath)
+    ? manifestPath
+    : join(cwd, manifestPath);
+  const contents = await readTextFile(absolutePath);
+  if (!contents) {
+    throw new Error(`Skopos Guard manifest does not exist or is empty: ${manifestPath}`);
+  }
+  return {
+    ...guardManifestSchema.parse(YAML.parse(contents)),
+    sourcePath: relative(cwd, absolutePath) || absolutePath,
+  };
+};
+
 export const loadSkoposGuardManifests = async ({
   cwd,
   manifestDirs = ['tools/skopos/guards'],
@@ -56,10 +76,12 @@ export const loadSkoposGuardManifests = async ({
       if (!contents) {
         continue;
       }
-      manifests.push({
-        ...guardManifestSchema.parse(YAML.parse(contents)),
-        sourcePath: relative(cwd, manifestPath) || manifestPath,
-      });
+      manifests.push(
+        await loadSkoposGuardManifestFile({
+          cwd,
+          manifestPath,
+        }),
+      );
     }
   }
 

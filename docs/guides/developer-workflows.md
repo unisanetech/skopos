@@ -21,6 +21,9 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-07-30`: Added `--action-manifest` and `--guard-manifest` review inputs so
+  project-specific candidate commands can enter the same digest-bound approval flow
+  without adding project rules to Skopos core.
 - `2026-07-30`: Added the reviewed project capability-integration workflow. Detection
   and approval remain local and non-authoritative; only applying an exact approval
   writes tracked declarations and activation validates Guard providers.
@@ -101,7 +104,21 @@ approval fields before approval. Proposal and approval write only local
 `.skopos/integrations/**` artifacts. Apply writes the reviewed Action/Guard pair,
 refuses collisions, and activates it only after the Guard's explicit provider loads.
 An unrecognized project-specific command remains a candidate; author its declaration
-instead of forcing a generic suggestion.
+instead of forcing a generic suggestion:
+
+```bash
+skopos integrations approve . \
+  --proposal <proposal-digest> \
+  --accept <one-candidate-id> \
+  --action-manifest .skopos/integrations/review/<action>.yaml \
+  --guard-manifest .skopos/integrations/review/<guard>.yaml \
+  --actor <id> \
+  --reason "<why these exact declarations are correct>"
+```
+
+The reviewed Action must preserve the candidate's exact command and working directory,
+and the reviewed Guard must require that Action. Skopos copies the approved declarations
+to their canonical tracked paths only during apply.
 
 ## Record And Check Proof
 

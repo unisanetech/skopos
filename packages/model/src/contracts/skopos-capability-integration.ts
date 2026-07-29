@@ -35,6 +35,13 @@ export interface SkoposCapabilityIntegrationApproval
   acceptedCandidateIds: string[];
   approvedByActorId: string;
   approvalReason: string;
+  reviewedDeclarations: SkoposReviewedCapabilityDeclarations[];
+}
+
+export interface SkoposReviewedCapabilityDeclarations {
+  candidateId: string;
+  action: SkoposActionManifest;
+  guard: SkoposGuardManifest;
 }
 
 export interface SkoposCapabilityIntegrationActivation

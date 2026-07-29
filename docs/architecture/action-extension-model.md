@@ -28,6 +28,9 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-07-30`: Added reviewed project-authored manifests for candidates that have no
+  safe generic suggestion. Approval binds the exact candidate command, Action, Guard,
+  actor, reason, and proposal digest before application.
 - `2026-07-30`: Added the reviewed capability-integration pipeline. Repository
   commands are detected only as local proposal candidates; a digest-bound approval is
   required before tracked Action/Guard declarations can be written, and activation
@@ -164,6 +167,8 @@ skopos integrations propose .
 skopos integrations approve . \
   --proposal <proposal-digest> \
   --accept <candidate-id> \
+  --action-manifest <reviewed-action.yaml> \
+  --guard-manifest <reviewed-guard.yaml> \
   --actor <actor> \
   --reason "<reason>"
 skopos integrations apply . \
@@ -181,8 +186,12 @@ a missing Action provider.
 Discovery is intentionally broad but suggestion is narrow. Package scripts and
 configured commands may become candidates for any project. Skopos provides complete
 automatic suggestions only for recognized general proof capabilities; unknown or
-project-specific commands remain visible candidates requiring a project-authored
-declaration. Detection never selects a Task Action, satisfies a Policy, or contributes
+project-specific commands remain visible candidates requiring project-authored review
+manifests. The approval command loads those manifests through the canonical parsers,
+requires the Action to preserve the candidate's exact command and working directory,
+requires the Guard to name that Action provider, and includes both declarations in the
+approval digest. One manual candidate is approved per manifest pair so provenance is
+unambiguous. Detection never selects a Task Action, satisfies a Policy, or contributes
 Evidence.
 
 ## Readiness Fit

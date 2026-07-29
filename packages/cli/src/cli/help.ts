@@ -31,7 +31,7 @@ Usage:
   skopos plan <goal> [target] [--scope <scope>] [--actor <id>] [--dry-run] [--json]
   skopos guards resolve [target] [--actor <id>] [--dry-run] [--json]
   skopos integrations propose [target] [--dry-run] [--json]
-  skopos integrations approve [target] --proposal <digest> --accept <candidate-id> [--accept <candidate-id>...] --actor <id> --reason <text> [--dry-run] [--json]
+  skopos integrations approve [target] --proposal <digest> --accept <candidate-id> [--accept <candidate-id>...] [--action-manifest <path> --guard-manifest <path>] --actor <id> --reason <text> [--dry-run] [--json]
   skopos integrations apply [target] --approval <digest> --actor <id> [--dry-run] [--json]
   skopos policies list [target] [--json]
   skopos policies show <pack> [target] [--json]

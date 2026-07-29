@@ -4,7 +4,9 @@ import { dirname, join, resolve } from 'node:path';
 
 import {
   discoverSkoposCapabilityCandidates,
+  loadSkoposActionManifestFile,
   loadSkoposActionManifests,
+  loadSkoposGuardManifestFile,
   loadSkoposGuardManifests,
 } from '@skopos/indexer';
 import type {
@@ -16,6 +18,7 @@ import type {
   SkoposCapabilityIntegrationProposal,
   SkoposCapabilityIntegrationProposalResult,
   SkoposGuardManifest,
+  SkoposReviewedCapabilityDeclarations,
 } from '@skopos/model';
 
 import { projectGuardAvailability } from '../guards/guards.service.js';
@@ -75,6 +78,8 @@ export const approveSkoposCapabilityIntegrationsRuntime = async ({
   acceptedCandidateIds,
   actor,
   reason,
+  actionManifestPath,
+  guardManifestPath,
   dryRun = false,
 }: {
   cwd: string;
@@ -82,6 +87,8 @@ export const approveSkoposCapabilityIntegrationsRuntime = async ({
   acceptedCandidateIds: string[];
   actor?: string;
   reason: string;
+  actionManifestPath?: string;
+  guardManifestPath?: string;
   dryRun?: boolean;
 }): Promise<SkoposCapabilityIntegrationApprovalResult> => {
   const workspaceRoot = resolve(cwd);
@@ -104,12 +111,25 @@ export const approveSkoposCapabilityIntegrationsRuntime = async ({
   const candidateById = new Map(
     proposal.candidates.map((candidate) => [candidate.id, candidate]),
   );
+  const reviewedDeclarations = await loadReviewedDeclarations({
+    workspaceRoot,
+    acceptedIds,
+    candidateById,
+    actionManifestPath,
+    guardManifestPath,
+  });
+  const reviewedByCandidateId = new Map(
+    reviewedDeclarations.map((entry) => [entry.candidateId, entry]),
+  );
   for (const candidateId of acceptedIds) {
     const candidate = candidateById.get(candidateId);
     if (!candidate) {
       throw new Error(`Capability proposal has no candidate ${candidateId}.`);
     }
-    if (!candidate.suggestedAction || !candidate.suggestedGuard) {
+    if (
+      (!candidate.suggestedAction || !candidate.suggestedGuard) &&
+      !reviewedByCandidateId.has(candidateId)
+    ) {
       throw new Error(
         `Capability candidate ${candidateId} has no complete Action/Guard suggestion and cannot be approved automatically.`,
       );
@@ -121,6 +141,7 @@ export const approveSkoposCapabilityIntegrationsRuntime = async ({
     acceptedCandidateIds: acceptedIds,
     approvedByActorId: actorId,
     approvalReason,
+    reviewedDeclarations,
   });
   const approval: SkoposCapabilityIntegrationApproval = {
     schemaVersion: 1,
@@ -137,6 +158,7 @@ export const approveSkoposCapabilityIntegrationsRuntime = async ({
     acceptedCandidateIds: acceptedIds,
     approvedByActorId: actorId,
     approvalReason,
+    reviewedDeclarations,
   };
   const approvalWrite = await writeJsonArtifact({
     artifactPath: join(workspaceRoot, CAPABILITY_APPROVAL_PATH),
@@ -183,16 +205,22 @@ export const applySkoposCapabilityIntegrationsRuntime = async ({
   const candidateById = new Map(
     proposal.candidates.map((candidate) => [candidate.id, candidate]),
   );
+  const reviewedByCandidateId = new Map(
+    approval.reviewedDeclarations.map((entry) => [entry.candidateId, entry]),
+  );
   const selected = approval.acceptedCandidateIds.map((candidateId) => {
     const candidate = candidateById.get(candidateId);
-    if (!candidate?.suggestedAction || !candidate.suggestedGuard) {
+    const reviewed = reviewedByCandidateId.get(candidateId);
+    const action = reviewed?.action ?? candidate?.suggestedAction;
+    const guard = reviewed?.guard ?? candidate?.suggestedGuard;
+    if (!candidate || !action || !guard) {
       throw new Error(
         `Approved capability candidate ${candidateId} is absent or incomplete in the bound proposal.`,
       );
     }
     return {
-      action: candidate.suggestedAction,
-      guard: candidate.suggestedGuard,
+      action,
+      guard,
     };
   });
   assertNoDeclarationCollisions(existingActions, existingGuards, selected);
@@ -363,6 +391,73 @@ const assertApprovalIntegrity = (
     acceptedCandidateIds: approval.acceptedCandidateIds,
     approvedByActorId: approval.approvedByActorId,
     approvalReason: approval.approvalReason,
+    reviewedDeclarations: approval.reviewedDeclarations,
   });
   assertDigest('approval content', approval.approvalDigest, actual);
 };
+
+const loadReviewedDeclarations = async ({
+  workspaceRoot,
+  acceptedIds,
+  candidateById,
+  actionManifestPath,
+  guardManifestPath,
+}: {
+  workspaceRoot: string;
+  acceptedIds: string[];
+  candidateById: Map<
+    string,
+    SkoposCapabilityIntegrationProposal['candidates'][number]
+  >;
+  actionManifestPath?: string;
+  guardManifestPath?: string;
+}): Promise<SkoposReviewedCapabilityDeclarations[]> => {
+  if (!actionManifestPath && !guardManifestPath) return [];
+  if (!actionManifestPath || !guardManifestPath) {
+    throw new Error(
+      'Reviewed capability integration requires both --action-manifest and --guard-manifest.',
+    );
+  }
+  if (acceptedIds.length !== 1) {
+    throw new Error(
+      'Reviewed capability manifests require exactly one accepted candidate per approval.',
+    );
+  }
+  const candidateId = acceptedIds[0]!;
+  const candidate = candidateById.get(candidateId);
+  if (!candidate) {
+    throw new Error(`Capability proposal has no candidate ${candidateId}.`);
+  }
+  const [loadedAction, loadedGuard] = await Promise.all([
+    loadSkoposActionManifestFile({
+      cwd: workspaceRoot,
+      manifestPath: actionManifestPath,
+    }),
+    loadSkoposGuardManifestFile({
+      cwd: workspaceRoot,
+      manifestPath: guardManifestPath,
+    }),
+  ]);
+  const action: SkoposActionManifest = {
+    ...loadedAction,
+    sourcePath: `tools/skopos/actions/${manifestFilename(loadedAction.id)}.yaml`,
+  };
+  const guard: SkoposGuardManifest = {
+    ...loadedGuard,
+    sourcePath: `tools/skopos/guards/${manifestFilename(loadedGuard.id)}.yaml`,
+  };
+  if (action.command !== candidate.command || action.cwd !== candidate.cwd) {
+    throw new Error(
+      `Reviewed Action ${action.id} must preserve candidate ${candidateId}'s exact command and cwd.`,
+    );
+  }
+  if (!guard.requires.actionIds.includes(action.id)) {
+    throw new Error(
+      `Reviewed Guard ${guard.id} must require reviewed Action ${action.id}.`,
+    );
+  }
+  return [{ candidateId, action, guard }];
+};
+
+const manifestFilename = (id: string): string =>
+  id.replace(/[^a-zA-Z0-9._-]+/g, '-').replaceAll('.', '-');

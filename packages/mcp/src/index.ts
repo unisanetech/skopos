@@ -112,6 +112,8 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
     candidateIds: { type: 'string', description: 'Comma-separated candidate ids from the reviewed proposal.' },
     actor: { type: 'string' },
     reason: { type: 'string' },
+    actionManifestPath: { type: 'string' },
+    guardManifestPath: { type: 'string' },
   }, ['cwd', 'proposalDigest', 'candidateIds', 'actor', 'reason']),
   tool('skopos_integrations_apply', 'Write Action and Guard declarations only from an exact approval, then validate every Guard provider.', {
     cwd: cwdProperty,
@@ -202,6 +204,8 @@ export const callSkoposMcpTool = async (
           .filter(Boolean),
         actor: requiredString(input, 'actor'),
         reason: requiredString(input, 'reason'),
+        actionManifestPath: optionalString(input, 'actionManifestPath'),
+        guardManifestPath: optionalString(input, 'guardManifestPath'),
       });
     case 'skopos_integrations_apply':
       return applySkoposCapabilityIntegrationsRuntime({

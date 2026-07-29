@@ -156,6 +156,116 @@ describe('reviewed project capability integrations', () => {
       }),
     ).rejects.toThrow(/Action quality.typecheck already exists/);
   });
+
+  it('binds a manual candidate to exact reviewed project-authored manifests', async () => {
+    const root = await createWorkspace();
+    const proposed = await proposeSkoposCapabilityIntegrationsRuntime({ cwd: root });
+    const candidate = proposed.proposal.candidates.find(
+      (entry) => entry.name === 'release',
+    )!;
+    const reviewDir = join(root, '.skopos/integrations/review');
+    const actionManifestPath = join(reviewDir, 'release-action.yaml');
+    const guardManifestPath = join(reviewDir, 'release-guard.yaml');
+    await mkdir(reviewDir, { recursive: true });
+    await Promise.all([
+      writeFile(
+        actionManifestPath,
+        JSON.stringify(
+          {
+            id: 'example.release-check',
+            title: 'Check example release',
+            description: 'Run the project-owned release check.',
+            category: 'quality-check',
+            scope: ['workspace'],
+            command: 'npm run release',
+            cwd: '.',
+            inputs: ['package.json', 'scripts'],
+            outputs: [],
+            affects: [],
+            safety: 'read-only',
+            requiresApproval: false,
+            phases: ['closure'],
+            risks: ['standard', 'high-impact'],
+            recommendedAfter: [],
+            owner: 'example',
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      ),
+      writeFile(
+        guardManifestPath,
+        JSON.stringify(
+          {
+            id: 'example.release-check',
+            title: 'Release changes require project proof',
+            description: 'Select the exact project release Action.',
+            owner: 'example',
+            scope: ['workspace'],
+            strength: 'required',
+            appliesTo: {
+              paths: ['scripts/**', 'package.json'],
+              phases: ['closure'],
+              risks: ['standard', 'high-impact'],
+            },
+            requires: {
+              actionIds: ['example.release-check'],
+              evidence: 'source-bound-action',
+            },
+          },
+          null,
+          2,
+        ),
+        'utf8',
+      ),
+    ]);
+
+    await expect(
+      approveSkoposCapabilityIntegrationsRuntime({
+        cwd: root,
+        proposalDigest: proposed.proposal.proposalDigest,
+        acceptedCandidateIds: [candidate.id],
+        actor: 'reviewer',
+        reason: 'Bind the exact project release capability.',
+      }),
+    ).rejects.toThrow(/no complete Action\/Guard suggestion/);
+
+    const approved = await approveSkoposCapabilityIntegrationsRuntime({
+      cwd: root,
+      proposalDigest: proposed.proposal.proposalDigest,
+      acceptedCandidateIds: [candidate.id],
+      actor: 'reviewer',
+      reason: 'Bind the exact project release capability.',
+      actionManifestPath,
+      guardManifestPath,
+    });
+    expect(approved.approval.reviewedDeclarations).toEqual([
+      expect.objectContaining({
+        candidateId: candidate.id,
+        action: expect.objectContaining({
+          id: 'example.release-check',
+          command: 'npm run release',
+          sourcePath: 'tools/skopos/actions/example-release-check.yaml',
+        }),
+        guard: expect.objectContaining({
+          id: 'example.release-check',
+          sourcePath: 'tools/skopos/guards/example-release-check.yaml',
+        }),
+      }),
+    ]);
+
+    const activated = await applySkoposCapabilityIntegrationsRuntime({
+      cwd: root,
+      approvalDigest: approved.approval.approvalDigest,
+      actor: 'integrator',
+    });
+    expect(activated.activation).toMatchObject({
+      providerValidation: 'pass',
+      actionPaths: ['tools/skopos/actions/example-release-check.yaml'],
+      guardPaths: ['tools/skopos/guards/example-release-check.yaml'],
+    });
+  });
 });
 
 const createWorkspace = async (): Promise<string> => {
