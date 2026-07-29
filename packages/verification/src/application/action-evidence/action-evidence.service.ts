@@ -41,16 +41,19 @@ export const buildSkoposEvidence = async ({
   runId,
   actorId,
   capturedAt = new Date().toISOString(),
+  ignoredSourcePaths = [],
 }: {
   workspaceRoot: string;
   manifest: SkoposActionManifest;
   runId: string;
   actorId?: string;
   capturedAt?: string;
+  ignoredSourcePaths?: string[];
 }): Promise<SkoposEvidence> => {
   const sourceState = await captureSkoposActionSourceState({
     workspaceRoot,
     manifest,
+    ignoredSourcePaths,
   });
   const workspace = await resolveSkoposWorkspaceIdentity(workspaceRoot);
   const commandDigest = digestText(`${manifest.command}\n${manifest.cwd}`);
@@ -94,14 +97,17 @@ export const finalizeSkoposEvidence = async ({
   workspaceRoot,
   manifest,
   evidence,
+  ignoredSourcePaths = [],
 }: {
   workspaceRoot: string;
   manifest: SkoposActionManifest;
   evidence: SkoposEvidence;
+  ignoredSourcePaths?: string[];
 }): Promise<SkoposEvidence> => {
   const sourceState = await captureSkoposActionSourceState({
     workspaceRoot,
     manifest,
+    ignoredSourcePaths,
   });
   const outputState = await captureDeclaredPathState({
     workspaceRoot,
@@ -132,11 +138,13 @@ export const validateSkoposEvidence = async ({
   manifest,
   artifact,
   now = new Date(),
+  ignoredSourcePaths = [],
 }: {
   workspaceRoot: string;
   manifest: SkoposActionManifest;
   artifact: SkoposActionRunArtifact;
   now?: Date;
+  ignoredSourcePaths?: string[];
 }): Promise<SkoposEvidenceValidation> => {
   const evidence = artifact.evidence;
   if (!evidence) {
@@ -181,6 +189,7 @@ export const validateSkoposEvidence = async ({
   const currentSourceState = await captureSkoposActionSourceState({
     workspaceRoot,
     manifest,
+    ignoredSourcePaths,
   });
   if (currentSourceState.digest !== evidence.sourceState.digest) {
     return {
@@ -240,9 +249,11 @@ export const validateSkoposEvidence = async ({
 export const captureSkoposActionSourceState = async ({
   workspaceRoot,
   manifest,
+  ignoredSourcePaths = [],
 }: {
   workspaceRoot: string;
   manifest: SkoposActionManifest;
+  ignoredSourcePaths?: string[];
 }): Promise<SkoposEvidenceState> => {
   const declaredPaths = [
     ...manifest.inputs,
@@ -255,12 +266,19 @@ export const captureSkoposActionSourceState = async ({
       resolve(workspaceRoot, manifest.cwd, outputPath),
     ),
   );
+  const normalizedIgnoredSourcePaths = ignoredSourcePaths.map((ignoredPath) =>
+    normalizeWorkspacePath(workspaceRoot, resolve(workspaceRoot, ignoredPath)),
+  );
 
   return captureDeclaredPathState({
     workspaceRoot,
     baseDirectory: resolve(workspaceRoot, manifest.cwd),
     declaredPaths,
-    ignoredWorkspacePaths: [...IGNORED_SOURCE_PREFIXES, ...outputPaths],
+    ignoredWorkspacePaths: [
+      ...IGNORED_SOURCE_PREFIXES,
+      ...outputPaths,
+      ...normalizedIgnoredSourcePaths,
+    ],
   });
 };
 

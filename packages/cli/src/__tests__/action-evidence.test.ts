@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -351,6 +351,95 @@ describe('source-bound Action Evidence', () => {
         workspaceRoot,
         manifest: stateManifest,
         artifact,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'stale' }));
+  });
+
+  it('keeps Task-bound Evidence fresh across Skopos projection transitions', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-evidence-task-projection-'));
+    const activeTaskPath = 'docs/work/tasks/T-001.md';
+    const archivedTaskPath = 'docs/work/archive/tasks/T-001.md';
+    await mkdir(join(workspaceRoot, 'docs/work/tasks'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'tools/skopos/actions'), { recursive: true });
+    await writeFile(
+      join(workspaceRoot, activeTaskPath),
+      '# Task\n\nStatus: verifying\n',
+      'utf8',
+    );
+    await writeFile(join(workspaceRoot, 'docs/guide.md'), '# Guide\n', 'utf8');
+    await writeFile(
+      join(workspaceRoot, 'tools/skopos/actions/docs-check.yaml'),
+      'id: docs.check\n',
+      'utf8',
+    );
+    await writeFile(join(workspaceRoot, 'skopos.config.yaml'), 'schemaVersion: 1\n', 'utf8');
+    const docsManifest: SkoposActionManifest = {
+      ...manifest,
+      id: 'docs.check',
+      title: 'Check docs',
+      inputs: ['docs'],
+      outputs: [],
+      sourcePath: 'tools/skopos/actions/docs-check.yaml',
+    };
+    const ignoredSourcePaths = [activeTaskPath];
+    const evidence = await finalizeSkoposEvidence({
+      workspaceRoot,
+      manifest: docsManifest,
+      ignoredSourcePaths,
+      evidence: await buildSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        runId: 'run-docs-check',
+        ignoredSourcePaths,
+      }),
+    });
+    const artifact = {
+      ...buildRunArtifact(evidence),
+      actionId: docsManifest.id,
+      actionTitle: docsManifest.title,
+      sourcePath: docsManifest.sourcePath,
+    };
+
+    await writeFile(
+      join(workspaceRoot, activeTaskPath),
+      '# Task\n\nStatus: ready-to-integrate\n',
+      'utf8',
+    );
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        artifact,
+        ignoredSourcePaths: [activeTaskPath],
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'valid' }));
+
+    await mkdir(join(workspaceRoot, 'docs/work/archive/tasks'), { recursive: true });
+    await rename(
+      join(workspaceRoot, activeTaskPath),
+      join(workspaceRoot, archivedTaskPath),
+    );
+    await writeFile(
+      join(workspaceRoot, archivedTaskPath),
+      '# Task\n\nStatus: complete\n',
+      'utf8',
+    );
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        artifact,
+        ignoredSourcePaths: [archivedTaskPath],
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'valid' }));
+
+    await writeFile(join(workspaceRoot, 'docs/guide.md'), '# Changed guide\n', 'utf8');
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        artifact,
+        ignoredSourcePaths: [archivedTaskPath],
       }),
     ).resolves.toEqual(expect.objectContaining({ status: 'stale' }));
   });

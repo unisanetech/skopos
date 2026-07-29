@@ -80,6 +80,12 @@ export const runSkoposActionRuntime = async ({
     cwd: workspaceRoot,
     action,
   });
+  const task = taskId
+    ? await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId })
+    : undefined;
+  const ignoredSourcePaths = task?.trackedDocumentPath
+    ? [task.trackedDocumentPath]
+    : [];
 
   if (!dryRun && (manifest.requiresApproval || manifest.safety === 'destructive') && !approve) {
     throw new Error(
@@ -134,6 +140,7 @@ export const runSkoposActionRuntime = async ({
     runId,
     actorId,
     capturedAt: startedAt,
+    ignoredSourcePaths,
   });
   const existingRuns = await loadActionRunArtifacts(workspaceRoot);
   const exactRuns = existingRuns.filter(
@@ -156,6 +163,7 @@ export const runSkoposActionRuntime = async ({
         workspaceRoot,
         manifest,
         artifact: existingRun,
+        ignoredSourcePaths,
       });
       if (validation.status === 'valid') {
         const existingRunPath = join(
@@ -234,6 +242,7 @@ export const runSkoposActionRuntime = async ({
           workspaceRoot,
           manifest,
           evidence,
+          ignoredSourcePaths,
         })
       : evidence;
   let artifact = buildActionRunArtifact({
@@ -286,6 +295,7 @@ export const runSkoposActionRuntime = async ({
     workspaceRoot,
     manifest,
     evidence: finalizedEvidence,
+    ignoredSourcePaths,
   });
   artifact = {
     ...artifact,

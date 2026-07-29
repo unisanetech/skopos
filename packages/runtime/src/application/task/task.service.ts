@@ -737,16 +737,16 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
     '<!-- skopos:task-state:end -->',
     '',
   ];
-  return `${lines.join('\n')}\n`;
+  return lines.join('\n');
 };
 
-export const archiveTrackedTaskDocumentPath = (trackedDocumentPath: string): string =>
-  join(
-    dirname(dirname(trackedDocumentPath)),
-    'archive',
-    'tasks',
-    basename(trackedDocumentPath),
-  );
+export const archiveTrackedTaskDocumentPath = (trackedDocumentPath: string): string => {
+  let memoryWorkRoot = dirname(dirname(trackedDocumentPath));
+  while (basename(memoryWorkRoot) === 'archive') {
+    memoryWorkRoot = dirname(memoryWorkRoot);
+  }
+  return join(memoryWorkRoot, 'archive', 'tasks', basename(trackedDocumentPath));
+};
 
 const asBulletList = (values: string[], empty: string): string[] =>
   values.length > 0 ? values.map((value) => `- ${value}`) : [`- ${empty}`];

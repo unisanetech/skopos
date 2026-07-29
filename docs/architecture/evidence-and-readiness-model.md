@@ -32,6 +32,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-07-30`: Prevented Skopos-managed tracked Task projection rewrites from
+  self-invalidating Task-bound Action Evidence while retaining every other declared
+  project input as a freshness dependency.
 - `2026-07-30`: Required explicit Task Action Evidence Links for reusable Action Runs
   and added native Project Memory integrity to Task verification blockers.
 - `2026-07-29`: Replaced overlapping validation and closure authorities with one
@@ -56,6 +59,13 @@ An Action Run is reusable project-level Evidence. A Task consumes it only throug
 explicit Task Action Evidence Link stored under that Task's local Evidence directory.
 The link records Task id, Action id, run id, actor, and link time. This separates honest
 cross-Task Evidence reuse from accidental global-run leakage.
+
+When an Action is executed or validated for a Task, Skopos excludes only that Task's
+current runtime-managed tracked-document projection from the Action source digest.
+Skopos state transitions may rewrite or archive that projection, and control-plane
+churn must not force the same project Action to run again. Standalone Action Evidence
+does not receive this exclusion, and changes to every other declared input—including
+other Project Memory documents and tracked Tasks—still invalidate Evidence normally.
 
 ## Verify
 

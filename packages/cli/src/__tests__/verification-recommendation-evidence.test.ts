@@ -38,5 +38,11 @@ describe('Task acceptance Action evidence', () => {
     expect(
       archiveTrackedTaskDocumentPath('docs/work/tasks/T-123-task.md'),
     ).toBe('docs/work/archive/tasks/T-123-task.md');
+    expect(
+      archiveTrackedTaskDocumentPath('docs/work/archive/tasks/T-123-task.md'),
+    ).toBe('docs/work/archive/tasks/T-123-task.md');
+    expect(
+      archiveTrackedTaskDocumentPath('docs/work/archive/archive/tasks/T-123-task.md'),
+    ).toBe('docs/work/archive/tasks/T-123-task.md');
   });
 });

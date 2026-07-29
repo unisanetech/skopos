@@ -86,6 +86,9 @@ export const verifySkoposTaskRuntime = async ({
         requirement,
         manifests,
         runs: taskRuns,
+        ignoredSourcePaths: task.trackedDocumentPath
+          ? [task.trackedDocumentPath]
+          : [],
       }),
     ),
   );
@@ -555,11 +558,13 @@ const evaluateActionEvidence = async ({
   requirement,
   manifests,
   runs,
+  ignoredSourcePaths,
 }: {
   workspaceRoot: string;
   requirement: SkoposActionRequirement;
   manifests: Awaited<ReturnType<typeof loadSkoposActionManifests>>;
   runs: SkoposActionRunArtifact[];
+  ignoredSourcePaths: string[];
 }): Promise<SkoposActionRequirementEvidence> => {
   const manifest = manifests.find((candidate) => candidate.id === requirement.id);
   if (!manifest) {
@@ -576,6 +581,7 @@ const evaluateActionEvidence = async ({
       workspaceRoot,
       manifest,
       artifact: run,
+      ignoredSourcePaths,
     });
     if (validation.status === 'valid') {
       return {
