@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { existsSync } from 'node:fs';
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -157,22 +158,25 @@ export interface SkoposPolicyRoleMappingDecisionsRuntimeResult {
   actorId?: string;
 }
 
-const BUNDLED_POLICY_PACK_ROOT = join(dirname(fileURLToPath(import.meta.url)), 'policy-packs');
-const SOURCE_POLICY_PACK_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  '..',
-  '..',
-  '..',
-  'policy-packs',
-);
-
 const resolvePolicyPackRoots = (_workspaceRoot: string): string[] => [
   'policy-packs',
-  BUNDLED_POLICY_PACK_ROOT,
-  SOURCE_POLICY_PACK_ROOT,
+  ...discoverBundledPolicyPackRoots(dirname(fileURLToPath(import.meta.url))),
 ];
+
+export const discoverBundledPolicyPackRoots = (
+  moduleDirectory: string,
+): string[] => {
+  const roots: string[] = [];
+  let cursor = resolve(moduleDirectory);
+  for (let depth = 0; depth < 8; depth += 1) {
+    const candidate = join(cursor, 'policy-packs');
+    if (existsSync(candidate)) roots.push(candidate);
+    const parent = dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+  }
+  return [...new Set(roots)];
+};
 
 export const listSkoposPolicyPacksRuntime = async ({
   cwd,
