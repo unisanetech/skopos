@@ -12,6 +12,7 @@ import type { SkoposScanSummary } from './skopos-scan-summary.js';
 import type { SkoposDecisionQuestion } from './skopos-decision-question.js';
 import type { SkoposScopesLiteArtifact } from './skopos-scope-lite.js';
 import type { SkoposSourceDependency } from './skopos-source-dependency.js';
+import type { SkoposAdoptionAssessmentRuntimeResult } from './skopos-adoption.js';
 
 export type SkoposInitMode = 'existing' | 'greenfield';
 
@@ -71,6 +72,13 @@ export interface SkoposDocsScaffoldArtifact {
   title: string;
 }
 
+export interface SkoposScopeRegistryScaffoldArtifact {
+  path: string;
+  relativePath: string;
+  status: Extract<SkoposWriteStatus, 'written' | 'skipped-existing' | 'dry-run'>;
+  scopeCount: number;
+}
+
 export type SkoposGitignoreScaffoldWriteStatus = 'written' | 'skipped-existing' | 'dry-run';
 
 export interface SkoposGitignoreScaffoldArtifact {
@@ -98,8 +106,10 @@ export interface SkoposInitResult {
   referenceArtifacts: SkoposInitReferenceArtifact[];
   toolAdapterArtifacts: SkoposToolAdapterSummary[];
   docsScaffold?: SkoposDocsScaffoldArtifact;
+  scopeRegistryScaffold?: SkoposScopeRegistryScaffoldArtifact;
   gitignoreScaffold?: SkoposGitignoreScaffoldArtifact;
   instructionScaffold?: SkoposInstructionScaffoldArtifact;
+  adoptionAssessment?: SkoposAdoptionAssessmentRuntimeResult;
   configWrite: SkoposWriteStatus;
   projectWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   bootstrapWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;

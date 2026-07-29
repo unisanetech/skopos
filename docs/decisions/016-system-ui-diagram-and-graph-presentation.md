@@ -1,21 +1,26 @@
+---
+title: "Decision: System UI Diagram And Graph Presentation"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-016
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-11
+lastUpdated: 2026-04-11
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+  - 015-system-ui-markdown-rendering-and-doc-reader-pipeline.md
+  - ../architecture/artifact-model.md
+---
+
 # Decision: System UI Diagram And Graph Presentation
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-016`
-- Status: `accepted`
-- Date: `2026-04-11`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-04-11`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
-  - `015-system-ui-markdown-rendering-and-doc-reader-pipeline.md`
-  - `../architecture/artifact-model.md`
 
 ## Changelog
 

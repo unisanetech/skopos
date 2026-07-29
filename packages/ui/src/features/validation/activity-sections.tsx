@@ -88,14 +88,14 @@ export function ActivityGuidanceCard({
         />
         <GuidancePoint
           label="Use when"
-          text="You need to trace when missions, plans, readiness, evidence, or workflow state changed."
+          text="You need to trace when tasks, plans, readiness, evidence, or action state changed."
         />
         <GuidancePoint
           label="Next step"
           text={
             eventGroupCount > 0
-              ? 'Open a linked mission or plan when an event needs more context.'
-              : 'Start or refresh Skopos workflow state to populate activity.'
+              ? 'Open a linked task or plan when an event needs more context.'
+              : 'Start or refresh Skopos action state to populate activity.'
           }
         />
       </div>
@@ -144,7 +144,7 @@ export function ActivityTimelineCard({
       ) : (
         <EmptyMessage
           title="No recent changes"
-          description="No Skopos activity has been recorded yet. Start or claim a mission to connect work with history."
+          description="No Skopos activity has been recorded yet. Start or claim a task to connect work with history."
         />
       )}
     </Card>
@@ -207,11 +207,11 @@ function ActivityFeedEntryBody({
     </>
   );
 
-  if (entry.missionId) {
+  if (entry.taskId) {
     return (
       <Link
-        to="/missions/$missionId"
-        params={{ missionId: entry.missionId }}
+        to="/tasks/$taskId"
+        params={{ taskId: entry.taskId }}
         className="min-w-0 flex-1"
       >
         {content}

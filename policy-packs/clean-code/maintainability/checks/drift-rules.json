@@ -67,11 +67,11 @@
     {
       "id": "clean-code.maintainability.changed-behavior-without-proof",
       "severity": "must",
-      "target": "changed behavior and done reports",
-      "strategy": "workflow-evidence-later",
+      "target": "changed behavior and closure reports",
+      "strategy": "task-evidence-review",
       "evidence": [
         "behavior changed with no focused test or smoke check",
-        "done report lists no proof command for product logic change",
+        "closure report lists no proof command for product logic change",
         "skipped proof has no reason"
       ],
       "remediation": "Run or add focused proof that would fail if the changed behavior were wrong, or record why proof was skipped."

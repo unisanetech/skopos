@@ -1,8 +1,7 @@
-import { basename } from 'node:path';
+import { basename, join } from 'node:path';
 
-import { createDefaultSkoposConfig, reconcileGeneratedSkoposConfig } from '@skopos/config';
+import { createDefaultSkoposConfig, loadSkoposConfig } from '@skopos/config';
 import type {
-  SkoposAppliedOverride,
   SkoposArchitectureReport,
   SkoposBootstrapArtifact,
   SkoposDiagnosisReport,
@@ -34,10 +33,14 @@ export interface SkoposBootstrapArtifacts {
 export const buildSkoposBootstrapArtifacts = async ({
   cwd,
   mode = 'existing',
-  existingConfig = null,
+  existingConfig,
   subtreeTarget,
 }: BuildSkoposBootstrapArtifactsOptions): Promise<SkoposBootstrapArtifacts> => {
-  const detected = await scanRepo({ cwd, subtreeTarget, existingConfig });
+  const rootConfig =
+    existingConfig === undefined
+      ? await loadSkoposConfig(join(cwd, 'skopos.config.yaml'))
+      : existingConfig;
+  const detected = await scanRepo({ cwd, subtreeTarget, existingConfig: rootConfig });
   const inferredConfig = createDefaultSkoposConfig({
     projectName: basename(cwd),
     archetype: detected.archetypeSuggestion,
@@ -51,16 +54,7 @@ export const buildSkoposBootstrapArtifacts = async ({
       detectCanonicalInstructionSource(detected.instructionFiles) ?? 'AGENTS.md',
     commands: detected.commands,
   });
-  const reconciledConfig = existingConfig
-    ? reconcileGeneratedSkoposConfig({
-        existingConfig,
-        recommendedConfig: inferredConfig,
-      }).config
-    : null;
-  const recommendedConfig = applyDetectedOverridesToConfig(
-    reconciledConfig ?? inferredConfig,
-    detected.appliedOverrides,
-  );
+  const recommendedConfig = rootConfig ?? inferredConfig;
   const scopesLite = await buildSkoposScopesLite({ cwd, scanSummary: detected, subtreeTarget });
   const diagnosis = await buildSkoposDiagnosisReport({
     cwd,
@@ -136,46 +130,3 @@ const detectCanonicalInstructionSource = (
 
 const joinPath = (left: string, right: string): string =>
   `${left.replace(/\/$/, '')}/${right.replace(/^\//, '')}`;
-
-const applyDetectedOverridesToConfig = (
-  config: SkoposRootConfig,
-  appliedOverrides: SkoposAppliedOverride[],
-): SkoposRootConfig => {
-  let nextConfig = config;
-
-  for (const override of appliedOverrides) {
-    if (override.key === 'project.archetype') {
-      nextConfig = {
-        ...nextConfig,
-        project: {
-          ...nextConfig.project,
-          archetype: override.value as SkoposRootConfig['project']['archetype'],
-        },
-      };
-      continue;
-    }
-
-    if (override.key === 'project.repoMode') {
-      nextConfig = {
-        ...nextConfig,
-        project: {
-          ...nextConfig.project,
-          repoMode: override.value as SkoposRootConfig['project']['repoMode'],
-        },
-      };
-      continue;
-    }
-
-    if (override.key === 'docs.root') {
-      nextConfig = {
-        ...nextConfig,
-        docs: {
-          ...nextConfig.docs,
-          root: override.value,
-        },
-      };
-    }
-  }
-
-  return nextConfig;
-};

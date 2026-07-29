@@ -4,25 +4,26 @@ import type {
   SkoposHostProjectionModel,
   SkoposToolAdapterLifecycleCoverage,
   SkoposToolAdapterSummary,
-  SkoposWorkflowManifest,
+  SkoposActionManifest,
+  SkoposGuardManifest,
 } from '@skopos/model';
 
-const CLAUDE_CODE_SETTINGS_PATH = '.skopos/tooling/claude-code/settings.json';
+const CLAUDE_CODE_SETTINGS_PATH = '.skopos/cache/tooling/claude-code/settings.json';
 const CLAUDE_CODE_GENERATED_FILES = [
   CLAUDE_CODE_SETTINGS_PATH,
-  '.skopos/tooling/claude-code/hooks/session-start-hook.mjs',
-  '.skopos/tooling/claude-code/hooks/user-prompt-submit-hook.mjs',
-  '.skopos/tooling/claude-code/hooks/post-edit-hook.mjs',
-  '.skopos/tooling/claude-code/hooks/pre-compact-hook.mjs',
-  '.skopos/tooling/claude-code/hooks/stop-hook.mjs',
+  '.skopos/cache/tooling/claude-code/hooks/session-start-hook.mjs',
+  '.skopos/cache/tooling/claude-code/hooks/user-prompt-submit-hook.mjs',
+  '.skopos/cache/tooling/claude-code/hooks/post-edit-hook.mjs',
+  '.skopos/cache/tooling/claude-code/hooks/pre-compact-hook.mjs',
+  '.skopos/cache/tooling/claude-code/hooks/stop-hook.mjs',
 ] as const;
-const CODEX_MANIFEST_PATH = '.skopos/tooling/codex/adapter-manifest.json';
+const CODEX_MANIFEST_PATH = '.skopos/cache/tooling/codex/adapter-manifest.json';
 const CODEX_GENERATED_FILES = [
   CODEX_MANIFEST_PATH,
-  '.skopos/tooling/codex/codex-discussion-adapter.mjs',
-  '.skopos/tooling/codex/README.md',
+  '.skopos/cache/tooling/codex/codex-discussion-adapter.mjs',
+  '.skopos/cache/tooling/codex/README.md',
 ] as const;
-const MANUAL_HOST_GUIDE_PATH = '.skopos/tooling/manual-hosts/README.md';
+const MANUAL_HOST_GUIDE_PATH = '.skopos/cache/tooling/manual-hosts/README.md';
 const MANUAL_HOST_GENERATED_FILES = [MANUAL_HOST_GUIDE_PATH] as const;
 const FULL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
   sessionStart: true,
@@ -31,7 +32,7 @@ const FULL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
   majorStateChange: true,
   preCompact: true,
 };
-const FULL_WORKFLOW_ROUTER_COVERAGE = {
+const FULL_ACTION_ROUTER_COVERAGE = {
   sessionStart: true,
   stopBoundary: true,
 } as const;
@@ -42,42 +43,50 @@ const MANUAL_LIFECYCLE_COVERAGE: SkoposToolAdapterLifecycleCoverage = {
   majorStateChange: true,
   preCompact: true,
 };
-const MANUAL_WORKFLOW_ROUTER_COVERAGE = {
+const MANUAL_ACTION_ROUTER_COVERAGE = {
   sessionStart: true,
   stopBoundary: true,
 } as const;
 
 export interface BuildSkoposEnforcementProfileOptions {
   cwd: string;
-  workflows: SkoposWorkflowManifest[];
+  actions: SkoposActionManifest[];
+  guards: SkoposGuardManifest[];
   instructionSourcePath?: string;
+  instructionMirrorPaths?: string[];
 }
 
 export const buildSkoposEnforcementProfile = ({
   cwd,
-  workflows,
+  actions,
+  guards,
   instructionSourcePath = 'AGENTS.md',
+  instructionMirrorPaths = [
+    'CLAUDE.md',
+    '.cursor/rules/project.mdc',
+    '.github/copilot-instructions.md',
+  ],
 }: BuildSkoposEnforcementProfileOptions): SkoposEnforcementProfileArtifact => {
-  const requiredWorkflowCount = workflows.filter((workflow) => workflow.requiredForDone).length;
-  const approvalRequiredWorkflowCount = workflows.filter(
-    (workflow) => workflow.requiresApproval,
+  const requiredGuardCount = guards.filter((guard) => guard.strength === 'required').length;
+  const approvalRequiredActionCount = actions.filter(
+    (action) => action.requiresApproval,
   ).length;
   const generatedAt = new Date().toISOString();
   const rules: SkoposEnforcementRule[] = [
     {
       id: 'enforcement.on-session-start',
       trigger: 'on-session-start',
-      command: 'skopos program next <project-root> --compact --json',
+      command: 'skopos session context <project-root> --json',
       blocking: false,
       summary:
-        'Refresh the program router and expose the strongest next workflow action when an agent session starts.',
+        'Inject the shared compact response contract, current Task, Work Queue recommendation, and pending decision when an agent Session starts.',
     },
     {
       id: 'enforcement.before-agent-stop',
       trigger: 'before-agent-stop',
-      command: 'skopos done --cwd <project-root> --json',
+      command: 'skopos readiness <current-task-id> <project-root> --for close --json',
       blocking: true,
-      summary: 'Block tool-native stop flows when Skopos closure evidence is incomplete.',
+      summary: 'Block tool-native stop flows when the current Task is not ready to close.',
     },
     {
       id: 'enforcement.after-instruction-source-edit',
@@ -91,7 +100,7 @@ export const buildSkoposEnforcementProfile = ({
       trigger: 'before-context-compact',
       command: 'skopos discuss handoff <project-root> --json',
       blocking: false,
-      summary: 'Refresh the compact workflow handoff before Claude Code compacts session context.',
+      summary: 'Refresh the compact Task handoff before Claude Code compacts Session context.',
     },
     {
       id: 'enforcement.on-user-prompt-submit',
@@ -103,7 +112,7 @@ export const buildSkoposEnforcementProfile = ({
     {
       id: 'enforcement.manual-readiness',
       trigger: 'manual-readiness',
-      command: 'skopos trust <project-root> --json',
+      command: 'skopos readiness <current-task-id> <project-root> --for continue --json',
       blocking: false,
       summary: 'Expose a deterministic readiness surface for wrappers, hooks, and humans.',
     },
@@ -113,7 +122,7 @@ export const buildSkoposEnforcementProfile = ({
       toolId: 'claude-code',
       displayName: 'Claude Code',
       summary:
-        'Native hook-based lifecycle adapter that returns compact discussion continuity plus workflow-router guidance.',
+        'Generated native hook adapter that injects the shared compact Session context when installed in the host.',
       adapterKind: 'hook-settings',
       supportTier: 'native-lifecycle',
       supportStatus: 'implemented',
@@ -121,13 +130,13 @@ export const buildSkoposEnforcementProfile = ({
       generatedFiles: [...CLAUDE_CODE_GENERATED_FILES],
       installMode: 'manual-merge',
       lifecycleCoverage: FULL_LIFECYCLE_COVERAGE,
-      workflowRouterCoverage: FULL_WORKFLOW_ROUTER_COVERAGE,
+      actionRouterCoverage: FULL_ACTION_ROUTER_COVERAGE,
     },
     {
       toolId: 'codex',
       displayName: 'OpenAI Codex',
       summary:
-        'Wrapper-mediated lifecycle adapter that maps Codex host boundaries into shared discussion-memory and workflow-router runtime surfaces.',
+        'Generated wrapper adapter that injects the shared compact Session context when used by a Codex host launcher.',
       adapterKind: 'wrapper-manifest',
       supportTier: 'wrapper-mediated',
       supportStatus: 'implemented',
@@ -135,13 +144,13 @@ export const buildSkoposEnforcementProfile = ({
       generatedFiles: [...CODEX_GENERATED_FILES],
       installMode: 'wrapper-runner',
       lifecycleCoverage: FULL_LIFECYCLE_COVERAGE,
-      workflowRouterCoverage: FULL_WORKFLOW_ROUTER_COVERAGE,
+      actionRouterCoverage: FULL_ACTION_ROUTER_COVERAGE,
     },
     {
       toolId: 'manual-hosts',
       displayName: 'Other coding agents',
       summary:
-        'Generated manual fallback guide that maps unsupported agent hosts into the same workflow-router and discussion-memory command contract.',
+        'Generated manual fallback guide that maps unsupported agent hosts into the same action-router and discussion-memory command contract.',
       adapterKind: 'wrapper-manifest',
       supportTier: 'manual-fallback',
       supportStatus: 'manual-only',
@@ -149,11 +158,12 @@ export const buildSkoposEnforcementProfile = ({
       generatedFiles: [...MANUAL_HOST_GENERATED_FILES],
       installMode: 'manual-only',
       lifecycleCoverage: MANUAL_LIFECYCLE_COVERAGE,
-      workflowRouterCoverage: MANUAL_WORKFLOW_ROUTER_COVERAGE,
+      actionRouterCoverage: MANUAL_ACTION_ROUTER_COVERAGE,
     },
   ];
   const hostProjectionModel = buildHostProjectionModel({
     instructionSourcePath,
+    instructionMirrorPaths,
     rules,
     toolAdapters,
   });
@@ -165,14 +175,14 @@ export const buildSkoposEnforcementProfile = ({
     status: 'generated',
     authority: 'generated',
     summary:
-      'Compiled enforcement profile for CLI and MCP gates plus generated Claude Code, Codex, and manual host adapter surfaces for continuity, closure, and instruction-sync enforcement.',
+      'Compiled enforcement profile for CLI and MCP Guards plus generated Claude Code, Codex, and manual host adapter surfaces for continuity, Readiness, and instruction-sync enforcement.',
     updatedAt: generatedAt,
     generatedAt,
     workspaceRoot: cwd,
     instructionSourcePath,
     primarySurface: 'cli-and-mcp',
-    requiredWorkflowCount,
-    approvalRequiredWorkflowCount,
+    requiredGuardCount,
+    approvalRequiredActionCount,
     rules,
     toolAdapters,
     hostProjectionModel,
@@ -181,15 +191,33 @@ export const buildSkoposEnforcementProfile = ({
 
 const buildHostProjectionModel = ({
   instructionSourcePath,
+  instructionMirrorPaths,
   rules,
   toolAdapters,
 }: {
   instructionSourcePath: string;
+  instructionMirrorPaths: string[];
   rules: SkoposEnforcementRule[];
   toolAdapters: SkoposToolAdapterSummary[];
 }): SkoposHostProjectionModel => {
   const ruleIds = rules.map((rule) => rule.id);
   const adapterById = new Map(toolAdapters.map((adapter) => [adapter.toolId, adapter]));
+  const remainingMirrorPaths = [...new Set(instructionMirrorPaths)];
+  const takeMirrorPath = (predicate: (path: string) => boolean): string | undefined => {
+    const index = remainingMirrorPaths.findIndex(predicate);
+    if (index < 0) {
+      return undefined;
+    }
+
+    return remainingMirrorPaths.splice(index, 1)[0];
+  };
+  const claudeMirrorPath = takeMirrorPath((path) => /(^|\/)claude\.md$/i.test(path));
+  const cursorMirrorPath = takeMirrorPath(
+    (path) => path.startsWith('.cursor/') || path.endsWith('.mdc'),
+  );
+  const copilotMirrorPath = takeMirrorPath(
+    (path) => path.startsWith('.github/') || path.toLowerCase().includes('copilot'),
+  );
   const host = (
     hostId: string,
     displayName: string,
@@ -210,6 +238,21 @@ const buildHostProjectionModel = ({
       enforcementRuleIds: ruleIds,
     };
   };
+  const mirroredHost = (
+    hostId: string,
+    displayName: string,
+    mirrorPath: string | undefined,
+    adapterId: string,
+    support: 'native' | 'wrapper' | 'manual',
+  ) =>
+    host(
+      hostId,
+      displayName,
+      mirrorPath ?? adapterById.get(adapterId)?.path ?? MANUAL_HOST_GUIDE_PATH,
+      mirrorPath ? 'mirror' : 'adapter-guide',
+      adapterId,
+      support,
+    );
 
   return {
     schemaVersion: 1,
@@ -225,27 +268,24 @@ const buildHostProjectionModel = ({
         'codex',
         'wrapper',
       ),
-      host(
+      mirroredHost(
         'claude-code',
         'Claude Code',
-        'CLAUDE.md',
-        'mirror',
+        claudeMirrorPath,
         'claude-code',
         'native',
       ),
-      host(
+      mirroredHost(
         'cursor',
         'Cursor',
-        '.cursor/rules/project.mdc',
-        'mirror',
+        cursorMirrorPath,
         'manual-hosts',
         'manual',
       ),
-      host(
+      mirroredHost(
         'github-copilot',
         'GitHub Copilot',
-        '.github/copilot-instructions.md',
-        'mirror',
+        copilotMirrorPath,
         'manual-hosts',
         'manual',
       ),
@@ -256,6 +296,16 @@ const buildHostProjectionModel = ({
         'adapter-guide',
         'manual-hosts',
         'manual',
+      ),
+      ...remainingMirrorPaths.map((instructionPath, index) =>
+        host(
+          `instruction-mirror-${index + 1}`,
+          `Configured instruction mirror ${index + 1}`,
+          instructionPath,
+          'mirror',
+          'manual-hosts',
+          'manual',
+        ),
       ),
     ],
   };

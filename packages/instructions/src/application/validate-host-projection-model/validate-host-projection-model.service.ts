@@ -15,6 +15,11 @@ export interface ValidateSkoposHostProjectionModelResult {
 
 export const validateSkoposHostProjectionModel = (
   profile: SkoposEnforcementProfileArtifact,
+  expectedMirrorPaths: string[] = [
+    'CLAUDE.md',
+    '.cursor/rules/project.mdc',
+    '.github/copilot-instructions.md',
+  ],
 ): ValidateSkoposHostProjectionModelResult => {
   const diagnostics: string[] = [];
   const model = profile.hostProjectionModel;
@@ -63,13 +68,7 @@ export const validateSkoposHostProjectionModel = (
   const mirrorPaths = model.hosts
     .filter((host) => host.instructionProjection === 'mirror')
     .map((host) => host.instructionPath);
-  if (
-    !sameIds(mirrorPaths, [
-      'CLAUDE.md',
-      '.cursor/rules/project.mdc',
-      '.github/copilot-instructions.md',
-    ])
-  ) {
+  if (!sameIds(mirrorPaths, expectedMirrorPaths)) {
     diagnostics.push('Generated instruction mirrors differ from the host projection model.');
   }
 

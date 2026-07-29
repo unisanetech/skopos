@@ -13,6 +13,7 @@ import type {
   SkoposSymbolReferenceEntry,
 } from '@skopos/model';
 import * as ts from 'typescript';
+import YAML from 'yaml';
 
 import {
   findFilesNamed,
@@ -21,11 +22,11 @@ import {
   readTextFile,
 } from '../../adapters/workspace-filesystem.adapter.js';
 import { scanRepo } from '../scan-repo/scan-repo.service.js';
+import { loadSkoposScopeRegistry } from '../load-scope-registry/load-scope-registry.service.js';
 import { isPackageScopePath } from '../shared/package-scope-path.policy.js';
 import { isWithinSubtree, normalizeSubtreeTarget } from '../shared/subtree-target.policy.js';
 
 const COMMAND_NAMES = ['dev', 'build', 'test', 'typecheck', 'lint'] as const;
-const DOC_ID_PATTERN = /^-\s+Doc ID:\s+`([^`]+)`/m;
 
 type CommandName = (typeof COMMAND_NAMES)[number];
 
@@ -56,6 +57,7 @@ export const buildSkoposReferenceArtifacts = async ({
 }: BuildSkoposReferenceArtifactsOptions): Promise<BuildSkoposReferenceArtifactsResult> => {
   const generatedAt = new Date().toISOString();
   const scanSummary = await scanRepo({ cwd, subtreeTarget });
+  const scopeRegistry = await loadSkoposScopeRegistry({ cwd });
   const focusSubtree = normalizeSubtreeTarget(cwd, subtreeTarget ?? scanSummary.focusSubtree);
   const packageSurfaces = await collectPackageSurfaces(cwd, focusSubtree, scanSummary.ignoredPaths);
   const symbols = await buildSkoposSymbolReferenceArtifact({
@@ -68,7 +70,10 @@ export const buildSkoposReferenceArtifacts = async ({
     cwd,
     focusSubtree,
     packageSurfaces,
-    docsRoot: scanSummary.docsHealth.root,
+    docsRoots: [
+      ...(scanSummary.docsHealth.root ? [scanSummary.docsHealth.root] : []),
+      ...(scopeRegistry?.scopes.map((scope) => scope.memoryRoot) ?? []),
+    ],
     rootCommands: scanSummary.commands,
     generatedAt,
   });
@@ -280,7 +285,7 @@ interface BuildSkoposDuplicateReferenceArtifactOptions {
   cwd: string;
   focusSubtree?: string;
   packageSurfaces: PackageSurface[];
-  docsRoot?: string;
+  docsRoots: string[];
   rootCommands: Record<string, string | undefined>;
   generatedAt: string;
 }
@@ -289,7 +294,7 @@ const buildSkoposDuplicateReferenceArtifact = async ({
   cwd,
   focusSubtree,
   packageSurfaces,
-  docsRoot,
+  docsRoots,
   rootCommands,
   generatedAt,
 }: BuildSkoposDuplicateReferenceArtifactOptions): Promise<SkoposDuplicateReferenceArtifact> => {
@@ -319,7 +324,7 @@ const buildSkoposDuplicateReferenceArtifact = async ({
     }
   }
 
-  const docDuplicates = await collectDocIdDuplicates(cwd, docsRoot);
+  const docDuplicates = await collectDocIdDuplicates(cwd, docsRoots);
   entries.push(...docDuplicates);
 
   return {
@@ -339,13 +344,21 @@ const buildSkoposDuplicateReferenceArtifact = async ({
 
 const collectDocIdDuplicates = async (
   cwd: string,
-  docsRoot?: string,
+  docsRoots: string[],
 ): Promise<SkoposDuplicateReferenceEntry[]> => {
-  if (!docsRoot) {
+  if (docsRoots.length === 0) {
     return [];
   }
 
-  const markdownPaths = await listFilesUnder(join(cwd, docsRoot), ['.md']);
+  const markdownPaths = [
+    ...new Set(
+      (
+        await Promise.all(
+          docsRoots.map((docsRoot) => listFilesUnder(join(cwd, docsRoot), ['.md'])),
+        )
+      ).flat(),
+    ),
+  ].sort();
   const ownersByDocId = new Map<string, Array<{ label: string; path: string }>>();
 
   for (const filePath of markdownPaths) {
@@ -354,8 +367,7 @@ const collectDocIdDuplicates = async (
       continue;
     }
 
-    const docIdMatch = source.match(DOC_ID_PATTERN);
-    const docId = docIdMatch?.[1]?.trim();
+    const docId = readCanonicalDocumentId(source);
     if (!docId) {
       continue;
     }
@@ -374,11 +386,33 @@ const collectDocIdDuplicates = async (
       id: `doc-id:${docId}`,
       kind: 'doc-id',
       key: docId,
-      summary: `Doc ID "${docId}" is declared in multiple markdown documents.`,
+      summary: `Document id "${docId}" is declared in multiple Markdown documents.`,
       owners,
       recommendedAction:
         'Keep one canonical doc id per document so exact retrieval and canonical routing stay stable.',
     }));
+};
+
+const readCanonicalDocumentId = (source: string): string | undefined => {
+  const lines = source.replace(/\r\n/g, '\n').split('\n');
+  if (lines[0]?.trim() !== '---') return undefined;
+  const closingIndex = lines.slice(1).findIndex((line) => line.trim() === '---');
+  if (closingIndex < 0) return undefined;
+
+  try {
+    const parsed = YAML.parse(lines.slice(1, closingIndex + 1).join('\n')) as unknown;
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      Array.isArray(parsed) ||
+      typeof (parsed as { id?: unknown }).id !== 'string'
+    ) {
+      return undefined;
+    }
+    return (parsed as { id: string }).id.trim() || undefined;
+  } catch {
+    return undefined;
+  }
 };
 
 interface BuildSkoposContradictionReferenceArtifactOptions {

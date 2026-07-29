@@ -1,28 +1,15 @@
 import type {
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
 
-export const toneForTrust = (
-  trustLevel: SkoposUiConsoleState['trustReport']['trustLevel'] | undefined,
-): 'positive' | 'warning' | 'danger' => {
-  switch (trustLevel) {
-    case 'high':
-      return 'positive';
-    case 'medium':
-      return 'warning';
-    default:
-      return 'danger';
-  }
-};
-
 export const toneForReadiness = (
-  readiness: SkoposUiConsoleState['trustReport']['readiness'] | 'build-needed' | undefined,
+  readiness: SkoposUiConsoleState['readinessReport']['readiness'] | 'build-needed' | undefined,
 ): 'positive' | 'warning' | 'danger' => {
   switch (readiness) {
-    case 'agent-ready':
+    case 'ready':
       return 'positive';
-    case 'needs-review':
+    case 'attention':
       return 'warning';
     default:
       return 'danger';
@@ -30,7 +17,7 @@ export const toneForReadiness = (
 };
 
 export const toneForCheck = (
-  status: SkoposUiConsoleState['trustReport']['checks'][number]['status'],
+  status: SkoposUiConsoleState['readinessReport']['checks'][number]['status'],
 ): 'positive' | 'warning' | 'danger' => {
   switch (status) {
     case 'pass':
@@ -42,8 +29,8 @@ export const toneForCheck = (
   }
 };
 
-export const toneForMissionState = (
-  state: SkoposUiConsoleMissionView['mission']['state'],
+export const toneForTaskState = (
+  state: SkoposUiConsoleTaskView['task']['state'],
 ): 'neutral' | 'positive' | 'warning' | 'danger' | 'info' => {
   switch (state) {
     case 'complete':

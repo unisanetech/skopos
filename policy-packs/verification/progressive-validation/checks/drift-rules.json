@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.verification.progressive-validation.drift-rules",
+  "packId": "verification.progressive-validation",
+  "updatedAt": "2026-06-24",
+  "rules": [
+    {
+      "id": "verification.progressive-validation.light-lane-overprocess",
+      "severity": "should",
+      "target": "Tasks",
+      "strategy": "task-evidence-review",
+      "evidence": [
+        "tiny task generated a high-impact Task without escalation reason",
+        "full proof ran for a harmless local edit while focused checks existed"
+      ],
+      "remediation": "Use light lane for narrow local edits and keep memory updates only for durable truth changes."
+    },
+    {
+      "id": "verification.progressive-validation.missing-risk-escalation",
+      "severity": "must",
+      "target": "Tasks and Readiness reports",
+      "strategy": "task-evidence-review",
+      "evidence": [
+        "public API, stack, migration, security, architecture, generated artifact, or multi-package change used only light proof",
+        "no explanation for high-impact Task escalation or skipped escalation"
+      ],
+      "remediation": "Record the escalation reason and satisfy staged Guards before Readiness."
+    },
+    {
+      "id": "verification.progressive-validation.closure-proof-missing",
+      "severity": "must",
+      "target": "Readiness reports and summaries",
+      "strategy": "readiness-report-scan",
+      "evidence": [
+        "closure summary omits commands run",
+        "failed checks are not addressed",
+        "remaining risk is not recorded"
+      ],
+      "remediation": "Record proof commands, results, skipped-check reasons, and residual risk before closing."
+    }
+  ]
+}

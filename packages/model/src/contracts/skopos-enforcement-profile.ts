@@ -21,7 +21,7 @@ export interface SkoposToolAdapterLifecycleCoverage {
   preCompact: boolean;
 }
 
-export interface SkoposToolAdapterWorkflowRouterCoverage {
+export interface SkoposToolAdapterActionRouterCoverage {
   sessionStart: boolean;
   stopBoundary: boolean;
 }
@@ -45,7 +45,7 @@ export interface SkoposToolAdapterSummary {
   generatedFiles: string[];
   installMode: SkoposToolAdapterInstallMode;
   lifecycleCoverage: SkoposToolAdapterLifecycleCoverage;
-  workflowRouterCoverage: SkoposToolAdapterWorkflowRouterCoverage;
+  actionRouterCoverage: SkoposToolAdapterActionRouterCoverage;
 }
 
 export type SkoposHostProjectionSupport =
@@ -76,8 +76,8 @@ export interface SkoposEnforcementProfileArtifact extends SkoposArtifactEnvelope
   workspaceRoot: string;
   instructionSourcePath: string;
   primarySurface: 'cli-and-mcp';
-  requiredWorkflowCount: number;
-  approvalRequiredWorkflowCount: number;
+  requiredGuardCount: number;
+  approvalRequiredActionCount: number;
   rules: SkoposEnforcementRule[];
   toolAdapters: SkoposToolAdapterSummary[];
   hostProjectionModel: SkoposHostProjectionModel;

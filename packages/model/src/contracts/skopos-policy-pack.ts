@@ -1,4 +1,6 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
+import type { SkoposSourceDependency } from './skopos-source-dependency.js';
+import type { SkoposTaskRisk } from './skopos-task.js';
 
 export type SkoposPolicySeverity = 'must' | 'should' | 'advisory';
 
@@ -18,8 +20,7 @@ export type SkoposPolicyPackFamily =
   | 'release-public-api'
   | 'generated-artifacts'
   | 'stack'
-  | 'gates'
-  | 'workflow';
+  | 'verification';
 
 export type SkoposProjectLifecycle =
   | 'greenfield'
@@ -28,8 +29,6 @@ export type SkoposProjectLifecycle =
   | 'legacy-stabilization';
 
 export type SkoposPolicySignalConfidence = 'low' | 'medium' | 'high';
-
-export type SkoposExecutionLane = 'light' | 'normal' | 'workpack';
 
 export interface SkoposPolicySignal {
   id: string;
@@ -77,14 +76,14 @@ export interface SkoposPolicyForbiddenImport {
   to: string[];
 }
 
-export interface SkoposPolicyGateSet {
+export interface SkoposPolicyGuardSet {
   required: string[];
   recommended: string[];
 }
 
 export interface SkoposPolicyAgentPrompts {
   beforeEditing: string[];
-  beforeDone: string[];
+  beforeReadiness: string[];
 }
 
 export interface SkoposPolicyPackManifest extends SkoposArtifactEnvelope<'policy-pack'> {
@@ -104,7 +103,7 @@ export interface SkoposPolicyPackManifest extends SkoposArtifactEnvelope<'policy
   recommendedLayers?: string[];
   dependencyDirection?: Record<string, SkoposPolicyDependencyDirection>;
   forbiddenImports?: SkoposPolicyForbiddenImport[];
-  gates?: SkoposPolicyGateSet;
+  guards?: SkoposPolicyGuardSet;
   agentPrompts?: SkoposPolicyAgentPrompts;
   projectLifecycles: SkoposProjectLifecycle[];
   appliesWhen: SkoposPolicySignal[];
@@ -123,6 +122,11 @@ export interface SkoposAcceptedPolicyPack {
   acceptedBy?: string;
   reason: string;
   source: 'recommended' | 'manual' | 'profile';
+}
+
+export interface SkoposTrackedPolicyAcceptance
+  extends Omit<SkoposAcceptedPolicyPack, 'acceptedBy'> {
+  acceptedBy: string;
 }
 
 export interface SkoposPolicyOverride {
@@ -191,11 +195,20 @@ export interface SkoposPolicyRoleMappingDecisionArtifact
   decisions: SkoposPolicyRoleMappingDecision[];
 }
 
-export interface SkoposExecutionLaneRule {
-  lane: SkoposExecutionLane;
+export interface SkoposProjectPolicySource {
+  schemaVersion: 1;
+  updatedAt: string;
+  defaultTaskRisk: SkoposTaskRisk;
+  acceptedPacks: SkoposTrackedPolicyAcceptance[];
+  overrides: SkoposPolicyOverride[];
+  roleMappings: SkoposPolicyRoleMappingDecision[];
+}
+
+export interface SkoposTaskRiskRule {
+  risk: SkoposTaskRisk;
   summary: string;
   triggers: string[];
-  defaultGates: string[];
+  defaultEvidence: string[];
 }
 
 export interface SkoposPolicyRecommendationEntry {
@@ -219,8 +232,8 @@ export interface SkoposPolicyRecommendationArtifact
   extends SkoposArtifactEnvelope<'policy-recommendations'> {
   workspaceRoot: string;
   projectLifecycle: SkoposProjectLifecycle;
-  defaultExecutionLane: SkoposExecutionLane;
-  recommendedExecutionLanes: SkoposExecutionLaneRule[];
+  defaultTaskRisk: SkoposTaskRisk;
+  recommendedTaskRisks: SkoposTaskRiskRule[];
   recommendations: SkoposPolicyRecommendationEntry[];
 }
 
@@ -228,11 +241,11 @@ export interface SkoposResolvedPolicyArtifact extends SkoposArtifactEnvelope<'re
   workspaceRoot: string;
   profileId?: string;
   projectLifecycle: SkoposProjectLifecycle;
-  defaultExecutionLane: SkoposExecutionLane;
-  recommendedExecutionLanes: SkoposExecutionLaneRule[];
+  defaultTaskRisk: SkoposTaskRisk;
+  recommendedTaskRisks: SkoposTaskRiskRule[];
   acceptedPacks: SkoposAcceptedPolicyPack[];
   overrides: SkoposPolicyOverride[];
   activeRules: SkoposPolicyRule[];
-  sourcePaths: string[];
+  sourceDependencies: SkoposSourceDependency[];
   generatedDocPaths: string[];
 }

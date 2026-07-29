@@ -27,7 +27,7 @@ export const devSkoposUiConsoleApp = async ({
   createViteDevServer,
 }: DevSkoposUiConsoleAppOptions): Promise<SkoposUiConsoleDevResult> => {
   const workspaceRoot = resolve(cwd);
-  const packageRoot = resolveUiPackageRoot(import.meta.url);
+  const uiApp = resolveUiDevApp(import.meta.url);
   const ignoredWatchTargets = watchIgnoredTargets(workspaceRoot);
   let currentState = await buildCurrentState(workspaceRoot);
   let debounceHandle: ReturnType<typeof setTimeout> | undefined;
@@ -36,12 +36,14 @@ export const devSkoposUiConsoleApp = async ({
 
   const createServer = createViteDevServer ?? (await import('vite')).createServer;
   const server = await createServer({
-    configFile: resolve(packageRoot, 'vite.config.ts'),
+    root: uiApp.root,
+    configFile: uiApp.configFile,
+    appType: 'spa',
     server: {
       host,
       port,
       fs: {
-        allow: [packageRoot, workspaceRoot],
+        allow: [uiApp.root, workspaceRoot],
       },
       watch: {
         ignored: ignoredWatchTargets,
@@ -139,8 +141,7 @@ export const devSkoposUiConsoleApp = async ({
     stateEndpointPath: skoposUiDevStateEndpointPath,
     fileEndpointPath: skoposUiDevFileEndpointPath,
     generatedAt: currentState.generatedAt,
-    trustLevel: currentState.trustReport.trustLevel,
-    readiness: currentState.trustReport.readiness,
+    readiness: currentState.readinessReport.readiness,
     state: currentState,
     server: {
       close: async () => {
@@ -190,34 +191,34 @@ const watchTargets = (workspaceRoot: string): string[] => [
   resolve(workspaceRoot, 'docs', '**', '*.json'),
   resolve(workspaceRoot, 'docs', '**', '*.yaml'),
   resolve(workspaceRoot, 'docs', '**', '*.yml'),
-  resolve(workspaceRoot, '.skopos', 'bootstrap.json'),
-  resolve(workspaceRoot, '.skopos', 'diagnosis.json'),
-  resolve(workspaceRoot, '.skopos', 'index.json'),
-  resolve(workspaceRoot, '.skopos', 'scopes-lite.json'),
-  resolve(workspaceRoot, '.skopos', 'architecture.json'),
-  resolve(workspaceRoot, '.skopos', 'enforcement.json'),
-  resolve(workspaceRoot, '.skopos', 'proof', 'latest-report.json'),
-  resolve(workspaceRoot, '.skopos', 'plans', '*.json'),
-  resolve(workspaceRoot, '.skopos', 'missions', '*.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'bootstrap.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'diagnosis.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'memory.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'scopes.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'architecture.json'),
+  resolve(workspaceRoot, '.skopos', 'index', 'enforcement.json'),
+  resolve(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json'),
+  resolve(workspaceRoot, 'docs', 'work', 'plans', '**', '*.md'),
+  resolve(workspaceRoot, '.skopos', 'tasks', 'tasks', '*.json'),
   resolve(workspaceRoot, '.skopos', 'graph', '*.json'),
   resolve(workspaceRoot, '.skopos', 'runs', '*.json'),
-  resolve(workspaceRoot, '.skopos', 'log.jsonl'),
+  resolve(workspaceRoot, '.skopos', 'runs', 'operations.jsonl'),
   resolve(workspaceRoot, 'AGENTS.md'),
   resolve(workspaceRoot, 'skopos.config.yaml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'workflows', '**', '*.yaml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'workflows', '**', '*.yml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'workflows', '**', '*.json'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'workflows', '**', '*.md'),
+  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.yaml'),
+  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.yml'),
+  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.json'),
+  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.md'),
 ];
 
 const watchIgnoredTargets = (workspaceRoot: string): string[] => [
-  resolve(workspaceRoot, 'docs', 'generated', 'skopos', 'app', '**'),
-  resolve(workspaceRoot, '.skopos', 'tooling', '**'),
+  resolve(workspaceRoot, '.skopos', 'ui', '**'),
+  resolve(workspaceRoot, '.skopos', 'cache', 'tooling', '**'),
 ];
 
 const ignoredRefreshRoots = (workspaceRoot: string): string[] => [
-  resolve(workspaceRoot, 'docs', 'generated', 'skopos', 'app'),
-  resolve(workspaceRoot, '.skopos', 'tooling'),
+  resolve(workspaceRoot, '.skopos', 'ui'),
+  resolve(workspaceRoot, '.skopos', 'cache', 'tooling'),
 ];
 
 const shouldRefreshForPath = (workspaceRoot: string, changedPath: string): boolean => {
@@ -233,7 +234,7 @@ const shouldRefreshForPath = (workspaceRoot: string, changedPath: string): boole
       resolve(workspaceRoot, '.skopos'),
       resolve(workspaceRoot, 'AGENTS.md'),
       resolve(workspaceRoot, 'skopos.config.yaml'),
-      resolve(workspaceRoot, 'tools', 'skopos', 'workflows'),
+      resolve(workspaceRoot, 'tools', 'skopos', 'actions'),
     ].some((candidate) => isPathWithin(candidate, resolvedPath) || candidate === resolvedPath)
   );
 };
@@ -280,17 +281,46 @@ const isPathWithin = (rootPath: string, candidatePath: string): boolean => {
   return relativePath === '' || (!relativePath.startsWith(`..${sep}`) && relativePath !== '..');
 };
 
-function resolveUiPackageRoot(moduleUrl: string): string {
+export interface SkoposUiDevAppResolution {
+  root: string;
+  configFile: string | false;
+  mode: 'source' | 'bundled';
+}
+
+export function resolveUiDevApp(moduleUrl: string): SkoposUiDevAppResolution {
   let currentPath = resolve(fileURLToPath(new URL('.', moduleUrl)));
 
   for (let depth = 0; depth < 6; depth += 1) {
-    if (existsSync(resolve(currentPath, 'vite.config.ts')) && existsSync(resolve(currentPath, 'package.json'))) {
-      return currentPath;
+    const viteConfigPath = resolve(currentPath, 'vite.config.ts');
+    if (existsSync(viteConfigPath) && existsSync(resolve(currentPath, 'package.json'))) {
+      return {
+        root: currentPath,
+        configFile: viteConfigPath,
+        mode: 'source',
+      };
+    }
+
+    const bundledAppRoot = resolve(currentPath, 'ui-app');
+    if (existsSync(resolve(bundledAppRoot, 'index.html'))) {
+      return {
+        root: bundledAppRoot,
+        configFile: false,
+        mode: 'bundled',
+      };
+    }
+
+    const sourceBuildRoot = resolve(currentPath, 'dist-app');
+    if (existsSync(resolve(sourceBuildRoot, 'index.html'))) {
+      return {
+        root: sourceBuildRoot,
+        configFile: false,
+        mode: 'bundled',
+      };
     }
     currentPath = resolve(currentPath, '..');
   }
 
-  throw new Error('Could not resolve the @skopos/ui package root for the Vite app.');
+  throw new Error('Could not resolve source or bundled assets for the Skopos UI app.');
 }
 
 const isReadableFile = async (filePath: string): Promise<boolean> => {

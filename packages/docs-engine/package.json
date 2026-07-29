@@ -5,8 +5,8 @@
   "type": "module",
   "description": "Docs governance and generated docs views for the Skopos SDK",
   "skopos": {
-    "surface": "internal-product",
-    "releaseTarget": "internal-only",
+    "surface": "public-sdk-core",
+    "releaseTarget": "candidate",
     "publishPhase": "incubation"
   },
   "exports": {

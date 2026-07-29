@@ -36,7 +36,7 @@
   "agentUse": [
     "Use this pack after understanding the local code style and existing helpers.",
     "Prefer improving touched code over broad cleanup unrelated to the task.",
-    "Escalate to normal lane when a cleanup changes public behavior, shared helpers, or many files."
+    "Escalate to standard risk when a cleanup changes public behavior, shared helpers, or many files."
   ],
   "structureTree": {
     "title": "Clean-code responsibility tree",
@@ -145,7 +145,7 @@
       }
     ]
   },
-  "gates": {
+  "guards": {
     "required": [
       "typecheck",
       "focused behavior proof"
@@ -168,7 +168,7 @@
       "Identify the smallest owner for the behavior being changed.",
       "Check whether a helper already exists before adding a new one."
     ],
-    "beforeDone": [
+    "beforeReadiness": [
       "Confirm touched files still have one clear responsibility.",
       "Confirm any new helper has a specific name and real caller.",
       "Confirm changed behavior has focused proof or an explicit reason proof was skipped."
@@ -357,7 +357,7 @@
       "appliesTo": [
         "tests",
         "smoke checks",
-        "done reports",
+        "closure reports",
         "review notes"
       ],
       "examples": [
@@ -379,8 +379,8 @@
     "policies/testing-and-proof.md"
   ],
   "generatedArtifacts": [
-    ".skopos/policies/resolved.json",
-    ".skopos/policies/agent-brief.md"
+    ".skopos/index/policies/resolved.json",
+    ".skopos/index/policies/agent-brief.md"
   ],
   "driftCheckIds": [
     "clean-code.maintainability.mixed-responsibility-file",

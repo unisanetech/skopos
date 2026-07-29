@@ -1,17 +1,13 @@
-import type { SkoposMissionArtifact, SkoposPlanRunResult } from './skopos-plan.js';
-import type { SkoposCompactTaskBrief } from './skopos-agent-native-operating-model.js';
 import type { SkoposProjectKnowledgeGuidance } from './skopos-memory-state.js';
 import type { SkoposResolvedScope } from './skopos-scope-lite.js';
-import type { SkoposTaskStatePaths } from './skopos-task-identity.js';
+import type { SkoposTaskCoordinationState } from './skopos-coordination.js';
 import type {
-  SkoposWorkflowQuestionArtifact,
-  SkoposWorkflowQuestionEntry,
-} from './skopos-workflow-question.js';
-import type {
-  SkoposWorkflowRecommendationArtifact,
-  SkoposWorkflowExecutionSurfaceRecommendation,
-  SkoposWorkflowRecommendationEntry,
-} from './skopos-workflow-recommendation.js';
+  SkoposTaskArtifact,
+  SkoposTaskQuestion,
+  SkoposTaskQuestionArtifact,
+  SkoposTaskRecommendation,
+  SkoposTaskRecommendationArtifact,
+} from './skopos-task.js';
 
 export interface SkoposStartRunResult {
   workspaceRoot: string;
@@ -20,25 +16,17 @@ export interface SkoposStartRunResult {
   actorId?: string;
   scope: SkoposResolvedScope;
   codeAllowed: boolean;
-  taskState?: SkoposTaskStatePaths;
-  planId: string;
-  planPath: string;
-  missionId: string;
-  missionPath: string;
-  missionState: SkoposMissionArtifact['state'];
-  missionClaimedByActorId?: string;
+  taskPath: string;
+  taskWrite: 'written' | 'dry-run';
+  task: SkoposTaskArtifact;
+  coordination?: SkoposTaskCoordinationState;
   questionsPath: string;
   questionsWrite: 'written' | 'dry-run';
-  questions: SkoposWorkflowQuestionArtifact;
+  questions: SkoposTaskQuestionArtifact;
   recommendationsPath: string;
   recommendationsWrite: 'written' | 'dry-run';
-  executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
-  taskBrief?: SkoposCompactTaskBrief;
-  recommendations: SkoposWorkflowRecommendationArtifact;
+  recommendations: SkoposTaskRecommendationArtifact;
   projectKnowledge: SkoposProjectKnowledgeGuidance;
-  blockingQuestions: SkoposWorkflowQuestionEntry[];
-  recommendedAction?: SkoposWorkflowRecommendationEntry;
-  nextCommand?: string;
-  plan: SkoposPlanRunResult;
-  mission: SkoposMissionArtifact;
+  blockingQuestions: SkoposTaskQuestion[];
+  recommendedAction?: SkoposTaskRecommendation;
 }

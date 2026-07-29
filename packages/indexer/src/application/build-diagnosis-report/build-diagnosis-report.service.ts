@@ -46,7 +46,7 @@ export const buildSkoposDiagnosisReport = async ({
     detected,
     packageSurfaces,
   });
-  const remediationMissions = buildRemediationMissions(findings);
+  const remediationTasks = buildRemediationTasks(findings);
   const health = deriveRepoHealth(findings);
   const summary =
     health === 'healthy'
@@ -73,7 +73,7 @@ export const buildSkoposDiagnosisReport = async ({
     workspacePackageCount: detected.workspacePackageCount,
     health,
     findings,
-    remediationMissions,
+    remediationTasks,
   };
 };
 
@@ -100,8 +100,6 @@ const buildDiagnosisFindings = ({
 ];
 
 const buildWorkspaceStructureFinding = (detected: SkoposScanSummary): SkoposDiagnosisFinding => {
-  const overrideEvidence = overrideEvidenceFor(detected, 'project.repoMode');
-
   if (detected.focusSubtree && detected.workspacePackageCount > detected.packageCount) {
     return createFinding({
       id: 'workspace-structure',
@@ -113,7 +111,6 @@ const buildWorkspaceStructureFinding = (detected: SkoposScanSummary): SkoposDiag
       evidence: [
         `workspace package count: ${detected.workspacePackageCount}`,
         `slice package count: ${detected.packageCount}`,
-        ...overrideEvidence,
       ],
       recommendedAction:
         'Use subtree-targeted scans for large workspaces, then fall back to full-workspace scans when changing shared root policy.',
@@ -133,7 +130,6 @@ const buildWorkspaceStructureFinding = (detected: SkoposScanSummary): SkoposDiag
         `repo mode: ${detected.repoMode}`,
         `package count: ${detected.packageCount}`,
         detected.hasPnpmWorkspace ? 'workspace manifest detected' : 'workspace manifest missing',
-        ...overrideEvidence,
       ],
       recommendedAction:
         'Confirm whether this should stay a monorepo and standardize the expected package boundaries.',
@@ -153,7 +149,6 @@ const buildWorkspaceStructureFinding = (detected: SkoposScanSummary): SkoposDiag
       evidence: [
         `repo mode: ${detected.repoMode}`,
         `package count: ${detected.packageCount}`,
-        ...overrideEvidence,
       ],
       recommendedAction:
         'Adopt a workspace manifest or collapse packages until the intended package topology is clear.',
@@ -174,16 +169,16 @@ const buildWorkspaceStructureFinding = (detected: SkoposScanSummary): SkoposDiag
     evidence: [
       `repo mode: ${detected.repoMode}`,
       `package count: ${detected.packageCount}`,
-      ...overrideEvidence,
     ],
     requiresHumanDecision: false,
   });
 };
 
 const buildDocsRootFinding = (detected: SkoposScanSummary): SkoposDiagnosisFinding => {
-  const overrideEvidence = overrideEvidenceFor(detected, 'docs.root');
-
-  if (detected.docsRoots.length === 0) {
+  if (
+    !detected.docsHealth.root ||
+    !detected.docsRoots.includes(detected.docsHealth.root)
+  ) {
     return createFinding({
       id: 'docs-root',
       family: 'docs-root',
@@ -191,7 +186,12 @@ const buildDocsRootFinding = (detected: SkoposScanSummary): SkoposDiagnosisFindi
       severity: 'high',
       confidence: detected.confidence,
       summary: 'No canonical docs root was detected.',
-      evidence: ['expected docs root: docs/', 'detected docs roots: none', ...overrideEvidence],
+      evidence: [
+        `expected docs root: ${detected.docsHealth.root ?? 'docs'}/`,
+        detected.docsRoots.length > 0
+          ? `other detected docs roots: ${detected.docsRoots.join(', ')}`
+          : 'detected docs roots: none',
+      ],
       recommendedAction:
         'Create a canonical docs root and a deterministic start-here router before relying on repo knowledge.',
       requiresHumanDecision: false,
@@ -209,7 +209,6 @@ const buildDocsRootFinding = (detected: SkoposScanSummary): SkoposDiagnosisFindi
       evidence: [
         ...detected.docsRoots.map((docsRoot) => `docs root: ${docsRoot}`),
         'missing router: no deterministic docs start-here path was detected',
-        ...overrideEvidence,
       ],
       recommendedAction:
         'Add or declare a deterministic docs start-here router so humans and agents have one canonical entrypoint into project knowledge.',
@@ -224,18 +223,16 @@ const buildDocsRootFinding = (detected: SkoposScanSummary): SkoposDiagnosisFindi
     severity: 'low',
     confidence: detected.confidence,
     summary: 'A canonical docs root is present.',
-    evidence: [
-      ...detected.docsRoots.map((docsRoot) => `docs root: ${docsRoot}`),
-      ...overrideEvidence,
-    ],
+    evidence: detected.docsRoots.map((docsRoot) => `docs root: ${docsRoot}`),
     requiresHumanDecision: false,
   });
 };
 
 const buildDocsFreshnessFinding = (detected: SkoposScanSummary): SkoposDiagnosisFinding => {
-  const overrideEvidence = overrideEvidenceFor(detected, 'docs.root');
-
-  if (detected.docsRoots.length === 0) {
+  if (
+    !detected.docsHealth.root ||
+    !detected.docsRoots.includes(detected.docsHealth.root)
+  ) {
     return createFinding({
       id: 'docs-freshness',
       family: 'docs-freshness',
@@ -243,7 +240,7 @@ const buildDocsFreshnessFinding = (detected: SkoposScanSummary): SkoposDiagnosis
       severity: 'low',
       confidence: detected.confidence,
       summary: 'Docs freshness cannot be evaluated until a canonical docs root exists.',
-      evidence: ['docs root missing', ...overrideEvidence],
+      evidence: ['docs root missing'],
       requiresHumanDecision: false,
     });
   }
@@ -258,7 +255,6 @@ const buildDocsFreshnessFinding = (detected: SkoposScanSummary): SkoposDiagnosis
       summary: 'Docs freshness metadata indicates stale human-readable guidance.',
       evidence: [
         ...detected.docsHealth.staleDocPaths.map((filePath) => `stale doc: ${filePath}`),
-        ...overrideEvidence,
       ],
       recommendedAction:
         'Review and refresh the stale docs before trusting them as canonical guidance for agents.',
@@ -280,7 +276,6 @@ const buildDocsFreshnessFinding = (detected: SkoposScanSummary): SkoposDiagnosis
       `docs root: ${detected.docsHealth.root ?? detected.docsRoots[0]}`,
       `tracked docs: ${detected.docsHealth.freshnessTrackedCount}`,
       `stale docs: ${detected.docsHealth.staleDocPaths.length}`,
-      ...overrideEvidence,
     ],
     requiresHumanDecision: false,
   });
@@ -489,7 +484,7 @@ const collectPackageOwnersByCommand = (
   return ownersByCommand;
 };
 
-const buildRemediationMissions = (findings: SkoposDiagnosisFinding[]) =>
+const buildRemediationTasks = (findings: SkoposDiagnosisFinding[]) =>
   findings
     .filter(
       (finding) => finding.classification !== 'canonical' && finding.classification !== 'unknown',
@@ -540,7 +535,7 @@ const remediationCommandForFamily = (findingId: string): string | undefined => {
   }
 
   if (findingId === 'docs-freshness') {
-    return 'skopos trust --cwd <repo-root> --json';
+    return 'skopos adopt assess <repo-root> --json';
   }
 
   return undefined;
@@ -600,11 +595,3 @@ const createFinding = ({
   recommendedAction,
   requiresHumanDecision,
 });
-
-const overrideEvidenceFor = (
-  detected: SkoposScanSummary,
-  key: 'project.repoMode' | 'docs.root',
-): string[] =>
-  detected.appliedOverrides
-    .filter((entry) => entry.key === key)
-    .map((entry) => `override: ${entry.key}=${entry.value}`);

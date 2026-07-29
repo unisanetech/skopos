@@ -5,12 +5,11 @@ This file is the canonical instruction source for the standalone Skopos workspac
 ## Read Order
 
 1. `docs/00-start-here.md`
-2. `docs/project/proof-phase-plan.md`
-3. `docs/project/implementation-checklist.md`
-4. `docs/architecture/runtime-model.md`
-5. `docs/architecture/agent-native-operating-model.md`
-6. `docs/architecture/config-model.md`
-7. `docs/architecture/artifact-model.md`
+2. `docs/work/plans/P-e7e888e6-canonical-product-convergence.md`
+3. `docs/architecture/00-architecture.md`
+4. `docs/architecture/agent-native-operating-model.md`
+5. `docs/architecture/docs-governance.md`
+6. `docs/architecture/artifact-model.md`
 
 ## Standalone Governance
 
@@ -22,10 +21,14 @@ This file is the canonical instruction source for the standalone Skopos workspac
 
 1. Keep Skopos core generic and project-agnostic.
 2. Do not hand-edit generated instruction mirrors or runtime-managed `.skopos/**` derived artifacts.
-3. During the current proof phase, prioritize brownfield reliability, closure quality, and self-hosting friction discovery over new UI or graph surface expansion.
+3. During the current convergence Plan, prioritize canonical product semantics,
+   self-adoption, clean reconstruction, and coding-agent reliability over new surface
+   expansion.
 4. If `AGENTS.md` changes, regenerate mirrors with `pnpm instructions:sync`.
-5. Before grepping source to discover command usage, check this file, `docs/00-start-here.md`, `docs/project/workflows.md`, and `skopos --help` or subcommand help. Source grep is a fallback when docs/help are missing or unclear.
-6. Treat Skopos as the single project workflow and closure authority. Project-specific
+5. Before grepping source to discover command usage, check this file,
+   `docs/00-start-here.md`, `docs/guides/developer-workflows.md`, and `skopos --help`
+   or subcommand help. Source grep is a fallback when docs/help are missing or unclear.
+6. Treat Skopos as the single project Memory, Task, and closure authority. Project-specific
    integrations contribute context, actions, and guards; they do not create a parallel
    LLM workflow.
 7. Let coding agents own general reasoning and implementation. Add Skopos state only
@@ -39,7 +42,7 @@ This file is the canonical instruction source for the standalone Skopos workspac
 3. `pnpm proof`
 4. `pnpm instructions:sync`
 5. `pnpm skopos:init`
-6. `pnpm skopos:trust`
+6. `pnpm skopos:session`
 7. `pnpm skopos:ui`
 8. `pnpm skopos:ui:dev`
 9. `pnpm skopos:ui:serve`
@@ -51,63 +54,81 @@ Use `skopos --help` for the full CLI surface and `skopos <command> --help` where
 1. Load compact project knowledge: `skopos knowledge . --compact`
 2. Review setup questions: `skopos setup review .`
 3. Build project understanding: `skopos understand . --actor <id>`
-4. See the next action: `skopos program next . --compact --json`
-5. Start tracked work: `skopos start "<goal>" . --actor <id>`
-6. Continue tracked work: `skopos next . --actor <id>`
-7. Check trust/readiness: `skopos trust . --actor <id> --compact`
+4. See Session context: `skopos session context . --json`
+5. Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
+6. Continue tracked work: `skopos work next . --actor <id>`
+7. Check Readiness: `skopos readiness <task-id> . --for close --actor <id>`
 8. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
 9. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
 10. Render static UI artifact: `skopos ui render .`
 11. Sync agent instructions: `skopos instructions sync . --actor <id>`
-12. List workflows: `skopos workflows list .`
-13. Run a workflow: `skopos workflows run <workflow-id> . --actor <id>`
-14. Validate changed scope: `skopos eval . --mission <mission-id> --actor <id> --phase iteration`
-15. Review owner stabilization: `skopos eval . --mission <mission-id> --actor <id> --phase stabilization`
-16. Validate final closure: `skopos eval . --mission <mission-id> --actor <id> --phase closure`
+12. List Actions: `skopos actions list .`
+13. Run an Action: `skopos actions run <action-id> . --actor <id>`
+14. Validate changed scope: `skopos verify <task-id> . --actor <id> --phase iteration`
+15. Review stabilization: `skopos verify <task-id> . --actor <id> --phase stabilization`
+16. Validate closure: `skopos verify <task-id> . --actor <id> --phase closure`
 17. Review project skill packs: `skopos skills recommend .`
 18. Accept a project-bound skill: `skopos skills apply <pack-id> . --binding <binding-id> --actor <id> --reason <text>`
 
 <!-- skopos:policy:start -->
-## Skopos Accepted Policy
+## Skopos Accepted Policy (Derived Projection)
 
-- Source of truth: `.skopos/policies/resolved.json`
-- Accepted packs: `stack.async-work@0.1.0`, `gates.progressive-validation@0.1.0`, `architecture.mid-app@0.1.0`, `clean-code.maintainability@0.1.0`
-- Default execution lane: `normal`
-- Progressive workflow rule: keep small tasks light, use normal gates for bounded feature work, and create/use a workpack for public API, architecture, stack, security, migration, multi-package, or long-running changes.
-- Agent brief: `.skopos/agent/policy-brief.json`
+- This block is generated from tracked project policy; do not edit it directly.
+- Source of truth: `tools/skopos/policies.yaml`
+- Accepted packs: `architecture.mid-app@0.1.0`, `clean-code.maintainability@0.1.0`, `verification.progressive-validation@0.1.0`, `stack.async-work@0.1.0`
+- Default Task risk: `standard`
+- Progressive verification: keep small Tasks light, use proportional Actions and Guards for standard work, and use detailed high-impact Tasks or child Tasks for public API, architecture, stack, security, migration, multi-Scope, or long-running changes.
+- Agent brief: `.skopos/cache/agent/policy-brief.json`
 
 <!-- skopos:policy:end -->
 
 <!-- skopos-operating-contract:start -->
 ## Default Skopos Operating Contract
-When Skopos is installed, agents should treat it as the default workflow layer for project memory, planning, validation, and closure.
+When Skopos is installed, agents should treat it as the default operating memory layer for project Memory, planning, coordination, Evidence, and Readiness.
 ### Session Start
 1. Read `AGENTS.md` first.
-2. Run or inspect `skopos program next . --compact --json` before broad scanning or implementation.
-3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos program next`.
+2. Run or inspect `skopos session context . --json` before broad scanning or implementation.
+3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos session context`.
 4. Use `docs/00-start-here.md` as the human docs router when it exists; otherwise inspect `docs/` conservatively.
-5. Load `.skopos/agent/communication-brief.json` when available so user-facing answers follow project tone, question, progress, and closure rules.
-### Lane Selection
-- Light lane: use for narrow local edits with low risk. Inspect relevant files, edit, run a focused check, and update memory only if project truth changed.
-- Normal lane: use for multi-file feature, docs, policy, or maintenance work. Start or continue a Skopos mission, keep decisions current, run proportional checks, and summarize proof.
-- Workpack lane: use for architecture, public API, data migration, security, stack, release, or long-running work. Track phases, decisions, staged gates, findings, memory sync, and closure proof.
+5. Host adapters should inject `skopos session context . --json`; use it directly when the host cannot inject session context.
+### Agent Response Contract
+- Answer the user directly before process detail.
+- Use the response mode that fits the moment; do not announce a lane unless risk or execution scope makes it useful.
+- Ask only when the answer changes direction, risk, policy, or public behavior.
+- When asking, show the recommendation, reason, alternatives, and the default behavior if the user has no preference.
+- For progress, report completed work, current work, blockers, and proof still needed without false precision.
+- For closure, state changed behavior, focused proof, memory updates, and remaining risk.
+### Task Risk And Detail
+- Light risk: use for narrow local edits. Inspect relevant files, edit, capture focused Evidence, and update Memory only if project truth changed.
+- Standard risk: use for bounded multi-file feature, docs, policy, or maintenance work. Start or continue a Task, keep decisions current, and capture proportional Evidence.
+- High-impact risk: use for architecture, public API, data migration, security, stack, release, multi-Scope, or long-running work. Use a detailed Task or child Tasks, staged Guards and Evidence, findings, Memory sync, and explicit Readiness.
 ### Memory And Docs
 - Update durable docs, decisions, findings, or policy only when project truth changes.
-- Do not duplicate truth. Workpacks track execution; durable rules belong in docs, policy, decisions, findings, or memory.
-- In brownfield projects, suggest docs organization improvements before rewriting existing docs.
-- After changing `AGENTS.md`, run `skopos instructions sync .` so mirrors and adapters stay aligned.
-### Closure
-- Before saying work is done, run the focused checks that match the lane.
-- For normal/workpack work, run `skopos done --cwd . --actor <id>` or explain why it could not be run.
-- Do not claim complete when `skopos trust`, `skopos eval`, accepted-policy drift, open workflow questions, or mission state blocks closure.
-- Final responses should state what changed, proof/checks, memory/docs updates, and remaining risk.
+- Do not duplicate truth. Tasks track execution; durable rules belong in docs, policy, decisions, findings, Patterns, or Memory.
+- In brownfield projects, use Skopos adoption discovery, proposal, approval, transformation, verification, and activation to converge docs safely.
+- After changing `AGENTS.md`, run the project instruction action selected by Skopos. `skopos instructions sync .` owns only mirrors and adapters declared through Skopos.
+### Validation Economy
+- Treat root validation commands as a capability catalog, not a mandatory sequence.
+- Select Actions and Guards from Task-owned changed paths and affected Scope dependents. Unchanged dirty paths that predate the Task are outside its proof boundary unless explicitly adopted with `--own`.
+- Run the narrowest reliable check first. Do not run a workspace-wide test or build when affected-scope evidence is sufficient.
+- Stop after the first failing check, fix the cause, then resume. Do not spend time collecting predictable downstream failures.
+- Reuse valid source-bound Evidence while the exact Action, source, config, and command state are unchanged. Rerun after relevant invalidation.
+- If project commands already own verification, register them as Actions; do not maintain a second verification authority.
+### Readiness
+- Before saying work is complete, capture the focused Evidence selected for the Task.
+- Run `skopos verify <task-id> . --phase closure`, then `skopos readiness <task-id> . --for close --actor <id>`.
+- Do not claim completion while Readiness blockers, accepted-policy drift, open Task questions, missing Evidence, or Task state prevent closure.
+- Final responses should state what changed, Evidence, Memory/docs updates, and remaining risk.
 ### Default Commands
-- Program next: `skopos program next . --compact --json`
-- Trust check: `skopos trust . --compact`
-- Start tracked work: `skopos start "<goal>" . --actor <id>`
-- Continue work: `skopos next . --actor <id>`
+- Session context: `skopos session context . --json`
+- Work Queue: `skopos work queue . --json`
+- Next work: `skopos work next . --json`
+- Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
+- Current Task: `skopos task current . --actor <id> --json`
 - Sync instructions: `skopos instructions sync .`
-- Closure: `skopos done --cwd . --actor <id>`
+- Verify: `skopos verify <task-id> . --phase closure`
+- Close Readiness: `skopos readiness <task-id> . --for close --actor <id>`
+- Validation commands below are discoverable capabilities. Skopos selects a proportional affected-scope set; do not run all of them by default.
 - typecheck: `pnpm typecheck`
 - test: `pnpm test`
 - build: `pnpm build`

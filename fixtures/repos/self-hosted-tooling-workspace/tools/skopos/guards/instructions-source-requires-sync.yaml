@@ -1,0 +1,14 @@
+id: instructions.source-requires-sync
+title: Instruction source changes require synchronized mirrors
+description: Require fresh instruction-mirror Evidence when the canonical instruction source changes.
+owner: fixture
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - AGENTS.md
+requires:
+  actionIds:
+    - instructions.sync-mirrors
+  evidence: source-bound-action

@@ -1,0 +1,20 @@
+id: maintenance.destructive-cleanup
+title: Destructive cleanup
+description: Simulate a destructive maintenance Action that must not run without explicit approval.
+category: maintenance
+scope:
+  - workspace
+command: node tools/skopos/scripts/destructive-cleanup.mjs
+cwd: .
+inputs:
+  - AGENTS.md
+outputs:
+  - .tmp/skopos/destructive-cleanup.log
+affects:
+  - .tmp/skopos
+safety: destructive
+requiresApproval: true
+whenToUse: Run only after explicit human approval for destructive maintenance.
+recommendedAfter:
+  - plan
+owner: skopos-fixture

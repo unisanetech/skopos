@@ -9,7 +9,7 @@ import {
   PlanListGuidanceCard,
   PlanListCard,
   PlansInspectorAside,
-  PlanWorkflowRecordingCard,
+  PlanActionRecordingCard,
   PlanWorkPlanCard,
 } from '../../features/knowledge/plans/index.js';
 import { ListPage } from '../../patterns/pages/list-page.js';
@@ -27,7 +27,7 @@ export function PlansView({
   search: { view: 'current' | 'library' | 'all' };
 }): React.JSX.Element {
   const state = requireConsoleState();
-  const { activePlans, missionLinkedPlans, libraryPlans, latestPlan, linkedMissionByPlanId } =
+  const { activePlans, taskLinkedPlans, libraryPlans, latestPlan, linkedTaskByPlanId } =
     getPlanCollections(state);
   const showCurrentPlans = search.view !== 'library';
   const showLibraryPlans = search.view !== 'current';
@@ -40,7 +40,7 @@ export function PlansView({
       aside={
         <PlansInspectorAside
           currentCount={activePlans.length}
-          linkedCount={missionLinkedPlans.length}
+          linkedCount={taskLinkedPlans.length}
           libraryCount={libraryPlans.length}
           updatedAt={latestPlan?.plan.updatedAt}
         />
@@ -74,7 +74,7 @@ export function PlansView({
             title="Current plan queue"
             description="Plans still attached to active work."
             plans={activePlans}
-            linkedMissionByPlanId={linkedMissionByPlanId}
+            linkedTaskByPlanId={linkedTaskByPlanId}
             emptyTitle="No active plans"
             emptyDescription="No active work is using a saved plan. Small tasks can stay lightweight; larger work should create or link a plan before editing."
           />
@@ -96,7 +96,7 @@ export function PlansView({
 
 export function PlanDetailView({ planId }: { planId: string }): React.JSX.Element {
   const state = requireConsoleState();
-  const { planView, relatedMission } = getPlanDetailContext(state, planId);
+  const { planView, relatedTask } = getPlanDetailContext(state, planId);
 
   if (!planView) {
     return (
@@ -124,14 +124,14 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
           value={planView.plan.confidence}
           tone={planView.plan.confidence === 'high' ? 'positive' : 'warning'}
         />,
-        relatedMission ? (
-          <StatusPill key="mission" value={relatedMission.mission.state} tone="info" />
+        relatedTask ? (
+          <StatusPill key="task" value={relatedTask.task.state} tone="info" />
         ) : null,
       ]}
-      aside={<PlanDetailInspectorAside planView={planView} relatedMission={relatedMission} />}
+      aside={<PlanDetailInspectorAside planView={planView} relatedTask={relatedTask} />}
     >
-      <PlanDetailGuidanceCard planView={planView} relatedMission={relatedMission} />
-      <PlanWorkflowRecordingCard planView={planView} />
+      <PlanDetailGuidanceCard planView={planView} relatedTask={relatedTask} />
+      <PlanActionRecordingCard planView={planView} />
       <PlanFrameCard planView={planView} />
       <PlanWorkPlanCard
         implementationSteps={planView.plan.implementationSteps}

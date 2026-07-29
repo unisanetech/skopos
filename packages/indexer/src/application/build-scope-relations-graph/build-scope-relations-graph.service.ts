@@ -22,20 +22,26 @@ export const buildSkoposScopeRelationsGraph = async ({
   const nodes = new Map<string, SkoposGraphNode>();
   const edges = new Map<string, SkoposGraphEdge>();
   const workspaceNodeId = 'workspace';
-  const packageScopes = scopesLite.scopes.filter((scope) => scope.kind === 'package');
+  const projectScopes = scopesLite.scopes.filter((scope) => scope.kind !== 'workspace');
+  const workspaceScope = scopesLite.scopes.find((scope) => scope.kind === 'workspace');
+  const scopesById = new Map(scopesLite.scopes.map((scope) => [scope.id, scope]));
 
   addNode(nodes, {
     id: workspaceNodeId,
     kind: 'workspace',
-    label: 'workspace',
+    label: workspaceScope?.title ?? 'workspace',
     state: 'active',
     path: '.',
-    summary: 'Workspace root for cross-scope package relationships.',
+    summary: 'Workspace root for declared cross-Scope relationships.',
   });
 
-  const scopeById = new Map(packageScopes.map((scope) => [scope.id, scope] as const));
+  const scopeByResolvableName = new Map(
+    projectScopes.flatMap((scope) =>
+      [scope.id, ...scope.aliases].map((name) => [name, scope] as const),
+    ),
+  );
 
-  for (const scope of packageScopes) {
+  for (const scope of projectScopes) {
     const nodeId = `scope:${scope.id}`;
     addNode(nodes, {
       id: nodeId,
@@ -44,36 +50,53 @@ export const buildSkoposScopeRelationsGraph = async ({
       state: 'active',
       path: scope.path,
       summary: scope.summary,
+      metadata: {
+        scopeKind: scope.kind,
+      },
     });
+    const parentNodeId =
+      scope.parent &&
+      scope.parent !== workspaceScope?.id &&
+      scopesById.get(scope.parent)?.kind !== 'workspace'
+        ? `scope:${scope.parent}`
+        : workspaceNodeId;
     addEdge(edges, {
-      id: `${workspaceNodeId}->${nodeId}:contains`,
+      id: `${parentNodeId}->${nodeId}:contains`,
       kind: 'contains',
-      from: workspaceNodeId,
+      from: parentNodeId,
       to: nodeId,
       state: 'active',
     });
   }
 
-  for (const scope of packageScopes) {
+  for (const scope of projectScopes) {
     const packageJson = await readJsonFile<Record<string, unknown>>(
       join(workspaceRoot, scope.path, 'package.json'),
     );
-    if (!packageJson) {
-      continue;
+
+    const dependencyIds = new Set(scope.dependsOn ?? []);
+    if (packageJson) {
+      for (const dependencyName of collectDependencyNames(packageJson)) {
+        const dependencyScope = scopeByResolvableName.get(dependencyName);
+        if (dependencyScope) dependencyIds.add(dependencyScope.id);
+      }
     }
 
-    const dependencyNames = collectDependencyNames(packageJson);
-
-    for (const dependencyName of dependencyNames) {
-      if (!scopeById.has(dependencyName)) {
+    for (const dependencyId of dependencyIds) {
+      const dependencyScope = scopesById.get(dependencyId);
+      if (!dependencyScope || dependencyScope.id === scope.id) {
         continue;
       }
+      const dependencyNodeId =
+        dependencyScope.kind === 'workspace'
+          ? workspaceNodeId
+          : `scope:${dependencyScope.id}`;
 
       addEdge(edges, {
-        id: `scope:${scope.id}->scope:${dependencyName}:depends-on`,
+        id: `scope:${scope.id}->${dependencyNodeId}:depends-on`,
         kind: 'depends-on',
         from: `scope:${scope.id}`,
-        to: `scope:${dependencyName}`,
+        to: dependencyNodeId,
         state: 'active',
       });
     }
@@ -85,7 +108,8 @@ export const buildSkoposScopeRelationsGraph = async ({
     type: 'graph',
     status: 'generated',
     authority: 'generated',
-    summary: 'Typed scope-relations graph for package scopes and inferred internal dependencies.',
+    summary:
+      'Typed Scope-relations graph for declared hierarchy, dependencies, and package-manifest enrichment.',
     updatedAt: generatedAt,
     generatedAt,
     workspaceRoot,

@@ -18,9 +18,9 @@ export const validateSkoposProjectProviderDescription = (
     );
   }
   if (
-    description.authorityBoundary.workflowAuthority !== 'skopos' ||
+    description.authorityBoundary.actionAuthority !== 'skopos' ||
     description.authorityBoundary.taskStateAuthority !== 'skopos' ||
-    description.authorityBoundary.closureAuthority !== 'skopos'
+    description.authorityBoundary.readinessAuthority !== 'skopos'
   ) {
     diagnostics.push(`Provider ${description.providerId} claims authority reserved for Skopos.`);
   }

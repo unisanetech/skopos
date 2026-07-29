@@ -22,7 +22,7 @@
     "app:dev": "vite --config vite.config.ts",
     "app:preview": "vite preview --config vite.config.ts",
     "check-types": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run src/__tests__/document-artifact-projections.test.ts src/__tests__/document-reader.test.ts src/__tests__/knowledge-document-views.test.ts src/__tests__/current-task-routing.test.ts"
   },
   "dependencies": {
     "@skopos/model": "workspace:*",

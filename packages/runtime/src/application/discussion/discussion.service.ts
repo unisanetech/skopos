@@ -11,13 +11,13 @@ import type {
 } from '@skopos/model';
 
 import { refreshSkoposDiscussionCheckpoints } from '../shared/discussion-checkpoints.js';
+import { resolveCurrentTaskState } from '../shared/current-task-state.js';
 import { loadLatestSkoposDiscussionRawJournalInfo, appendSkoposDiscussionTurnRecord } from '../shared/discussion-raw-journal.js';
 import { syncLatestCodexDiscussionJournal } from '../shared/codex-session-import.js';
 import { refreshSkoposDiscussionResumeArtifacts } from '../shared/discussion-lifecycle.js';
 import { readJsonIfExists } from '../shared/token-control-state.js';
 import {
   DISCUSSION_INDEX_ARTIFACT_PATH,
-  LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH,
 } from '../shared/token-control-constants.js';
 
 export interface BuildSkoposDiscussionAppendTurnRuntimeOptions {
@@ -134,10 +134,11 @@ export const buildSkoposDiscussionRecentRuntime = async ({
   await syncLatestCodexDiscussionJournal({
     workspaceRoot,
   });
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot });
   const [latestHandoff, discussionIndex, latestJournal] = await Promise.all([
-    readJsonIfExists<SkoposDiscussionHandoffArtifact>(
-      join(workspaceRoot, LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH),
-    ),
+    currentTask
+      ? readJsonIfExists<SkoposDiscussionHandoffArtifact>(currentTask.handoffPath)
+      : Promise.resolve(undefined),
     readJsonIfExists<SkoposDiscussionIndexArtifact>(join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH)),
     loadLatestSkoposDiscussionRawJournalInfo(workspaceRoot),
   ]);
@@ -158,8 +159,8 @@ export const buildSkoposDiscussionRecentRuntime = async ({
     workspaceRoot,
     summary:
       latestHandoff?.summary ??
-      'No workflow handoff is available yet. Start or refresh mission routing before resuming from discussion context.',
-    latestHandoffPath: latestHandoff ? join(workspaceRoot, LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH) : undefined,
+      'No Task handoff is available yet. Start or resume an exact Task before relying on discussion continuation.',
+    latestHandoffPath: latestHandoff ? currentTask?.handoffPath : undefined,
     latestHandoff,
     recentCheckpoints,
     latestJournalPath: latestJournal?.path,

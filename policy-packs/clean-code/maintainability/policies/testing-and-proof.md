@@ -13,9 +13,9 @@ Examples:
 
 If proof is skipped, record why.
 
-## Agent Done Check
+## Agent Readiness Check
 
-Before saying done, confirm:
+Before claiming completion, confirm:
 
 - touched files still have clear responsibility
 - new helpers have specific names

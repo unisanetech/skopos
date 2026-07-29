@@ -1,4 +1,5 @@
-import { isAbsolute, join, relative } from 'node:path';
+import { dirname, isAbsolute, join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type {
   SkoposProjectSkillBinding,
@@ -19,9 +20,9 @@ const signalSchema = z
   .strict();
 const authorityBoundarySchema = z
   .object({
-    workflowAuthority: z.literal('skopos'),
+    actionAuthority: z.literal('skopos'),
     taskStateAuthority: z.literal('skopos'),
-    closureAuthority: z.literal('skopos'),
+    readinessAuthority: z.literal('skopos'),
   })
   .strict();
 const roleRequirementsSchema = z
@@ -124,7 +125,7 @@ const skillPackManifestSchema = z
         ]),
       )
       .min(1),
-    riskLanes: z.array(z.enum(['light', 'normal', 'workpack'])).min(1),
+    taskRisks: z.array(z.enum(['light', 'standard', 'high-impact'])).min(1),
     appliesWhen: z.array(signalSchema).min(1),
     avoidWhen: z.array(signalSchema),
     selection: z
@@ -184,8 +185,40 @@ const projectSkillBindingSchema = z
     actionBindings: z.record(nonEmptyString, nonEmptyString),
     guardBindings: z.record(nonEmptyString, nonEmptyString),
     adaptationNotes: z.array(nonEmptyString),
+    acceptance: z
+      .object({
+        acceptedAt: nonEmptyString.refine(
+          (value) => !Number.isNaN(Date.parse(value)),
+          'Expected an ISO-compatible date-time.',
+        ),
+        acceptedBy: nonEmptyString,
+        reason: nonEmptyString,
+      })
+      .strict()
+      .optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((binding, context) => {
+    if (
+      (binding.lifecycle === 'accepted' || binding.lifecycle === 'validated') &&
+      !binding.acceptance
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: `Binding lifecycle ${binding.lifecycle} requires explicit acceptance metadata.`,
+      });
+    }
+    if (
+      binding.acceptance &&
+      binding.lifecycle !== 'accepted' &&
+      binding.lifecycle !== 'validated'
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: `Binding acceptance metadata requires lifecycle accepted or validated, not ${binding.lifecycle}.`,
+      });
+    }
+  });
 
 export interface SkoposLoadedSkillPack extends SkoposSkillPackManifest {
   sourcePath: string;
@@ -194,6 +227,18 @@ export interface SkoposLoadedSkillPack extends SkoposSkillPackManifest {
 export interface SkoposLoadedProjectSkillBinding extends SkoposProjectSkillBinding {
   sourcePath: string;
 }
+
+const SKILL_PACK_LOADER_DIRECTORY = dirname(fileURLToPath(import.meta.url));
+const BUNDLED_SKILL_PACK_ROOT = join(SKILL_PACK_LOADER_DIRECTORY, 'skill-packs');
+const SOURCE_SKILL_PACK_ROOT = join(
+  SKILL_PACK_LOADER_DIRECTORY,
+  '..',
+  '..',
+  '..',
+  '..',
+  '..',
+  'skill-packs',
+);
 
 export const loadSkoposSkillPacks = async ({
   cwd,
@@ -221,6 +266,16 @@ export const loadSkoposSkillPacks = async ({
   }
   return packs.sort((left, right) => left.packId.localeCompare(right.packId));
 };
+
+export const loadSkoposSkillPackCatalog = async ({
+  cwd,
+}: {
+  cwd: string;
+}): Promise<SkoposLoadedSkillPack[]> =>
+  loadSkoposSkillPacks({
+    cwd,
+    packRoots: ['skill-packs', BUNDLED_SKILL_PACK_ROOT, SOURCE_SKILL_PACK_ROOT],
+  });
 
 export const loadSkoposProjectSkillBindings = async ({
   cwd,

@@ -6,6 +6,7 @@ export interface SkoposContextReference {
     | 'config'
     | 'instructions'
     | 'docs-start-here'
+    | 'project-doc'
     | 'symbols'
     | 'duplicates'
     | 'contradictions'

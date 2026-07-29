@@ -1,13 +1,9 @@
-import { access, readFile, readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { access, readFile } from 'node:fs/promises';
+import { relative } from 'node:path';
 
-import type { SkoposAgentProgramBriefArtifact } from '@skopos/model';
+import type { SkoposTaskIdentity } from '@skopos/model';
 
-import {
-  DISCUSSION_HANDOFF_DIRECTORY,
-  QUESTIONS_ARTIFACT_PATH,
-  PROGRAM_BRIEF_ARTIFACT_PATH,
-} from './token-control-constants.js';
+import { resolveCurrentTaskState } from './current-task-state.js';
 
 export const estimateTokens = (value: string): number => {
   const normalized = value.trim();
@@ -32,30 +28,31 @@ export const readJsonIfExists = async <T>(path: string): Promise<T | undefined> 
   return JSON.parse(contents) as T;
 };
 
-export const resolveActiveMissionId = async (workspaceRoot: string): Promise<string | undefined> => {
-  const questions = await readJsonIfExists<{
-    generatedForMissionId?: string;
-  }>(join(workspaceRoot, QUESTIONS_ARTIFACT_PATH));
-  if (questions?.generatedForMissionId) {
-    return questions.generatedForMissionId;
-  }
-
-  const programBrief = await readJsonIfExists<SkoposAgentProgramBriefArtifact>(
-    join(workspaceRoot, PROGRAM_BRIEF_ARTIFACT_PATH),
-  );
-  return programBrief?.currentMissionId;
+export const resolveCurrentTaskId = async (
+  workspaceRoot: string,
+  taskIdentity?: SkoposTaskIdentity,
+): Promise<string | undefined> => {
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot, taskIdentity });
+  return currentTask?.task.id;
 };
 
-export const resolveLatestHandoffPath = async (workspaceRoot: string): Promise<string | undefined> => {
-  const handoffRoot = join(workspaceRoot, DISCUSSION_HANDOFF_DIRECTORY);
-  try {
-    const entries = await readdir(handoffRoot);
-    const latest = entries
-      .filter((entry) => entry.endsWith('.json'))
-      .sort()
-      .at(-1);
-    return latest ? `${DISCUSSION_HANDOFF_DIRECTORY}/${latest}` : undefined;
-  } catch {
+export const resolveCurrentTaskHandoffPath = async (
+  workspaceRoot: string,
+  taskIdentity?: SkoposTaskIdentity,
+): Promise<string | undefined> => {
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot, taskIdentity });
+  if (!currentTask || !(await pathExists(currentTask.handoffPath))) {
     return undefined;
+  }
+
+  return relative(workspaceRoot, currentTask.handoffPath);
+};
+
+const pathExists = async (path: string): Promise<boolean> => {
+  try {
+    await access(path);
+    return true;
+  } catch {
+    return false;
   }
 };

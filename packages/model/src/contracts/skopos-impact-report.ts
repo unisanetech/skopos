@@ -1,16 +1,16 @@
 import type { SkoposScopeLite } from './skopos-scope-lite.js';
-import type { SkoposWorkflowRequirement } from './skopos-workflow.js';
+import type { SkoposActionRequirement } from './skopos-action.js';
+import type { SkoposGuardMatch } from './skopos-guard.js';
 
 export type SkoposImpactCategory =
   | 'root-config'
-  | 'override-artifact'
   | 'generated-artifact'
-  | 'workflow-artifact'
+  | 'action-artifact'
   | 'docs'
   | 'instruction-source'
   | 'instruction-mirror'
   | 'package-manifest'
-  | 'package-source'
+  | 'scope-source'
   | 'workspace-file';
 
 export interface SkoposImpactEntry {
@@ -21,13 +21,15 @@ export interface SkoposImpactEntry {
 
 export interface SkoposImpactReport {
   workspaceRoot: string;
-  changedPathSource: 'explicit' | 'git-status';
+  changedPathSource: 'explicit' | 'git-status' | 'task';
   changedPaths: string[];
+  ignoredPreExistingPaths?: string[];
   changed: SkoposImpactEntry[];
   affectedScopes: SkoposScopeLite[];
-  requiredActions: string[];
+  recommendedCommands: string[];
   recommendedChecks: string[];
-  requiredWorkflows: SkoposWorkflowRequirement[];
+  matchedGuards: SkoposGuardMatch[];
+  requiredActions: SkoposActionRequirement[];
   warnings: string[];
   instructionMirrorIssues: string[];
   graphPath?: string;

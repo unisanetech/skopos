@@ -6,8 +6,8 @@ import type {
   SkoposStructuredCommand,
   SkoposTaskContract,
 } from './skopos-agent-native-operating-model.js';
-import type { SkoposExecutionLane } from './skopos-policy-pack.js';
 import type { SkoposTaskIdentity } from './skopos-task-identity.js';
+import type { SkoposTaskRisk } from './skopos-task.js';
 
 export const SKOPOS_PROJECT_PROVIDER_PROTOCOL_VERSION = 1;
 
@@ -22,9 +22,9 @@ export interface SkoposProjectProviderRequestEnvelope<TMethod extends SkoposProj
 }
 
 export interface SkoposProjectProviderAuthorityBoundary {
-  workflowAuthority: 'skopos';
+  actionAuthority: 'skopos';
   taskStateAuthority: 'skopos';
-  closureAuthority: 'skopos';
+  readinessAuthority: 'skopos';
 }
 
 export interface SkoposProjectProviderDescribeRequest
@@ -54,7 +54,7 @@ export interface SkoposProjectProviderBriefRequest
   extends SkoposProjectProviderRequestEnvelope<'brief'> {
   task: SkoposTaskContract;
   phase: SkoposExecutionPhase;
-  riskLane: SkoposExecutionLane;
+  taskRisk: SkoposTaskRisk;
   changedPaths: string[];
 }
 

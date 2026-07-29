@@ -11,12 +11,12 @@
   "variant": "product-ui",
   "version": "0.1.0",
   "displayName": "Product UI Craft",
-  "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, actions, guards, or closure authority.",
+  "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, Actions, Guards, Evidence, or Readiness.",
   "plainLanguageSummary": "Use this for customer-facing pages and product screens that need real design judgment, complete states, human copy, responsive behavior, and visual evidence.",
   "authorityBoundary": {
-    "workflowAuthority": "skopos",
+    "actionAuthority": "skopos",
     "taskStateAuthority": "skopos",
-    "closureAuthority": "skopos"
+    "readinessAuthority": "skopos"
   },
   "bestFor": [
     "Customer-facing web pages",
@@ -34,7 +34,7 @@
     "established-brownfield",
     "legacy-stabilization"
   ],
-  "riskLanes": ["light", "normal", "workpack"],
+  "taskRisks": ["light", "standard", "high-impact"],
   "appliesWhen": [
     {
       "id": "signal.frontend-surface",

@@ -1,21 +1,31 @@
+---
+title: "Decision: Bundled CLI Release Contract"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-031
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-06-26
+lastUpdated: 2026-07-29
+relatedDocs:
+  - ../architecture/package-boundaries.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../../packages/cli/README.md
+---
+
 # Decision: Bundled CLI Release Contract
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-031`
-- Status: `accepted`
-- Date: `2026-06-26`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-06-26`
-- Related Docs:
-  - `../architecture/package-boundaries.md`
-  - `../project/implementation-checklist.md`
-  - `../../packages/cli/README.md`
 
 ## Changelog
 
+- `2026-07-29`: Updated installed smoke proof to use canonical Session context and
+  Readiness surfaces.
+- `2026-07-27`: Required installed live UI to resolve the CLI-bundled app without a
+  monorepo-local UI package and extended release smoke to prove both snapshot build
+  and live refresh from the packed CLI.
 - `2026-06-27`: Added the first-release version policy: publish `@skopos/cli@0.1.0` with the `next` dist tag while internal packages remain private and version-aligned.
 - `2026-06-26`: Set the public bundled CLI release license to Apache-2.0 and required the npm package to include a license file.
 - `2026-06-26`: Accepted the bundled CLI release contract so Skopos can install through `npx`, `npm exec`, and `pnpm dlx` without publishing the internal package graph.
@@ -52,6 +62,9 @@ The first public CLI release version is `0.1.0` and must publish with the `next`
    - `npm exec --package @skopos/cli -- skopos init .`
    - `pnpm dlx @skopos/cli init .`
 13. Release smoke must prove the packed CLI works from a fresh project outside the monorepo.
+14. Installed `skopos ui dev` must use bundled app assets when source UI assets are
+    unavailable; it must not require a separately installed internal `@skopos/ui`
+    package.
 
 ## Consequences
 
@@ -76,6 +89,8 @@ The release smoke test must pack `@skopos/cli`, install it into a fresh project,
 
 1. installed `skopos --help`
 2. installed `skopos init .`
-3. installed `skopos trust . --compact`
+3. installed `skopos session context . --json`
 4. `npm exec --package <packed-cli> -- skopos init <target>`
 5. `pnpm dlx <packed-cli> init <target>`
+6. installed `skopos ui build <target>`
+7. installed `skopos ui dev <target>` plus live state refresh

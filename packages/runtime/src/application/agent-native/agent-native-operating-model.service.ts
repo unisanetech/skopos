@@ -1,52 +1,50 @@
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
-import { loadSkoposWorkflowManifests } from '@skopos/indexer';
+import {
+  buildSkoposDocumentCatalog,
+  loadSkoposActionManifests,
+} from '@skopos/indexer';
 import type {
   SkoposCompactTaskBrief,
-  SkoposExecutionLane,
   SkoposExecutionPhase,
   SkoposMemoryStateArtifact,
-  SkoposMissionArtifact,
-  SkoposResolvedGatesArtifact,
+  SkoposResolvedGuardsArtifact,
   SkoposResolvedPolicyArtifact,
-  SkoposWorkflowQuestionArtifact,
+  SkoposTaskArtifact,
+  SkoposTaskQuestionArtifact,
+  SkoposTaskRisk,
 } from '@skopos/model';
 
-import { buildSkoposCompactTaskBrief, inferSkoposTaskRiskLane } from './compact-task-brief.js';
-import { compileSkoposAgentNativeOperatingModel } from './compile-operating-model.js';
+import { buildSkoposCompactTaskBrief, inferSkoposTaskRisk } from './compact-task-brief.js';
+import {
+  compileSkoposAgentNativeOperatingModel,
+  compileSkoposDocumentKnowledgeEntries,
+} from './compile-operating-model.js';
 import { selectSkoposSkillsForTaskRuntime } from '../skills/skills.service.js';
 
-const RESOLVED_POLICY_ARTIFACT_PATH = '.skopos/policies/resolved.json';
-const RESOLVED_GATES_ARTIFACT_PATH = '.skopos/gates/resolved.json';
-const MEMORY_STATE_ARTIFACT_PATH = '.skopos/memory/state.json';
+const RESOLVED_POLICY_ARTIFACT_PATH = '.skopos/index/policies/resolved.json';
+const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
+const MEMORY_STATE_ARTIFACT_PATH = '.skopos/index/roles.json';
 
 export {
   buildSkoposCompactTaskBrief,
-  inferSkoposTaskRiskLane,
+  inferSkoposTaskRisk,
 } from './compact-task-brief.js';
 export {
   compileSkoposAgentNativeOperatingModel,
-  resolveSkoposWorkflowActionPhases,
+  compileSkoposDocumentKnowledgeEntries,
+  resolveSkoposActionPhases,
 } from './compile-operating-model.js';
-export {
-  selectSkoposEvalCheckCommands,
-  selectSkoposEvalWorkflowIds,
-} from './phase-execution.js';
 export {
   formatSkoposStructuredCommand,
   parseSkoposStructuredCommand,
 } from './structured-command.js';
 export { evaluateSkoposKnowledgePromotion } from './knowledge-promotion.js';
 export {
-  COMPACT_PROJECT_ARTIFACT_PATH,
-  CURRENT_BRIEF_ARTIFACT_PATH,
-  CURRENT_TASK_ARTIFACT_PATH,
-  RECEIPTS_ARTIFACT_DIRECTORY,
-  writeSkoposCompactProjectProjection,
-  writeSkoposCurrentTaskProjections,
-  writeSkoposReceiptProjection,
-} from './artifact-lifecycle.js';
+  PROJECT_ARTIFACT_PATH,
+  writeSkoposProjectArtifact,
+} from './project-artifact.js';
 export {
   mergeSkoposProjectProviderDescription,
   validateSkoposProjectProviderBrief,
@@ -56,60 +54,73 @@ export {
 
 export interface BuildSkoposCompactTaskBriefRuntimeOptions {
   cwd: string;
-  mission: SkoposMissionArtifact;
-  questions: SkoposWorkflowQuestionArtifact;
+  task: SkoposTaskArtifact;
+  questions: SkoposTaskQuestionArtifact;
   phase: SkoposExecutionPhase;
-  riskLane?: SkoposExecutionLane;
+  risk?: SkoposTaskRisk;
 }
 
 export const buildSkoposCompactTaskBriefRuntime = async ({
   cwd,
-  mission,
+  task,
   questions,
   phase,
-  riskLane,
+  risk,
 }: BuildSkoposCompactTaskBriefRuntimeOptions): Promise<SkoposCompactTaskBrief> => {
   const workspaceRoot = resolve(cwd);
-  const [workflows, policy, gates, memory] = await Promise.all([
-    loadSkoposWorkflowManifests({ cwd: workspaceRoot }),
+  const [actions, policy, guards, memory, documentCatalog] = await Promise.all([
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
     readJsonIfExists<SkoposResolvedPolicyArtifact>(
       join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH),
     ),
-    readJsonIfExists<SkoposResolvedGatesArtifact>(
-      join(workspaceRoot, RESOLVED_GATES_ARTIFACT_PATH),
+    readJsonIfExists<SkoposResolvedGuardsArtifact>(
+      join(workspaceRoot, RESOLVED_GUARDS_ARTIFACT_PATH),
     ),
     readJsonIfExists<SkoposMemoryStateArtifact>(
       join(workspaceRoot, MEMORY_STATE_ARTIFACT_PATH),
     ),
+    buildSkoposDocumentCatalog({ cwd: workspaceRoot }),
   ]);
 
   const operatingModel = compileSkoposAgentNativeOperatingModel({
-    workflows,
+    actions,
     policy,
-    gates,
+    guards,
     memory,
+    knowledge: compileSkoposDocumentKnowledgeEntries(documentCatalog.documents),
   });
-  const resolvedRiskLane = riskLane ?? inferSkoposTaskRiskLane({ policy, questions });
+  operatingModel.diagnostics.push(
+    ...documentCatalog.issues.map(
+      (issue) =>
+        `Project Memory ${issue.kind} issue [${issue.code}] in ${issue.path}: ${issue.summary}`,
+    ),
+  );
+  const resolvedRisk = risk ?? inferSkoposTaskRisk({ policy, questions });
   const baseBrief = buildSkoposCompactTaskBrief({
-    mission,
+    task,
     questions,
     operatingModel,
     phase,
-    riskLane: resolvedRiskLane,
+    risk: resolvedRisk,
   });
   const skillSelection = await selectSkoposSkillsForTaskRuntime({
     cwd: workspaceRoot,
     task: baseBrief.task,
-    riskLane: resolvedRiskLane,
+    taskRisk:
+      resolvedRisk === 'high-impact'
+        ? 'high-impact'
+        : resolvedRisk === 'standard'
+          ? 'standard'
+          : 'light',
     operatingModel,
   });
 
   const brief = buildSkoposCompactTaskBrief({
-    mission,
+    task,
     questions,
     operatingModel,
     phase,
-    riskLane: resolvedRiskLane,
+    risk: resolvedRisk,
     selectedSkills: skillSelection.selectedSkills,
   });
   return {

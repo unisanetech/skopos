@@ -1,20 +1,26 @@
+---
+title: "F-20260411-self-hosting-workflow-router-drift: Self-Hosted Feature Work
+  Can Still Drift Outside Skopos Mission State"
+status: historical
+owner: skopos-core
+id: SKOPOS-F-20260411-SELF-HOSTING-WORKFLOW-ROUTER-DRIFT
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-06-25
+relatedDocs:
+  - ../README.md
+  - ../../00-start-here.md
+  - ../../operations/local-development.md
+  - ../../decisions/archive/018-self-hosting-workflow-contract.md
+  - ../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md
+reviewCycle: per workpack
+---
+
 # F-20260411-self-hosting-workflow-router-drift: Self-Hosted Feature Work Can Still Drift Outside Skopos Mission State
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260411-SELF-HOSTING-WORKFLOW-ROUTER-DRIFT`
-- Status: `historical`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-06-25`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `registry.md`
-  - `../00-start-here.md`
-  - `../runbooks/local-development.md`
-  - `../decisions/018-self-hosting-workflow-contract.md`
-  - `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
 
 ## Changelog
 
@@ -45,7 +51,7 @@
 ## Symptom
 
 1. Self-hosted Skopos feature work can still continue after planning discussion without a newly created or claimed Skopos mission.
-2. `00-start-here.md` and `runbooks/local-development.md` still described hybrid or outer-governance behavior instead of making Skopos-native execution the primary contract.
+2. `../../00-start-here.md` and `../../operations/local-development.md` still described hybrid or outer-governance behavior instead of making Skopos-native execution the primary contract.
 3. Trust warnings such as instruction-mirror drift can appear as downstream symptoms while the execution-state gap itself remains under-specified.
 4. Even when a real plan and claimed mission exist, a new artifact family or core contract change can still begin in code before the durable decision doc exists.
 5. There is now a single runtime command for new work after a discussion, a durable ongoing-work router during implementation, and an explicit eval lane between implementation and closure.
@@ -82,9 +88,9 @@
 
 ## Linked Docs
 
-1. `registry.md`
-2. `../00-start-here.md`
-3. `../runbooks/local-development.md`
-4. `../decisions/018-self-hosting-workflow-contract.md`
-5. `../decisions/019-compiled-reference-layer-and-agent-memory-baseline.md`
-6. `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
+1. `../README.md`
+2. `../../00-start-here.md`
+3. `../../operations/local-development.md`
+4. `../../decisions/archive/018-self-hosting-workflow-contract.md`
+5. `../../decisions/019-compiled-reference-layer-and-agent-memory-baseline.md`
+6. `../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md`

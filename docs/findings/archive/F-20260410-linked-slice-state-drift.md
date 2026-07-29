@@ -1,19 +1,25 @@
+---
+title: "F-20260410-linked-slice-state-drift: Parent Batch Missions Did Not
+  Refresh Child Slice Progress"
+status: done
+owner: skopos-core
+id: SKOPOS-F-20260410-LINKED-SLICE-STATE-DRIFT
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-04-10
+relatedDocs:
+  - ../README.md
+  - ../../work/plans/P-067e15c4-proof-and-benchmarking.md
+  - ../../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../../scopes/skopos-runtime/overview.md
+reviewCycle: per workpack
+---
+
 # F-20260410-linked-slice-state-drift: Parent Batch Missions Did Not Refresh Child Slice Progress
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260410-LINKED-SLICE-STATE-DRIFT`
-- Status: `done`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-04-10`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `../registry.md`
-  - `../../project/proof-phase-plan.md`
-  - `../../project/implementation-checklist.md`
-  - `../../scopes/runtime.md`
 
 ## Changelog
 
@@ -53,6 +59,6 @@
 
 ## Linked Docs
 
-1. `../registry.md`
-2. `../../project/proof-phase-plan.md`
-3. `../../scopes/runtime.md`
+1. `../README.md`
+2. `../../work/plans/P-067e15c4-proof-and-benchmarking.md`
+3. `../../scopes/skopos-runtime/overview.md`

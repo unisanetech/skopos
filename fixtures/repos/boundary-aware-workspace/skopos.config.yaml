@@ -14,7 +14,6 @@ workspace:
     - fixtures
     - internal
     - tests
-    - docs/generated
 docs:
   root: docs
   usePerDomainArchive: true
@@ -27,10 +26,10 @@ agents:
     - .cursor/rules/project.mdc
     - .github/copilot-instructions.md
   mcp: true
-trust:
+verification:
   mode: balanced
   requireDocsSync: true
-  requireProofForDone: true
+  requireEvidenceForReadiness: true
 decisions:
   mode: balanced
   askFor:

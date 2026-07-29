@@ -17,7 +17,7 @@ export const skoposUiSections = [
   'scopes',
   'decisions',
   'findings',
-  'trust',
+  'readiness',
   'activity',
   'graphs',
 ] as const;

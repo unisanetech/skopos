@@ -1,0 +1,29 @@
+id: ui.build-console-app
+title: Build routed Skopos console app
+description: Build the routed local Skopos console bundle from compiled UI state for human pilot use while keeping the snapshot renderer as fallback.
+category: maintenance
+scope:
+  - workspace
+  - docs
+command: pnpm skopos:ui:app
+cwd: .
+inputs:
+  - .skopos
+  - docs
+  - packages/ui
+  - packages/cli
+outputs:
+  - .skopos/ui/app
+affects:
+  - .skopos/ui/app
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing routed UI state shaping, the console app shell, route structure, or other human-facing app surfaces.
+phases:
+  - stabilization
+risks:
+  - standard
+  - high-impact
+recommendedAfter:
+  - maintenance.refresh-knowledge
+owner: skopos-core

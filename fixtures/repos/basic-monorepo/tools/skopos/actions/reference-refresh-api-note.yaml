@@ -1,0 +1,21 @@
+id: reference.refresh-api-note
+title: Refresh API reference note
+description: Generate a small API reference note so Skopos can require a declared Action for API-scope changes.
+category: reference-generator
+scope:
+  - '@fixture/api'
+command: node tools/skopos/scripts/generate-api-reference-note.mjs
+cwd: .
+inputs:
+  - packages/api/package.json
+outputs:
+  - docs/reference/generated/api-reference-note.md
+affects:
+  - packages/api
+  - docs/reference/generated
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing the API package manifest or API contract surfaces.
+recommendedAfter:
+  - plan
+owner: skopos-fixture

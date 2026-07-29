@@ -31,5 +31,5 @@
     "Required rendered evidence is absent"
   ],
   "authority": "manual-proof-input",
-  "closureAuthority": "skopos"
+  "readinessAuthority": "skopos"
 }

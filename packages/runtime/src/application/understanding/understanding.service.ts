@@ -9,6 +9,8 @@ import type {
   SkoposDecisionQuestion,
   SkoposFeatureInventoryArtifact,
   SkoposImplementationHotspotsArtifact,
+  SkoposMemoryRole,
+  SkoposMemoryRoleKind,
   SkoposRepoUnderstandingSummaryArtifact,
   SkoposRootConfig,
   SkoposScopeLite,
@@ -28,6 +30,7 @@ import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
+import { buildSkoposMemoryRoles } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 
@@ -42,7 +45,7 @@ export interface BuildSkoposSetupAnswerRuntimeOptions extends BuildSkoposUnderst
   optionId: string;
 }
 
-const UNDERSTANDING_DIRECTORY = '.skopos/understanding';
+const UNDERSTANDING_DIRECTORY = '.skopos/index/understanding';
 const SUMMARY_PATH = `${UNDERSTANDING_DIRECTORY}/repo-summary.json`;
 const FEATURE_INVENTORY_PATH = `${UNDERSTANDING_DIRECTORY}/feature-inventory.json`;
 const HOTSPOTS_PATH = `${UNDERSTANDING_DIRECTORY}/hotspots.json`;
@@ -58,10 +61,10 @@ export const buildSkoposUnderstandingRuntime = async ({
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   const bootstrap = await readJson<SkoposBootstrapArtifact>(
-    join(workspaceRoot, '.skopos', 'bootstrap.json'),
+    join(workspaceRoot, '.skopos', 'index', 'bootstrap.json'),
   );
   const scopesLite = await readJson<SkoposScopesLiteArtifact>(
-    join(workspaceRoot, '.skopos', 'scopes-lite.json'),
+    join(workspaceRoot, '.skopos', 'index', 'scopes.json'),
   );
   const setupAnswersPath = join(workspaceRoot, SETUP_ANSWERS_PATH);
   const setupAnswers = await loadSetupAnswersArtifact({
@@ -69,6 +72,10 @@ export const buildSkoposUnderstandingRuntime = async ({
     setupAnswersPath,
   });
   const generatedAt = new Date().toISOString();
+  const memoryRoles = await buildSkoposMemoryRoles({
+    workspaceRoot,
+    bootstrap,
+  });
   const summary = buildRepoSummaryArtifact({
     workspaceRoot,
     generatedAt,
@@ -91,6 +98,7 @@ export const buildSkoposUnderstandingRuntime = async ({
     workspaceRoot,
     generatedAt,
     bootstrap,
+    memoryRoles,
   });
   const setupReview = buildSetupReviewArtifact({
     workspaceRoot,
@@ -215,7 +223,7 @@ export const buildSkoposSetupAnswerRuntime = async ({
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   const bootstrap = await readJson<SkoposBootstrapArtifact>(
-    join(workspaceRoot, '.skopos', 'bootstrap.json'),
+    join(workspaceRoot, '.skopos', 'index', 'bootstrap.json'),
   );
   const current = await buildSkoposSetupReviewRuntime({
     cwd: workspaceRoot,
@@ -312,66 +320,98 @@ const buildAgentAnalysisBriefArtifact = async ({
   workspaceRoot,
   generatedAt,
   bootstrap,
+  memoryRoles,
 }: {
   workspaceRoot: string;
   generatedAt: string;
   bootstrap: SkoposBootstrapArtifact;
+  memoryRoles: SkoposMemoryRole[];
 }): Promise<SkoposAgentAnalysisBriefArtifact> => {
   const docsRoot = bootstrap.recommendedConfig.docs.root;
   const candidates = [
     {
       id: 'project-overview',
       title: 'Project overview',
-      path: `${docsRoot}/project/overview.md`,
+      path: `${docsRoot}/overview.md`,
       purpose: 'Explain what the product/project does, who uses it, and what success means.',
       required: true,
+      sourceRoles: ['project-overview'] satisfies SkoposMemoryRoleKind[],
     },
     {
       id: 'architecture',
       title: 'Architecture map',
-      path: `${docsRoot}/project/architecture.md`,
+      path: `${docsRoot}/architecture/overview.md`,
       purpose: 'Explain the main layers, boundaries, data flow, integrations, and where new work should fit.',
-      required: true,
+      required:
+        bootstrap.detected.repoMode === 'monorepo' ||
+        bootstrap.detected.workspacePackageCount > 1,
+      sourceRoles: ['architecture-structure'] satisfies SkoposMemoryRoleKind[],
     },
     {
       id: 'domains',
       title: 'Domain and feature map',
-      path: `${docsRoot}/project/domains.md`,
+      path: `${docsRoot}/domains/overview.md`,
       purpose: 'Map important product domains/features to their owning folders, routes, services, docs, and risks.',
-      required: true,
+      required: false,
+      sourceRoles: [
+        'architecture-structure',
+        'project-overview',
+      ] satisfies SkoposMemoryRoleKind[],
     },
     {
-      id: 'workflows',
-      title: 'Developer workflows',
-      path: `${docsRoot}/project/workflows.md`,
+      id: 'developer-procedures',
+      title: 'Developer procedures',
+      path: `${docsRoot}/guides/developer-procedures.md`,
       purpose: 'Describe how agents and developers should add features, fix bugs, update docs, and close work safely.',
-      required: true,
+      required: Object.keys(bootstrap.recommendedConfig.commands).length > 0,
+      sourceRoles: ['verification-guards'] satisfies SkoposMemoryRoleKind[],
     },
     {
       id: 'validation',
-      title: 'Validation gates',
-      path: `${docsRoot}/project/validation.md`,
+      title: 'Verification Guards',
+      path: `${docsRoot}/standards/validation.md`,
       purpose: 'Record the real commands and proof expectations for safe changes by risk and surface touched.',
-      required: true,
-    },
-    {
-      id: 'open-questions',
-      title: 'Open setup questions',
-      path: `${docsRoot}/project/open-questions.md`,
-      purpose: 'Keep unresolved assumptions visible until the user or maintainers confirm them.',
-      required: false,
+      required: Object.keys(bootstrap.recommendedConfig.commands).length > 0,
+      sourceRoles: ['verification-guards'] satisfies SkoposMemoryRoleKind[],
     },
   ];
   const durableOutputs = await Promise.all(
-    candidates.map(async (entry) => ({
-      ...entry,
-      status: (await pathExists(join(workspaceRoot, entry.path))) ? 'present' as const : 'missing' as const,
-    })),
+    candidates.map(async (entry) => {
+      const directPathExists = await pathExists(join(workspaceRoot, entry.path));
+      const mappedRole = entry.sourceRoles
+        .map((role) => memoryRoles.find((candidate) => candidate.role === role))
+        .find((role) => role?.status === 'mapped' && role.sources.length > 0);
+      const mappedPaths = mappedRole?.sources.map((source) => source.path) ?? [];
+      const resolvedPath = directPathExists ? entry.path : mappedPaths[0] ?? entry.path;
+
+      return {
+        id: entry.id,
+        title: entry.title,
+        path: resolvedPath,
+        ...(resolvedPath !== entry.path ? { recommendedPath: entry.path } : {}),
+        ...(mappedPaths.length > 0 ? { mappedPaths } : {}),
+        ...(mappedRole ? { sourceRole: mappedRole.role } : {}),
+        purpose: entry.purpose,
+        required: entry.required,
+        status: directPathExists || mappedPaths.length > 0
+          ? 'present' as const
+          : 'missing' as const,
+      };
+    }),
   );
   const missingRequired = durableOutputs.filter((entry) => entry.required && entry.status !== 'present');
   const analysisStatus: SkoposAgentAnalysisBriefArtifact['analysisStatus'] =
     missingRequired.length === 0 ? 'agent-reviewed' : 'brief-ready';
   const requiredReads = buildAgentAnalysisReads(bootstrap);
+  const outputById = new Map(durableOutputs.map((entry) => [entry.id, entry]));
+  const mappedOutputExpectation = (id: string, fallback: string): string => {
+    const output = outputById.get(id);
+    if (!output?.sourceRole || !output.mappedPaths?.length) {
+      return fallback;
+    }
+
+    return `Review and update the mapped existing source${output.mappedPaths.length === 1 ? '' : 's'} ${output.mappedPaths.join(', ')} when project truth changes; do not create ${output.recommendedPath} as a parallel authority.`;
+  };
 
   return {
     schemaVersion: 1,
@@ -381,7 +421,7 @@ const buildAgentAnalysisBriefArtifact = async ({
     authority: 'generated',
     summary:
       analysisStatus === 'agent-reviewed'
-        ? 'Agent-reviewed project understanding docs are present. Keep them current when project truth changes.'
+        ? 'Durable project understanding sources are mapped. Keep the existing sources current when project truth changes.'
         : 'Scanner-only understanding is not enough yet. A coding agent should follow this brief and create durable project understanding docs before broad work.',
     updatedAt: generatedAt,
     generatedAt,
@@ -398,47 +438,65 @@ const buildAgentAnalysisBriefArtifact = async ({
         id: 'product-purpose',
         title: 'Explain the product purpose',
         prompt: 'Read the README, instruction file, important docs, package metadata, and visible app routes. Describe what this project does, who it serves, and the main user workflows.',
-        outputExpectation: `Write or update ${docsRoot}/project/overview.md in simple developer-friendly language.`,
+        outputExpectation: mappedOutputExpectation(
+          'project-overview',
+          `Write or update ${docsRoot}/overview.md in simple developer-friendly language.`,
+        ),
       },
       {
         id: 'architecture-map',
         title: 'Map the architecture',
         prompt: 'Inspect the top-level folders, app/runtime entrypoints, API routes, services, data access, UI components, jobs, integrations, and config boundaries.',
-        outputExpectation: `Write or update ${docsRoot}/project/architecture.md with layers, ownership, data flow, and rules for where new code belongs.`,
+        outputExpectation: mappedOutputExpectation(
+          'architecture',
+          `When architecture needs durable explanation, write or update ${docsRoot}/architecture/overview.md with layers, ownership, data flow, and rules for where new code belongs.`,
+        ),
       },
       {
         id: 'domain-map',
         title: 'Map domains and features',
         prompt: 'Identify real product domains/features and map each to code paths, docs, commands, and known risks. Do not treat folders as domains unless behavior confirms it.',
-        outputExpectation: `Write or update ${docsRoot}/project/domains.md with feature/domain ownership and first-look paths.`,
+        outputExpectation: mappedOutputExpectation(
+          'domains',
+          `When domain ownership needs durable explanation, write or update ${docsRoot}/domains/overview.md with feature/domain ownership and first-look paths.`,
+        ),
       },
       {
         id: 'workflow-map',
         title: 'Map work and validation flows',
         prompt: 'Find how developers add features, run checks, deploy/build, update docs, and close work. Compare package scripts, CI hints, AGENTS.md, and docs.',
-        outputExpectation: `Write or update ${docsRoot}/project/workflows.md and ${docsRoot}/project/validation.md.`,
+        outputExpectation: [
+          mappedOutputExpectation(
+            'workflows',
+            `Write or update ${docsRoot}/guides/developer-workflows.md when the project has a durable development workflow.`,
+          ),
+          mappedOutputExpectation(
+            'validation',
+            `Write or update ${docsRoot}/standards/validation.md when validation rules need durable project authority.`,
+          ),
+        ].join(' '),
       },
       {
         id: 'docs-authority',
         title: 'Classify docs authority',
         prompt: 'Classify key docs as canonical, supporting, stale, draft, or generated. Identify duplicate or conflicting guidance.',
-        outputExpectation: `Update ${docsRoot}/00-start-here.md links and record unresolved conflicts in ${docsRoot}/project/open-questions.md.`,
+        outputExpectation: `Update ${bootstrap.recommendedConfig.docs.startHerePath} only when routing truth changes. Record an unresolved structural gap as a collision-resistant Finding under ${docsRoot}/findings/**; keep work-bound questions on the owning Task and accepted choices in Decisions.`,
       },
       {
         id: 'confirmation-questions',
         title: 'Ask only important unresolved questions',
         prompt: 'List questions only when the answer changes architecture, validation, docs authority, product behavior, or agent workflow.',
-        outputExpectation: 'Use `skopos setup review` and project open-questions docs so assumptions stay visible until confirmed.',
+        outputExpectation: 'Use `skopos setup review`; promote a durable blocker to the owning Task or a Finding, and record an accepted choice as a Decision.',
       },
     ],
     durableOutputs,
     nextAgentAction:
       analysisStatus === 'agent-reviewed'
-        ? 'Use the project understanding docs as the first durable context before broad source scans.'
-        : 'Have a coding agent follow this brief, inspect the project, write the durable understanding docs, then rerun `skopos understand .` and `skopos trust .`.',
+        ? 'Use the mapped project understanding sources as durable context before broad source scans.'
+        : 'Have a coding agent follow this brief, inspect the project, write the durable understanding docs, then rerun `skopos understand .` and `skopos adopt assess .`.',
     nextCommand:
       analysisStatus === 'agent-reviewed'
-        ? 'skopos trust .'
+        ? 'skopos session context . --json'
         : `cat ${AGENT_ANALYSIS_BRIEF_PATH}`,
   };
 };
@@ -582,7 +640,7 @@ const buildHotspotsArtifact = ({
       evidence: [
         {
           label: 'Scope registry',
-          path: '.skopos/scopes-lite.json',
+          path: '.skopos/index/scopes.json',
         },
       ],
     }));
@@ -638,7 +696,7 @@ const buildSetupReviewArtifact = ({
       title: 'Project name',
       summary: `Skopos detected the project name as "${bootstrap.recommendedConfig.project.name}".`,
       confidence: 'high',
-      evidence: [{ label: 'Bootstrap artifact', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Bootstrap artifact', path: '.skopos/index/bootstrap.json' }],
     },
     {
       id: 'fact.repo-shape',
@@ -665,7 +723,7 @@ const buildSetupReviewArtifact = ({
           ? `Detected ${commandCount} command${commandCount === 1 ? '' : 's'} for project workflow.`
           : 'No reliable command surface was detected yet.',
       confidence: commandCount > 0 ? 'high' : 'low',
-      evidence: [{ label: 'Bootstrap commands', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Bootstrap commands', path: '.skopos/index/bootstrap.json' }],
     },
   ];
 
@@ -747,14 +805,16 @@ const buildSetupReviewArtifact = ({
     recommendedActions: buildSetupRecommendedActions(readiness, lifecycle),
     nextCommand:
       readiness === 'ready'
-        ? 'skopos trust .'
+        ? 'skopos session context . --json'
         : 'skopos setup review .',
   };
 };
 
 const pickPackageScopes = (scopes: SkoposScopeLite[]): SkoposScopeLite[] => {
-  const packages = scopes.filter((scope) => scope.kind === 'package');
-  return packages.length > 0 ? packages : scopes.filter((scope) => scope.kind === 'workspace');
+  const projectScopes = scopes.filter((scope) => scope.kind !== 'workspace');
+  return projectScopes.length > 0
+    ? projectScopes
+    : scopes.filter((scope) => scope.kind === 'workspace');
 };
 
 const buildDocsEntrypoints = (
@@ -788,8 +848,8 @@ const buildRepoShapeEvidence = (
   bootstrap: SkoposBootstrapArtifact,
 ): SkoposUnderstandingEvidence[] => {
   const evidence: SkoposUnderstandingEvidence[] = [
-    { label: 'Bootstrap artifact', path: '.skopos/bootstrap.json' },
-    { label: 'Scope registry', path: '.skopos/scopes-lite.json' },
+    { label: 'Bootstrap artifact', path: '.skopos/index/bootstrap.json' },
+    { label: 'Scope registry', path: '.skopos/index/scopes.json' },
   ];
 
   if (bootstrap.detected.hasRootPackageJson) {
@@ -836,7 +896,7 @@ const buildSetupAssumptions = ({
           ? 'Skopos is treating this as an existing project and will prefer mapping current truth before suggesting structure changes.'
           : 'Skopos is treating this as a new project and may recommend a clearer default memory and docs structure.',
       confidence: bootstrap.mode === 'existing' || bootstrap.mode === 'greenfield' ? 'medium' : 'low',
-      evidence: [{ label: 'Init mode', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Init mode', path: '.skopos/index/bootstrap.json' }],
     },
     {
       id: 'assumption.project-mode',
@@ -854,7 +914,7 @@ const buildSetupAssumptions = ({
       title: 'Project archetype',
       summary: `Skopos is using "${bootstrap.recommendedConfig.project.archetype}" as the working archetype until confirmed.`,
       confidence: bootstrap.detected.confidence,
-      evidence: [{ label: 'Bootstrap detection', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Bootstrap detection', path: '.skopos/index/bootstrap.json' }],
     },
   ];
 
@@ -874,7 +934,7 @@ const buildSetupAssumptions = ({
       title: 'Canonical docs root',
       summary: 'Skopos has no confirmed docs root yet and may recommend creating one for durable project memory.',
       confidence: 'low',
-      evidence: [{ label: 'Bootstrap docs health', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Bootstrap docs health', path: '.skopos/index/bootstrap.json' }],
     });
   }
 
@@ -885,18 +945,18 @@ const buildSetupAssumptions = ({
       title: 'Validation commands',
       summary: 'Skopos has not confirmed the commands agents should run before closing work.',
       confidence: 'low',
-      evidence: [{ label: 'Bootstrap command detection', path: '.skopos/bootstrap.json' }],
+      evidence: [{ label: 'Bootstrap command detection', path: '.skopos/index/bootstrap.json' }],
     });
   }
 
-  if (scopes.filter((scope) => scope.kind === 'package').length === 0) {
+  if (scopes.filter((scope) => scope.kind !== 'workspace').length === 0) {
     assumptions.push({
       id: 'assumption.work-boundaries',
       kind: 'assumption',
       title: 'Work boundaries',
-      summary: 'Skopos has not confirmed package-level work boundaries, so future agents should inspect local structure before broad edits.',
+      summary: 'Skopos has not confirmed declared Scope boundaries, so future agents should inspect local structure before broad edits.',
       confidence: 'medium',
-      evidence: [{ label: 'Scope registry', path: '.skopos/scopes-lite.json' }],
+      evidence: [{ label: 'Scope registry', path: '.skopos/index/scopes.json' }],
     });
   }
 
@@ -1018,7 +1078,7 @@ const buildSetupRecommendedActions = (
   if (readiness === 'ready') {
     return [
       'Use the repo summary and hotspots as the compact first-read context for future agent work.',
-      'Run trust before closing onboarding so generated state and instruction surfaces stay aligned.',
+      'Run `skopos adopt assess .` before closing onboarding so Memory and instruction surfaces stay aligned.',
     ];
   }
 

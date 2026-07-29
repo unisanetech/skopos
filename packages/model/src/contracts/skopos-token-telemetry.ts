@@ -18,7 +18,7 @@ export interface SkoposTokenTelemetryMeasurement {
 export interface SkoposTokenTelemetryArtifact
   extends SkoposArtifactEnvelope<'token-telemetry'> {
   workspaceRoot: string;
-  activeMissionId?: string;
+  activeTaskId?: string;
   measurementCount: number;
   overBudgetCount: number;
   missingCount: number;

@@ -230,8 +230,8 @@ export function SearchDock({
                 : `${searchContext.total} result${searchContext.total === 1 ? '' : 's'}`}
             </p>
             <p className="skopos-search-results-copy">
-              Search docs, decisions, missions, plans, issues, and project areas. Filters like{' '}
-              <code>mission:</code>, <code>plan:</code>, and <code>doc:</code> also work.
+              Search docs, decisions, tasks, plans, issues, and project areas. Filters like{' '}
+              <code>task:</code>, <code>plan:</code>, and <code>doc:</code> also work.
             </p>
           </div>
           {searchContext.groups.length > 0 ? (
@@ -297,7 +297,7 @@ export function SearchDock({
             }}
             onKeyDown={handleInputKeyDown}
             className="skopos-search-dock-input"
-            placeholder="Search docs, scopes, missions, plans..."
+            placeholder="Search docs, scopes, tasks, plans..."
             autoComplete="off"
             spellCheck={false}
           />
@@ -401,10 +401,6 @@ const labelForSearchKind = (kind: SkoposConsoleSearchKind): string => {
       return 'finding';
     case 'discussion':
       return 'discussion';
-    case 'program':
-      return 'program';
-    case 'obligation':
-      return 'obligation';
     case 'artifact':
       return 'source';
     case 'portal':
@@ -413,12 +409,12 @@ const labelForSearchKind = (kind: SkoposConsoleSearchKind): string => {
       return 'report';
     case 'plan':
       return 'plan';
-    case 'mission':
-      return 'mission';
+    case 'task':
+      return 'task';
     case 'scope':
       return 'scope';
-    case 'workflow':
-      return 'workflow';
+    case 'action':
+      return 'action';
     case 'event':
       return 'event';
     case 'graph':

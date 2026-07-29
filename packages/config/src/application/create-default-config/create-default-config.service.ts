@@ -36,6 +36,9 @@ export const createDefaultSkoposConfig = ({
     ...(projectMode ? { mode: projectMode } : {}),
   },
   commands: sanitizeCommandMap(commands),
+  validation: {
+    mode: 'commands',
+  },
   workspace: {
     ignore: [],
   },
@@ -43,18 +46,18 @@ export const createDefaultSkoposConfig = ({
     root: docsRoot,
     startHerePath: docsStartHerePath,
     usePerDomainArchive: true,
-    strictMetadata: true,
-    strictLinking: true,
+    strictMetadata: projectMode !== 'brownfield',
+    strictLinking: projectMode !== 'brownfield',
   },
   agents: {
     canonicalInstructions,
     syncMirrors: ['CLAUDE.md', '.cursor/rules/project.mdc', '.github/copilot-instructions.md'],
     mcp: true,
   },
-  trust: {
+  verification: {
     mode: repoMode === 'monorepo' ? 'balanced' : 'stabilize',
     requireDocsSync: true,
-    requireProofForDone: true,
+    requireEvidenceForReadiness: true,
   },
   decisions: {
     mode: 'balanced',

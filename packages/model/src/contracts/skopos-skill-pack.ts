@@ -3,11 +3,11 @@ import type {
   SkoposContextEntry,
 } from './skopos-agent-native-operating-model.js';
 import type {
-  SkoposExecutionLane,
   SkoposPolicySignal,
   SkoposPolicySignalConfidence,
   SkoposProjectLifecycle,
 } from './skopos-policy-pack.js';
+import type { SkoposTaskRisk } from './skopos-task.js';
 
 export type SkoposSkillPackFamily =
   | 'project-intelligence'
@@ -43,9 +43,9 @@ export type SkoposSkillProjectionHostId =
   (typeof SKOPOS_SKILL_PROJECTION_HOST_IDS)[number];
 
 export interface SkoposSkillAuthorityBoundary {
-  workflowAuthority: 'skopos';
+  actionAuthority: 'skopos';
   taskStateAuthority: 'skopos';
-  closureAuthority: 'skopos';
+  readinessAuthority: 'skopos';
 }
 
 export interface SkoposSkillSelectionPolicy {
@@ -112,7 +112,7 @@ export interface SkoposSkillPackManifest extends SkoposArtifactEnvelope<'skill-p
   bestFor: string[];
   notFor: string[];
   projectLifecycles: SkoposProjectLifecycle[];
-  riskLanes: SkoposExecutionLane[];
+  taskRisks: SkoposTaskRisk[];
   appliesWhen: SkoposPolicySignal[];
   avoidWhen: SkoposPolicySignal[];
   selection: SkoposSkillSelectionPolicy;
@@ -135,6 +135,13 @@ export interface SkoposProjectSkillBinding
   actionBindings: Record<string, string>;
   guardBindings: Record<string, string>;
   adaptationNotes: string[];
+  acceptance?: SkoposSkillAcceptance;
+}
+
+export interface SkoposSkillAcceptance {
+  acceptedAt: string;
+  acceptedBy: string;
+  reason: string;
 }
 
 export interface SkoposSkillRecommendationEntry {
@@ -220,7 +227,7 @@ export interface SkoposSkillHostProjectionArtifact
   extends SkoposArtifactEnvelope<'skill-host-projection'> {
   workspaceRoot: string;
   hostId: string;
-  sourceAuthority: 'skopos-resolved-skills';
+  sourceAuthority: 'tracked-project-skill-bindings';
   resolvedSkillsPath: string;
   acceptedSkillPackIds: string[];
   sourceDigest: string;

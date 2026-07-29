@@ -1,6 +1,4 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
-import type { SkoposReadiness, SkoposTrustLevel } from './skopos-trust-report.js';
-
 export type SkoposContentIndexEntryKind =
   | 'config'
   | 'doc-router'
@@ -10,11 +8,12 @@ export type SkoposContentIndexEntryKind =
   | 'telemetry-artifact'
   | 'understanding-artifact'
   | 'reference-artifact'
-  | 'override-artifact'
   | 'graph-artifact'
   | 'plan-artifact'
-  | 'mission-artifact'
-  | 'workflow-run-artifact'
+  | 'task-artifact'
+  | 'action-run-artifact'
+  | 'verification-artifact'
+  | 'readiness-artifact'
   | 'tool-adapter';
 
 export interface SkoposContentIndexCounts {
@@ -25,17 +24,86 @@ export interface SkoposContentIndexCounts {
   referenceArtifactCount: number;
   graphCount: number;
   planCount: number;
-  missionCount: number;
-  workflowRunCount: number;
-  workflowManifestCount: number;
-  overrideEntryCount: number;
+  taskCount: number;
+  actionRunCount: number;
+  actionManifestCount: number;
+  documentCount?: number;
+}
+
+export type SkoposDocumentRole =
+  | 'router'
+  | 'overview'
+  | 'architecture'
+  | 'standard'
+  | 'domain'
+  | 'guide'
+  | 'operation'
+  | 'decision'
+  | 'finding'
+  | 'plan'
+  | 'task'
+  | 'pattern'
+  | 'reference'
+  | 'document';
+
+export type SkoposDocumentLifecycle = 'active' | 'durable' | 'historical' | 'dead';
+
+export type SkoposDocumentAuthority =
+  | 'canonical'
+  | 'supporting'
+  | 'generated';
+
+export type SkoposDocumentProvenance =
+  | 'declared'
+  | 'accepted'
+  | 'observed'
+  | 'inferred'
+  | 'proposed';
+
+export type SkoposDocumentView = 'current' | 'target' | 'transition' | 'exception';
+
+export type SkoposPatternKind = 'preferred-pattern' | 'failure-pattern';
+
+export type SkoposFindingSeverity = 'MUST' | 'SHOULD' | 'COULD';
+
+export type SkoposDocumentAdoption = 'adopted' | 'discovery';
+
+export interface SkoposDocumentMetadata {
+  id?: string;
+  status?: string;
+  owner?: string;
+  scope?: string;
+  role?: SkoposDocumentRole;
+  lifecycle?: SkoposDocumentLifecycle;
+  authority?: SkoposDocumentAuthority;
+  provenance?: SkoposDocumentProvenance;
+  view?: SkoposDocumentView;
+  severity?: SkoposFindingSeverity;
+  priority?: number;
+  dependencyIds?: string[];
+  patternKind?: SkoposPatternKind;
+  appliesTo?: string[];
+}
+
+export interface SkoposDocumentKnowledgeEntry {
+  id: string;
+  title: string;
+  path: string;
+  sourceId: string;
+  adoption: SkoposDocumentAdoption;
+  role: SkoposDocumentRole;
+  lifecycle: SkoposDocumentLifecycle;
+  authority: SkoposDocumentAuthority;
+  defaultVisible: boolean;
+  summary?: string;
+  updatedAt?: string;
+  metadata?: SkoposDocumentMetadata;
 }
 
 export interface SkoposContentIndexQuickLinks {
   configPath: string;
   bootstrapPath?: string;
   docsStartHerePath?: string;
-  overridesPath?: string;
   logPath: string;
 }
 
@@ -60,11 +128,11 @@ export interface SkoposContentIndexArtifact extends SkoposArtifactEnvelope<'inde
   workspaceRoot: string;
   focusSubtree?: string;
   docsRoot?: string;
-  readiness: SkoposReadiness | 'unknown';
-  trustLevel: SkoposTrustLevel | 'unknown';
+  readiness: 'ready' | 'attention' | 'blocked' | 'unknown';
   counts: SkoposContentIndexCounts;
   quickLinks: SkoposContentIndexQuickLinks;
   latestEvent?: SkoposContentIndexLatestEvent;
+  documents?: SkoposDocumentKnowledgeEntry[];
   entries: SkoposContentIndexEntry[];
 }
 
@@ -73,25 +141,25 @@ export type SkoposOperationalLogEventKind =
   | 'scan'
   | 'start'
   | 'decision'
-  | 'program-sync'
-  | 'program-next'
   | 'next'
-  | 'eval'
+  | 'work-queue'
+  | 'verification'
+  | 'readiness'
+  | 'evidence'
+  | 'adoption'
+  | 'coordination'
   | 'instructions-scaffold'
   | 'instructions-sync'
   | 'policy'
   | 'policy-drift'
   | 'plan'
-  | 'mission-slice'
-  | 'mission-claim'
-  | 'mission-release'
-  | 'mission-item-complete'
-  | 'mission-complete'
-  | 'workflow-run'
+  | 'task-claim'
+  | 'task-release'
+  | 'task-step-complete'
+  | 'task-complete'
+  | 'action-run'
   | 'impact'
-  | 'done'
-  | 'trust'
-  | 'override-set'
+  | 'discussion'
   | 'understanding';
 
 export type SkoposOperationalLogStatus = 'succeeded' | 'failed' | 'dry-run';

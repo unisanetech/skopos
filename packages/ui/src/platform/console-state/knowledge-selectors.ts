@@ -1,6 +1,6 @@
 import type {
   SkoposUiConsoleDocumentView,
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
@@ -11,10 +11,10 @@ import {
 
 export interface PlanCollections {
   activePlans: SkoposUiConsolePlanView[];
-  missionLinkedPlans: SkoposUiConsolePlanView[];
+  taskLinkedPlans: SkoposUiConsolePlanView[];
   libraryPlans: SkoposUiConsolePlanView[];
   latestPlan?: SkoposUiConsolePlanView;
-  linkedMissionByPlanId: Map<string, SkoposUiConsoleMissionView>;
+  linkedTaskByPlanId: Map<string, SkoposUiConsoleTaskView>;
 }
 
 export interface KnowledgeDocumentCollections {
@@ -23,6 +23,8 @@ export interface KnowledgeDocumentCollections {
   referenceDocuments: SkoposUiConsoleDocumentView[];
   latestDocument?: SkoposUiConsoleDocumentView;
 }
+
+export type ProjectDocumentView = 'essentials' | 'work' | 'other' | 'all';
 
 export interface KnowledgeDocumentDetailContext {
   document?: SkoposUiConsoleDocumentView;
@@ -35,27 +37,27 @@ export const compareOptionalTimestamps = (left?: string, right?: string): number
   (left ?? '').localeCompare(right ?? '');
 
 export const getPlanCollections = (state: SkoposUiConsoleState): PlanCollections => {
-  const linkedMissionByPlanId = new Map<string, SkoposUiConsoleMissionView>();
+  const linkedTaskByPlanId = new Map<string, SkoposUiConsoleTaskView>();
 
-  for (const missionView of state.missions) {
-    if (!missionView.mission.planId || linkedMissionByPlanId.has(missionView.mission.planId)) {
+  for (const taskView of state.tasks) {
+    if (!taskView.task.planIds[0] || linkedTaskByPlanId.has(taskView.task.planIds[0])) {
       continue;
     }
-    linkedMissionByPlanId.set(missionView.mission.planId, missionView);
+    linkedTaskByPlanId.set(taskView.task.planIds[0], taskView);
   }
 
   const activePlans = state.plans
     .filter((planView) =>
-      state.missions.some(
-        (missionView) =>
-          missionView.mission.planId === planView.plan.id &&
-          missionView.mission.state !== 'complete',
+      state.tasks.some(
+        (taskView) =>
+          taskView.task.planIds[0] === planView.plan.id &&
+          taskView.task.state !== 'complete',
       ),
     )
     .sort((left, right) => compareOptionalTimestamps(right.plan.updatedAt, left.plan.updatedAt));
   const activePlanIds = new Set(activePlans.map((planView) => planView.plan.id));
-  const missionLinkedPlans = state.plans.filter((planView) =>
-    linkedMissionByPlanId.has(planView.plan.id),
+  const taskLinkedPlans = state.plans.filter((planView) =>
+    linkedTaskByPlanId.has(planView.plan.id),
   );
   const libraryPlans = state.plans
     .filter((planView) => !activePlanIds.has(planView.plan.id))
@@ -65,10 +67,10 @@ export const getPlanCollections = (state: SkoposUiConsoleState): PlanCollections
 
   return {
     activePlans,
-    missionLinkedPlans,
+    taskLinkedPlans,
     libraryPlans,
     latestPlan,
-    linkedMissionByPlanId,
+    linkedTaskByPlanId,
   };
 };
 
@@ -77,7 +79,7 @@ export const getPlanDetailContext = (
   planId: string,
 ): {
   planView?: SkoposUiConsolePlanView;
-  relatedMission?: SkoposUiConsoleMissionView;
+  relatedTask?: SkoposUiConsoleTaskView;
 } => {
   const planView = state.plans.find((candidate) => candidate.plan.id === planId);
 
@@ -87,8 +89,8 @@ export const getPlanDetailContext = (
 
   return {
     planView,
-    relatedMission: state.missions.find(
-      (missionView) => missionView.mission.planId === planView.plan.id,
+    relatedTask: state.tasks.find(
+      (taskView) => taskView.task.planIds[0] === planView.plan.id,
     ),
   };
 };
@@ -98,7 +100,11 @@ export const getKnowledgeDocumentCollections = (
   category: KnowledgeCategory,
 ): KnowledgeDocumentCollections => {
   const documents = state.documents
-    .filter((document) => knowledgeCategoryForDocument(document) === category)
+    .filter(
+      (document) =>
+        knowledgeCategoryForDocument(document) === category &&
+        document.defaultVisible !== false,
+    )
     .sort((left, right) => sortKnowledgeDocuments(left, right, category));
   const referenceDocuments =
     category === 'docs' ? [] : documents.filter((document) => isReferenceKnowledgeDocument(document));
@@ -118,12 +124,40 @@ export const getKnowledgeDocumentCollections = (
   };
 };
 
+export const filterProjectDocuments = (
+  documents: SkoposUiConsoleDocumentView[],
+  view: ProjectDocumentView,
+): SkoposUiConsoleDocumentView[] => {
+  if (view === 'all') return documents;
+  if (view === 'essentials') {
+    return documents.filter((document) =>
+      [
+        'router',
+        'overview',
+        'architecture',
+        'standard',
+        'domain',
+        'guide',
+        'operation',
+      ].includes(document.role ?? 'document'),
+    );
+  }
+  if (view === 'work') {
+    return documents.filter((document) => ['plan', 'task'].includes(document.role ?? 'document'));
+  }
+  return documents.filter((document) =>
+    ['pattern', 'reference', 'document'].includes(document.role ?? 'document'),
+  );
+};
+
 export const getKnowledgeDocumentDetailContext = (
   state: SkoposUiConsoleState,
   category: KnowledgeCategory,
   documentId: string,
 ): KnowledgeDocumentDetailContext => {
-  const { documents } = getKnowledgeDocumentCollections(state, category);
+  const documents = state.documents
+    .filter((candidate) => knowledgeCategoryForDocument(candidate) === category)
+    .sort((left, right) => sortKnowledgeDocuments(left, right, category));
   const document = documents.find((candidate) => candidate.id === documentId);
 
   if (!document) {

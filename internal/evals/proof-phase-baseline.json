@@ -3,7 +3,7 @@
   "id": "proof-phase-baseline-v1",
   "definitionSetId": "proof-phase-benchmarks",
   "requiredStatus": "pass",
-  "benchmarkCount": 21,
+  "benchmarkCount": 20,
   "minimumWeightedPassRate": 1,
   "benchmarks": [
     {
@@ -38,11 +38,6 @@
     },
     {
       "id": "stale-docs-trust",
-      "requiredStatus": "pass",
-      "minimumWeightedPassRate": 1
-    },
-    {
-      "id": "override-canonicalization",
       "requiredStatus": "pass",
       "minimumWeightedPassRate": 1
     },
@@ -150,11 +145,6 @@
     },
     {
       "category": "docs-trust",
-      "requiredStatus": "pass",
-      "minimumWeightedPassRate": 1
-    },
-    {
-      "category": "override-canonicalization",
       "requiredStatus": "pass",
       "minimumWeightedPassRate": 1
     },

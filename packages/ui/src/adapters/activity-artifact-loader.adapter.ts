@@ -1,49 +1,64 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type {
-  SkoposMissionArtifact,
+  SkoposActionRunArtifact,
   SkoposOperationalLogEntry,
-  SkoposPlanArtifact,
-  SkoposWorkflowRunArtifact,
+  SkoposTaskArtifact,
 } from '@skopos/model';
 
 export interface LoadedActivityArtifacts {
-  plans: SkoposPlanArtifact[];
-  missions: SkoposMissionArtifact[];
-  workflowRuns: SkoposWorkflowRunArtifact[];
+  tasks: SkoposTaskArtifact[];
+  actionRuns: SkoposActionRunArtifact[];
   operationalLog: SkoposOperationalLogEntry[];
 }
 
 export const loadSkoposActivityArtifacts = async (
   workspaceRoot: string,
 ): Promise<LoadedActivityArtifacts> => ({
-  plans: await loadJsonArtifacts<SkoposPlanArtifact>(join(workspaceRoot, '.skopos', 'plans')),
-  missions: await loadJsonArtifacts<SkoposMissionArtifact>(
-    join(workspaceRoot, '.skopos', 'missions'),
+  tasks: await loadJsonArtifacts<SkoposTaskArtifact>(
+    join(workspaceRoot, '.skopos/tasks'),
+    true,
+    (name) => name === 'task.json',
   ),
-  workflowRuns: await loadJsonArtifacts<SkoposWorkflowRunArtifact>(
-    join(workspaceRoot, '.skopos', 'runs'),
+  actionRuns: await loadJsonArtifacts<SkoposActionRunArtifact>(
+    join(workspaceRoot, '.skopos/runs'),
+    false,
   ),
   operationalLog: await loadJsonLinesArtifacts<SkoposOperationalLogEntry>(
-    join(workspaceRoot, '.skopos', 'log.jsonl'),
+    join(workspaceRoot, '.skopos/runs/operations.jsonl'),
   ),
 });
 
-const loadJsonArtifacts = async <T>(directoryPath: string): Promise<T[]> => {
+const loadJsonArtifacts = async <T>(
+  directoryPath: string,
+  recursive: boolean,
+  include: (name: string) => boolean = (name) => name.endsWith('.json'),
+): Promise<T[]> => {
+  const paths = await collectJsonPaths(directoryPath, recursive, include);
+  return Promise.all(
+    paths.map(async (path) => JSON.parse(await readFile(path, 'utf8')) as T),
+  );
+};
+
+const collectJsonPaths = async (
+  directoryPath: string,
+  recursive: boolean,
+  include: (name: string) => boolean,
+): Promise<string[]> => {
   try {
     const entries = await readdir(directoryPath, { withFileTypes: true });
-    const jsonFiles = entries
-      .filter((entry) => entry.isFile() && entry.name.endsWith('.json'))
-      .map((entry) => entry.name)
-      .sort();
-    const artifacts = await Promise.all(
-      jsonFiles.map(
-        async (fileName) => JSON.parse(await readFile(join(directoryPath, fileName), 'utf8')) as T,
-      ),
-    );
-
-    return artifacts;
+    return (
+      await Promise.all(
+        entries.map((entry) => {
+          const path = join(directoryPath, entry.name);
+          if (recursive && entry.isDirectory()) {
+            return collectJsonPaths(path, true, include);
+          }
+          return entry.isFile() && include(entry.name) ? [path] : [];
+        }),
+      )
+    ).flat();
   } catch {
     return [];
   }
@@ -51,11 +66,10 @@ const loadJsonArtifacts = async <T>(directoryPath: string): Promise<T[]> => {
 
 const loadJsonLinesArtifacts = async <T>(filePath: string): Promise<T[]> => {
   try {
-    const content = await readFile(filePath, 'utf8');
-    return content
+    return (await readFile(filePath, 'utf8'))
       .split('\n')
       .map((line) => line.trim())
-      .filter((line) => line.length > 0)
+      .filter(Boolean)
       .map((line) => JSON.parse(line) as T);
   } catch {
     return [];

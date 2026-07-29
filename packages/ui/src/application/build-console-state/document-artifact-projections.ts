@@ -111,7 +111,7 @@ const buildArchitectureArtifactView = (
             entriesSection(
               'current-units',
               'Current units',
-              'Detected workspace and package boundaries.',
+              'Detected workspace and project Scope boundaries.',
               currentUnits.map((unit) => ({
                 title: readString(unit.title) ?? readString(unit.scopeId) ?? 'Unnamed unit',
                 summary: readString(unit.summary),
@@ -233,7 +233,7 @@ const buildDiagnosisArtifactView = (
 ): NonNullable<SkoposUiConsoleDocumentView['artifactView']> => {
   const record = asRecord(parsed);
   const findings = asArrayOfRecords(record.findings);
-  const remediationMissions = asArrayOfRecords(record.remediationMissions);
+  const remediationTasks = asArrayOfRecords(record.remediationTasks);
 
   return {
     kind: 'diagnosis',
@@ -243,7 +243,7 @@ const buildDiagnosisArtifactView = (
       metric('Health', readString(record.health), toneForState(readString(record.health))),
       metric('Confidence', readString(record.confidence)),
       metric('Findings', countValue(findings.length)),
-      metric('Remediations', countValue(remediationMissions.length)),
+      metric('Remediations', countValue(remediationTasks.length)),
     ]),
     sections: [
       keyValueSection(
@@ -277,17 +277,17 @@ const buildDiagnosisArtifactView = (
       ),
       ...entriesSectionIfAny(
         'remediation',
-        'Remediation missions',
-        'Recommended or linked missions for diagnosis follow-up.',
-        remediationMissions.map((mission) => ({
-          title: readString(mission.title) ?? readString(mission.id) ?? 'Mission',
-          summary: readString(mission.summary),
+        'Remediation tasks',
+        'Recommended or linked tasks for diagnosis follow-up.',
+        remediationTasks.map((task) => ({
+          title: readString(task.title) ?? readString(task.id) ?? 'Task',
+          summary: readString(task.summary),
           meta: compactParts([
-            readString(mission.status),
-            readString(mission.updatedAt),
+            readString(task.status),
+            readString(task.updatedAt),
           ]),
-          badge: readString(mission.status),
-          tone: toneForState(readString(mission.status)),
+          badge: readString(task.status),
+          tone: toneForState(readString(task.status)),
         })),
       ),
       jsonSection(raw),
@@ -311,9 +311,9 @@ const buildIndexArtifactView = (
       readString(record.summary) ?? 'Compiled knowledge index for the current workspace.',
     metrics: compactMetrics([
       metric('Readiness', readString(record.readiness), toneForState(readString(record.readiness))),
-      metric('Trust', readString(record.trustLevel), toneForState(readString(record.trustLevel))),
+      metric('Readiness', readString(record.readinessLevel), toneForState(readString(record.readinessLevel))),
       metric('Plans', countValue(readNumber(counts.planCount))),
-      metric('Missions', countValue(readNumber(counts.missionCount))),
+      metric('Tasks', countValue(readNumber(counts.taskCount))),
     ]),
     sections: [
       keyValueSection(
@@ -322,7 +322,7 @@ const buildIndexArtifactView = (
         'High-signal index posture for the current workspace.',
         compactItems([
           item('Readiness', readString(record.readiness)),
-          item('Trust level', readString(record.trustLevel)),
+          item('Readiness level', readString(record.readinessLevel)),
           item('Docs root', readString(record.docsRoot)),
           item('Workspace root', readString(record.workspaceRoot), true),
         ]),
@@ -337,10 +337,9 @@ const buildIndexArtifactView = (
           item('Scopes', countValue(readNumber(counts.scopeCount))),
           item('Graphs', countValue(readNumber(counts.graphCount))),
           item('Plans', countValue(readNumber(counts.planCount))),
-          item('Missions', countValue(readNumber(counts.missionCount))),
-          item('Workflow runs', countValue(readNumber(counts.workflowRunCount))),
-          item('Workflow manifests', countValue(readNumber(counts.workflowManifestCount))),
-          item('Overrides', countValue(readNumber(counts.overrideEntryCount))),
+          item('Tasks', countValue(readNumber(counts.taskCount))),
+          item('Action runs', countValue(readNumber(counts.actionRunCount))),
+          item('Action manifests', countValue(readNumber(counts.actionManifestCount))),
         ]),
       ),
       keyValueSection(

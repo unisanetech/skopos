@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router';
 import type {
   SkoposUiConsoleDiscussionCheckpointView,
   SkoposUiConsoleDiscussionHandoffView,
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
 } from '../../contracts/skopos-ui-console-state.js';
 import { Card } from '../../patterns/sections/content-primitives.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
@@ -22,18 +22,18 @@ const formatDiscussionPromotionKind = (value: string): string => value.replaceAl
 export function OverviewRecentDiscussionCard({
   latestDiscussionHandoff,
   recentDiscussionCheckpoints,
-  activeMissionView,
+  activeTaskView,
 }: {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   recentDiscussionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
-  activeMissionView?: SkoposUiConsoleMissionView;
+  activeTaskView?: SkoposUiConsoleTaskView;
 }): React.JSX.Element {
   const hasDiscussionState = Boolean(latestDiscussionHandoff) || recentDiscussionCheckpoints.length > 0;
 
   return (
     <Card
       title="Recent discussion"
-      description="The latest workflow handoff keeps accepted direction visible without replaying the full chat."
+      description="The latest action handoff keeps accepted direction visible without replaying the full chat."
     >
       {hasDiscussionState ? (
         <div className="border-y border-[var(--line)]">
@@ -67,20 +67,20 @@ export function OverviewRecentDiscussionCard({
               </p>
             </section>
           ) : null}
-          {activeMissionView && latestDiscussionHandoff ? (
+          {activeTaskView && latestDiscussionHandoff ? (
             <Link
-              to="/missions/$missionId"
-              params={{ missionId: activeMissionView.mission.id }}
+              to="/tasks/$taskId"
+              params={{ taskId: activeTaskView.task.id }}
               className="block border-t border-[var(--line)] py-3.5 transition-colors hover:bg-[color:rgba(255,252,246,0.4)]"
             >
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Active mission
+                Active task
               </p>
               <p className="mt-1.5 text-[12.75px] font-medium tracking-[-0.01em]">
-                {activeMissionView.mission.title}
+                {activeTaskView.task.title}
               </p>
               <p className="mt-1 text-[12px] leading-[1.35rem] text-[var(--muted)]">
-                {activeMissionView.mission.summary}
+                {activeTaskView.task.summary}
               </p>
             </Link>
           ) : null}
@@ -107,26 +107,26 @@ export function OverviewRecentDiscussionCard({
       ) : (
         <EmptyMessage
           title="No recent discussion yet"
-          description="A workflow handoff will appear here once the runtime has current discussion resume state."
+          description="A action handoff will appear here once the runtime has current discussion resume state."
         />
       )}
     </Card>
   );
 }
 
-export function MissionDiscussionContextCard({
+export function TaskDiscussionContextCard({
   latestDiscussionHandoff,
-  missionCheckpoints,
+  taskCheckpoints,
 }: {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
-  missionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
+  taskCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
 }): React.JSX.Element {
   return (
     <Card
       title="Discussion context"
-      description="Keep the current mission tied to the latest accepted direction and unresolved discussion pressure."
+      description="Keep the current task tied to the latest accepted direction and unresolved discussion pressure."
     >
-      {Boolean(latestDiscussionHandoff) || missionCheckpoints.length > 0 ? (
+      {Boolean(latestDiscussionHandoff) || taskCheckpoints.length > 0 ? (
         <div className="border-y border-[var(--line)]">
           {latestDiscussionHandoff ? (
             <section className="py-3.5">
@@ -201,13 +201,13 @@ export function MissionDiscussionContextCard({
               </p>
             </section>
           ) : null}
-          {missionCheckpoints.length > 0 ? (
+          {taskCheckpoints.length > 0 ? (
             <section className="border-t border-[var(--line)] py-3.5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
                 Checkpoint history
               </p>
               <div className="mt-2 space-y-2">
-                {missionCheckpoints.slice(0, 4).map((checkpointView) => (
+                {taskCheckpoints.slice(0, 4).map((checkpointView) => (
                   <div key={checkpointView.checkpoint.id}>
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-[12.75px] font-medium tracking-[-0.01em]">
@@ -244,9 +244,9 @@ export function MissionDiscussionContextCard({
         <EmptyMessage
           title="No current discussion context"
           description={
-            missionCheckpoints.length > 0
-              ? 'Checkpoint history exists for this mission, but no latest handoff currently points at it.'
-              : 'The latest handoff belongs to a different mission, or discussion resume state has not been generated yet.'
+            taskCheckpoints.length > 0
+              ? 'Checkpoint history exists for this task, but no latest handoff currently points at it.'
+              : 'The latest handoff belongs to a different task, or discussion resume state has not been generated yet.'
           }
         />
       )}
@@ -257,11 +257,11 @@ export function MissionDiscussionContextCard({
 export function DiscussionGuidanceCard({
   latestDiscussionHandoff,
   checkpointCount,
-  activeMissionCount,
+  activeTaskCount,
 }: {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   checkpointCount: number;
-  activeMissionCount: number;
+  activeTaskCount: number;
 }): React.JSX.Element {
   const openQuestionCount = latestDiscussionHandoff?.handoff.openQuestions.length ?? 0;
 
@@ -288,8 +288,8 @@ export function DiscussionGuidanceCard({
         <GuidancePoint
           label="Next step"
           text={
-            activeMissionCount > 0
-              ? 'Open the linked mission when the discussion belongs to active work.'
+            activeTaskCount > 0
+              ? 'Open the linked task when the discussion belongs to active work.'
               : checkpointCount > 0
                 ? 'Review checkpoints when you need older reasoning history.'
                 : 'Generate a handoff or checkpoint during active work to populate this page.'
@@ -303,11 +303,11 @@ export function DiscussionGuidanceCard({
 export function DiscussionHistoryCard({
   latestDiscussionHandoff,
   checkpoints,
-  missionTitleById,
+  taskTitleById,
 }: {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   checkpoints: SkoposUiConsoleDiscussionCheckpointView[];
-  missionTitleById: Record<string, string>;
+  taskTitleById: Record<string, string>;
 }): React.JSX.Element {
   return (
     <Card
@@ -351,8 +351,8 @@ export function DiscussionHistoryCard({
               </p>
               <div className="mt-2 space-y-2.5">
                 {checkpoints.map((checkpointView) => {
-                  const missionId = checkpointView.checkpoint.activeMissionId;
-                  const missionTitle = missionId ? missionTitleById[missionId] : undefined;
+                  const taskId = checkpointView.checkpoint.activeTaskId;
+                  const taskTitle = taskId ? taskTitleById[taskId] : undefined;
 
                   return (
                     <div key={checkpointView.checkpoint.id} className="rounded-[18px] border border-[var(--line)] px-3.5 py-3">
@@ -376,13 +376,13 @@ export function DiscussionHistoryCard({
                             tone="neutral"
                           />
                         )}
-                        {missionId ? (
+                        {taskId ? (
                           <Link
-                            to="/missions/$missionId"
-                            params={{ missionId }}
+                            to="/tasks/$taskId"
+                            params={{ taskId }}
                             className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)] hover:underline"
                           >
-                            {missionTitle ?? missionId}
+                            {taskTitle ?? taskId}
                           </Link>
                         ) : null}
                       </div>

@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 
-import { buildSkoposTrustRuntime, refreshSkoposMemoryState } from '@skopos/runtime';
+import { refreshSkoposMemoryState } from '@skopos/runtime';
 
 import {
   buildSummaryLines,
@@ -49,19 +49,13 @@ interface SkoposKnowledgeCompactOutput {
 
 export const runKnowledgeCommand = async (args: string[]): Promise<void> => {
   const parsed = parseKnowledgeArgs(args);
-  const trust = await buildSkoposTrustRuntime({
-    cwd: parsed.cwd,
-    actor: parsed.actor,
-  });
   const result = await refreshSkoposMemoryState({
     workspaceRoot: parsed.cwd,
-    trustLevel: trust.trustLevel,
-    readiness: trust.readiness,
   });
   const compact = buildKnowledgeCompactOutput({
     workspaceRoot: parsed.cwd,
-    trustLevel: trust.trustLevel,
-    readiness: trust.readiness,
+    trustLevel: 'unknown',
+    readiness: 'unknown',
     memoryPath: result.memoryPath,
     communicationBriefPath: result.communicationBriefPath,
     memory: result.memory,

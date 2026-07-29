@@ -1,17 +1,23 @@
+---
+title: "Decision: System UI Routed App Stack"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-008
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+---
+
 # Decision: System UI Routed App Stack
-
-## Metadata
-
-- Decision ID: `SKOPOS-DECISION-008`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/ui`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
 
 ## Context
 

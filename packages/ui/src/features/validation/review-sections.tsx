@@ -1,8 +1,8 @@
 export {
-  TrustGuidanceCard,
-  TrustAttentionCard,
-  TrustInspectorAside,
-} from './trust-sections.js';
+  ReadinessGuidanceCard,
+  ReadinessAttentionCard,
+  ReadinessInspectorAside,
+} from './readiness-sections.js';
 export {
   ProofCategoryWatchCard,
   ProofGuidanceCard,
@@ -18,7 +18,7 @@ export {
   PackArchitectureContractCard,
   PackDetailsCard,
   PackDetailInspectorAside,
-  PackGateStatusCard,
+  PackGuardStatusCard,
   PackOverviewCard,
   PackRoleMappingReviewCard,
   PackRulesCard,

@@ -20,6 +20,18 @@ importers:
         specifier: ^2.8.3
         version: 2.8.3
     devDependencies:
+      '@skopos/instructions':
+        specifier: workspace:*
+        version: link:../instructions
+      '@skopos/model':
+        specifier: workspace:*
+        version: link:../model
+      '@skopos/runtime':
+        specifier: workspace:*
+        version: link:../runtime
+      '@skopos/ui':
+        specifier: workspace:*
+        version: link:../ui
       tsup:
         specifier: ^8.0.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
@@ -159,6 +171,9 @@ importers:
       '@skopos/config':
         specifier: workspace:*
         version: link:../config
+      '@skopos/docs-engine':
+        specifier: workspace:*
+        version: link:../docs-engine
       '@skopos/indexer':
         specifier: workspace:*
         version: link:../indexer
@@ -174,9 +189,9 @@ importers:
       '@skopos/query':
         specifier: workspace:*
         version: link:../query
-      '@skopos/trust':
+      '@skopos/verification':
         specifier: workspace:*
-        version: link:../trust
+        version: link:../verification
     devDependencies:
       tsup:
         specifier: ^8.0.0
@@ -185,7 +200,7 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
 
-  packages/trust:
+  packages/verification:
     dependencies:
       '@skopos/config':
         specifier: workspace:*

@@ -45,8 +45,8 @@ export function RulesInspectorAside({
             { label: 'Local exceptions', value: String(context.localOverrides.length) },
             {
               label: 'Default lane',
-              value: context.resolvedPolicy?.defaultExecutionLane
-                ? humanize(context.resolvedPolicy.defaultExecutionLane)
+              value: context.resolvedPolicy?.defaultTaskRisk
+                ? humanize(context.resolvedPolicy.defaultTaskRisk)
                 : 'Not recorded',
             },
             { label: 'Updated', value: formatDateTime(generatedAt) },
@@ -63,34 +63,34 @@ export function RulesInspectorAside({
           <KeyValueList items={context.sourceItems.map((item) => ({ ...item, monospace: true }))} layout="stacked" />
         </SidebarCard>
       ) : null}
-      {context.executionLanes.length > 0 ? (
+      {context.taskRisks.length > 0 ? (
         <SidebarCard
-          title="Work lanes"
-          badge={String(context.executionLanes.length)}
+          title="Task risk"
+          badge={String(context.taskRisks.length)}
           collapsible
           defaultOpen={false}
         >
           <SidebarList
-            items={context.executionLanes}
-            getKey={(lane) => lane.lane}
-            renderItem={(lane) => (
+            items={context.taskRisks}
+            getKey={(taskRisk) => taskRisk.risk}
+            renderItem={(taskRisk) => (
               <>
                 <div className="flex items-center justify-between gap-2.5">
                   <p className="text-[12.5px] font-medium tracking-[-0.01em]">
-                    {humanize(lane.lane)}
+                    {humanize(taskRisk.risk)}
                   </p>
                   <StatusPill
-                    value={context.resolvedPolicy?.defaultExecutionLane === lane.lane ? 'default' : 'available'}
-                    tone={context.resolvedPolicy?.defaultExecutionLane === lane.lane ? 'positive' : 'neutral'}
+                    value={context.resolvedPolicy?.defaultTaskRisk === taskRisk.risk ? 'default' : 'available'}
+                    tone={context.resolvedPolicy?.defaultTaskRisk === taskRisk.risk ? 'positive' : 'neutral'}
                   />
                 </div>
                 <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
-                  {lane.summary}
+                  {taskRisk.summary}
                 </p>
               </>
             )}
-            emptyTitle="No lanes"
-            emptyDescription="No execution lane guidance is recorded yet."
+            emptyTitle="No Task risk guidance"
+            emptyDescription="No Task risk guidance is recorded yet."
           />
         </SidebarCard>
       ) : null}
@@ -788,7 +788,7 @@ export function PackArchitectureContractCard({
     pack.recommendedLayers.length > 0 ||
     pack.dependencyDirection.length > 0 ||
     pack.forbiddenImports.length > 0 ||
-    Boolean(pack.gates) ||
+    Boolean(pack.guards) ||
     Boolean(pack.agentPrompts);
 
   return (
@@ -844,81 +844,81 @@ export function PackArchitectureContractCard({
               </div>
             </div>
           ) : null}
-          {pack.gates ? (
+          {pack.guards ? (
             <div className="grid gap-4 xl:grid-cols-2">
-              <PackDetailList title="Required gates" items={pack.gates.required} empty="No required gates are recorded." monospace />
-              <PackDetailList title="Recommended gates" items={pack.gates.recommended} empty="No recommended gates are recorded." monospace />
+              <PackDetailList title="Required guards" items={pack.guards.required} empty="No required guards are recorded." monospace />
+              <PackDetailList title="Recommended guards" items={pack.guards.recommended} empty="No recommended guards are recorded." monospace />
             </div>
           ) : null}
           {pack.agentPrompts ? (
             <div className="grid gap-4 xl:grid-cols-2">
               <PackDetailList title="Before editing" items={pack.agentPrompts.beforeEditing} empty="No before-editing prompts are recorded." />
-              <PackDetailList title="Before done" items={pack.agentPrompts.beforeDone} empty="No before-done prompts are recorded." />
+              <PackDetailList title="Before Readiness" items={pack.agentPrompts.beforeReadiness} empty="No pre-Readiness prompts are recorded." />
             </div>
           ) : null}
         </div>
       ) : (
         <EmptyMessage
           title="No architecture contract"
-          description="This pack has not recorded layer, dependency, gate, or agent-prompt details yet."
+          description="This pack has not recorded layer, dependency, guard, or agent-prompt details yet."
         />
       )}
     </Card>
   );
 }
 
-export function PackGateStatusCard({
+export function PackGuardStatusCard({
   pack,
 }: {
   pack: PolicyPackDetail;
 }): React.JSX.Element {
   return (
     <Card
-      title="Gate status"
-      description="Shows which checks Skopos found in this project, which checks need manual proof, and which commands are missing."
+      title="Guard status"
+      description="Shows which verification guards Skopos resolved, which need observation Evidence, and which Actions are missing."
     >
-      {pack.resolvedGates.length > 0 ? (
+      {pack.resolvedGuards.length > 0 ? (
         <div className="grid gap-4">
           <MetricGrid
             items={[
               {
                 label: 'Available',
-                value: pack.gateCounts.available,
+                value: pack.guardCounts.available,
                 helper: 'Project commands Skopos can run or ask the agent to run.',
               },
               {
                 label: 'Manual proof',
-                value: pack.gateCounts.manual,
+                value: pack.guardCounts.manual,
                 helper: 'Checks the agent must inspect and explain clearly.',
               },
               {
                 label: 'Missing',
-                value: pack.gateCounts.missing,
-                helper: pack.gateCounts.missingRequired > 0
+                value: pack.guardCounts.missing,
+                helper: pack.guardCounts.missingRequired > 0
                   ? 'Required commands are missing from package scripts.'
                   : 'Recommended commands not found in package scripts.',
               },
             ]}
           />
           <div className={skoposListSurfaceClass}>
-            {pack.resolvedGates.map((gate, index) => (
+            {pack.resolvedGuards.map((guard, index) => (
               <article
-                key={gate.id}
+                key={guard.id}
                 className={getSkoposListRowClass({ bordered: index > 0, interactive: false })}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="skopos-section-title">{gate.label}</p>
-                    <p className="skopos-helper-copy mt-1">{gate.summary}</p>
+                    <p className="skopos-section-title">{guard.label}</p>
+                    <p className="skopos-helper-copy mt-1">{guard.summary}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <StatusPill value={humanize(gate.status)} tone={gateStatusTone(gate)} />
-                    <StatusPill value={humanize(gate.requiredness)} tone={gate.requiredness === 'required' ? 'warning' : 'neutral'} />
+                    <StatusPill value={humanize(guard.status)} tone={guardStatusTone(guard)} />
+                    <StatusPill value={humanize(guard.strength)} tone={guard.strength === 'required' ? 'warning' : 'neutral'} />
                   </div>
                 </div>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
-                  <SmallFact label="Kind" value={humanize(gate.kind)} />
-                  <SmallFact label="Proof" value={gate.command ?? gate.missingReason ?? 'Agent must inspect and explain.'} monospace={Boolean(gate.command)} />
+                  <SmallFact label="Kind" value={humanize(guard.kind)} />
+                  <SmallFact label="Evidence" value={guard.command ?? guard.missingReason ?? 'Agent must inspect and explain.'} monospace={Boolean(guard.command)} />
                 </div>
               </article>
             ))}
@@ -926,8 +926,8 @@ export function PackGateStatusCard({
         </div>
       ) : (
         <EmptyMessage
-          title="No resolved gate status"
-          description="Apply this pack, then run skopos gates resolve . to generate the gate plan for this project."
+          title="No resolved Guard status"
+          description="Apply this pack, then refresh Skopos so project Guards can be resolved."
         />
       )}
     </Card>
@@ -1197,7 +1197,7 @@ function CodebaseVerificationPanel({
         <div>
           <p className="skopos-section-title">Verify against the codebase</p>
           <p className="skopos-helper-copy mt-1">
-            Check these signs in the actual folder tree, docs, commands, and source code before trusting the pack blindly.
+            Check these signs in the actual folder tree, docs, commands, and source code before readinessing the pack blindly.
           </p>
         </div>
         {pack.projectLifecycles.length > 0 ? (
@@ -1492,16 +1492,16 @@ const roleMappingStatusTone = (
   }
 };
 
-const gateStatusTone = (
-  gate: PolicyPackDetail['resolvedGates'][number],
+const guardStatusTone = (
+  guard: PolicyPackDetail['resolvedGuards'][number],
 ): 'neutral' | 'positive' | 'warning' | 'danger' | 'info' => {
-  switch (gate.status) {
+  switch (guard.status) {
     case 'available':
       return 'positive';
     case 'manual':
       return 'info';
     case 'missing':
-      return gate.requiredness === 'required' ? 'danger' : 'warning';
+      return guard.strength === 'required' ? 'danger' : 'warning';
   }
 };
 

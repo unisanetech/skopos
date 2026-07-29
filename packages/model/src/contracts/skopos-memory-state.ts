@@ -1,12 +1,10 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
-import type { SkoposReadiness, SkoposTrustLevel } from './skopos-trust-report.js';
-
 export type SkoposMemoryLayerKind =
   | 'observed'
   | 'inferred'
   | 'accepted'
   | 'operational'
-  | 'agent-ready';
+  | 'agent-context';
 
 export type SkoposMemoryFreshnessStatus = 'fresh' | 'stale' | 'partial' | 'unknown';
 
@@ -14,7 +12,7 @@ export type SkoposMemoryRoleKind =
   | 'agent-entrypoint'
   | 'project-overview'
   | 'architecture-structure'
-  | 'validation-gates'
+  | 'verification-guards'
   | 'decisions-rationale'
   | 'findings-drift'
   | 'generated-artifacts'
@@ -37,7 +35,7 @@ export type SkoposMemorySourceKind =
   | 'config'
   | 'package-manifest'
   | 'generated-artifact'
-  | 'workflow-artifact';
+  | 'task-artifact';
 
 export type SkoposMemorySuggestionSeverity = 'must' | 'should' | 'advisory';
 
@@ -61,7 +59,7 @@ export interface SkoposMemoryLayerSummary {
 export interface SkoposMemoryDecisionSnapshot {
   id: string;
   title: string;
-  kind: 'policy' | 'stack' | 'workflow' | 'architecture' | 'project' | 'override';
+  kind: 'policy' | 'stack' | 'action' | 'architecture' | 'project' | 'override';
   status: 'accepted' | 'rejected' | 'deferred' | 'superseded';
   sourcePath?: string;
   summary: string;
@@ -99,8 +97,7 @@ export interface SkoposMemoryRole {
 
 export interface SkoposMemoryStateArtifact extends SkoposArtifactEnvelope<'memory-state'> {
   workspaceRoot: string;
-  trustLevel: SkoposTrustLevel | 'unknown';
-  readiness: SkoposReadiness | 'unknown';
+  readiness: 'ready' | 'attention' | 'blocked' | 'unknown';
   freshness: SkoposMemoryFreshnessStatus;
   summary: string;
   roles: SkoposMemoryRole[];

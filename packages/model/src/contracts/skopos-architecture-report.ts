@@ -20,9 +20,15 @@ export type SkoposArchitectureAlignmentStatus = 'aligned' | 'partial' | 'diverge
 
 export type SkoposArchitectureUnitRole =
   | 'workspace-root'
+  | 'product'
+  | 'application'
   | 'service'
   | 'web-app'
   | 'library'
+  | 'package'
+  | 'domain'
+  | 'infrastructure'
+  | 'tool'
   | 'support'
   | 'unknown';
 

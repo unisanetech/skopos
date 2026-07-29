@@ -1,37 +1,32 @@
-import { dirname, resolve } from 'node:path';
+import { stat, unlink } from 'node:fs/promises';
+import { relative, resolve } from 'node:path';
 
 import type {
-  SkoposMissionArtifact,
   SkoposStartRunResult,
+  SkoposTaskCoordinationState,
+  SkoposTaskDetail,
+  SkoposTaskRisk,
 } from '@skopos/model';
 
-import { claimSkoposMissionRuntime } from '../mission/mission.service.js';
-import { buildSkoposPlanRuntime } from '../plan/plan.service.js';
+import {
+  claimSkoposCoordinationResource,
+  ensureSkoposCoordinationSession,
+  getSkoposCoordinationStatus,
+  releaseSkoposCoordinationTask,
+  reserveSkoposCoordinationTask,
+} from '../coordination/coordination.service.js';
+import { prepareSkoposPlanRuntime } from '../plan/plan.service.js';
 import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
 import { buildSkoposProjectKnowledgeGuidance } from '../shared/memory-state.js';
+import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
-  buildSkoposAgentMissionBrief,
-  resolveAgentMissionBriefArtifactPath,
-  writeSkoposAgentBrief,
-} from '../shared/agent-briefs.js';
-import { refreshSkoposDiscussionLifecycleArtifacts } from '../shared/discussion-lifecycle.js';
-import {
-  buildWorkflowQuestionsArtifact,
-  buildWorkflowRecommendationsArtifact,
-  isImplementationAllowed,
-} from '../workflow-router/workflow-router-state.service.js';
-import {
-  resolveMissionTaskIdentity,
-  writeWorkflowQuestionsState,
-  writeWorkflowRecommendationsState,
-} from '../workflow-router/workflow-router-task-state.service.js';
-import {
-  buildSkoposCompactTaskBriefRuntime,
-  writeSkoposCurrentTaskProjections,
-} from '../agent-native/agent-native-operating-model.service.js';
+  prepareSkoposTaskRuntime,
+  publishSkoposTaskAuthorityRuntime,
+  writeSkoposTaskAuxiliaryArtifactsRuntime,
+} from '../task/task.service.js';
 
 export interface BuildSkoposStartRuntimeOptions {
   cwd: string;
@@ -39,6 +34,17 @@ export interface BuildSkoposStartRuntimeOptions {
   scope?: string;
   actor?: string;
   dryRun?: boolean;
+  acceptanceCriteria?: string[];
+  nonGoals?: string[];
+  constraints?: string[];
+  ownedPaths?: string[];
+  risk?: SkoposTaskRisk;
+  detail?: SkoposTaskDetail;
+  priority?: number;
+  dependencyTaskIds?: string[];
+  sessionId?: string;
+  host?: string;
+  leaseSeconds?: number;
 }
 
 export const buildSkoposStartRuntime = async ({
@@ -47,106 +53,94 @@ export const buildSkoposStartRuntime = async ({
   scope,
   actor,
   dryRun = false,
+  acceptanceCriteria = [],
+  nonGoals = [],
+  constraints = [],
+  ownedPaths = [],
+  risk,
+  detail,
+  priority,
+  dependencyTaskIds,
+  sessionId,
+  host = 'manual-cli',
+  leaseSeconds,
 }: BuildSkoposStartRuntimeOptions): Promise<SkoposStartRunResult> => {
   const workspaceRoot = resolve(cwd);
-  const plan = await buildSkoposPlanRuntime({
+  const actorId = resolveSkoposRuntimeActorId(actor);
+  if (sessionId && !actorId) {
+    throw new Error(
+      'Coordination-aware Task start requires an explicit actor through --actor or SKOPOS_ACTOR.',
+    );
+  }
+
+  const plan = await prepareSkoposPlanRuntime({
     cwd: workspaceRoot,
     goal,
     scope,
-    actor,
+  });
+  const created = await prepareSkoposTaskRuntime({
+    cwd: workspaceRoot,
+    plan,
+    actor: actorId,
+    acceptanceCriteria,
+    nonGoals,
+    constraints,
+    ownedPaths,
+    risk,
+    detail,
+    priority,
+    dependencyTaskIds,
     dryRun,
   });
-  const actorId = resolveActorId(actor);
-  const mission =
-    actorId && !dryRun
-      ? await claimSkoposMissionRuntime({
+  let coordination: SkoposTaskCoordinationState | undefined;
+  if (!dryRun) {
+    await writeSkoposTaskAuxiliaryArtifactsRuntime({ prepared: created });
+    try {
+      if (sessionId && actorId) {
+        coordination = await coordinateStartedTask({
+          workspaceRoot,
+          actorId,
+          host,
+          sessionId,
+          leaseSeconds,
+          taskId: created.task.id,
+          ownedPaths,
+        });
+      }
+      await publishSkoposTaskAuthorityRuntime({ prepared: created });
+    } catch (error) {
+      if (coordination && sessionId) {
+        await releaseSkoposCoordinationTask({
           cwd: workspaceRoot,
-          mission: plan.missionId,
-          actor: actorId,
-        })
-      : plan.mission;
+          sessionId,
+          taskId: created.task.id,
+          reason: 'Task authority publication failed.',
+        }).catch(() => undefined);
+      }
+      await Promise.all([
+        unlink(created.questionsPath).catch(() => undefined),
+        unlink(created.recommendationsPath).catch(() => undefined),
+        ...(created.task.trackedDocumentPath
+          ? [unlink(resolve(workspaceRoot, created.task.trackedDocumentPath)).catch(() => undefined)]
+          : []),
+      ]);
+      throw error;
+    }
+  }
 
-  const taskIdentity = await resolveMissionTaskIdentity({
-    workspaceRoot,
-    mission,
-    actorId,
-  });
-  const activeMission = {
-    ...mission,
-    taskIdentity,
-  };
-  const questions = buildWorkflowQuestionsArtifact({
-    workspaceRoot,
-    planId: plan.planId,
-    missionId: activeMission.id,
-    decisionQuestions: plan.decisionQuestions,
-    planPath: plan.planPath,
-    missionPath: plan.missionPath,
-    taskIdentity,
-  });
-  const recommendations = buildWorkflowRecommendationsArtifact({
-    workspaceRoot,
-    actorId,
-    planId: plan.planId,
-    mission: activeMission,
-    questions,
-    taskIdentity,
-  });
-  const questionsState = await writeWorkflowQuestionsState({
-    workspaceRoot,
-    artifact: questions,
-    dryRun,
-  });
-  const recommendationsState = await writeWorkflowRecommendationsState({
-    workspaceRoot,
-    artifact: recommendations,
-    dryRun,
-  });
-  const questionsPath = questionsState.compatibilityPath;
-  const questionsWrite = questionsState.write;
-  const recommendationsPath = recommendationsState.compatibilityPath;
-  const recommendationsWrite = recommendationsState.write;
-  const blockingQuestions = questions.entries.filter(
-    (entry) => entry.status === 'open' && entry.blocking,
+  const blockingQuestions = created.questions.entries.filter(
+    (question) => question.blocking && question.status === 'open',
   );
-  const recommendedAction = recommendations.entries.find((entry) => entry.status === 'open');
-  const codeAllowed = isImplementationAllowed({ mission: activeMission, questions });
-  const summary = buildStartSummary({
-    mission: activeMission,
-    blockingQuestionCount: blockingQuestions.length,
-    codeAllowed,
-  });
+  const codeAllowed = blockingQuestions.length === 0;
+  const recommendedAction = created.recommendations.entries.find(
+    (recommendation) => recommendation.status === 'open',
+  );
+  const summary = codeAllowed
+    ? `Started Task ${created.task.id}; implementation is admitted.`
+    : `Started blocked Task ${created.task.id} with ${blockingQuestions.length} decision${blockingQuestions.length === 1 ? '' : 's'} requiring user input.`;
   const projectKnowledge = await buildSkoposProjectKnowledgeGuidance({
     workspaceRoot,
     dryRun,
-  });
-  const taskBrief = await buildSkoposCompactTaskBriefRuntime({
-    cwd: workspaceRoot,
-    mission: activeMission,
-    questions,
-    phase: 'admission',
-  });
-  const compactArtifacts = await writeSkoposCurrentTaskProjections({
-    workspaceRoot,
-    mission: activeMission,
-    brief: taskBrief,
-    dryRun,
-  });
-  await writeSkoposAgentBrief({
-    artifactPath: resolveAgentMissionBriefArtifactPath(workspaceRoot, mission.id),
-    artifact: buildSkoposAgentMissionBrief({
-      workspaceRoot,
-      mission: activeMission,
-      questions,
-      recommendations,
-      codeAllowed,
-    }),
-    dryRun,
-  });
-  await refreshSkoposDiscussionLifecycleArtifacts({
-    workspaceRoot,
-    dryRun,
-    checkpointTrigger: 'workflow-start',
   });
 
   await appendSkoposOperationalLogEntry({
@@ -155,29 +149,26 @@ export const buildSkoposStartRuntime = async ({
     status: dryRun ? 'dry-run' : 'succeeded',
     summary,
     relatedArtifactPaths: [
-      plan.planPath,
-      plan.missionPath,
-      plan.graphPath,
-      questionsState.authorityPath,
-      questionsPath,
-      recommendationsState.authorityPath,
-      recommendationsPath,
+      created.taskPath,
+      created.questionsPath,
+      created.recommendationsPath,
+      ...(created.task.trackedDocumentPath
+        ? [resolve(workspaceRoot, created.task.trackedDocumentPath)]
+        : []),
       projectKnowledge.memoryPath,
       projectKnowledge.communicationBriefPath,
-      compactArtifacts.projectPath,
-      compactArtifacts.taskPath,
-      compactArtifacts.briefPath,
     ],
     metadata: {
-      goal: plan.goal,
-      scopeId: plan.scope.scope.id,
+      goal: created.task.goal,
+      scopeId: created.task.scope.scope.id,
       actorId: actorId ?? null,
-      planId: plan.planId,
-      missionId: mission.id,
+      taskId: created.task.id,
+      risk: created.task.risk,
+      detail: created.task.detail,
       codeAllowed,
       blockingQuestionCount: blockingQuestions.length,
-      projectKnowledgeKnownAreaCount: projectKnowledge.knownAreaCount,
-      projectKnowledgeAttentionAreaCount: projectKnowledge.attentionAreaCount,
+      coordinationSessionId: coordination?.session.sessionId ?? null,
+      coordinationClaimCount: coordination?.claims.length ?? 0,
     },
     dryRun,
   });
@@ -188,74 +179,116 @@ export const buildSkoposStartRuntime = async ({
 
   return {
     workspaceRoot,
-    goal: plan.goal,
+    goal: created.task.goal,
     summary,
     actorId,
-    scope: plan.scope,
+    scope: created.task.scope,
     codeAllowed,
-    taskState: {
-      authorityDirectory: dirname(questionsState.authorityPath),
-      questionsPath: questionsState.authorityPath,
-      recommendationsPath: recommendationsState.authorityPath,
-      compatibilityQuestionsPath: questionsPath,
-      compatibilityRecommendationsPath: recommendationsPath,
-    },
-    planId: plan.planId,
-    planPath: plan.planPath,
-    missionId: mission.id,
-    missionPath: plan.missionPath,
-    missionState: activeMission.state,
-    missionClaimedByActorId: activeMission.coordination.claimedBy?.actorId,
-    questionsPath,
-    questionsWrite,
-    questions,
-    recommendationsPath,
-    recommendationsWrite,
-    executionSurface: recommendations.executionSurface,
-    taskBrief,
-    recommendations,
+    taskPath: created.taskPath,
+    taskWrite: created.taskWrite,
+    task: created.task,
+    coordination,
+    questionsPath: created.questionsPath,
+    questionsWrite: created.questionsWrite,
+    questions: created.questions,
+    recommendationsPath: created.recommendationsPath,
+    recommendationsWrite: created.recommendationsWrite,
+    recommendations: created.recommendations,
     projectKnowledge,
     blockingQuestions,
     recommendedAction,
-    nextCommand: recommendedAction?.command,
-    plan: {
-      ...plan,
-      mission: activeMission,
-    },
-    mission: activeMission,
   };
 };
 
-const buildStartSummary = ({
-  mission,
-  blockingQuestionCount,
-  codeAllowed,
+const coordinateStartedTask = async ({
+  workspaceRoot,
+  actorId,
+  host,
+  sessionId,
+  leaseSeconds,
+  taskId,
+  ownedPaths,
 }: {
-  mission: SkoposMissionArtifact;
-  blockingQuestionCount: number;
-  codeAllowed: boolean;
-}): string => {
-  if (!mission.coordination.claimedBy?.actorId) {
-    return `Started ${mission.id} without an active claim; mission ownership still needs to be recorded.`;
+  workspaceRoot: string;
+  actorId: string;
+  host: string;
+  sessionId: string;
+  leaseSeconds?: number;
+  taskId: string;
+  ownedPaths: string[];
+}): Promise<SkoposTaskCoordinationState> => {
+  const ensured = await ensureSkoposCoordinationSession({
+    cwd: workspaceRoot,
+    actorId,
+    host,
+    sessionId,
+    leaseSeconds,
+  });
+  let reserved = false;
+  try {
+    await reserveSkoposCoordinationTask({
+      cwd: workspaceRoot,
+      sessionId,
+      taskId,
+    });
+    reserved = true;
+    for (const ownedPath of ownedPaths) {
+      const resource = await resolveOwnedPathClaim(workspaceRoot, ownedPath);
+      await claimSkoposCoordinationResource({
+        cwd: workspaceRoot,
+        sessionId,
+        taskId,
+        resourceKind: resource.kind,
+        resourceKey: resource.key,
+      });
+    }
+    const status = await getSkoposCoordinationStatus({ cwd: workspaceRoot });
+    return {
+      enforcementLevel: ensured.enforcementLevel,
+      preventiveSafety: ensured.preventiveSafety,
+      session: status.sessions.find((candidate) => candidate.sessionId === sessionId)!,
+      reservation: status.reservations.find((candidate) => candidate.taskId === taskId),
+      claims: status.claims.filter((claim) => claim.taskId === taskId),
+    };
+  } catch (error) {
+    if (reserved) {
+      await releaseSkoposCoordinationTask({
+        cwd: workspaceRoot,
+        sessionId,
+        taskId,
+        reason: 'Task start admission failed before coordination completed.',
+      });
+    }
+    throw error;
   }
-
-  if (blockingQuestionCount > 0) {
-    return `Started ${mission.id} with ${blockingQuestionCount} blocking workflow question${blockingQuestionCount === 1 ? '' : 's'} still open.`;
-  }
-
-  if (codeAllowed) {
-    return `Started ${mission.id}; implementation is allowed for the claimed mission.`;
-  }
-
-  return `Started ${mission.id}; further workflow guidance is still required before implementation.`;
 };
 
-const resolveActorId = (actor?: string): string | undefined => {
-  const candidate = actor ?? process.env.SKOPOS_ACTOR;
-  if (typeof candidate !== 'string') {
-    return undefined;
+const resolveOwnedPathClaim = async (
+  workspaceRoot: string,
+  ownedPath: string,
+): Promise<{ kind: 'exact-path' | 'path-pattern'; key: string }> => {
+  const projectPath = relative(workspaceRoot, resolve(workspaceRoot, ownedPath))
+    .replaceAll('\\', '/');
+  if (
+    projectPath === '..' ||
+    projectPath.startsWith('../') ||
+    projectPath.startsWith('/')
+  ) {
+    throw new Error(`Owned path must stay inside the workspace: ${ownedPath}.`);
   }
-
-  const normalized = candidate.trim();
-  return normalized.length > 0 ? normalized : undefined;
+  if (/[*?]/.test(ownedPath)) {
+    return { kind: 'path-pattern', key: ownedPath.replaceAll('\\', '/') };
+  }
+  try {
+    const info = await stat(resolve(workspaceRoot, ownedPath));
+    if (info.isDirectory()) {
+      return {
+        kind: 'path-pattern',
+        key: projectPath === '' ? '**' : `${projectPath.replace(/\/+$/, '')}/**`,
+      };
+    }
+  } catch {
+    return { kind: 'exact-path', key: projectPath };
+  }
+  return { kind: 'exact-path', key: projectPath };
 };

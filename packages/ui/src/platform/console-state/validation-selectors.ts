@@ -1,4 +1,4 @@
-import type { SkoposResolvedGate } from '@skopos/model';
+import type { SkoposResolvedGuard } from '@skopos/model';
 
 import type { SkoposUiConsoleState } from '../../contracts/skopos-ui-console-state.js';
 import { humanize } from '../../support/formatting/console-formatting.js';
@@ -11,11 +11,11 @@ interface InspectorItem {
 
 type ActivityTone = 'neutral' | 'positive' | 'warning' | 'danger';
 
-export interface TrustViewContext {
-  passChecks: SkoposUiConsoleState['trustReport']['checks'];
-  warningChecks: SkoposUiConsoleState['trustReport']['checks'];
-  failureChecks: SkoposUiConsoleState['trustReport']['checks'];
-  allChecks: SkoposUiConsoleState['trustReport']['checks'];
+export interface ReadinessViewContext {
+  passChecks: SkoposUiConsoleState['readinessReport']['checks'];
+  warningChecks: SkoposUiConsoleState['readinessReport']['checks'];
+  failureChecks: SkoposUiConsoleState['readinessReport']['checks'];
+  allChecks: SkoposUiConsoleState['readinessReport']['checks'];
   sourceLinks: SkoposUiConsoleState['docsLinks'];
   workspaceSignalItems: InspectorItem[];
   docsPostureItems: InspectorItem[];
@@ -80,12 +80,12 @@ export interface PolicyPackDetail extends PolicyPackSummary {
     from: string;
     to: string[];
   }>;
-  gates?: {
+  guards?: {
     required: string[];
     recommended: string[];
   };
-  resolvedGates: SkoposResolvedGate[];
-  gateCounts: {
+  resolvedGuards: SkoposResolvedGuard[];
+  guardCounts: {
     available: number;
     manual: number;
     missing: number;
@@ -93,7 +93,7 @@ export interface PolicyPackDetail extends PolicyPackSummary {
   };
   agentPrompts?: {
     beforeEditing: string[];
-    beforeDone: string[];
+    beforeReadiness: string[];
   };
   rules: NonNullable<
     NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
@@ -145,10 +145,10 @@ export interface PolicyViewContext {
   suppressedDriftFindings: NonNullable<
     NonNullable<SkoposUiConsoleState['policyReview']>['driftReport']
   >['report']['findings'];
-  executionLanes: NonNullable<
+  taskRisks: NonNullable<
     NonNullable<SkoposUiConsoleState['policyReview']>['resolvedPolicy']
-  >['policy']['recommendedExecutionLanes'];
-  resolvedGates?: NonNullable<NonNullable<SkoposUiConsoleState['policyReview']>['gates']>['resolved'];
+  >['policy']['recommendedTaskRisks'];
+  resolvedGuards?: NonNullable<NonNullable<SkoposUiConsoleState['policyReview']>['guards']>['resolved'];
   sourceItems: InspectorItem[];
 }
 
@@ -174,7 +174,7 @@ interface ActivityTimelineEntry {
 
 export interface ActivityFeedEntry {
   id: string;
-  feedKind: 'event' | 'mission' | 'plan' | 'workflow';
+  feedKind: 'event' | 'task' | 'plan' | 'action';
   kindLabel: string;
   statusLabel?: string;
   statusTone?: ActivityTone;
@@ -184,7 +184,7 @@ export interface ActivityFeedEntry {
   actorId?: string;
   timestamp: string;
   rangeStart?: string;
-  missionId?: string;
+  taskId?: string;
   planId?: string;
 }
 
@@ -194,69 +194,66 @@ export interface ActivityFeedGroup {
   entries: ActivityFeedEntry[];
 }
 
-export const getTrustViewContext = (state: SkoposUiConsoleState): TrustViewContext => {
-  const passChecks = state.trustReport.checks.filter((check) => check.status === 'pass');
-  const warningChecks = state.trustReport.checks.filter((check) => check.status === 'warn');
-  const failureChecks = state.trustReport.checks.filter((check) => check.status === 'fail');
+export const getReadinessViewContext = (state: SkoposUiConsoleState): ReadinessViewContext => {
+  const passChecks = state.readinessReport.checks.filter((check) => check.status === 'pass');
+  const warningChecks = state.readinessReport.checks.filter((check) => check.status === 'warn');
+  const failureChecks = state.readinessReport.checks.filter((check) => check.status === 'fail');
 
   return {
     passChecks,
     warningChecks,
     failureChecks,
-    allChecks: state.trustReport.checks,
+    allChecks: state.readinessReport.checks,
     sourceLinks: state.docsLinks.filter((link) => ['doc', 'artifact', 'report'].includes(link.kind)),
     workspaceSignalItems: [
       {
         label: 'Packages',
         value:
-          state.trustReport.detected.packageCount === state.trustReport.detected.workspacePackageCount
-            ? `${state.trustReport.detected.workspacePackageCount} workspace packages`
-            : `${state.trustReport.detected.workspacePackageCount}/${state.trustReport.detected.packageCount} workspace packages`,
+          state.readinessReport.detected.packageCount === state.readinessReport.detected.workspacePackageCount
+            ? `${state.readinessReport.detected.workspacePackageCount} workspace packages`
+            : `${state.readinessReport.detected.workspacePackageCount}/${state.readinessReport.detected.packageCount} workspace packages`,
       },
-      { label: 'Repo mode', value: humanize(state.trustReport.detected.repoMode) },
-      { label: 'Archetype', value: humanize(state.trustReport.detected.archetypeSuggestion) },
-      ...(state.trustReport.detected.frameworks.length > 0
-        ? [{ label: 'Frameworks', value: state.trustReport.detected.frameworks.join(' · ') }]
+      { label: 'Repo mode', value: humanize(state.readinessReport.detected.repoMode) },
+      { label: 'Archetype', value: humanize(state.readinessReport.detected.archetypeSuggestion) },
+      ...(state.readinessReport.detected.frameworks.length > 0
+        ? [{ label: 'Frameworks', value: state.readinessReport.detected.frameworks.join(' · ') }]
         : []),
-      ...(state.trustReport.detected.languages.length > 0
-        ? [{ label: 'Languages', value: state.trustReport.detected.languages.join(' · ') }]
+      ...(state.readinessReport.detected.languages.length > 0
+        ? [{ label: 'Languages', value: state.readinessReport.detected.languages.join(' · ') }]
         : []),
-      ...(state.trustReport.detected.instructionFiles.length > 0
-        ? [{ label: 'Instruction files', value: String(state.trustReport.detected.instructionFiles.length) }]
-        : []),
-      ...(state.trustReport.detected.appliedOverrides.length > 0
-        ? [{ label: 'Overrides', value: String(state.trustReport.detected.appliedOverrides.length) }]
+      ...(state.readinessReport.detected.instructionFiles.length > 0
+        ? [{ label: 'Instruction files', value: String(state.readinessReport.detected.instructionFiles.length) }]
         : []),
     ],
     docsPostureItems: [
       {
         label: 'Docs root',
-        value: state.trustReport.detected.docsHealth.root ?? 'No canonical docs root detected',
+        value: state.readinessReport.detected.docsHealth.root ?? 'No canonical docs root detected',
       },
       {
         label: 'Docs start',
-        value: state.trustReport.detected.docsHealth.hasStartHere
+        value: state.readinessReport.detected.docsHealth.hasStartHere
           ? 'Canonical start present'
           : 'Canonical docs start missing',
       },
       {
         label: 'Tracked docs',
-        value: `${state.trustReport.detected.docsHealth.markdownFileCount} markdown docs`,
+        value: `${state.readinessReport.detected.docsHealth.markdownFileCount} markdown docs`,
       },
-      ...(state.trustReport.detected.docsHealth.freshnessTrackedCount > 0
+      ...(state.readinessReport.detected.docsHealth.freshnessTrackedCount > 0
         ? [{
             label: 'Freshness tracked',
-            value: `${state.trustReport.detected.docsHealth.freshnessTrackedCount} docs`,
+            value: `${state.readinessReport.detected.docsHealth.freshnessTrackedCount} docs`,
           }]
         : []),
-      ...(state.trustReport.detected.docsHealth.staleDocPaths.length > 0
+      ...(state.readinessReport.detected.docsHealth.staleDocPaths.length > 0
         ? [{
             label: 'Stale docs',
-            value: `${state.trustReport.detected.docsHealth.staleDocPaths.length} flagged`,
+            value: `${state.readinessReport.detected.docsHealth.staleDocPaths.length} flagged`,
           }]
         : []),
-      ...(state.trustReport.detected.ignoredPaths.length > 0
-        ? [{ label: 'Ignored roots', value: state.trustReport.detected.ignoredPaths.join(' · ') }]
+      ...(state.readinessReport.detected.ignoredPaths.length > 0
+        ? [{ label: 'Ignored roots', value: state.readinessReport.detected.ignoredPaths.join(' · ') }]
         : []),
     ],
   };
@@ -290,7 +287,7 @@ export const getProofViewContext = (state: SkoposUiConsoleState): ProofViewConte
 export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewContext => {
   const resolvedPolicy = state.policyReview?.resolvedPolicy?.policy;
   const driftReport = state.policyReview?.driftReport?.report;
-  const resolvedGates = state.policyReview?.gates?.resolved;
+  const resolvedGuards = state.policyReview?.guards?.resolved;
   const recommendationByPackId = new Map(
     (state.policyReview?.recommendations?.recommendations.recommendations ?? []).map(
       (recommendation) => [recommendation.packId, recommendation],
@@ -347,7 +344,8 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
       const rules = acceptedPack
         ? activeRules.filter((rule) => rule.id.startsWith(`${packId}.`))
         : manifest?.rules ?? [];
-      const packGates = resolvedGates?.gates.filter((gate) => gate.packId === packId) ?? [];
+      const packGuards =
+        resolvedGuards?.guards.filter((guard) => guard.packId === packId) ?? [];
       const roleMappings =
         state.policyReview?.roleMapping?.mapping.mappings.filter((mapping) => mapping.packId === packId) ?? [];
 
@@ -404,14 +402,14 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
           }),
         ),
         forbiddenImports: manifest?.forbiddenImports ?? [],
-        gates: manifest?.gates,
-        resolvedGates: packGates,
-        gateCounts: {
-          available: packGates.filter((gate) => gate.status === 'available').length,
-          manual: packGates.filter((gate) => gate.status === 'manual').length,
-          missing: packGates.filter((gate) => gate.status === 'missing').length,
-          missingRequired: packGates.filter(
-            (gate) => gate.status === 'missing' && gate.requiredness === 'required',
+        guards: manifest?.guards,
+        resolvedGuards: packGuards,
+        guardCounts: {
+          available: packGuards.filter((guard) => guard.status === 'available').length,
+          manual: packGuards.filter((guard) => guard.status === 'manual').length,
+          missing: packGuards.filter((guard) => guard.status === 'missing').length,
+          missingRequired: packGuards.filter(
+            (guard) => guard.status === 'missing' && guard.strength === 'required',
           ).length,
         },
         agentPrompts: manifest?.agentPrompts,
@@ -434,8 +432,8 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
     advisoryRules: activeRules.filter((rule) => rule.severity === 'advisory'),
     openDriftFindings: findings.filter((finding) => finding.status === 'open'),
     suppressedDriftFindings: findings.filter((finding) => finding.status === 'suppressed'),
-    executionLanes: resolvedPolicy?.recommendedExecutionLanes ?? [],
-    resolvedGates,
+    taskRisks: resolvedPolicy?.recommendedTaskRisks ?? [],
+    resolvedGuards,
     sourceItems: [
       ...(state.policyReview?.resolvedPolicy
         ? [{ label: 'Accepted rules', value: state.policyReview.resolvedPolicy.artifactPath }]
@@ -449,8 +447,8 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
       ...(state.policyReview?.roleMapping
         ? [{ label: 'Role mapping', value: state.policyReview.roleMapping.artifactPath }]
         : []),
-      ...(state.policyReview?.gates
-        ? [{ label: 'Gate plan', value: state.policyReview.gates.artifactPath }]
+      ...(state.policyReview?.guards
+        ? [{ label: 'Guard resolution', value: state.policyReview.guards.artifactPath }]
         : []),
       ...(state.policyReview?.overrides
         ? [{ label: 'Local exceptions', value: state.policyReview.overrides.artifactPath }]
@@ -464,16 +462,16 @@ export const getActivityViewContext = (state: SkoposUiConsoleState): ActivityVie
     [
       ...state.activity.operationalEvents.map((event) => event.actorId),
       ...state.activity.plans.map((plan) => plan.createdByActorId),
-      ...state.activity.missions.map((mission) => mission.lastUpdatedByActorId ?? mission.claimedByActorId),
-      ...state.activity.workflowRuns.map((run) => run.runByActorId),
+      ...state.activity.tasks.map((task) => task.lastUpdatedByActorId ?? task.claimedByActorId),
+      ...state.activity.actionRuns.map((run) => run.runByActorId),
     ].filter(Boolean),
   ).size;
   const operationalEntries = buildActivityTimelineEntries(state.activity.operationalEvents);
   const feedEntries = buildActivityFeedEntries({
     operationalEntries,
     plans: state.activity.plans,
-    missions: state.activity.missions,
-    workflowRuns: state.activity.workflowRuns,
+    tasks: state.activity.tasks,
+    actionRuns: state.activity.actionRuns,
   });
 
   return {
@@ -488,11 +486,11 @@ export const getActivityViewContext = (state: SkoposUiConsoleState): ActivityVie
       ...(state.activity.plans.length > 0
         ? [{ label: 'Plans', value: String(state.activity.plans.length) }]
         : []),
-      ...(state.activity.missions.length > 0
-        ? [{ label: 'Missions', value: String(state.activity.missions.length) }]
+      ...(state.activity.tasks.length > 0
+        ? [{ label: 'Tasks', value: String(state.activity.tasks.length) }]
         : []),
-      ...(state.activity.workflowRuns.length > 0
-        ? [{ label: 'Workflow runs', value: String(state.activity.workflowRuns.length) }]
+      ...(state.activity.actionRuns.length > 0
+        ? [{ label: 'Action runs', value: String(state.activity.actionRuns.length) }]
         : []),
       ...(actorCount > 0 ? [{ label: 'Actors', value: String(actorCount) }] : []),
     ],
@@ -503,19 +501,19 @@ export const getActivityViewContext = (state: SkoposUiConsoleState): ActivityVie
 const buildActivityFeedEntries = ({
   operationalEntries,
   plans,
-  missions,
-  workflowRuns,
+  tasks,
+  actionRuns,
 }: {
   operationalEntries: ActivityTimelineEntry[];
   plans: SkoposUiConsoleState['activity']['plans'];
-  missions: SkoposUiConsoleState['activity']['missions'];
-  workflowRuns: SkoposUiConsoleState['activity']['workflowRuns'];
+  tasks: SkoposUiConsoleState['activity']['tasks'];
+  actionRuns: SkoposUiConsoleState['activity']['actionRuns'];
 }): ActivityFeedEntry[] =>
   [
     ...operationalEntries.map((entry) => buildOperationalFeedEntry(entry)),
     ...plans.map((plan) => buildPlanFeedEntry(plan)),
-    ...missions.map((mission) => buildMissionFeedEntry(mission)),
-    ...workflowRuns.map((run) => buildWorkflowFeedEntry(run)),
+    ...tasks.map((task) => buildTaskFeedEntry(task)),
+    ...actionRuns.map((run) => buildActionFeedEntry(run)),
   ]
     .sort((left, right) => sortActivityFeedEntries(left.timestamp, right.timestamp))
     .slice(0, 16);
@@ -546,27 +544,27 @@ const buildPlanFeedEntry = (
   planId: plan.id,
 });
 
-const buildMissionFeedEntry = (
-  mission: SkoposUiConsoleState['activity']['missions'][number],
+const buildTaskFeedEntry = (
+  task: SkoposUiConsoleState['activity']['tasks'][number],
 ): ActivityFeedEntry => ({
-  id: `mission-${mission.id}`,
-  feedKind: 'mission',
-  kindLabel: 'Mission',
-  statusLabel: humanize(mission.state),
-  statusTone: toneForActivityMissionState(mission.state),
-  headline: mission.title,
-  summary: `${mission.pendingItemCount} pending items · ${mission.linkedSliceCount} linked slices`,
-  actorId: mission.lastUpdatedByActorId ?? mission.claimedByActorId,
-  timestamp: mission.updatedAt ?? '',
-  missionId: mission.id,
+  id: `task-${task.id}`,
+  feedKind: 'task',
+  kindLabel: 'Task',
+  statusLabel: humanize(task.state),
+  statusTone: toneForActivityTaskState(task.state),
+  headline: task.title,
+  summary: `${task.pendingStepCount} pending items · ${task.childTaskCount} linked slices`,
+  actorId: task.lastUpdatedByActorId ?? task.claimedByActorId,
+  timestamp: task.updatedAt ?? '',
+  taskId: task.id,
 });
 
-const buildWorkflowFeedEntry = (
-  run: SkoposUiConsoleState['activity']['workflowRuns'][number],
+const buildActionFeedEntry = (
+  run: SkoposUiConsoleState['activity']['actionRuns'][number],
 ): ActivityFeedEntry => ({
-  id: `workflow-${run.id}`,
-  feedKind: 'workflow',
-  kindLabel: 'Workflow',
+  id: `action-${run.id}`,
+  feedKind: 'action',
+  kindLabel: 'Action',
   statusLabel: humanize(run.runStatus),
   statusTone:
     run.runStatus === 'succeeded'
@@ -574,7 +572,7 @@ const buildWorkflowFeedEntry = (
       : run.runStatus === 'failed'
         ? 'danger'
         : 'warning',
-  headline: run.workflowTitle,
+  headline: run.actionTitle,
   summary:
     run.outputPaths.length > 0
       ? `${run.outputPaths.length} output path${run.outputPaths.length === 1 ? '' : 's'} recorded`
@@ -598,7 +596,7 @@ const buildActivityTimelineEntries = (
       continue;
     }
 
-    const readiness = parseTrustReadiness(event.summary);
+    const readiness = parseReadinessReadiness(event.summary);
 
     groupedEntries.push({
       id: event.id,
@@ -624,7 +622,7 @@ const shouldCollapseActivityEvents = (
   entry: ActivityTimelineEntry,
   event: SkoposUiConsoleState['activity']['operationalEvents'][number],
 ): boolean => {
-  const readiness = parseTrustReadiness(event.summary);
+  const readiness = parseReadinessReadiness(event.summary);
 
   return (
     entry.signature === buildActivitySignature(event, readiness ?? normalizeActivityStatusLabel(event.status))
@@ -652,8 +650,8 @@ const buildActivitySummary = (
     return rawSummary;
   }
 
-  if (eventKind === 'trust') {
-    return `${count} trust checks completed with the same ${outcomeLabel} readiness result.`;
+  if (eventKind === 'readiness') {
+    return `${count} Readiness checks completed with the same ${outcomeLabel} result.`;
   }
 
   return `${count} ${humanize(eventKind).toLowerCase()} events recorded with the same ${outcomeLabel} outcome.`;
@@ -685,8 +683,8 @@ const toneForOperationalStatus = (
   }
 };
 
-const toneForActivityMissionState = (
-  state: SkoposUiConsoleState['activity']['missions'][number]['state'],
+const toneForActivityTaskState = (
+  state: SkoposUiConsoleState['activity']['tasks'][number]['state'],
 ): ActivityTone => {
   switch (state) {
     case 'complete':
@@ -700,7 +698,7 @@ const toneForActivityMissionState = (
   }
 };
 
-const parseTrustReadiness = (summary: string): 'agent-ready' | 'needs-review' | 'needs-stabilization' | undefined => {
+const parseReadinessReadiness = (summary: string): 'agent-ready' | 'needs-review' | 'needs-stabilization' | undefined => {
   const match = /with\s+([a-z-]+)\s+readiness/i.exec(summary);
   const readiness = match?.[1];
 
@@ -722,7 +720,7 @@ const toneForActivityReadiness = (
     return 'danger';
   }
 
-  return toneForReadiness(readiness);
+  return readiness === 'agent-ready' ? 'positive' : 'warning';
 };
 
 const groupActivityFeedEntriesByDay = (

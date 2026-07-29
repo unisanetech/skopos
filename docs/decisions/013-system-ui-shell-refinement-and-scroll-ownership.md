@@ -1,22 +1,27 @@
+---
+title: "Decision: System UI Shell Refinement And Scroll Ownership"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-013
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+  - 009-system-ui-app-shell-and-layout-doctrine.md
+  - 010-system-ui-information-hierarchy-and-signal-placement.md
+  - 011-system-ui-navigation-and-knowledge-routing.md
+  - 012-system-ui-dev-loop-and-hot-reload.md
+---
+
 # Decision: System UI Shell Refinement And Scroll Ownership
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-013`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
-  - `009-system-ui-app-shell-and-layout-doctrine.md`
-  - `010-system-ui-information-hierarchy-and-signal-placement.md`
-  - `011-system-ui-navigation-and-knowledge-routing.md`
-  - `012-system-ui-dev-loop-and-hot-reload.md`
 
 ## Changelog
 

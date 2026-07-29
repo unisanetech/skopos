@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.verification.progressive-validation",
+  "type": "policy-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Verification policy for choosing proportional evidence without turning every task into heavy process.",
+  "updatedAt": "2026-06-24",
+  "packId": "verification.progressive-validation",
+  "family": "verification",
+  "variant": "progressive-validation",
+  "version": "0.1.0",
+  "displayName": "Progressive Verification",
+  "description": "A portable verification pack that helps agents choose proportional evidence for small edits, standard feature work, risky architecture changes, and long-running Tasks.",
+  "plainLanguageSummary": "Use this to keep small tasks fast and make big or risky changes prove enough before closure.",
+  "bestFor": [
+    "Projects where agents either run too much validation or not enough",
+    "Teams that want light, standard, and high-impact Task risk",
+    "Brownfield projects where closure proof is inconsistent"
+  ],
+  "notFor": [
+    "Throwaway spikes where no durable validation policy is needed",
+    "Projects that already have a complete accepted verification-strategy contract"
+  ],
+  "userQuestions": [
+    "Is this a light, standard, or high-impact change?",
+    "Which command proves the exact behavior changed?",
+    "Does this touch public API, data, security, stack, migration, or architecture boundaries?"
+  ],
+  "qualityBar": [
+    "Small tasks stay lightweight.",
+    "Risky work explains why it escalated.",
+    "Closure includes proof commands and results.",
+    "High-impact Tasks track execution only; durable rules move to decisions, policy, docs, or memory."
+  ],
+  "agentUse": [
+    "Load this pack while admitting Tasks, selecting Actions and Guards, and evaluating Readiness.",
+    "Use light lane for narrow local edits, standard risk for bounded feature work, and high-impact risk for risky or long-running work.",
+    "Never use process as a substitute for progress."
+  ],
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "appliesWhen": [
+    {
+      "id": "signal.multiple-validation-costs",
+      "summary": "The project has more than one useful check and agents need to choose proportionally.",
+      "confidence": "high",
+      "evidence": [
+        "typecheck, test, build, proof, e2e, lint, or workflow commands exist",
+        "some checks are fast and some are expensive",
+        "closure expectations vary by task risk"
+      ]
+    },
+    {
+      "id": "signal.long-running-agent-work",
+      "summary": "The project uses Plans, Tasks, or multi-step agent execution.",
+      "confidence": "medium",
+      "evidence": [
+        "Skopos Plans or Tasks exist",
+        "docs mention Readiness, Evidence, Task risk, or Guards",
+        "agent work often spans several turns"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.no-durable-project",
+      "summary": "No durable verification policy is needed for a disposable experiment.",
+      "confidence": "high",
+      "evidence": [
+        "no package manifest",
+        "no tests",
+        "no durable deployment or release surface"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "verification.progressive-validation.light-lane-stays-light",
+      "title": "Light lane stays light",
+      "severity": "should",
+      "summary": "Small local edits should use a compact brief, inspect relevant files, make the edit, run a focused check when useful, and update memory only when project truth changed.",
+      "rationale": "Agents lose speed and user trust when every typo fix becomes a process-heavy high-impact Task.",
+      "appliesTo": [
+        "small fixes",
+        "copy edits",
+        "single-owner styling",
+        "localized tests"
+      ],
+      "examples": [
+        "Run one focused test for a one-file bug fix",
+        "Skip policy updates when no durable project truth changed"
+      ],
+      "antiPatterns": [
+        "Creating a high-impact Task for a tiny copy change",
+        "Running full proof for a harmless local rename"
+      ],
+      "checkIds": [
+        "verification.progressive-validation.light-lane-overprocess"
+      ]
+    },
+    {
+      "id": "verification.progressive-validation.risk-escalates-proof",
+      "title": "Risk escalates proof",
+      "severity": "must",
+      "summary": "Public API, architecture, data, security, stack, migration, generated-artifact, multi-package, or long-running changes must explain escalation and satisfy staged Guards.",
+      "rationale": "High-risk changes need durable context and stronger proof so agents do not drift or close unsafe work.",
+      "appliesTo": [
+        "public API changes",
+        "architecture refactors",
+        "stack additions",
+        "security-sensitive work",
+        "data migrations",
+        "multi-package changes"
+      ],
+      "examples": [
+        "Use a high-impact Task for a new queue stack",
+        "Run typecheck, relevant tests, build, and policy drift before closing architecture changes"
+      ],
+      "antiPatterns": [
+        "Closing a migration after only checking one changed file",
+        "Adding a new dependency without proof or accepted stack decision"
+      ],
+      "checkIds": [
+        "verification.progressive-validation.missing-risk-escalation"
+      ]
+    },
+    {
+      "id": "verification.progressive-validation.closure-records-proof",
+      "title": "Closure records proof",
+      "severity": "must",
+      "summary": "Before closing, the agent must record which checks ran, what passed or failed, and what remains risky or intentionally deferred.",
+      "rationale": "Future agents need proof history, not vague claims that work is done.",
+      "appliesTo": [
+        "Task closure",
+        "pull request summaries",
+        "high-impact Task closure",
+        "release notes"
+      ],
+      "examples": [
+        "Closure says typecheck passed, UI build passed, and proof was skipped because no proof lane exists",
+        "Open risk is recorded as a finding or follow-up instead of hidden in chat"
+      ],
+      "antiPatterns": [
+        "Completion message with no validation result",
+        "Ignoring failed checks because the UI looked fine"
+      ],
+      "checkIds": [
+        "verification.progressive-validation.closure-proof-missing"
+      ]
+    }
+  ],
+  "requiredDocs": [
+    "policies/overview.md",
+    "policies/lane-guide.md",
+    "policies/closure.md"
+  ],
+  "generatedArtifacts": [
+    ".skopos/index/policies/resolved.json",
+    ".skopos/cache/agent/policy-brief.json",
+    ".skopos/evidence/tasks/<task-id>/*.json"
+  ],
+  "driftCheckIds": [
+    "verification.progressive-validation.light-lane-overprocess",
+    "verification.progressive-validation.missing-risk-escalation",
+    "verification.progressive-validation.closure-proof-missing"
+  ],
+  "proofFixtureIds": [
+    "verification.progressive-validation.good-proportional-proof",
+    "verification.progressive-validation.drift-heavy-small-task-and-thin-risky-task"
+  ]
+}

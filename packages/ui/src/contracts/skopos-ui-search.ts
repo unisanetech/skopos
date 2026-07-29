@@ -13,15 +13,13 @@ export type SkoposUiConsoleSearchKind =
   | 'decision'
   | 'finding'
   | 'discussion'
-  | 'program'
-  | 'obligation'
   | 'artifact'
   | 'portal'
   | 'report'
   | 'plan'
-  | 'mission'
+  | 'task'
   | 'scope'
-  | 'workflow'
+  | 'action'
   | 'event'
   | 'graph';
 

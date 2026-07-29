@@ -47,19 +47,27 @@ export const documentHrefForCategory = (
 };
 
 export const knowledgeCategoryForDocument = (
-  document: Pick<SkoposUiConsoleDocumentView, 'displayPath'>,
-): KnowledgeCategory => knowledgeCategoryForDisplayPath(document.displayPath);
+  document: Pick<SkoposUiConsoleDocumentView, 'displayPath' | 'role' | 'lifecycle'>,
+): KnowledgeCategory => {
+  if (document.role === 'decision') {
+    return 'decisions';
+  }
+  if (document.role === 'finding') {
+    return 'findings';
+  }
+  return knowledgeCategoryForDisplayPath(document.displayPath);
+};
 
 export const knowledgeCategoryForDisplayPath = (displayPath: string): KnowledgeCategory => {
   const normalizedPath = normalizeDocumentPath(displayPath);
 
-  if (normalizedPath.includes('/docs/decisions/')) {
+  if (hasPathSegment(normalizedPath, 'decisions')) {
     return 'decisions';
   }
 
   if (
-    normalizedPath.includes('/docs/findings/') &&
-    !normalizedPath.includes('/docs/findings/archive/')
+    hasPathSegment(normalizedPath, 'findings') &&
+    !hasPathSegment(normalizedPath, 'archive')
   ) {
     return 'findings';
   }
@@ -78,11 +86,7 @@ export const documentLifecycleForDisplayPath = (
 
   if (
     normalizedPath.endsWith('/docs/00-start-here.md') ||
-    normalizedPath === 'docs/00-start-here.md' ||
-    normalizedPath.endsWith('/docs/findings/registry.md') ||
-    normalizedPath === 'docs/findings/registry.md' ||
-    normalizedPath.includes('/docs/project/execution/') ||
-    normalizedPath.startsWith('project/execution/')
+    normalizedPath === 'docs/00-start-here.md'
   ) {
     return 'active';
   }
@@ -93,7 +97,7 @@ export const documentLifecycleForDisplayPath = (
 export const isHistoricalDocumentPath = (displayPath: string): boolean =>
   documentLifecycleForDisplayPath(displayPath) === 'historical';
 
-export const isDefaultWorkflowDocumentPath = (displayPath: string): boolean =>
+export const isDefaultActionDocumentPath = (displayPath: string): boolean =>
   documentLifecycleForDisplayPath(displayPath) !== 'historical';
 
 export const resolveKnowledgeDocumentHref = ({

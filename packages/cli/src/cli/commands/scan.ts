@@ -43,10 +43,10 @@ export const runScanCommand = async (args: string[]): Promise<void> => {
     lines.splice(2, 0, `- focus subtree: ${result.focusSubtree}`);
   }
 
-  if (result.remediationMissions.length > 0) {
+  if (result.remediationTasks.length > 0) {
     lines.push('- remediation:');
-    for (const mission of result.remediationMissions) {
-      lines.push(`  - [${mission.priority}] ${mission.title}: ${mission.detail}`);
+    for (const task of result.remediationTasks) {
+      lines.push(`  - [${task.priority}] ${task.title}: ${task.detail}`);
     }
   }
 

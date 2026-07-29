@@ -1,7 +1,7 @@
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
-import { buildSkoposTrustRuntime } from '@skopos/runtime';
+import { assessSkoposProjectReadinessRuntime } from '@skopos/runtime';
 
 import { loadSkoposUiActivityViews } from '../load-activity-views/load-activity-views.service.js';
 import type { SkoposUiArtifactCounts } from '../../contracts/skopos-ui-portal.js';
@@ -27,13 +27,13 @@ export const renderSkoposUiPortal = async ({
     cwd: workspaceRoot,
   });
   const proofSnapshot = await loadLatestProofSnapshot(workspaceRoot);
-  const trustReport = await buildSkoposTrustRuntime({
+  const readinessReport = await assessSkoposProjectReadinessRuntime({
     cwd: workspaceRoot,
   });
   const artifactCounts = await collectArtifactCounts(workspaceRoot);
   const resolvedOutputPath = resolve(
     workspaceRoot,
-    outputPath ?? 'docs/generated/skopos/index.html',
+    outputPath ?? '.skopos/ui/index.html',
   );
   const resolvedGraphPortalPath = resolve(dirname(resolvedOutputPath), 'graph-portal.html');
   const html = await buildPortalShellHtml({
@@ -42,12 +42,11 @@ export const renderSkoposUiPortal = async ({
     outputPath: resolvedOutputPath,
     graphPortalPath: resolvedGraphPortalPath,
     artifactCounts,
-    trustLevel: trustReport.trustLevel,
-    readiness: trustReport.readiness,
-    trustSummary: trustReport.summary,
-    checks: trustReport.checks,
-    unresolvedAssumptions: trustReport.unresolvedAssumptions,
-    findings: trustReport.findings,
+    readiness: readinessReport.readiness,
+    readinessSummary: readinessReport.summary,
+    checks: readinessReport.checks,
+    readinessWarnings: readinessReport.warnings,
+    readinessBlockers: readinessReport.blockers,
     activityViews,
     proofSnapshot,
     graphViews,
@@ -71,9 +70,8 @@ export const renderSkoposUiPortal = async ({
     writeStatus: dryRun ? 'dry-run' : 'written',
     graphPortalWriteStatus: dryRun ? 'dry-run' : 'written',
     graphCount: graphViews.graphs.length,
-    trustLevel: trustReport.trustLevel,
-    readiness: trustReport.readiness,
-    trustSummary: trustReport.summary,
+    readiness: readinessReport.readiness,
+    readinessSummary: readinessReport.summary,
     artifactCounts,
     html,
     graphHtml,
@@ -90,12 +88,11 @@ interface BuildPortalShellHtmlOptions extends BuildPortalHtmlOptions {
   outputPath: string;
   graphPortalPath: string;
   artifactCounts: SkoposUiArtifactCounts;
-  trustLevel: SkoposUiPortalRenderResult['trustLevel'];
   readiness: SkoposUiPortalRenderResult['readiness'];
-  trustSummary: string;
+  readinessSummary: string;
   checks: Array<{ id: string; status: 'pass' | 'warn' | 'fail'; summary: string }>;
-  unresolvedAssumptions: string[];
-  findings: string[];
+  readinessWarnings: string[];
+  readinessBlockers: string[];
   activityViews: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>;
   proofSnapshot?: SkoposUiProofSnapshot;
 }
@@ -122,19 +119,18 @@ const buildPortalShellHtml = async ({
   outputPath,
   graphPortalPath,
   artifactCounts,
-  trustLevel,
   readiness,
-  trustSummary,
+  readinessSummary,
   checks,
-  unresolvedAssumptions,
-  findings,
+  readinessWarnings,
+  readinessBlockers,
   activityViews,
   proofSnapshot,
   graphViews,
 }: BuildPortalShellHtmlOptions): Promise<string> => {
   const workspaceLabel = basename(workspaceRoot);
-  const activeMissions = activityViews.missions.filter((mission) => mission.state !== 'complete');
-  const activeMissionCount = activeMissions.length;
+  const activeTasks = activityViews.tasks.filter((task) => task.state !== 'complete');
+  const activeTaskCount = activeTasks.length;
   const warningCheckCount = checks.filter((check) => check.status === 'warn').length;
   const failedCheckCount = checks.filter((check) => check.status === 'fail').length;
   const docsStartLink = await buildPortalLink(
@@ -150,7 +146,7 @@ const buildPortalShellHtml = async ({
   );
   const proofReportLink = await buildPortalLink(
     outputPath,
-    join(workspaceRoot, '.skopos', 'proof', 'latest-report.json'),
+    join(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json'),
     'Latest proof report',
   );
   const links = [
@@ -159,17 +155,17 @@ const buildPortalShellHtml = async ({
     await buildPortalLink(outputPath, join(workspaceRoot, 'skopos.config.yaml'), 'Root config'),
     await buildPortalLink(
       outputPath,
-      join(workspaceRoot, '.skopos', 'bootstrap.json'),
+      join(workspaceRoot, '.skopos', 'index', 'bootstrap.json'),
       'Bootstrap artifact',
     ),
     await buildPortalLink(
       outputPath,
-      join(workspaceRoot, '.skopos', 'diagnosis.json'),
+      join(workspaceRoot, '.skopos', 'index', 'diagnosis.json'),
       'Diagnosis artifact',
     ),
     await buildPortalLink(
       outputPath,
-      join(workspaceRoot, '.skopos', 'scopes-lite.json'),
+      join(workspaceRoot, '.skopos', 'index', 'scopes.json'),
       'Scopes-lite artifact',
     ),
     proofReportLink,
@@ -617,13 +613,13 @@ const buildPortalShellHtml = async ({
         color: var(--muted);
         font-size: 0.82rem;
       }
-      .mission-chip-list,
+      .task-chip-list,
       .highlight-pill-list {
         display: flex;
         flex-wrap: wrap;
         gap: 6px;
       }
-      .mission-chip,
+      .task-chip,
       .highlight-pill {
         border-radius: 999px;
         padding: 4px 8px;
@@ -767,8 +763,8 @@ const buildPortalShellHtml = async ({
         <div class="sidebar-section">
           <span class="section-label">Navigate</span>
           <a class="nav-link" href="#overview">Overview <span class="nav-pill">home</span></a>
-          <a class="nav-link" href="#execution">Execution <span class="nav-pill">${activeMissionCount}</span></a>
-          <a class="nav-link" href="#trust">Trust <span class="nav-pill">${escapeHtml(trustLevel)}</span></a>
+          <a class="nav-link" href="#execution">Execution <span class="nav-pill">${activeTaskCount}</span></a>
+          <a class="nav-link" href="#readiness">Readiness <span class="nav-pill">${escapeHtml(readiness)}</span></a>
           <a class="nav-link" href="#operations">Scopes <span class="nav-pill">${graphViews.graphs.length}</span></a>
           <a class="nav-link" href="#activity">Activity <span class="nav-pill">${activityViews.operationalEvents.length}</span></a>
         </div>
@@ -787,12 +783,12 @@ const buildPortalShellHtml = async ({
             <strong>${escapeHtml(readiness)}</strong>
           </div>
           <div class="mini-metric">
-            <span class="sidebar-note">Trust</span>
-            <strong>${escapeHtml(trustLevel)}</strong>
+            <span class="sidebar-note">Readiness</span>
+            <strong>${escapeHtml(readiness)}</strong>
           </div>
           <div class="mini-metric">
-            <span class="sidebar-note">Active missions</span>
-            <strong>${activeMissionCount}</strong>
+            <span class="sidebar-note">Active tasks</span>
+            <strong>${activeTaskCount}</strong>
           </div>
         </div>
       </aside>
@@ -802,7 +798,7 @@ const buildPortalShellHtml = async ({
           <div class="topbar-copy">
             <p class="breadcrumbs">Skopos / ${escapeHtml(workspaceLabel)} / Overview</p>
             <h1>Project intelligence console</h1>
-            <p class="meta-copy">Human-facing workspace state for trust, proof, docs, workflows, and mission execution.</p>
+            <p class="meta-copy">Human-facing workspace state for readiness, proof, docs, actions, and task execution.</p>
           </div>
           <div class="topbar-actions">
             <a class="action-link" href="${escapeHtml(docsStartLink.href)}">Open docs</a>
@@ -821,10 +817,10 @@ const buildPortalShellHtml = async ({
               <div class="hero-intro">
                 <div class="hero-kicker">Workspace overview</div>
                 <h2>${escapeHtml(workspaceLabel)}</h2>
-                <p class="hero-copy">${escapeHtml(trustSummary)}</p>
+                <p class="hero-copy">${escapeHtml(readinessSummary)}</p>
               </div>
               <div class="hero-chips">
-                <span class="status ${escapeHtml(trustLevel)}">trust ${escapeHtml(trustLevel)}</span>
+                <span class="status ${escapeHtml(readiness)}">readiness ${escapeHtml(readiness)}</span>
                 <span class="status ${escapeHtml(readiness)}">${escapeHtml(readiness)}</span>
                 ${
                   proofSnapshot
@@ -837,14 +833,14 @@ const buildPortalShellHtml = async ({
 
             <section class="summary-strip">
               <article class="metric-card">
-                <span>Active missions</span>
-                <strong>${activeMissionCount}</strong>
-                <span>${artifactCounts.missions} persisted missions</span>
+                <span>Active tasks</span>
+                <strong>${activeTaskCount}</strong>
+                <span>${artifactCounts.tasks} persisted tasks</span>
               </article>
               <article class="metric-card">
-                <span>Workflow evidence</span>
+                <span>Action evidence</span>
                 <strong>${artifactCounts.runs}</strong>
-                <span>${activityViews.workflowRuns.length} recent runs</span>
+                <span>${activityViews.actionRuns.length} recent runs</span>
               </article>
               <article class="metric-card">
                 <span>Graph views</span>
@@ -858,8 +854,8 @@ const buildPortalShellHtml = async ({
               </article>
               <article class="metric-card">
                 <span>Attention</span>
-                <strong>${failedCheckCount + warningCheckCount + findings.length}</strong>
-                <span>${failedCheckCount} failures · ${warningCheckCount} warnings · ${findings.length} findings</span>
+                <strong>${failedCheckCount + warningCheckCount + readinessBlockers.length}</strong>
+                <span>${failedCheckCount} failures · ${warningCheckCount} warnings · ${readinessBlockers.length} readinessBlockers</span>
               </article>
             </section>
 
@@ -868,10 +864,10 @@ const buildPortalShellHtml = async ({
               proofSnapshot,
             })}
 
-            ${renderTrustSurface({
+            ${renderReadinessSurface({
               checks,
-              unresolvedAssumptions,
-              findings,
+              readinessWarnings,
+              readinessBlockers,
             })}
 
             ${renderOperationalModules({
@@ -896,8 +892,8 @@ const buildPortalShellHtml = async ({
                   <dd><span class="status ${escapeHtml(readiness)}">${escapeHtml(readiness)}</span></dd>
                 </div>
                 <div>
-                  <dt>Trust</dt>
-                  <dd><span class="status ${escapeHtml(trustLevel)}">${escapeHtml(trustLevel)}</span></dd>
+                  <dt>Readiness</dt>
+                  <dd><span class="status ${escapeHtml(readiness)}">${escapeHtml(readiness)}</span></dd>
                 </div>
                 <div>
                   <dt>Generated</dt>
@@ -980,19 +976,19 @@ const buildPortalShellHtml = async ({
               <h2>Attention</h2>
               <div class="attention-list">
                 <div class="attention-row">
-                  <div class="item-title">Unresolved assumptions</div>
+                  <div class="item-title">Unresolved Readiness warnings</div>
                   ${
-                    unresolvedAssumptions.length > 0
-                      ? `<div class="item-summary">${unresolvedAssumptions.map(escapeHtml).join(' · ')}</div>`
-                      : '<div class="item-summary">No unresolved assumptions in the current trust snapshot.</div>'
+                    readinessWarnings.length > 0
+                      ? `<div class="item-summary">${readinessWarnings.map(escapeHtml).join(' · ')}</div>`
+                      : '<div class="item-summary">No unresolved Readiness warnings in the current Readiness snapshot.</div>'
                   }
                 </div>
                 <div class="attention-row">
-                  <div class="item-title">Bootstrap findings</div>
+                  <div class="item-title">Bootstrap readinessBlockers</div>
                   ${
-                    findings.length > 0
-                      ? `<div class="item-summary">${findings.map(escapeHtml).join(' · ')}</div>`
-                      : '<div class="item-summary">No active bootstrap findings.</div>'
+                    readinessBlockers.length > 0
+                      ? `<div class="item-summary">${readinessBlockers.map(escapeHtml).join(' · ')}</div>`
+                      : '<div class="item-summary">No active bootstrap readinessBlockers.</div>'
                   }
                 </div>
               </div>
@@ -1202,7 +1198,7 @@ const buildGraphPortalHtml = ({
       <header>
         <div class="graph-kind">Skopos Portal</div>
         <h1>Graph Portal</h1>
-        <p class="lede">Curated relationship views generated from Skopos graph artifacts. This portal stays focused on high-signal workspace, docs, commands, scope-relations, mission, and impact slices instead of broad repo-wide graph noise.</p>
+        <p class="lede">Curated relationship views generated from Skopos graph artifacts. This portal stays focused on high-signal workspace, docs, commands, scope-relations, task, and impact slices instead of broad repo-wide graph noise.</p>
         <div class="meta">
           <span><strong>Workspace:</strong> <code>${escapeHtml(workspaceRoot)}</code></span>
           <span><strong>Generated:</strong> <code>${escapeHtml(generatedAt)}</code></span>
@@ -1242,8 +1238,8 @@ const buildPortalLink = async (
 });
 
 const collectArtifactCounts = async (workspaceRoot: string): Promise<SkoposUiArtifactCounts> => ({
-  plans: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'plans')),
-  missions: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'missions')),
+  plans: await countFiles(join(workspaceRoot, 'docs', 'work', 'plans'), '.md'),
+  tasks: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'tasks')),
   runs: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'runs')),
   graphArtifacts: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'graph')),
 });
@@ -1257,10 +1253,26 @@ const countJsonArtifacts = async (directoryPath: string): Promise<number> => {
   }
 };
 
+const countFiles = async (directoryPath: string, extension: string): Promise<number> => {
+  try {
+    const entries = await readdir(directoryPath, { withFileTypes: true });
+    const counts = await Promise.all(
+      entries.map((entry) =>
+        entry.isDirectory()
+          ? countFiles(join(directoryPath, entry.name), extension)
+          : Number(entry.isFile() && entry.name.endsWith(extension)),
+      ),
+    );
+    return counts.reduce((sum, count) => sum + count, 0);
+  } catch {
+    return 0;
+  }
+};
+
 const loadLatestProofSnapshot = async (
   workspaceRoot: string,
 ): Promise<SkoposUiProofSnapshot | undefined> => {
-  const artifactPath = join(workspaceRoot, '.skopos', 'proof', 'latest-report.json');
+  const artifactPath = join(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json');
 
   try {
     const raw = await readFile(artifactPath, 'utf8');
@@ -1325,65 +1337,65 @@ const renderExecutionCockpit = ({
   activityViews: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>;
   proofSnapshot?: SkoposUiProofSnapshot;
 }): string => {
-  const activeMissions = activityViews.missions.filter((mission) => mission.state !== 'complete');
-  const featuredMissions = (activeMissions.length > 0 ? activeMissions : activityViews.missions).slice(0, 4);
+  const activeTasks = activityViews.tasks.filter((task) => task.state !== 'complete');
+  const featuredTasks = (activeTasks.length > 0 ? activeTasks : activityViews.tasks).slice(0, 4);
   const featuredPlans = activityViews.plans.slice(0, 3);
-  const featuredRuns = activityViews.workflowRuns.slice(0, 4);
+  const featuredRuns = activityViews.actionRuns.slice(0, 4);
 
   return `<section id="execution" class="panel">
             <div class="section-head">
               <div>
                 <h2>Execution cockpit</h2>
-                <p class="section-copy">The main human review surface for active missions, recent planning intent, workflow evidence, and proof posture.</p>
+                <p class="section-copy">The main human review surface for active tasks, recent planning intent, action evidence, and proof posture.</p>
               </div>
             </div>
             <div class="board-grid">
               <article class="board-card board-card-wide">
-                <div class="eyebrow">Mission focus</div>
+                <div class="eyebrow">Task focus</div>
                 <div class="board-stats">
-                  <span><strong>${activeMissions.length}</strong> active mission${activeMissions.length === 1 ? '' : 's'}</span>
+                  <span><strong>${activeTasks.length}</strong> active task${activeTasks.length === 1 ? '' : 's'}</span>
                   <span><strong>${featuredPlans.length}</strong> recent plan${featuredPlans.length === 1 ? '' : 's'}</span>
                 </div>
                 <div class="rows">
                   ${
-                    featuredMissions.length > 0
-                      ? featuredMissions
+                    featuredTasks.length > 0
+                      ? featuredTasks
                           .map(
-                            (mission) => `<div class="item-row">
+                            (task) => `<div class="item-row">
                               <div class="item-title-line">
-                                <div class="item-title">${escapeHtml(mission.title)}</div>
-                                <span class="status ${escapeHtml(mapMissionStateToStatus(mission.state))}">${escapeHtml(mission.state)}</span>
+                                <div class="item-title">${escapeHtml(task.title)}</div>
+                                <span class="status ${escapeHtml(mapTaskStateToStatus(task.state))}">${escapeHtml(task.state)}</span>
                               </div>
-                              <div class="item-meta">${escapeHtml(mission.scopeId)} · ${mission.pendingItemCount} pending${mission.linkedSliceCount > 0 ? ` · ${mission.linkedSliceCount} slice${mission.linkedSliceCount === 1 ? '' : 's'}` : ''}${mission.claimedByActorId ? ` · claimed by: ${escapeHtml(mission.claimedByActorId)}` : ''}</div>
-                              <div class="item-summary">${escapeHtml(mission.summary)}</div>
+                              <div class="item-meta">${escapeHtml(task.scopeId)} · ${task.pendingStepCount} pending${task.childTaskCount > 0 ? ` · ${task.childTaskCount} slice${task.childTaskCount === 1 ? '' : 's'}` : ''}${task.claimedByActorId ? ` · claimed by: ${escapeHtml(task.claimedByActorId)}` : ''}</div>
+                              <div class="item-summary">${escapeHtml(task.summary)}</div>
                               ${
-                                mission.recommendedWorkflowIds.length > 0
-                                  ? `<div class="mission-chip-list">${mission.recommendedWorkflowIds
+                                task.selectedActionIds.length > 0
+                                  ? `<div class="task-chip-list">${task.selectedActionIds
                                       .slice(0, 4)
-                                      .map((workflowId) => `<span class="mission-chip">${escapeHtml(workflowId)}</span>`)
+                                      .map((actionId) => `<span class="task-chip">${escapeHtml(actionId)}</span>`)
                                       .join('')}</div>`
                                   : ''
                               }
                               <details class="disclosure">
-                                <summary>Mission artifact</summary>
+                                <summary>Task artifact</summary>
                                 <div class="disclosure-block">
                                   ${
-                                    mission.parentMissionId
-                                      ? `<div>parent: ${escapeHtml(mission.parentMissionId)}</div>`
+                                    task.parentTaskId
+                                      ? `<div>parent: ${escapeHtml(task.parentTaskId)}</div>`
                                       : ''
                                   }
                                   ${
-                                    mission.lastUpdatedByActorId
-                                      ? `<div>updated by: ${escapeHtml(mission.lastUpdatedByActorId)}</div>`
+                                    task.lastUpdatedByActorId
+                                      ? `<div>updated by: ${escapeHtml(task.lastUpdatedByActorId)}</div>`
                                       : ''
                                   }
-                                  <code>${escapeHtml(mission.artifactPath)}</code>
+                                  <code>${escapeHtml(task.artifactPath)}</code>
                                 </div>
                               </details>
                             </div>`,
                           )
                           .join('\n')
-                      : '<div class="item-row"><div class="item-summary">No persisted missions yet.</div></div>'
+                      : '<div class="item-row"><div class="item-summary">No persisted tasks yet.</div></div>'
                   }
                 </div>
                 <details class="disclosure">
@@ -1408,10 +1420,10 @@ const renderExecutionCockpit = ({
               </article>
 
               <article class="board-card board-card-narrow">
-                <div class="eyebrow">Workflow evidence</div>
+                <div class="eyebrow">Action evidence</div>
                 <div class="board-stats">
                   <span><strong>${featuredRuns.length}</strong> recent run${featuredRuns.length === 1 ? '' : 's'}</span>
-                  <span><strong>${activityViews.workflowRuns.filter((run) => run.runStatus === 'succeeded').length}</strong> succeeded</span>
+                  <span><strong>${activityViews.actionRuns.filter((run) => run.runStatus === 'succeeded').length}</strong> succeeded</span>
                 </div>
                 <div class="rows">
                   ${
@@ -1420,10 +1432,10 @@ const renderExecutionCockpit = ({
                           .map(
                             (run) => `<div class="item-row">
                               <div class="item-title-line">
-                                <div class="item-title">${escapeHtml(run.workflowTitle)}</div>
-                                <span class="status ${escapeHtml(mapWorkflowStatusToStatus(run.runStatus))}">${escapeHtml(run.runStatus)}</span>
+                                <div class="item-title">${escapeHtml(run.actionTitle)}</div>
+                                <span class="status ${escapeHtml(mapActionStatusToStatus(run.runStatus))}">${escapeHtml(run.runStatus)}</span>
                               </div>
-                              <div class="item-meta"><code>${escapeHtml(run.workflowId)}</code>${run.runByActorId ? ` · run by: ${escapeHtml(run.runByActorId)}` : ''}${run.finishedAt ? ` · ${escapeHtml(run.finishedAt)}` : ''}</div>
+                              <div class="item-meta"><code>${escapeHtml(run.actionId)}</code>${run.runByActorId ? ` · run by: ${escapeHtml(run.runByActorId)}` : ''}${run.finishedAt ? ` · ${escapeHtml(run.finishedAt)}` : ''}</div>
                               <div class="item-summary">${run.outputPaths.length > 0 ? escapeHtml(run.outputPaths.join(', ')) : 'No output paths recorded.'}</div>
                               <details class="disclosure">
                                 <summary>Run artifact</summary>
@@ -1434,7 +1446,7 @@ const renderExecutionCockpit = ({
                             </div>`,
                           )
                           .join('\n')
-                      : '<div class="item-row"><div class="item-summary">No workflow runs recorded yet.</div></div>'
+                      : '<div class="item-row"><div class="item-summary">No action runs recorded yet.</div></div>'
                   }
                 </div>
               </article>
@@ -1473,25 +1485,25 @@ const renderExecutionCockpit = ({
           </section>`;
 };
 
-const renderTrustSurface = ({
+const renderReadinessSurface = ({
   checks,
-  unresolvedAssumptions,
-  findings,
+  readinessWarnings,
+  readinessBlockers,
 }: {
   checks: Array<{ id: string; status: 'pass' | 'warn' | 'fail'; summary: string }>;
-  unresolvedAssumptions: string[];
-  findings: string[];
+  readinessWarnings: string[];
+  readinessBlockers: string[];
 }): string => {
   const passedChecks = checks.filter((check) => check.status === 'pass').length;
   const warningChecks = checks.filter((check) => check.status === 'warn').length;
   const failedChecks = checks.filter((check) => check.status === 'fail').length;
-  const surfacedAttention = [...unresolvedAssumptions, ...findings].slice(0, 4);
+  const surfacedAttention = [...readinessWarnings, ...readinessBlockers].slice(0, 4);
 
-  return `<section id="trust" class="panel">
+  return `<section id="readiness" class="panel">
             <div class="section-head">
               <div>
-                <h2>Trust surface</h2>
-                <p class="section-copy">Current readiness, closure posture, and blocking or warning signals from the trust runtime.</p>
+                <h2>Readiness surface</h2>
+                <p class="section-copy">Current readiness, closure posture, and blocking or warning signals from the Readiness projection.</p>
               </div>
             </div>
             <div class="story-grid">
@@ -1501,9 +1513,9 @@ const renderTrustSurface = ({
                   <span><strong>${passedChecks}</strong> pass</span>
                   <span><strong>${warningChecks}</strong> warn</span>
                   <span><strong>${failedChecks}</strong> fail</span>
-                  <span><strong>${unresolvedAssumptions.length}</strong> assumptions</span>
+                  <span><strong>${readinessWarnings.length}</strong> Readiness warnings</span>
                 </div>
-                <div class="item-summary">This is the human-readable closure signal before you inspect the raw trust artifacts.</div>
+                <div class="item-summary">This is the human-readable closure signal before you inspect the raw readiness artifacts.</div>
               </article>
 
               <article class="list-card">
@@ -1518,13 +1530,13 @@ const renderTrustSurface = ({
                             </div>`,
                           )
                           .join('\n')
-                      : '<div class="item-row"><div class="item-summary">No unresolved assumptions or active findings in the current trust snapshot.</div></div>'
+                      : '<div class="item-row"><div class="item-summary">No unresolved Readiness warnings or active readinessBlockers in the current Readiness snapshot.</div></div>'
                   }
                 </div>
               </article>
             </div>
             <details class="disclosure" open>
-              <summary>Detailed trust checks</summary>
+              <summary>Detailed readiness checks</summary>
               <table>
                 <thead>
                   <tr>
@@ -1555,7 +1567,7 @@ const renderActivitySection = (
       <div class="section-head">
         <div>
           <h2>Activity</h2>
-          <p class="section-copy">Recent plans, mission ownership, workflow evidence, and lifecycle operations.</p>
+          <p class="section-copy">Recent plans, task ownership, action evidence, and lifecycle operations.</p>
         </div>
       </div>
       <div class="story-grid">
@@ -1582,50 +1594,50 @@ const renderActivitySection = (
         </article>
 
         <article class="list-card">
-          <h3>Recent missions</h3>
+          <h3>Recent tasks</h3>
           <div class="rows">
             ${
-              activityViews.missions.length > 0
-                ? activityViews.missions
+              activityViews.tasks.length > 0
+                ? activityViews.tasks
                     .map(
-                      (mission) => `<div class="item-row">
+                      (task) => `<div class="item-row">
                         <div class="item-title-line">
-                          <div class="item-title">${escapeHtml(mission.title)}</div>
-                          <span class="status ${escapeHtml(mapMissionStateToStatus(mission.state))}">${escapeHtml(mission.state)}</span>
+                          <div class="item-title">${escapeHtml(task.title)}</div>
+                          <span class="status ${escapeHtml(mapTaskStateToStatus(task.state))}">${escapeHtml(task.state)}</span>
                         </div>
-                        <div class="item-meta">${mission.pendingItemCount} pending${mission.linkedSliceCount > 0 ? ` · ${mission.linkedSliceCount} slice${mission.linkedSliceCount === 1 ? '' : 's'}` : ''}${mission.claimedByActorId ? ` · claimed by: ${escapeHtml(mission.claimedByActorId)}` : ''}</div>
-                        <div class="item-summary">${escapeHtml(mission.summary)}</div>
+                        <div class="item-meta">${task.pendingStepCount} pending${task.childTaskCount > 0 ? ` · ${task.childTaskCount} slice${task.childTaskCount === 1 ? '' : 's'}` : ''}${task.claimedByActorId ? ` · claimed by: ${escapeHtml(task.claimedByActorId)}` : ''}</div>
+                        <div class="item-summary">${escapeHtml(task.summary)}</div>
                         ${
-                          mission.parentMissionId || mission.lastUpdatedByActorId
-                            ? `<div class="item-meta">${mission.parentMissionId ? `parent: ${escapeHtml(mission.parentMissionId)}` : ''}${mission.lastUpdatedByActorId ? `${mission.parentMissionId ? ' · ' : ''}updated by: ${escapeHtml(mission.lastUpdatedByActorId)}` : ''}</div>`
+                          task.parentTaskId || task.lastUpdatedByActorId
+                            ? `<div class="item-meta">${task.parentTaskId ? `parent: ${escapeHtml(task.parentTaskId)}` : ''}${task.lastUpdatedByActorId ? `${task.parentTaskId ? ' · ' : ''}updated by: ${escapeHtml(task.lastUpdatedByActorId)}` : ''}</div>`
                             : ''
                         }
                       </div>`,
                     )
                     .join('\n')
-                : '<div class="item-row"><div class="item-summary">No persisted missions yet.</div></div>'
+                : '<div class="item-row"><div class="item-summary">No persisted tasks yet.</div></div>'
             }
           </div>
         </article>
 
         <article class="list-card">
-          <h3>Workflow evidence</h3>
+          <h3>Action evidence</h3>
           <div class="rows">
             ${
-              activityViews.workflowRuns.length > 0
-                ? activityViews.workflowRuns
+              activityViews.actionRuns.length > 0
+                ? activityViews.actionRuns
                     .map(
                       (run) => `<div class="item-row">
                         <div class="item-title-line">
-                          <div class="item-title">${escapeHtml(run.workflowTitle)}</div>
-                          <span class="status ${escapeHtml(mapWorkflowStatusToStatus(run.runStatus))}">${escapeHtml(run.runStatus)}</span>
+                          <div class="item-title">${escapeHtml(run.actionTitle)}</div>
+                          <span class="status ${escapeHtml(mapActionStatusToStatus(run.runStatus))}">${escapeHtml(run.runStatus)}</span>
                         </div>
-                        <div class="item-meta"><code>${escapeHtml(run.workflowId)}</code>${run.runByActorId ? ` · run by: ${escapeHtml(run.runByActorId)}` : ''}</div>
+                        <div class="item-meta"><code>${escapeHtml(run.actionId)}</code>${run.runByActorId ? ` · run by: ${escapeHtml(run.runByActorId)}` : ''}</div>
                         <div class="item-summary">${run.outputPaths.length > 0 ? escapeHtml(run.outputPaths.join(', ')) : 'No output paths recorded.'}</div>
                       </div>`,
                     )
                     .join('\n')
-                : '<div class="item-row"><div class="item-summary">No workflow runs recorded yet.</div></div>'
+                : '<div class="item-row"><div class="item-summary">No action runs recorded yet.</div></div>'
             }
           </div>
         </article>
@@ -1726,8 +1738,8 @@ const renderOperationalModuleCard = (
             </article>`;
 };
 
-const mapMissionStateToStatus = (
-  state: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>['missions'][number]['state'],
+const mapTaskStateToStatus = (
+  state: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>['tasks'][number]['state'],
 ): 'pass' | 'warn' | 'fail' => {
   if (state === 'complete') {
     return 'pass';
@@ -1740,8 +1752,8 @@ const mapMissionStateToStatus = (
   return 'warn';
 };
 
-const mapWorkflowStatusToStatus = (
-  status: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>['workflowRuns'][number]['runStatus'],
+const mapActionStatusToStatus = (
+  status: Awaited<ReturnType<typeof loadSkoposUiActivityViews>>['actionRuns'][number]['runStatus'],
 ): 'pass' | 'warn' | 'fail' => {
   if (status === 'succeeded') {
     return 'pass';

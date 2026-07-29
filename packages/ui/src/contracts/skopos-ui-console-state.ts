@@ -1,10 +1,14 @@
 import type {
   SkoposContentIndexArtifact,
+  SkoposDocumentAuthority,
+  SkoposDocumentLifecycle,
+  SkoposDocumentRole,
   SkoposDriftReportArtifact,
   SkoposDiscussionCheckpointArtifact,
   SkoposDiscussionHandoffArtifact,
   SkoposEnforcementProfileArtifact,
-  SkoposMissionArtifact,
+  SkoposTaskArtifact,
+  SkoposTaskQuestionArtifact,
   SkoposPlanArtifact,
   SkoposPolicyPackManifest,
   SkoposPolicyOverrideArtifact,
@@ -16,17 +20,15 @@ import type {
   SkoposUnderstandingSetupReviewArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
-  SkoposResolvedGatesArtifact,
+  SkoposResolvedGuardsArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposResolvedSkillArtifact,
   SkoposSkillHostProjectionArtifact,
   SkoposSkillRecommendationArtifact,
-  SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopeLite,
   SkoposToolAdapterSummary,
-  SkoposTrustReport,
-  SkoposWorkflowQuestionArtifact,
+  SkoposProjectReadinessArtifact,
 } from '@skopos/model';
 
 import type { SkoposUiActivityViewsResult } from './skopos-ui-activity-view.js';
@@ -50,7 +52,11 @@ export type SkoposUiConsoleDocumentFormat =
   | 'text'
   | 'unknown';
 
-export type SkoposUiConsoleDocumentLifecycle = 'active' | 'durable' | 'historical';
+export type SkoposUiConsoleDocumentLifecycle =
+  | 'active'
+  | 'durable'
+  | 'historical'
+  | 'dead';
 
 export interface SkoposUiConsoleLink {
   id: string;
@@ -59,6 +65,12 @@ export interface SkoposUiConsoleLink {
   displayPath: string;
   exists: boolean;
   kind: SkoposUiConsoleLinkKind;
+  role?: SkoposDocumentRole;
+  lifecycle?: SkoposDocumentLifecycle;
+  authority?: SkoposDocumentAuthority;
+  defaultVisible?: boolean;
+  sourceId?: string;
+  scope?: string;
 }
 
 export interface SkoposUiConsoleDocumentSection {
@@ -122,6 +134,11 @@ export interface SkoposUiConsoleDocumentView {
   kind: SkoposUiConsoleLinkKind;
   format: SkoposUiConsoleDocumentFormat;
   lifecycle: SkoposUiConsoleDocumentLifecycle;
+  role?: SkoposDocumentRole;
+  authority?: SkoposDocumentAuthority;
+  defaultVisible?: boolean;
+  sourceId?: string;
+  scope?: string;
   href: string;
   displayPath: string;
   exists: boolean;
@@ -138,18 +155,18 @@ export interface SkoposUiConsolePlanView {
   plan: SkoposPlanArtifact;
 }
 
-export interface SkoposUiConsoleMissionView {
+export interface SkoposUiConsoleTaskView {
   artifactPath: string;
-  mission: SkoposMissionArtifact;
+  task: SkoposTaskArtifact;
   plan?: SkoposUiConsolePlanView;
 }
 
 export interface SkoposUiConsoleScopeView {
   scope: SkoposScopeLite;
   relatedPlanIds: string[];
-  relatedMissionIds: string[];
+  relatedTaskIds: string[];
   relatedPlanCount: number;
-  relatedMissionCount: number;
+  relatedTaskCount: number;
 }
 
 export interface SkoposUiConsoleDiscussionHandoffView {
@@ -208,9 +225,9 @@ export interface SkoposUiConsolePolicyReviewView {
     artifactPath: string;
     report: SkoposDriftReportArtifact;
   };
-  gates?: {
+  guards?: {
     artifactPath: string;
-    resolved: SkoposResolvedGatesArtifact;
+    resolved: SkoposResolvedGuardsArtifact;
   };
   packManifests: Array<{
     artifactPath: string;
@@ -259,15 +276,14 @@ export interface SkoposUiConsoleState {
   outputDirectory: string;
   generatedAt: string;
   artifactCounts: SkoposUiArtifactCounts;
-  trustReport: SkoposTrustReport;
-  programState?: SkoposProgramStateArtifact;
-  workflowQuestions?: SkoposWorkflowQuestionArtifact;
+  readinessReport: SkoposProjectReadinessArtifact;
+  taskQuestions?: SkoposTaskQuestionArtifact;
   indexArtifact?: SkoposContentIndexArtifact;
   proofReport?: SkoposProofReportArtifact;
   activity: SkoposUiActivityViewsResult;
   graphs: SkoposUiGraphViewsResult;
   plans: SkoposUiConsolePlanView[];
-  missions: SkoposUiConsoleMissionView[];
+  tasks: SkoposUiConsoleTaskView[];
   scopes: SkoposUiConsoleScopeView[];
   adapterSupport?: SkoposUiConsoleAdapterSupportView;
   policyReview?: SkoposUiConsolePolicyReviewView;

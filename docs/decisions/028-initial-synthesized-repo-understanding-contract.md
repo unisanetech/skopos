@@ -1,26 +1,31 @@
+---
+title: "Decision: Initial Synthesized Repo Understanding Contract"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-028
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-17
+lastUpdated: 2026-04-17
+relatedDocs:
+  - ../overview.md
+  - ../domains/product/vision.md
+  - ../domains/product/positioning.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - 019-compiled-reference-layer-and-agent-memory-baseline.md
+  - 024-token-control-compact-agent-transport-and-progressive-retrieval.md
+  - archive/027-self-healing-product-loop-and-bounded-hardening-contract.md
+  - ../findings/archive/F-20260417-initial-synthesized-repo-understanding-gap.md
+  - ../findings/README.md
+---
+
 # Decision: Initial Synthesized Repo Understanding Contract
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-028`
-- Status: `accepted`
-- Date: `2026-04-17`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-04-17`
-- Related Docs:
-  - `../project/overview.md`
-  - `../project/vision.md`
-  - `../project/positioning.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../project/missing-decisions-checklist.md`
-  - `019-compiled-reference-layer-and-agent-memory-baseline.md`
-  - `024-token-control-compact-agent-transport-and-progressive-retrieval.md`
-  - `027-self-healing-product-loop-and-bounded-hardening-contract.md`
-  - `../findings/F-20260417-initial-synthesized-repo-understanding-gap.md`
-  - `../findings/registry.md`
 
 ## Changelog
 
@@ -70,11 +75,11 @@ This understanding layer is now part of the brownfield onboarding contract for m
 
 The synthesized layer must be derived from the existing bootstrap knowledge loop:
 
-1. `.skopos/bootstrap.json`
-2. `.skopos/scopes-lite.json`
-3. `.skopos/diagnosis.json`
-4. `.skopos/architecture.json`
-5. `.skopos/index.json`
+1. `.skopos/index/bootstrap.json`
+2. `.skopos/index/scopes.json`
+3. `.skopos/index/diagnosis.json`
+4. `.skopos/index/architecture.json`
+5. `.skopos/index/memory.json`
 6. command, symbol, graph, and docs projections where needed
 
 It should add synthesis, not duplicate raw inventories.
@@ -100,7 +105,7 @@ Required content:
 
 Recommended artifact forms:
 
-1. `.skopos/understanding/repo-summary.json`
+1. `.skopos/index/understanding/repo-summary.json`
 2. optional routed-doc projection for the console UI
 
 #### 2. Feature Inventory
@@ -120,7 +125,7 @@ Required content:
 
 Recommended artifact form:
 
-1. `.skopos/understanding/feature-inventory.json`
+1. `.skopos/index/understanding/feature-inventory.json`
 
 #### 3. Implementation Hotspots
 
@@ -138,7 +143,7 @@ Required content:
 
 Recommended artifact form:
 
-1. `.skopos/understanding/hotspots.json`
+1. `.skopos/index/understanding/hotspots.json`
 
 ### Keep Confidence Explicit
 

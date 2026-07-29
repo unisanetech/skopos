@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
+import type { SkoposContentIndexArtifact } from '@skopos/model';
 
 import { buildDocsLinks, buildDocuments } from '../application/build-console-state/document-projections.js';
 import type { SkoposUiConsoleLink } from '../contracts/skopos-ui-console-state.js';
@@ -176,7 +177,7 @@ describe('document artifact projections', () => {
 
     const links = await buildDocsLinks({
       workspaceRoot,
-      outputDirectory: join(workspaceRoot, 'docs', 'generated', 'skopos', 'app'),
+      outputDirectory: join(workspaceRoot, '.skopos', 'ui', 'app'),
     });
 
     const displayPaths = links.map((link) => link.displayPath);
@@ -187,5 +188,45 @@ describe('document artifact projections', () => {
     expect(displayPaths).not.toContain(
       join(workspaceRoot, 'docs', 'decisions', 'archive', '001-old.md'),
     );
+  });
+
+  it('uses compiled document semantics instead of rediscovering project-shaped paths', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-doc-catalog-'));
+    tempDirs.push(workspaceRoot);
+    await mkdir(join(workspaceRoot, 'handbook', 'governance', 'choices'), {
+      recursive: true,
+    });
+    const documentPath = join(workspaceRoot, 'handbook', 'governance', 'choices', 'C-001.md');
+    await writeFile(documentPath, '# Accepted choice\n\nKeep one authority.\n', 'utf8');
+
+    const links = await buildDocsLinks({
+      workspaceRoot,
+      outputDirectory: join(workspaceRoot, 'output'),
+      indexArtifact: {
+        docsRoot: 'handbook',
+        quickLinks: {},
+        documents: [
+          {
+            id: 'choice-c-001',
+            title: 'Accepted choice',
+            path: 'handbook/governance/choices/C-001.md',
+            sourceId: 'handbook',
+            role: 'decision',
+            lifecycle: 'active',
+            authority: 'canonical',
+            defaultVisible: true,
+          },
+        ],
+      } as SkoposContentIndexArtifact,
+    });
+    const documents = await buildDocuments(links);
+    const choice = documents.find((document) => document.id === 'choice-c-001');
+
+    expect(choice).toMatchObject({
+      role: 'decision',
+      lifecycle: 'active',
+      authority: 'canonical',
+      sourceId: 'handbook',
+    });
   });
 });

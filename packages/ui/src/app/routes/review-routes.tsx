@@ -1,1 +1,1 @@
-export { ActivityView, ProofView, TrustView } from '../../screens/validation/review-screens.js';
+export { ActivityView, ProofView, ReadinessView } from '../../screens/validation/review-screens.js';

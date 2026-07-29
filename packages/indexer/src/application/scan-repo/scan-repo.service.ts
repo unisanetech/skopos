@@ -19,14 +19,11 @@ import {
   readTextFile,
 } from '../../adapters/workspace-filesystem.adapter.js';
 import {
-  buildAppliedOverrides,
-  getSkoposOverrideValue,
-  loadSkoposOverrideArtifact,
-} from '../load-overrides/load-overrides.service.js';
-import {
   isPackageScopePath,
   normalizeWorkspaceIgnorePaths,
 } from '../shared/package-scope-path.policy.js';
+import { loadSkoposScopeRegistry } from '../load-scope-registry/load-scope-registry.service.js';
+import { buildSkoposSourceDependencyDigest } from '../source-dependency-digest/source-dependency-digest.service.js';
 import { isWithinSubtree, normalizeSubtreeTarget } from '../shared/subtree-target.policy.js';
 
 const FRAMEWORK_MAP: Record<string, string> = {
@@ -57,8 +54,10 @@ export const scanRepo = async ({
 }: ScanRepoOptions): Promise<SkoposScanSummary> => {
   const resolvedCwd = resolve(cwd);
   const focusSubtree = normalizeSubtreeTarget(cwd, subtreeTarget);
+  const configPath = join(resolvedCwd, 'skopos.config.yaml');
   const config =
-    existingConfig === undefined ? await loadSkoposConfig(join(cwd, 'skopos.config.yaml')) : existingConfig;
+    existingConfig === undefined ? await loadSkoposConfig(configPath) : existingConfig;
+  const scopeRegistry = await loadSkoposScopeRegistry({ cwd: resolvedCwd });
   const ignoredPaths = normalizeWorkspaceIgnorePaths(config?.workspace.ignore ?? []);
   const inheritedWorkspaceRoot = await findNearestParentWorkspaceRoot(resolvedCwd);
   const workspaceRoot = inheritedWorkspaceRoot?.path ?? resolvedCwd;
@@ -99,20 +98,15 @@ export const scanRepo = async ({
     const packageDir = relative(resolvedCwd, filePath.replace(/\/package\.json$/, '')) || '.';
     return isWithinSubtree(packageDir, focusSubtree);
   });
-  const overrides = await loadSkoposOverrideArtifact({ cwd });
   const dependencyNames = await collectDependencyNames(localRootPackageJsonPath, packageJsonPaths);
   const commands = extractCommandMap(localRootPackageJson);
-  const configuredDocsRoot =
-    getSkoposOverrideValue(overrides, 'docs.root') ?? existingConfig?.docs.root;
+  const configuredDocsRoot = config?.docs.root;
   const docsRoots = await collectDocsRoots({
     cwd: resolvedCwd,
     workspaceRoot,
     configuredDocsRoot,
   });
-  const docsHealthRoot =
-    configuredDocsRoot && docsRoots.includes(configuredDocsRoot)
-      ? configuredDocsRoot
-      : docsRoots[0];
+  const docsHealthRoot = configuredDocsRoot ?? docsRoots[0];
   const docsHealthData = await collectDocsHealthData(resolvedCwd, docsHealthRoot);
   const docsHealth = docsHealthData.summary;
   const instructionFiles = await collectInstructionFiles({
@@ -121,10 +115,9 @@ export const scanRepo = async ({
   });
   const hasPnpmWorkspace = await pathExists(join(workspaceRoot, 'pnpm-workspace.yaml'));
   const inferredRepoMode = detectRepoMode(hasWorkspaceSignals, workspacePackageJsonPaths.length);
-  const repoMode = getSkoposOverrideValue(overrides, 'project.repoMode') ?? inferredRepoMode;
+  const repoMode = config?.project.repoMode ?? inferredRepoMode;
   const archetypeSuggestion =
-    getSkoposOverrideValue(overrides, 'project.archetype') ??
-    detectArchetype(repoMode, dependencyNames);
+    config?.project.archetype ?? detectArchetype(repoMode, dependencyNames);
   const findings = buildFindings({
     commands,
     docsRoots,
@@ -143,8 +136,9 @@ export const scanRepo = async ({
     ignoredPaths,
     docsRoots,
     docsHealth,
-    appliedOverrides: buildAppliedOverrides(overrides),
-    sourceDependencies: buildSourceDependencies({
+    sourceDependencies: await buildSourceDependencies({
+      cwd: resolvedCwd,
+      rootConfigExists: await pathExists(configPath),
       rootPackageJsonExists: localRootPackageJson !== null,
       hasPnpmWorkspace,
       workspaceConfigPath: relative(resolvedCwd, join(workspaceRoot, 'pnpm-workspace.yaml')) || '.',
@@ -155,6 +149,12 @@ export const scanRepo = async ({
         (docsHealth.root ? joinRelativePath(docsHealth.root, '00-start-here.md') : undefined),
       docsHasStartHere: docsHealth.hasStartHere,
       markdownFilePaths: docsHealthData.markdownFilePaths,
+      memoryRoots: buildMemoryRootDependencyPaths({
+        docsRoot: docsHealth.root,
+        declaredMemoryRoots: (scopeRegistry?.scopes ?? []).map(
+          (scope) => scope.memoryRoot,
+        ),
+      }),
       instructionFiles,
     }),
     instructionFiles,
@@ -515,6 +515,8 @@ const collectDocsHealthData = async (
 };
 
 interface BuildSourceDependenciesInput {
+  cwd: string;
+  rootConfigExists: boolean;
   rootPackageJsonExists: boolean;
   hasPnpmWorkspace: boolean;
   workspaceConfigPath: string;
@@ -523,10 +525,13 @@ interface BuildSourceDependenciesInput {
   docsStartHerePath?: string;
   docsHasStartHere: boolean;
   markdownFilePaths: string[];
+  memoryRoots: string[];
   instructionFiles: string[];
 }
 
-const buildSourceDependencies = ({
+const buildSourceDependencies = async ({
+  cwd,
+  rootConfigExists,
   rootPackageJsonExists,
   hasPnpmWorkspace,
   workspaceConfigPath,
@@ -535,9 +540,13 @@ const buildSourceDependencies = ({
   docsStartHerePath,
   docsHasStartHere,
   markdownFilePaths,
+  memoryRoots,
   instructionFiles,
-}: BuildSourceDependenciesInput): SkoposSourceDependency[] => {
-  const dependencies = new Map<string, SkoposSourceDependency>();
+}: BuildSourceDependenciesInput): Promise<SkoposSourceDependency[]> => {
+  const dependencies = new Map<
+    string,
+    Omit<SkoposSourceDependency, 'digest'>
+  >();
 
   const register = (
     path: string,
@@ -552,6 +561,12 @@ const buildSourceDependencies = ({
   };
 
   register('package.json', 'root-package', rootPackageJsonExists);
+  register('skopos.config.yaml', 'root-config', rootConfigExists);
+  register(
+    'tools/skopos/scopes.yaml',
+    'scope-registry',
+    await pathExists(join(cwd, 'tools/skopos/scopes.yaml')),
+  );
   register(workspaceConfigPath, 'workspace-config', hasPnpmWorkspace);
 
   for (const instructionFile of instructionFiles) {
@@ -580,8 +595,70 @@ const buildSourceDependencies = ({
     register(markdownFilePath, 'docs-content', true);
   }
 
-  return [...dependencies.values()].sort((left, right) => left.path.localeCompare(right.path));
+  for (const memoryRoot of memoryRoots) {
+    register(memoryRoot, 'memory-root', await pathExists(join(cwd, memoryRoot)));
+  }
+
+  return (
+    await Promise.all(
+      [...dependencies.values()].map(async (dependency) => ({
+        ...dependency,
+        digest: await buildSkoposSourceDependencyDigest(
+          cwd,
+          dependency.path,
+          dependency.kind,
+        ),
+      })),
+    )
+  ).sort(
+    (left, right) =>
+      compareDependencyStrings(left.path, right.path) ||
+      compareDependencyStrings(left.kind, right.kind),
+  );
 };
+
+const normalizeDependencyPath = (value: string): string =>
+  value.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/+$/, '') || '.';
+
+const buildMemoryRootDependencyPaths = ({
+  docsRoot,
+  declaredMemoryRoots,
+}: {
+  docsRoot?: string;
+  declaredMemoryRoots: string[];
+}): string[] => {
+  const candidates = [
+    ...new Set(
+      [docsRoot, ...declaredMemoryRoots]
+        .filter((value): value is string => Boolean(value))
+        .map(normalizeDependencyPath),
+    ),
+  ].sort(
+    (left, right) =>
+      left.split('/').length - right.split('/').length ||
+      compareDependencyStrings(left, right),
+  );
+  const coveringRoots: string[] = [];
+
+  for (const candidate of candidates) {
+    if (
+      coveringRoots.some(
+        (root) =>
+          root === '.' ||
+          candidate === root ||
+          candidate.startsWith(`${root}/`),
+      )
+    ) {
+      continue;
+    }
+    coveringRoots.push(candidate);
+  }
+
+  return coveringRoots.sort(compareDependencyStrings);
+};
+
+const compareDependencyStrings = (left: string, right: string): number =>
+  left < right ? -1 : left > right ? 1 : 0;
 
 const findNearestParentWorkspaceRoot = async (
   cwd: string,

@@ -1,25 +1,31 @@
+---
+title: "F-20260412-program-router-and-obligation-gap: Program-Level Sequencing
+  Still Depends Too Much On User Memory"
+status: historical
+owner: skopos-core
+id: SKOPOS-F-20260412-PROGRAM-ROUTER-AND-OBLIGATION-GAP
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-06-25
+relatedDocs:
+  - ../README.md
+  - ../../overview.md
+  - ../../domains/product/vision.md
+  - ../../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../../work/archive/P-11229565-system-ui.md
+  - ../../architecture/artifact-model.md
+  - ../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md
+  - ../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
+  - ../../decisions/archive/022-program-router-sequencing-and-obligation-contract.md
+  - ../../decisions/023-supervision-cost-and-workflow-weight-discipline.md
+reviewCycle: per workpack
+---
+
 # F-20260412-program-router-and-obligation-gap: Program-Level Sequencing Still Depends Too Much On User Memory
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260412-PROGRAM-ROUTER-AND-OBLIGATION-GAP`
-- Status: `historical`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-06-25`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `registry.md`
-  - `../project/overview.md`
-  - `../project/vision.md`
-  - `../project/roadmap.md`
-  - `../project/system-ui-plan.md`
-  - `../architecture/artifact-model.md`
-  - `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-  - `../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
-  - `../decisions/022-program-router-sequencing-and-obligation-contract.md`
-  - `../decisions/023-supervision-cost-and-workflow-weight-discipline.md`
 
 ## Changelog
 
@@ -79,13 +85,13 @@
 
 ## Linked Docs
 
-1. `registry.md`
-2. `../project/overview.md`
-3. `../project/vision.md`
-4. `../project/roadmap.md`
-5. `../project/system-ui-plan.md`
-6. `../architecture/artifact-model.md`
-7. `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-8. `../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
-9. `../decisions/022-program-router-sequencing-and-obligation-contract.md`
-10. `../decisions/023-supervision-cost-and-workflow-weight-discipline.md`
+1. `../README.md`
+2. `../../overview.md`
+3. `../../domains/product/vision.md`
+4. `../../work/archive/P-37fa9180-prototype-roadmap.md`
+5. `../../work/archive/P-11229565-system-ui.md`
+6. `../../architecture/artifact-model.md`
+7. `../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md`
+8. `../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
+9. `../../decisions/archive/022-program-router-sequencing-and-obligation-contract.md`
+10. `../../decisions/023-supervision-cost-and-workflow-weight-discipline.md`

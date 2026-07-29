@@ -1,26 +1,33 @@
+---
+title: "Decision: System UI Dev Loop And Hot Reload"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-012
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+lastUpdated: 2026-07-28
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../operations/local-development.md
+  - ../scopes/skopos-ui/overview.md
+  - 008-system-ui-routed-app-stack.md
+  - 010-system-ui-information-hierarchy-and-signal-placement.md
+  - 011-system-ui-navigation-and-knowledge-routing.md
+---
+
 # Decision: System UI Dev Loop And Hot Reload
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-012`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../runbooks/local-development.md`
-  - `../scopes/ui.md`
-  - `008-system-ui-routed-app-stack.md`
-  - `010-system-ui-information-hierarchy-and-signal-placement.md`
-  - `011-system-ui-navigation-and-knowledge-routing.md`
 
 ## Changelog
 
-- `2026-04-11`: Hardened the dev-loop watcher scope after a self-hosted macOS watcher OOM, so `skopos ui dev` now excludes generated app output under `docs/generated/skopos/app/**` and non-route-owned `.skopos/tooling/**` churn from the live authoring watch surface.
+- `2026-07-28`: Established `.skopos/ui/**` as the rebuildable local UI output
+  family and excluded it from the live authoring watch surface.
 - `2026-04-11`: Hardened the dev-loop refresh contract so watched docs changes now invalidate the active routed view instead of relying on passive shell rerenders after console-state updates.
 - `2026-04-10`: Improved the accepted dev-loop contract in `@skopos/ui`, so watched docs and `.skopos/**` changes now push live console-state updates into the running app instead of depending on full page reload.
 - `2026-04-10`: Implemented the accepted dev-loop contract in `@skopos/ui`, adding `skopos ui dev`, Vite-backed HMR, watched compiled-state refresh, and file/state endpoints for the routed console.
@@ -74,7 +81,7 @@ Use for:
 4. plans
 5. missions
 6. trust and proof artifacts
-7. other route-relevant `.skopos/**` state
+7. other route-relevant local state under `.skopos/**`, excluding generated UI output
 
 ### 3. Preview Mode
 
@@ -103,8 +110,8 @@ Do not:
 1. rerun full bootstrap on every save
 2. force full workspace rescans for ordinary docs edits
 3. rely on manual restart as the default authoring experience
-4. watch generated app output under `docs/generated/skopos/app/**`
-5. treat `.skopos/tooling/**` churn as live routed-console refresh input
+4. watch generated UI output under `.skopos/ui/**`
+5. treat `.skopos/cache/tooling/**` churn as live routed-console refresh input
 
 ## Delivery Contract
 
@@ -123,9 +130,9 @@ Do not:
 2. `ui serve`
    - built preview loop
 3. `ui build`
-   - output generation
+   - routed-app generation under `.skopos/ui/app/`
 4. `ui render`
-   - fallback snapshot renderer
+   - local snapshot generation under `.skopos/ui/`
 
 ## Consequences
 
@@ -147,7 +154,9 @@ Implemented:
 
 1. `skopos ui dev`
 2. Vite HMR for UI source
-3. watched route-aware projection refresh for docs and `.skopos/**`
+3. watched route-aware projection refresh for docs and route-relevant `.skopos/**`
 4. browser data refresh through dedicated state and file endpoints, without manual restarts as the normal loop
-5. live console-state updates for watched docs and `.skopos/**` changes without full page reload
+5. live console-state updates for watched docs and route-relevant `.skopos/**`
+   changes without full page reload
 6. active route invalidation after live console-state refresh, so open docs/detail routes update in place instead of waiting for manual reload
+7. generated `.skopos/ui/**` output excluded from watcher-triggered projection refresh

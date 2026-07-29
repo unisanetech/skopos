@@ -1,7 +1,13 @@
 import { access, readFile, readdir, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve } from 'node:path';
 
-import type { SkoposContentIndexArtifact } from '@skopos/model';
+import type {
+  SkoposContentIndexArtifact,
+  SkoposDocumentAuthority,
+  SkoposDocumentKnowledgeEntry,
+  SkoposDocumentLifecycle,
+  SkoposDocumentRole,
+} from '@skopos/model';
 
 import type {
   SkoposUiConsoleDocumentFormat,
@@ -17,6 +23,12 @@ interface DocumentLinkSpec {
   title: string;
   path: string;
   kind: SkoposUiConsoleLinkKind;
+  role?: SkoposDocumentRole;
+  lifecycle?: SkoposDocumentLifecycle;
+  authority?: SkoposDocumentAuthority;
+  defaultVisible?: boolean;
+  sourceId?: string;
+  scope?: string;
 }
 
 export const buildDocsLinks = async ({
@@ -43,66 +55,78 @@ export const buildDocsLinks = async ({
         indexArtifact?.quickLinks.docsStartHerePath ?? 'docs/00-start-here.md',
       ),
       'doc',
+      {
+        role: 'router',
+        lifecycle: 'active',
+        authority: 'canonical',
+        defaultVisible: true,
+        sourceId: 'docs',
+      },
     ),
     buildLinkSpec('instructions', 'Canonical instructions', join(workspaceRoot, 'AGENTS.md'), 'instructions'),
     buildLinkSpec('config', 'Root config', join(workspaceRoot, 'skopos.config.yaml'), 'config'),
-    buildLinkSpec('bootstrap', 'Bootstrap artifact', join(workspaceRoot, '.skopos', 'bootstrap.json'), 'artifact'),
-    buildLinkSpec('diagnosis', 'Diagnosis artifact', join(workspaceRoot, '.skopos', 'diagnosis.json'), 'artifact'),
-    buildLinkSpec('scopes-lite', 'Scopes artifact', join(workspaceRoot, '.skopos', 'scopes-lite.json'), 'artifact'),
+    buildLinkSpec('bootstrap', 'Bootstrap artifact', join(workspaceRoot, '.skopos', 'index', 'bootstrap.json'), 'artifact'),
+    buildLinkSpec('diagnosis', 'Diagnosis artifact', join(workspaceRoot, '.skopos', 'index', 'diagnosis.json'), 'artifact'),
+    buildLinkSpec('scopes-lite', 'Scopes artifact', join(workspaceRoot, '.skopos', 'index', 'scopes.json'), 'artifact'),
     buildLinkSpec(
       'architecture',
       'Architecture artifact',
-      join(workspaceRoot, '.skopos', 'architecture.json'),
+      join(workspaceRoot, '.skopos', 'index', 'architecture.json'),
       'artifact',
     ),
-    buildLinkSpec('knowledge-index', 'Knowledge index', join(workspaceRoot, '.skopos', 'index.json'), 'artifact'),
+    buildLinkSpec('knowledge-index', 'Knowledge index', join(workspaceRoot, '.skopos', 'index', 'memory.json'), 'artifact'),
     buildLinkSpec(
       'understanding-summary',
       'Repo understanding',
-      join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json'),
+      join(workspaceRoot, '.skopos', 'index', 'understanding', 'repo-summary.json'),
       'artifact',
     ),
     buildLinkSpec(
       'understanding-features',
       'Feature inventory',
-      join(workspaceRoot, '.skopos', 'understanding', 'feature-inventory.json'),
+      join(workspaceRoot, '.skopos', 'index', 'understanding', 'feature-inventory.json'),
       'artifact',
     ),
     buildLinkSpec(
       'understanding-hotspots',
       'Implementation hotspots',
-      join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json'),
+      join(workspaceRoot, '.skopos', 'index', 'understanding', 'hotspots.json'),
       'artifact',
     ),
     buildLinkSpec(
       'understanding-setup-review',
       'Setup review',
-      join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json'),
+      join(workspaceRoot, '.skopos', 'index', 'understanding', 'setup-review.json'),
       'artifact',
     ),
     buildLinkSpec(
       'understanding-setup-answers',
       'Setup answers',
-      join(workspaceRoot, '.skopos', 'understanding', 'setup-answers.json'),
+      join(workspaceRoot, '.skopos', 'index', 'understanding', 'setup-answers.json'),
       'artifact',
     ),
-    buildLinkSpec('proof-report', 'Proof report', join(workspaceRoot, '.skopos', 'proof', 'latest-report.json'), 'report'),
+    buildLinkSpec('proof-report', 'Proof report', join(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json'), 'report'),
     buildLinkSpec(
       'snapshot-portal',
       'Snapshot portal',
-      join(workspaceRoot, 'docs', 'generated', 'skopos', 'index.html'),
+      join(workspaceRoot, '.skopos', 'ui', 'index.html'),
       'portal',
     ),
     buildLinkSpec(
       'graph-portal',
       'Graph portal',
-      join(workspaceRoot, 'docs', 'generated', 'skopos', 'graph-portal.html'),
+      join(workspaceRoot, '.skopos', 'ui', 'graph-portal.html'),
       'portal',
     ),
   ];
-  const discoveredDocs = await discoverMarkdownDocLinks({
-    docsRootPath,
-  });
+  const discoveredDocs =
+    indexArtifact?.documents && indexArtifact.documents.length > 0
+      ? indexArtifact.documents.map((document) =>
+          buildCatalogDocumentLinkSpec(document, workspaceRoot),
+        )
+      : await discoverMarkdownDocLinks({
+          docsRootPath,
+        });
 
   const links = await Promise.all(
     [...targets, ...discoveredDocs].map(async (target) => ({
@@ -112,6 +136,12 @@ export const buildDocsLinks = async ({
       href: buildLinkHref(outputEntryPath, target.path, linkMode, fileHrefBasePath),
       exists: await pathExists(target.path),
       kind: target.kind,
+      role: target.role,
+      lifecycle: target.lifecycle,
+      authority: target.authority,
+      defaultVisible: target.defaultVisible,
+      sourceId: target.sourceId,
+      scope: target.scope,
     })),
   );
 
@@ -133,7 +163,7 @@ export const buildDocuments = async (
           title: link.title,
           kind: link.kind,
           format,
-          lifecycle: documentLifecycleForDisplayPath(link.displayPath),
+          ...buildDocumentSemantics(link),
           href: link.href,
           displayPath: link.displayPath,
           exists,
@@ -151,7 +181,7 @@ export const buildDocuments = async (
           title: link.title,
           kind: link.kind,
           format,
-          lifecycle: documentLifecycleForDisplayPath(link.displayPath),
+          ...buildDocumentSemantics(link),
           href: link.href,
           displayPath: link.displayPath,
           exists,
@@ -170,7 +200,7 @@ export const buildDocuments = async (
           title: link.title,
           kind: link.kind,
           format,
-          lifecycle: documentLifecycleForDisplayPath(link.displayPath),
+          ...buildDocumentSemantics(link),
           href: link.href,
           displayPath: link.displayPath,
           exists,
@@ -191,11 +221,16 @@ const buildLinkSpec = (
   title: string,
   path: string,
   kind: SkoposUiConsoleLinkKind,
+  semantics: Omit<
+    DocumentLinkSpec,
+    'id' | 'title' | 'path' | 'kind'
+  > = {},
 ): DocumentLinkSpec => ({
   id,
   title,
   path,
   kind,
+  ...semantics,
 });
 
 const buildDocumentView = (
@@ -209,11 +244,14 @@ const buildDocumentView = (
   }
 
   if (format === 'json') {
-    return buildJsonArtifactDocumentView({
-      link,
-      raw,
-      updatedAt,
-    });
+    return {
+      ...buildJsonArtifactDocumentView({
+        link,
+        raw,
+        updatedAt,
+      }),
+      ...buildDocumentSemantics(link),
+    };
   }
 
   const preview = compactWhitespace(raw).slice(0, 1200);
@@ -224,13 +262,13 @@ const buildDocumentView = (
     title: link.title,
     kind: link.kind,
     format,
-    lifecycle: documentLifecycleForDisplayPath(link.displayPath),
+    ...buildDocumentSemantics(link),
     href: link.href,
     displayPath: link.displayPath,
     exists: link.exists,
     summary:
       format === 'yaml'
-        ? 'Configuration or workflow source exposed through the console.'
+        ? 'Configuration or action source exposed through the console.'
         : 'Text-based source surfaced for direct human inspection.',
     excerpt,
     headings: [],
@@ -307,7 +345,7 @@ const buildMarkdownDocumentView = (
     title: headings[0] ?? link.title,
     kind: link.kind,
     format: 'markdown',
-    lifecycle: documentLifecycleForDisplayPath(link.displayPath),
+    ...buildDocumentSemantics(link),
     href: link.href,
     displayPath: link.displayPath,
     exists: link.exists,
@@ -318,6 +356,33 @@ const buildMarkdownDocumentView = (
     updatedAt,
   };
 };
+
+const buildCatalogDocumentLinkSpec = (
+  document: SkoposDocumentKnowledgeEntry,
+  workspaceRoot: string,
+): DocumentLinkSpec =>
+  buildLinkSpec(document.id, document.title, resolveWorkspacePath(workspaceRoot, document.path), 'doc', {
+    role: document.role,
+    lifecycle: document.lifecycle,
+    authority: document.authority,
+    defaultVisible: document.defaultVisible,
+    sourceId: document.sourceId,
+    scope: document.metadata?.scope,
+  });
+
+const buildDocumentSemantics = (
+  link: SkoposUiConsoleLink,
+): Pick<
+  SkoposUiConsoleDocumentView,
+  'lifecycle' | 'role' | 'authority' | 'defaultVisible' | 'sourceId' | 'scope'
+> => ({
+  lifecycle: link.lifecycle ?? documentLifecycleForDisplayPath(link.displayPath),
+  role: link.role,
+  authority: link.authority,
+  defaultVisible: link.defaultVisible,
+  sourceId: link.sourceId,
+  scope: link.scope,
+});
 
 const classifyMarkdownSection = (
   title: string,

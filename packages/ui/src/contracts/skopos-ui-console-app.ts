@@ -1,4 +1,3 @@
-import type { SkoposReadiness, SkoposTrustLevel } from '@skopos/model';
 import type { Server } from 'node:http';
 
 import type { SkoposUiConsoleState } from './skopos-ui-console-state.js';
@@ -12,8 +11,7 @@ export interface SkoposUiConsoleBuildResult {
   assetPaths: string[];
   writeStatus: 'written' | 'dry-run';
   generatedAt: string;
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
+  readiness: SkoposUiConsoleState['readinessReport']['readiness'];
   state: SkoposUiConsoleState;
 }
 
@@ -32,8 +30,7 @@ export interface SkoposUiConsoleDevResult {
   stateEndpointPath: string;
   fileEndpointPath: string;
   generatedAt: string;
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
+  readiness: SkoposUiConsoleState['readinessReport']['readiness'];
   state: SkoposUiConsoleState;
   server: {
     close(): Promise<void>;

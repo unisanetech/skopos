@@ -2,6 +2,7 @@ import type {
   SkoposDiscussionCheckpointRunResult,
   SkoposDiscussionHandoffRunResult,
   SkoposDiscussionCheckpointPromotionTrigger,
+  SkoposTaskIdentity,
 } from '@skopos/model';
 
 import { refreshSkoposDiscussionCheckpoints } from './discussion-checkpoints.js';
@@ -11,24 +12,29 @@ import { refreshSkoposTokenTelemetry } from './token-telemetry.js';
 
 export const refreshSkoposDiscussionResumeArtifacts = async ({
   workspaceRoot,
+  taskIdentity,
   dryRun = false,
 }: {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   dryRun?: boolean;
 }): Promise<{
   handoff: SkoposDiscussionHandoffRunResult;
 }> => {
   const handoff = await refreshSkoposDiscussionHandoff({
     workspaceRoot,
+    taskIdentity,
     dryRun,
   });
 
   await refreshSkoposAgentPromptBrief({
     workspaceRoot,
+    taskIdentity,
     dryRun,
   });
   await refreshSkoposTokenTelemetry({
     workspaceRoot,
+    taskIdentity,
     dryRun,
   });
 
@@ -47,10 +53,12 @@ export const refreshSkoposDiscussionResumeArtifacts = async ({
 
 export const refreshSkoposDiscussionLifecycleArtifacts = async ({
   workspaceRoot,
+  taskIdentity,
   dryRun = false,
   checkpointTrigger = 'manual',
 }: {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   dryRun?: boolean;
   checkpointTrigger?: SkoposDiscussionCheckpointPromotionTrigger;
 }): Promise<{
@@ -59,11 +67,13 @@ export const refreshSkoposDiscussionLifecycleArtifacts = async ({
 }> => {
   const checkpoint = await refreshSkoposDiscussionCheckpoints({
     workspaceRoot,
+    taskIdentity,
     dryRun,
     trigger: checkpointTrigger,
   });
   const { handoff } = await refreshSkoposDiscussionResumeArtifacts({
     workspaceRoot,
+    taskIdentity,
     dryRun,
   });
 

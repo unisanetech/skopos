@@ -1,7 +1,5 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type { SkoposPolicySeverity } from './skopos-policy-pack.js';
-import type { SkoposTrustCheckStatus } from './skopos-trust-report.js';
-
 export type SkoposDriftFamily =
   | 'policy'
   | 'architecture'
@@ -13,7 +11,7 @@ export type SkoposDriftFamily =
   | 'docs'
   | 'memory'
   | 'security'
-  | 'workflow';
+  | 'action';
 
 export type SkoposDriftStatus = 'open' | 'acknowledged' | 'suppressed' | 'resolved';
 
@@ -22,7 +20,7 @@ export interface SkoposDriftFinding {
   family: SkoposDriftFamily;
   status: SkoposDriftStatus;
   severity: SkoposPolicySeverity;
-  trustStatus: SkoposTrustCheckStatus;
+  verificationStatus: 'pass' | 'warn' | 'fail';
   summary: string;
   ruleId?: string;
   packId?: string;

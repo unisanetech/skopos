@@ -1,0 +1,25 @@
+id: graph.render-local-portal
+title: Render local Skopos portal
+description: Render the local HTML portal and graph portal from the current compiled artifacts for human inspection while dogfooding the workspace.
+category: graph-generator
+scope:
+  - workspace
+  - docs
+command: pnpm skopos:ui
+cwd: .
+inputs:
+  - .skopos
+  - docs
+  - packages/ui
+  - packages/cli
+outputs:
+  - .skopos/ui/index.html
+  - .skopos/ui/graph-portal.html
+affects:
+  - .skopos/ui
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing graph artifacts, portal rendering, Readiness projections, or recent activity views.
+recommendedAfter:
+  - maintenance.refresh-knowledge
+owner: skopos-core

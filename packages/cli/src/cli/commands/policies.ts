@@ -154,6 +154,8 @@ export const runPoliciesCommand = async (args: string[]): Promise<void> => {
 
     writeLines(
       buildPolicyAppliedLines({
+        policySourcePath: result.policySourcePath,
+        policySourceWrite: result.policySourceWrite,
         policy: result.policy,
         policyWrite: result.policyWrite,
         policyBriefWrite: result.policyBriefWrite,
@@ -663,7 +665,7 @@ const buildPolicyRecommendationLines = (
     'Skopos policy recommendations',
     'Status: Recommendation ready',
     `Summary: Skopos reviewed ${result.recommendations.length} policy pack${result.recommendations.length === 1 ? '' : 's'} for a ${result.projectLifecycle} project.`,
-    `Default work lane: ${result.defaultExecutionLane}`,
+    `Default work lane: ${result.defaultTaskRisk}`,
   ];
 
   if (applyRecommendations.length > 0) {
@@ -712,12 +714,16 @@ const buildPolicyRecommendationLines = (
 };
 
 const buildPolicyAppliedLines = ({
+  policySourcePath,
+  policySourceWrite,
   policy,
   policyWrite,
   policyBriefWrite,
   agentsWrite,
   dryRun,
 }: {
+  policySourcePath: string;
+  policySourceWrite: 'written' | 'dry-run';
   policy: SkoposResolvedPolicyArtifact;
   policyWrite: 'written' | 'dry-run';
   policyBriefWrite: 'written' | 'dry-run';
@@ -731,11 +737,12 @@ const buildPolicyAppliedLines = ({
     `Summary: ${dryRun ? 'Skopos previewed the policy update without changing files.' : `Skopos accepted ${packs} as project policy.`}`,
     `Accepted packs: ${policy.acceptedPacks.length}`,
     `Active rules: ${policy.activeRules.length}`,
-    `Default work lane: ${policy.defaultExecutionLane}`,
+    `Default work lane: ${policy.defaultTaskRisk}`,
     'Updated surfaces:',
-    `- Resolved policy: ${policyWrite}`,
-    `- Agent policy brief: ${policyBriefWrite}`,
-    `- AGENTS.md policy section: ${agentsWrite}`,
+    `- Tracked policy source: ${policySourcePath} (${policySourceWrite})`,
+    `- Resolved local projection: ${policyWrite}`,
+    `- Agent policy projection: ${policyBriefWrite}`,
+    `- AGENTS.md derived policy projection: ${agentsWrite}`,
     'Next step:',
   ];
 
@@ -820,7 +827,7 @@ const buildPolicyOverrideLines = (artifact: SkoposPolicyOverrideArtifact): strin
   const lines = [
     'Skopos policy overrides',
     `Status: ${artifact.overrides.length === 0 ? 'No overrides' : 'Overrides active'}`,
-    `Summary: ${artifact.summary ?? 'Local policy overrides control intentional exceptions to accepted policy drift.'}`,
+    `Summary: ${artifact.summary ?? 'Tracked policy overrides record intentional exceptions to accepted policy drift.'}`,
   ];
 
   if (artifact.overrides.length > 0) {
@@ -865,10 +872,10 @@ const buildPolicyOverrideWriteLines = (
   'Skopos policy overrides',
   `Status: ${artifactWrite === 'dry-run' ? 'Preview only' : 'Overrides updated'}`,
   `Summary: ${artifact.summary ?? `${artifact.overrides.length} override${artifact.overrides.length === 1 ? '' : 's'} configured.`}`,
-  `Override file: ${artifactWrite}`,
-  `Resolved policy sync: ${resolvedPolicyWrite}`,
+  `Tracked policy source (tools/skopos/policies.yaml): ${artifactWrite}`,
+  `Resolved local projection: ${resolvedPolicyWrite}`,
   'Next step:',
-  'Run `skopos policies drift .` so trust and closure use the updated override state.',
+  'Run `skopos policies drift .` so Guards and Readiness use the updated override state.',
 ];
 
 const buildPolicyMappingDecisionLines = (
@@ -877,7 +884,7 @@ const buildPolicyMappingDecisionLines = (
   const lines = [
     'Skopos role mapping decisions',
     `Status: ${artifact.decisions.length === 0 ? 'No decisions' : 'Decisions active'}`,
-    `Summary: ${artifact.summary ?? 'Local role mapping decisions confirm or ignore inferred pack role mappings.'}`,
+    `Summary: ${artifact.summary ?? 'Tracked role mapping decisions confirm or ignore inferred pack role mappings.'}`,
   ];
 
   if (artifact.decisions.length > 0) {
@@ -898,7 +905,7 @@ const buildPolicyMappingDecisionLines = (
     'Next step:',
     artifact.decisions.length === 0
       ? 'Confirm a role when the inferred folder mapping is correct, or ignore a role when the project intentionally does not use it.'
-      : 'Refresh the Rules UI or run `skopos policies mappings list --json` to review the saved local mapping decisions.',
+      : 'Refresh the Rules UI or run `skopos policies mappings list --json` to review the tracked mapping decisions.',
   );
 
   return lines;
@@ -912,8 +919,8 @@ const buildPolicyMappingDecisionWriteLines = (
   'Skopos role mapping decisions',
   `Status: ${artifactWrite === 'dry-run' ? 'Preview only' : 'Decision updated'}`,
   `Summary: ${artifact.summary ?? `${artifact.decisions.length} role mapping decision${artifact.decisions.length === 1 ? '' : 's'} configured.`}`,
-  `Decision file: ${artifactWrite}`,
-  `Role mapping refresh: ${roleMappingWrite}`,
+  `Tracked policy source (tools/skopos/policies.yaml): ${artifactWrite}`,
+  `Resolved local role mapping: ${roleMappingWrite}`,
   'Next step:',
   'Open the Rules pack detail page to confirm the saved mapping now reflects the project structure.',
 ];

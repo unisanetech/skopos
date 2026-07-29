@@ -7,6 +7,7 @@ export interface SyncInstructionMirrorsOptions {
   cwd: string;
   dryRun?: boolean;
   instructionSourcePath?: string;
+  mirrorTargets?: string[];
   projectionModel?: SkoposHostProjectionModel;
 }
 
@@ -72,14 +73,15 @@ export const syncInstructionMirrors = async ({
 export const checkInstructionMirrorParity = async ({
   cwd,
   instructionSourcePath = 'AGENTS.md',
+  mirrorTargets,
   projectionModel,
-}: Pick<SyncInstructionMirrorsOptions, 'cwd' | 'instructionSourcePath' | 'projectionModel'>): Promise<CheckInstructionMirrorParityResult> => {
+}: Pick<SyncInstructionMirrorsOptions, 'cwd' | 'instructionSourcePath' | 'mirrorTargets' | 'projectionModel'>): Promise<CheckInstructionMirrorParityResult> => {
   const workspaceRoot = resolve(cwd);
   const sourcePath = join(workspaceRoot, instructionSourcePath);
   const source = await readFile(sourcePath, 'utf8');
   const issues: InstructionMirrorIssue[] = [];
 
-  for (const relativeTarget of resolveMirrorTargets(projectionModel)) {
+  for (const relativeTarget of resolveMirrorTargets(projectionModel, mirrorTargets)) {
     const targetPath = join(workspaceRoot, relativeTarget);
     const expected = renderMirror(relativeTarget, source, basename(instructionSourcePath));
 
@@ -110,12 +112,13 @@ export const checkInstructionMirrorParity = async ({
 
 const resolveMirrorTargets = (
   projectionModel?: SkoposHostProjectionModel,
+  mirrorTargets?: string[],
 ): string[] =>
   projectionModel
     ? projectionModel.hosts
         .filter((host) => host.instructionProjection === 'mirror')
         .map((host) => host.instructionPath)
-    : [...MIRROR_TARGETS];
+    : mirrorTargets ?? [...MIRROR_TARGETS];
 
 export const renderMirror = (target: string, source: string, sourceLabel = 'AGENTS.md'): string => {
   const header = [

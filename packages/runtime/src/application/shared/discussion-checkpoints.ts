@@ -1,28 +1,24 @@
 import { readdir } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import type {
-  SkoposAgentMissionBriefArtifact,
-  SkoposAgentProgramBriefArtifact,
   SkoposDiscussionCheckpointArtifact,
   SkoposDiscussionCheckpointPromotionKind,
   SkoposDiscussionCheckpointPromotionTrigger,
   SkoposDiscussionIndexArtifact,
-  SkoposWorkflowQuestionArtifact,
-  SkoposWorkflowRecommendationArtifact,
+  SkoposTaskQuestionArtifact,
+  SkoposTaskRecommendationArtifact,
+  SkoposTaskIdentity,
 } from '@skopos/model';
 
-import { writeJsonArtifact } from './write-json-artifact.js';
+import { resolveCurrentTaskState } from './current-task-state.js';
 import {
-  AGENT_MISSION_BRIEF_DIRECTORY,
   DISCUSSION_CHECKPOINT_DIRECTORY,
   DISCUSSION_INDEX_ARTIFACT_PATH,
-  PROGRAM_BRIEF_ARTIFACT_PATH,
-  QUESTIONS_ARTIFACT_PATH,
-  RECOMMENDATIONS_ARTIFACT_PATH,
   TOKEN_BUDGETS,
 } from './token-control-constants.js';
-import { estimateTokens, readJsonIfExists, resolveActiveMissionId } from './token-control-state.js';
+import { estimateTokens, readJsonIfExists } from './token-control-state.js';
+import { writeJsonArtifact } from './write-json-artifact.js';
 
 export interface RefreshSkoposDiscussionCheckpointResult {
   path: string;
@@ -35,339 +31,238 @@ export interface RefreshSkoposDiscussionCheckpointResult {
 
 export const refreshSkoposDiscussionCheckpoints = async ({
   workspaceRoot,
+  taskIdentity,
   dryRun = false,
   trigger = 'manual',
 }: {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   dryRun?: boolean;
   trigger?: SkoposDiscussionCheckpointPromotionTrigger;
 }): Promise<RefreshSkoposDiscussionCheckpointResult> => {
-  const activeMissionId = await resolveActiveMissionId(workspaceRoot);
-  const [programBrief, missionBrief, questions, recommendations, existingIndex] = await Promise.all([
-    readJsonIfExists<SkoposAgentProgramBriefArtifact>(join(workspaceRoot, PROGRAM_BRIEF_ARTIFACT_PATH)),
-    activeMissionId
-      ? readJsonIfExists<SkoposAgentMissionBriefArtifact>(
-          join(workspaceRoot, AGENT_MISSION_BRIEF_DIRECTORY, `${activeMissionId}.json`),
-        )
-      : Promise.resolve(undefined),
-    readJsonIfExists<SkoposWorkflowQuestionArtifact>(join(workspaceRoot, QUESTIONS_ARTIFACT_PATH)),
-    readJsonIfExists<SkoposWorkflowRecommendationArtifact>(
-      join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH),
-    ),
-    readJsonIfExists<SkoposDiscussionIndexArtifact>(join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH)),
+  const current = await resolveCurrentTaskState({ workspaceRoot, taskIdentity });
+  if (!current) {
+    throw new Error(
+      'Task-scoped discussion checkpoint requires an exact current Task identity.',
+    );
+  }
+  const task = current.task;
+  const [questions, recommendations] = await Promise.all([
+    readJsonIfExists<SkoposTaskQuestionArtifact>(current.questionsPath),
+    readJsonIfExists<SkoposTaskRecommendationArtifact>(current.recommendationsPath),
   ]);
-
-  const acceptedDecisions =
-    questions?.entries
-      .filter((entry) => entry.status === 'resolved' && entry.resolvedOptionId)
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title,
-        resolvedOptionId: entry.resolvedOptionId!,
-        resolvedOptionLabel: entry.options.find((option) => option.id === entry.resolvedOptionId)?.label,
-      })) ?? [];
-  const openQuestions =
-    questions?.entries
-      .filter((entry) => entry.status === 'open')
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title,
-        blocking: entry.blocking,
-        recommendedOptionId: entry.recommendedOptionId,
-      })) ?? [];
-  const recommendedAction = recommendations?.entries.find((entry) => entry.status === 'open');
-  const linkedPlanId = questions?.generatedForPlanId;
+  if (!questions || !recommendations) {
+    throw new Error(`Task ${task.id} is missing exact question or recommendation state.`);
+  }
+  const acceptedDecisions = questions.entries
+    .filter((entry) => entry.status === 'resolved' && entry.resolvedOptionId)
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.question,
+      resolvedOptionId: entry.resolvedOptionId!,
+      resolvedOptionLabel: entry.options.find(
+        (option) => option.id === entry.resolvedOptionId,
+      )?.label,
+    }));
+  const openQuestions = questions.entries
+    .filter((entry) => entry.status === 'open')
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.question,
+      blocking: entry.blocking,
+      recommendedOptionId: entry.recommendedOptionId,
+    }));
+  const recommendation = recommendations.entries.find(
+    (entry) => entry.status === 'open',
+  );
+  const nextStep = task.steps.find(
+    (step) => step.status !== 'complete' && step.status !== 'skipped',
+  );
   const currentDirection =
-    missionBrief?.recommendedActionSummary ??
-    programBrief?.recommendedActionSummary ??
-    recommendedAction?.summary ??
-    'Keep the current active workflow state compact and resume from the latest mission routing state.';
-  const linkedArtifactPaths = [
-    PROGRAM_BRIEF_ARTIFACT_PATH,
-    activeMissionId ? `${AGENT_MISSION_BRIEF_DIRECTORY}/${activeMissionId}.json` : undefined,
-    QUESTIONS_ARTIFACT_PATH,
-    RECOMMENDATIONS_ARTIFACT_PATH,
-  ].filter((value): value is string => Boolean(value));
+    recommendation?.summary ??
+    nextStep?.detail ??
+    `Continue Task ${task.id} from its exact Task-local state.`;
+  const recommendedNextCommand = `skopos task show ${task.id}`;
   const resumeSummary = buildResumeSummary({
-    activeMissionId,
+    taskId: task.id,
     currentDirection,
-    openQuestions,
+    openQuestionCount: openQuestions.length,
+    blockingQuestionCount: openQuestions.filter((entry) => entry.blocking).length,
     acceptedDecisionCount: acceptedDecisions.length,
-    nextCommand: recommendedAction?.command ?? missionBrief?.nextCommand ?? programBrief?.nextCommand,
+    recommendedNextCommand,
   });
-  const threadId = activeMissionId ? `mission:${activeMissionId}` : 'workspace:current';
-  const estimatedTokens = estimateTokens(resumeSummary);
-  const nextCommand = recommendedAction?.command ?? missionBrief?.nextCommand ?? programBrief?.nextCommand;
-  const latestCheckpoint = await loadLatestCheckpointArtifact(workspaceRoot, existingIndex);
-  const nextCheckpointShape = {
-    threadId,
-    activeMissionId,
+  const existingIndex = await readJsonIfExists<SkoposDiscussionIndexArtifact>(
+    join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH),
+  );
+  const latest = await loadLatestCheckpointArtifact(workspaceRoot, existingIndex);
+  const promotionKinds = derivePromotionKinds(latest, {
+    activeTaskId: task.id,
     currentDirection,
     acceptedDecisions,
     openQuestions,
-    recommendedNextCommand: nextCommand,
-  };
-  const promotionKinds = derivePromotionKinds({
-    workspaceRoot,
-    latestCheckpoint,
-    nextShape: nextCheckpointShape,
+    recommendedNextCommand,
   });
-
-  if (latestCheckpoint && promotionKinds.length === 0) {
-    const index = buildDiscussionIndexArtifact({
-      workspaceRoot,
-      latestCheckpoint,
-      entries: existingIndex?.entries ?? [],
-    });
-    const indexPath = join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH);
-    const needsIndexWrite =
-      !existingIndex ||
-      existingIndex.latestCheckpointId !== index.latestCheckpointId ||
-      existingIndex.latestCheckpointPath !== index.latestCheckpointPath ||
-      existingIndex.checkpointCount !== index.checkpointCount;
-
-    const indexWrite =
-      needsIndexWrite && !dryRun
-        ? await writeJsonArtifact({
-            artifactPath: indexPath,
-            artifact: index,
-            dryRun,
-          })
-        : needsIndexWrite
-          ? 'dry-run'
-          : 'unchanged';
-
+  if (latest && promotionKinds.length === 0) {
+    const index = buildDiscussionIndexArtifact(workspaceRoot, latest, existingIndex?.entries ?? []);
     return {
-      path: join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY, `${latestCheckpoint.id}.json`),
+      path: join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY, `${latest.id}.json`),
       write: 'unchanged',
-      artifact: latestCheckpoint,
-      indexPath,
-      indexWrite,
+      artifact: latest,
+      indexPath: join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH),
+      indexWrite: 'unchanged',
       index,
     };
   }
-
-  const timestamp = new Date().toISOString();
-  const checkpointId = toCheckpointId(timestamp);
+  const now = new Date().toISOString();
+  const estimatedTokens = estimateTokens(resumeSummary);
   const artifact: SkoposDiscussionCheckpointArtifact = {
     schemaVersion: 1,
-    id: checkpointId,
+    id: `discussion-checkpoint-${now.replace(/[-:.]/g, '').replace('Z', 'z')}`,
     type: 'discussion-checkpoint',
     status: 'generated',
     authority: 'generated',
-    summary: `Discussion checkpoint for ${activeMissionId ?? 'the active workspace workflow state'}.`,
-    updatedAt: timestamp,
-    generatedAt: timestamp,
+    summary: `Discussion checkpoint for Task ${task.id}.`,
+    updatedAt: now,
+    generatedAt: now,
     workspaceRoot,
-    threadId,
-    checkpointKind: 'workflow-state',
-    activeMissionId,
-    linkedPlanId,
+    threadId: `task:${task.id}`,
+    checkpointKind: 'task-state',
+    activeTaskId: task.id,
+    linkedPlanId: task.planIds[0],
     currentDirection,
     acceptedDecisions,
     openQuestions,
-    recommendedNextCommand: nextCommand,
-    linkedArtifactPaths,
+    recommendedNextCommand,
+    linkedArtifactPaths: [
+      relative(workspaceRoot, current.taskPath),
+      relative(workspaceRoot, current.questionsPath),
+      relative(workspaceRoot, current.recommendationsPath),
+    ],
     resumeSummary,
     estimatedTokens,
     budgetTokens: TOKEN_BUDGETS.checkpoint,
     overBudget: estimatedTokens > TOKEN_BUDGETS.checkpoint,
     promotionTrigger: trigger,
     promotionKinds,
-    supersedesCheckpointId: latestCheckpoint?.id,
+    supersedesCheckpointId: latest?.id,
   };
-
-  const relativeArtifactPath = `${DISCUSSION_CHECKPOINT_DIRECTORY}/${artifact.id}.json`;
-  const artifactPath = join(workspaceRoot, relativeArtifactPath);
-  const write = await writeJsonArtifact({
-    artifactPath,
-    artifact,
-    dryRun,
-  });
-  const index = buildDiscussionIndexArtifact({
+  const path = join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY, `${artifact.id}.json`);
+  const write = await writeJsonArtifact({ artifactPath: path, artifact, dryRun });
+  const index = buildDiscussionIndexArtifact(
     workspaceRoot,
-    latestCheckpoint: artifact,
-    entries: existingIndex?.entries ?? [],
-  });
+    artifact,
+    existingIndex?.entries ?? [],
+  );
   const indexPath = join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH);
   const indexWrite = await writeJsonArtifact({
     artifactPath: indexPath,
     artifact: index,
     dryRun,
   });
-
-  return {
-    path: artifactPath,
-    write,
-    artifact,
-    indexPath,
-    indexWrite,
-    index,
-  };
+  return { path, write, artifact, indexPath, indexWrite, index };
 };
 
 const loadLatestCheckpointArtifact = async (
   workspaceRoot: string,
-  existingIndex?: SkoposDiscussionIndexArtifact,
+  index?: SkoposDiscussionIndexArtifact,
 ): Promise<SkoposDiscussionCheckpointArtifact | undefined> => {
-  const indexedLatest = existingIndex?.latestCheckpointPath;
-  if (indexedLatest) {
-    return readJsonIfExists<SkoposDiscussionCheckpointArtifact>(join(workspaceRoot, indexedLatest));
+  if (index?.latestCheckpointPath) {
+    return readJsonIfExists(
+      join(workspaceRoot, index.latestCheckpointPath),
+    );
   }
-
   try {
-    const entries = (await readdir(join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY)))
+    const latest = (await readdir(join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY)))
       .filter((entry) => entry.endsWith('.json'))
       .sort()
-      .reverse();
-    const latest = entries.at(0);
+      .at(-1);
     return latest
-      ? readJsonIfExists<SkoposDiscussionCheckpointArtifact>(
-          join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY, latest),
-        )
+      ? readJsonIfExists(join(workspaceRoot, DISCUSSION_CHECKPOINT_DIRECTORY, latest))
       : undefined;
   } catch {
     return undefined;
   }
 };
 
-const derivePromotionKinds = ({
-  workspaceRoot,
-  latestCheckpoint,
-  nextShape: {
-    threadId,
-    activeMissionId,
-    currentDirection,
-    acceptedDecisions,
-    openQuestions,
-    recommendedNextCommand,
-  },
-}: {
-  workspaceRoot: string;
-  latestCheckpoint?: SkoposDiscussionCheckpointArtifact;
-  nextShape: {
-    threadId: string;
-    activeMissionId?: string;
-    currentDirection: string;
-    acceptedDecisions: SkoposDiscussionCheckpointArtifact['acceptedDecisions'];
-    openQuestions: SkoposDiscussionCheckpointArtifact['openQuestions'];
-    recommendedNextCommand?: string;
-  };
-}): SkoposDiscussionCheckpointPromotionKind[] => {
-  if (!latestCheckpoint) {
-    return ['initial-state'];
+const derivePromotionKinds = (
+  previous: SkoposDiscussionCheckpointArtifact | undefined,
+  next: Pick<
+    SkoposDiscussionCheckpointArtifact,
+    | 'activeTaskId'
+    | 'currentDirection'
+    | 'acceptedDecisions'
+    | 'openQuestions'
+    | 'recommendedNextCommand'
+  >,
+): SkoposDiscussionCheckpointPromotionKind[] => {
+  if (!previous) return ['initial-state'];
+  const kinds: SkoposDiscussionCheckpointPromotionKind[] = [];
+  if (previous.activeTaskId !== next.activeTaskId) kinds.push('active-task-changed');
+  if (previous.currentDirection !== next.currentDirection) {
+    kinds.push('current-direction-changed');
   }
-
-  const promotionKinds: SkoposDiscussionCheckpointPromotionKind[] = [];
-
-  if (
-    latestCheckpoint.threadId !== threadId ||
-    latestCheckpoint.activeMissionId !== activeMissionId
-  ) {
-    promotionKinds.push('active-mission-changed');
+  if (JSON.stringify(previous.acceptedDecisions) !== JSON.stringify(next.acceptedDecisions)) {
+    kinds.push('accepted-decisions-changed');
   }
-  if (latestCheckpoint.currentDirection !== currentDirection) {
-    promotionKinds.push('current-direction-changed');
+  if (JSON.stringify(previous.openQuestions) !== JSON.stringify(next.openQuestions)) {
+    kinds.push('open-questions-changed');
   }
-  if (JSON.stringify(latestCheckpoint.acceptedDecisions) !== JSON.stringify(acceptedDecisions)) {
-    promotionKinds.push('accepted-decisions-changed');
+  if (previous.recommendedNextCommand !== next.recommendedNextCommand) {
+    kinds.push('recommended-next-command-changed');
   }
-  if (JSON.stringify(latestCheckpoint.openQuestions) !== JSON.stringify(openQuestions)) {
-    promotionKinds.push('open-questions-changed');
-  }
-  if (
-    normalizeRecommendedCommandForPromotion(latestCheckpoint.recommendedNextCommand, workspaceRoot) !==
-    normalizeRecommendedCommandForPromotion(recommendedNextCommand, workspaceRoot)
-  ) {
-    promotionKinds.push('recommended-next-command-changed');
-  }
-
-  return promotionKinds;
+  return kinds;
 };
 
-const normalizeRecommendedCommandForPromotion = (
-  command: string | undefined,
+const buildDiscussionIndexArtifact = (
   workspaceRoot: string,
-): string | undefined => {
-  if (!command) {
-    return undefined;
-  }
-
-  return command
-    .replaceAll(workspaceRoot, '<project-root>')
-    .replace(/\s+--actor\s+(?:"[^"]*"|'[^']*'|\S+)/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-};
-
-const buildDiscussionIndexArtifact = ({
-  workspaceRoot,
-  latestCheckpoint,
-  entries,
-}: {
-  workspaceRoot: string;
-  latestCheckpoint: SkoposDiscussionCheckpointArtifact;
-  entries: SkoposDiscussionIndexArtifact['entries'];
-}): SkoposDiscussionIndexArtifact => {
-  const latestCheckpointPath = `${DISCUSSION_CHECKPOINT_DIRECTORY}/${latestCheckpoint.id}.json`;
-  const dedupedEntries = [
+  latest: SkoposDiscussionCheckpointArtifact,
+  entries: SkoposDiscussionIndexArtifact['entries'],
+): SkoposDiscussionIndexArtifact => {
+  const latestCheckpointPath = `${DISCUSSION_CHECKPOINT_DIRECTORY}/${latest.id}.json`;
+  const nextEntries = [
     {
-      id: latestCheckpoint.id,
-      threadId: latestCheckpoint.threadId,
+      id: latest.id,
+      threadId: latest.threadId,
       artifactPath: latestCheckpointPath,
-      activeMissionId: latestCheckpoint.activeMissionId,
-      linkedPlanId: latestCheckpoint.linkedPlanId,
-      summary: latestCheckpoint.summary ?? latestCheckpoint.resumeSummary,
-      currentDirection: latestCheckpoint.currentDirection,
-      updatedAt: latestCheckpoint.updatedAt ?? latestCheckpoint.generatedAt ?? new Date().toISOString(),
+      activeTaskId: latest.activeTaskId,
+      linkedPlanId: latest.linkedPlanId,
+      summary: latest.summary ?? latest.resumeSummary,
+      currentDirection: latest.currentDirection,
+      updatedAt: latest.updatedAt ?? latest.generatedAt ?? new Date().toISOString(),
     },
-    ...entries.filter((entry) => entry.id !== latestCheckpoint.id),
+    ...entries.filter((entry) => entry.id !== latest.id),
   ].sort((left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt));
-
+  const now = new Date().toISOString();
   return {
     schemaVersion: 1,
     id: 'discussion-index',
     type: 'discussion-index',
     status: 'generated',
     authority: 'generated',
-    summary:
-      dedupedEntries.length === 0
-        ? 'No discussion checkpoints have been generated yet.'
-        : `${dedupedEntries.length} discussion checkpoint${dedupedEntries.length === 1 ? '' : 's'} are available for routed history and resume state.`,
-    updatedAt: latestCheckpoint.updatedAt,
-    generatedAt: new Date().toISOString(),
+    summary: `${nextEntries.length} Task discussion checkpoint${nextEntries.length === 1 ? '' : 's'} available.`,
+    updatedAt: latest.updatedAt,
+    generatedAt: now,
     workspaceRoot,
-    latestCheckpointId: latestCheckpoint.id,
+    latestCheckpointId: latest.id,
     latestCheckpointPath,
-    checkpointCount: dedupedEntries.length,
-    entries: dedupedEntries,
+    checkpointCount: nextEntries.length,
+    entries: nextEntries,
   };
 };
 
 const buildResumeSummary = ({
-  activeMissionId,
+  taskId,
   currentDirection,
-  openQuestions,
+  openQuestionCount,
+  blockingQuestionCount,
   acceptedDecisionCount,
-  nextCommand,
+  recommendedNextCommand,
 }: {
-  activeMissionId?: string;
+  taskId: string;
   currentDirection: string;
-  openQuestions: Array<{ id: string; blocking: boolean }>;
+  openQuestionCount: number;
+  blockingQuestionCount: number;
   acceptedDecisionCount: number;
-  nextCommand?: string;
-}): string => {
-  const openQuestionSummary =
-    openQuestions.length === 0
-      ? 'No workflow questions remain open.'
-      : `${openQuestions.length} workflow question${openQuestions.length === 1 ? '' : 's'} remain open, including ${openQuestions.filter((entry) => entry.blocking).length} blocking.`;
-  const missionSummary = activeMissionId
-    ? `Resume mission ${activeMissionId}.`
-    : 'Resume from the latest workspace workflow state.';
-  const nextStepSummary = nextCommand ? `Next command: ${nextCommand}.` : 'No next command is currently suggested.';
-
-  return `${missionSummary} ${currentDirection} ${acceptedDecisionCount} decision${acceptedDecisionCount === 1 ? '' : 's'} already resolved. ${openQuestionSummary} ${nextStepSummary}`;
-};
-
-const toCheckpointId = (timestamp: string): string =>
-  `discussion-checkpoint-${timestamp.replace(/[-:.]/g, '').replace('Z', 'z')}`;
+  recommendedNextCommand: string;
+}): string =>
+  `Resume Task ${taskId}. ${currentDirection} ${acceptedDecisionCount} decision${acceptedDecisionCount === 1 ? '' : 's'} resolved; ${openQuestionCount} question${openQuestionCount === 1 ? '' : 's'} open (${blockingQuestionCount} blocking). Next command: ${recommendedNextCommand}.`;

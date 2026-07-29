@@ -1,23 +1,28 @@
+---
+title: "Decision 003: Current-State And Recommended Architecture Split"
+status: active
+owner: skopos-core
+id: SKOPOS-DECISION-003
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+lastUpdated: 2026-04-09
+relatedDocs:
+  - README.md
+  - ../architecture/00-architecture.md
+  - ../architecture/runtime-model.md
+  - ../architecture/artifact-model.md
+  - ../work/archive/P-067e15c4-proof-and-benchmarking.md
+  - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+reviewCycle: per convergence phase
+---
+
 # Decision 003: Current-State And Recommended Architecture Split
 
 Use this decision to keep brownfield architecture interpretation honest and agent-usable.
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-003`
-- Status: `active`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-04-09`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `README.md`
-  - `../architecture/00-architecture.md`
-  - `../architecture/runtime-model.md`
-  - `../architecture/artifact-model.md`
-  - `../project/proof-phase-plan.md`
-  - `../project/missing-decisions-checklist.md`
 
 ## Changelog
 
@@ -25,7 +30,7 @@ Use this decision to keep brownfield architecture interpretation honest and agen
 
 ## Decision
 
-1. Skopos will keep brownfield architecture interpretation in a dedicated `.skopos/architecture.json` artifact.
+1. Skopos will keep brownfield architecture interpretation in a dedicated `.skopos/index/architecture.json` artifact.
 2. The artifact will contain two distinct views:
    - current architecture
    - recommended architecture

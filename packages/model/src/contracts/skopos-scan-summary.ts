@@ -1,4 +1,3 @@
-import type { SkoposAppliedOverride } from './skopos-overrides.js';
 import type {
   SkoposCommandMap,
   SkoposProjectArchetype,
@@ -24,7 +23,6 @@ export interface SkoposScanSummary {
   ignoredPaths: string[];
   docsRoots: string[];
   docsHealth: SkoposDocsHealthSummary;
-  appliedOverrides: SkoposAppliedOverride[];
   sourceDependencies: SkoposSourceDependency[];
   instructionFiles: string[];
   packageCount: number;

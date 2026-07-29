@@ -4,28 +4,24 @@ import { Link } from '@tanstack/react-router';
 import {
   DiscussionGuidanceCard,
   DiscussionHistoryCard,
-  MissionChecklistCard,
-  MissionDiscussionContextCard,
-  MissionDetailInspectorAside,
-  MissionFocusCard,
-  MissionFrameCard,
-  MissionGuidanceCard,
-  MissionLinkedWorkCard,
-  MissionWorkflowRecordingCard,
-  MissionListGuidanceCard,
-  MissionListInspectorAside,
-  MissionQueueCard,
+  TaskChecklistCard,
+  TaskDiscussionContextCard,
+  TaskDetailInspectorAside,
+  TaskFocusCard,
+  TaskFrameCard,
+  TaskGuidanceCard,
+  TaskLinkedWorkCard,
+  TaskActionRecordingCard,
+  TaskListGuidanceCard,
+  TaskListInspectorAside,
+  TaskQueueCard,
   OverviewAdapterSupportCard,
   OverviewInspectorAside,
   OverviewProjectKnowledgeCard,
   OverviewRecentDiscussionCard,
   OverviewRecentPlansCard,
   OverviewUnderstandingCard,
-} from '../../features/work/mission-sections.js';
-import {
-  MissionProgramContextCard,
-  ProgramAttentionCard,
-} from '../../features/program/program-sections.js';
+} from '../../features/work/task-sections.js';
 import { DetailPage } from '../../patterns/pages/detail-page.js';
 import { ListPage } from '../../patterns/pages/list-page.js';
 import { PageSectionStack } from '../../patterns/pages/shared.js';
@@ -35,16 +31,12 @@ import {
   RouteFilterBar,
 } from '../../patterns/sections/content-primitives.js';
 import {
-  getMissionProgramContext,
-  getProgramOverviewContext,
-} from '../../platform/console-state/program-selectors.js';
-import {
   getExecutionOverviewContext,
-  getMissionDetailContext,
-  getMissionListContext,
+  getTaskDetailContext,
+  getTaskListContext,
 } from '../../platform/console-state/work-selectors.js';
 import {
-  getMissionDiscussionContext,
+  getTaskDiscussionContext,
   getOverviewDiscussionContext,
 } from '../../platform/console-state/discussion-selectors.js';
 import {
@@ -54,48 +46,38 @@ import {
 import { requireConsoleState } from '../../platform/console-state/access.js';
 import {
   toneForCheck,
-  toneForMissionState,
+  toneForTaskState,
   toneForReadiness,
-  toneForTrust,
 } from '../../support/ui/tone-helpers.js';
 import { filterChipClass } from '../../support/ui/filter-chip.js';
 
 export function ExecutionOverviewView(): React.JSX.Element {
   const state = requireConsoleState();
-  const { activeMissions, warningChecks, proofSummary, recentPlans } =
+  const { activeTasks, warningChecks, proofSummary, recentPlans } =
     getExecutionOverviewContext(state);
-  const { latestDiscussionHandoff, recentDiscussionCheckpoints, activeMissionView } =
+  const { latestDiscussionHandoff, recentDiscussionCheckpoints, activeTaskView } =
     getOverviewDiscussionContext(state);
-  const {
-    doNowItem,
-    doNextItem,
-    currentActiveItem,
-    currentItemObligations,
-    openProgramQuestionCount,
-    interruptRecommendation,
-    recommendedAction,
-  } = getProgramOverviewContext(state);
 
   return (
     <ReviewPage
       kicker="Current work"
       title={state.workspaceLabel}
       description={buildReadinessSentence({
-        readiness: state.trustReport.readiness,
-        passCount: state.trustReport.checks.filter((check) => check.status === 'pass').length,
+        readiness: state.readinessReport.readiness,
+        passCount: state.readinessReport.checks.filter((check) => check.status === 'pass').length,
         warningCount: warningChecks.length,
-        failureCount: state.trustReport.checks.filter((check) => check.status === 'fail').length,
+        failureCount: state.readinessReport.checks.filter((check) => check.status === 'fail').length,
       })}
       badges={[
         <StatusPill
-          key="trust"
-          value={`confidence ${state.trustReport.trustLevel}`}
-          tone={toneForTrust(state.trustReport.trustLevel)}
+          key="readiness"
+          value={`confidence ${state.readinessReport.readiness}`}
+          tone={toneForReadiness(state.readinessReport.readiness)}
         />,
         <StatusPill
           key="readiness"
-          value={state.trustReport.readiness}
-          tone={toneForReadiness(state.trustReport.readiness)}
+          value={state.readinessReport.readiness}
+          tone={toneForReadiness(state.readinessReport.readiness)}
         />,
         state.proofReport ? (
           <StatusPill
@@ -107,10 +89,8 @@ export function ExecutionOverviewView(): React.JSX.Element {
       ]}
       aside={
         <OverviewInspectorAside
-          activeMissionCount={activeMissions.length}
+          activeTaskCount={activeTasks.length}
           attentionLabel={warningChecks.length > 0 ? `${warningChecks.length} checks` : 'clear'}
-          programItemCount={state.programState?.items.length ?? 0}
-          openObligationCount={state.programState?.attention.openObligationCount ?? 0}
           proofPassRate={
             proofSummary
               ? `${Math.round(proofSummary.scorecard.weightedPassRate * 100)}%`
@@ -123,22 +103,12 @@ export function ExecutionOverviewView(): React.JSX.Element {
       <PageSectionStack>
         <OverviewUnderstandingCard understanding={state.understanding} />
         <OverviewProjectKnowledgeCard memoryView={state.memoryView} />
-        <MissionFocusCard missions={activeMissions} />
-        <ProgramAttentionCard
-          state={state}
-          doNowItem={doNowItem}
-          doNextItem={doNextItem}
-          currentActiveItem={currentActiveItem}
-          currentItemObligations={currentItemObligations}
-          openProgramQuestionCount={openProgramQuestionCount}
-          interruptRecommendation={interruptRecommendation}
-          recommendedAction={recommendedAction}
-        />
+        <TaskFocusCard tasks={activeTasks} />
         <OverviewAdapterSupportCard adapterSupport={state.adapterSupport} />
         <OverviewRecentDiscussionCard
           latestDiscussionHandoff={latestDiscussionHandoff}
           recentDiscussionCheckpoints={recentDiscussionCheckpoints}
-          activeMissionView={activeMissionView}
+          activeTaskView={activeTaskView}
         />
         <Card
           title="Attention"
@@ -187,36 +157,36 @@ const buildReadinessSentence = ({
 }): string =>
   `Readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
 
-export function ExecutionMissionsView({
+export function ExecutionTasksView({
   search,
 }: {
   search: { view: 'open' | 'blocked' | 'claimed' | 'complete' };
 }): React.JSX.Element {
   const state = requireConsoleState();
   const {
-    openMissions,
-    allCompletedMissions,
-    completedMissions,
-    blockedMissionCount,
-    claimedMissionCount,
-    latestMission,
-    primaryMissions,
+    openTasks,
+    allCompletedTasks,
+    completedTasks,
+    blockedTaskCount,
+    claimedTaskCount,
+    latestTask,
+    primaryTasks,
     primaryTitle,
     primaryDescription,
-  } = getMissionListContext(state, search.view);
+  } = getTaskListContext(state, search.view);
 
   return (
     <ListPage
-      kicker="Missions"
+      kicker="Tasks"
       title="Tracked work sessions"
-      description="A mission is the active container Skopos uses to track work, decisions, progress, and closure evidence."
+      description="A task is the active container Skopos uses to track work, decisions, progress, and closure evidence."
       aside={
-        <MissionListInspectorAside
-          openCount={openMissions.length}
-          blockedCount={blockedMissionCount}
-          claimedCount={claimedMissionCount}
-          completeCount={allCompletedMissions.length}
-          updatedAt={latestMission?.mission.updatedAt}
+        <TaskListInspectorAside
+          openCount={openTasks.length}
+          blockedCount={blockedTaskCount}
+          claimedCount={claimedTaskCount}
+          completeCount={allCompletedTasks.length}
+          updatedAt={latestTask?.task.updatedAt}
         />
       }
       filters={
@@ -229,7 +199,7 @@ export function ExecutionMissionsView({
           ] as const).map(([value, label]) => (
             <Link
               key={value}
-              to="/missions"
+              to="/tasks"
               search={{ view: value }}
               className={filterChipClass(search.view === value)}
             >
@@ -240,26 +210,26 @@ export function ExecutionMissionsView({
       }
     >
       <PageSectionStack className="gap-5">
-        <MissionListGuidanceCard
-          openCount={openMissions.length}
-          blockedCount={blockedMissionCount}
-          claimedCount={claimedMissionCount}
+        <TaskListGuidanceCard
+          openCount={openTasks.length}
+          blockedCount={blockedTaskCount}
+          claimedCount={claimedTaskCount}
         />
-        <MissionQueueCard
+        <TaskQueueCard
           title={primaryTitle}
           description={primaryDescription}
-          missions={primaryMissions}
-          emptyTitle={`No ${search.view} missions`}
-          emptyDescription="No mission matches this view. Start or claim a mission when work should be tracked across files, decisions, and checks."
+          tasks={primaryTasks}
+          emptyTitle={`No ${search.view} tasks`}
+          emptyDescription="No task matches this view. Start or claim a task when work should be tracked across files, decisions, and checks."
           compact={search.view === 'complete'}
         />
         {search.view !== 'complete' ? (
-          <MissionQueueCard
+          <TaskQueueCard
             title="Recently closed"
             description="Completed slices stay visible without competing with the live queue."
-            missions={completedMissions}
-            emptyTitle="No completed missions"
-            emptyDescription="Completed missions will appear here after Skopos records a closed work session."
+            tasks={completedTasks}
+            emptyTitle="No completed tasks"
+            emptyDescription="Completed tasks will appear here after Skopos records a closed work session."
             compact
           />
         ) : null}
@@ -270,11 +240,11 @@ export function ExecutionMissionsView({
 
 export function ExecutionDiscussionView(): React.JSX.Element {
   const state = requireConsoleState();
-  const missionTitleById = Object.fromEntries(
-    state.missions.map((missionView) => [missionView.mission.id, missionView.mission.title]),
+  const taskTitleById = Object.fromEntries(
+    state.tasks.map((taskView) => [taskView.task.id, taskView.task.title]),
   );
-  const activeMissionCount = state.discussionCheckpoints.filter(
-    (checkpointView) => checkpointView.checkpoint.activeMissionId,
+  const activeTaskCount = state.discussionCheckpoints.filter(
+    (checkpointView) => checkpointView.checkpoint.activeTaskId,
   ).length;
 
   return (
@@ -296,12 +266,10 @@ export function ExecutionDiscussionView(): React.JSX.Element {
       ]}
       aside={
         <OverviewInspectorAside
-          activeMissionCount={activeMissionCount}
+          activeTaskCount={activeTaskCount}
           attentionLabel={
             state.latestDiscussionHandoff?.handoff.overBudget ? 'budget warning' : 'compact'
           }
-          programItemCount={state.programState?.items.length ?? 0}
-          openObligationCount={state.programState?.attention.openObligationCount ?? 0}
           proofPassRate={
             state.proofReport
               ? `${Math.round(state.proofReport.scorecard.weightedPassRate * 100)}%`
@@ -315,101 +283,87 @@ export function ExecutionDiscussionView(): React.JSX.Element {
         <DiscussionGuidanceCard
           latestDiscussionHandoff={state.latestDiscussionHandoff}
           checkpointCount={state.discussionCheckpoints.length}
-          activeMissionCount={activeMissionCount}
+          activeTaskCount={activeTaskCount}
         />
         <DiscussionHistoryCard
           latestDiscussionHandoff={state.latestDiscussionHandoff}
           checkpoints={state.discussionCheckpoints}
-          missionTitleById={missionTitleById}
+          taskTitleById={taskTitleById}
         />
       </PageSectionStack>
     </ReviewPage>
   );
 }
 
-export function ExecutionMissionDetailView({
-  missionId,
+export function ExecutionTaskDetailView({
+  taskId,
 }: {
-  missionId: string;
+  taskId: string;
 }): React.JSX.Element {
   const state = requireConsoleState();
-  const { missionView, missionWorkflows, linkedMissionViews, guidance } = getMissionDetailContext(
+  const { taskView, taskActions, linkedTaskViews, guidance } = getTaskDetailContext(
     state,
-    missionId,
+    taskId,
   );
-  const { latestDiscussionHandoff, missionCheckpoints } = getMissionDiscussionContext(
+  const { latestDiscussionHandoff, taskCheckpoints } = getTaskDiscussionContext(
     state,
-    missionId,
-  );
-  const { missionItem, openObligations, doNextItem, recommendedAction } = getMissionProgramContext(
-    state,
-    missionId,
+    taskId,
   );
 
-  if (!missionView) {
+  if (!taskView) {
     return (
       <DetailPage
-        kicker="Mission detail"
-        title="Mission not found"
-        description="The requested mission is not present in this snapshot."
+        kicker="Task detail"
+        title="Task not found"
+        description="The requested task is not present in this snapshot."
       >
         <EmptyMessage
-          title="Unknown mission"
-          description="Refresh the app after rebuilding Skopos state if the mission changed."
+          title="Unknown task"
+          description="Refresh the app after rebuilding Skopos state if the task changed."
         />
       </DetailPage>
     );
   }
 
-  const mission = missionView.mission;
+  const task = taskView.task;
 
   return (
     <DetailPage
-      kicker="Mission detail"
-      title={mission.title}
-      description={mission.summary}
+      kicker="Task detail"
+      title={task.title}
+      description={task.goal}
       badges={[
         <StatusPill
           key="state"
-          value={mission.state}
-          tone={toneForMissionState(mission.state)}
+          value={task.state}
+          tone={toneForTaskState(task.state)}
         />,
-        <StatusPill key="scope" value={mission.scope.scope.title} tone="neutral" />,
-        mission.coordination.claimedBy?.actorId ? (
+        <StatusPill key="scope" value={task.scope.scope.title} tone="neutral" />,
+        task.coordination.claimedBy?.actorId ? (
           <StatusPill
             key="claim"
-            value={`claimed ${mission.coordination.claimedBy.actorId}`}
+            value={`claimed ${task.coordination.claimedBy.actorId}`}
             tone="info"
           />
         ) : null,
       ]}
       aside={
-        <MissionDetailInspectorAside
-          missionView={missionView}
-          missionWorkflows={missionWorkflows}
-          programItemDisposition={missionItem?.recommendedDisposition.replaceAll('-', ' ')}
-          openProgramObligationCount={openObligations.length}
-          queuedNextTitle={doNextItem?.title}
+        <TaskDetailInspectorAside
+          taskView={taskView}
+          taskActions={taskActions}
         />
       }
     >
       <PageSectionStack>
-        {guidance ? <MissionGuidanceCard guidance={guidance} /> : null}
-        <MissionWorkflowRecordingCard missionView={missionView} />
-        <MissionFrameCard missionView={missionView} />
-        <MissionProgramContextCard
-          state={state}
-          missionItem={missionItem}
-          openObligations={openObligations}
-          doNextItem={doNextItem}
-          recommendedAction={recommendedAction}
-        />
-        <MissionDiscussionContextCard
+        {guidance ? <TaskGuidanceCard guidance={guidance} /> : null}
+        <TaskActionRecordingCard taskView={taskView} />
+        <TaskFrameCard taskView={taskView} />
+        <TaskDiscussionContextCard
           latestDiscussionHandoff={latestDiscussionHandoff}
-          missionCheckpoints={missionCheckpoints}
+          taskCheckpoints={taskCheckpoints}
         />
-        <MissionChecklistCard missionView={missionView} />
-        <MissionLinkedWorkCard linkedMissionViews={linkedMissionViews} />
+        <TaskChecklistCard taskView={taskView} />
+        <TaskLinkedWorkCard linkedTaskViews={linkedTaskViews} />
       </PageSectionStack>
     </DetailPage>
   );

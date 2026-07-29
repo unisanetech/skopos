@@ -1,0 +1,38 @@
+id: maintenance.refresh-knowledge
+title: Refresh self-hosted knowledge state
+description: Rebuild the local Skopos compiled knowledge artifacts for the Skopos subtree after config, docs routing, package topology, or Action changes.
+category: maintenance
+scope:
+  - workspace
+command: pnpm skopos:init
+cwd: .
+inputs:
+  - package.json
+  - pnpm-workspace.yaml
+  - skopos.config.yaml
+  - AGENTS.md
+  - packages
+  - docs
+  - tools/skopos/actions
+outputs:
+  - .skopos/index/bootstrap.json
+  - .skopos/index/scopes.json
+  - .skopos/index/diagnosis.json
+  - .skopos/index/architecture.json
+  - .skopos/index/enforcement.json
+  - .skopos/index/memory.json
+  - .skopos/runs/operations.jsonl
+affects:
+  - .skopos
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing the Skopos subtree workspace shape, root config, docs routing, or declared Actions.
+phases:
+  - stabilization
+risks:
+  - standard
+  - high-impact
+recommendedAfter:
+  - plan
+  - impact
+owner: skopos-core

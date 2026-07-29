@@ -33,14 +33,19 @@ Better prompt:
 Use Skopos. Follow AGENTS.md, make the smallest safe change, run the right checks, and update memory if project truth changed.
 ```
 
-## 📦 What It Adds
+## 📦 What It Owns
 
 ```txt
 AGENTS.md
+skopos.config.yaml
+tools/skopos/
 .skopos/
 ```
 
-`AGENTS.md` gives coding agents project guidance. `.skopos/` stores local project memory and workflow state.
+`AGENTS.md`, `skopos.config.yaml`, `tools/skopos/`, and durable project docs are
+tracked authority. `.skopos/` contains only disposable local projections, task
+runtime state, evidence, and caches; delete it and run `skopos init .` to rebuild
+the project state.
 
 ## 🛠 Useful Commands
 
@@ -48,9 +53,10 @@ AGENTS.md
 skopos understand .
 skopos policies recommend .
 skopos policies apply .
-skopos program next . --compact
-skopos trust . --compact
-skopos done . --compact
+skopos session context . --json
+skopos work next . --json
+skopos verify <task-id> . --phase closure
+skopos readiness <task-id> . --for close
 ```
 
 Use `--json` when another tool needs structured output.

@@ -1,120 +1,149 @@
+---
+title: Config Model
+status: active
+owner: skopos-core
+id: SKOPOS-ARCH-CONFIG-MODEL
+scope: skopos
+role: architecture
+lifecycle: durable
+authority: canonical
+provenance: declared
+view: current
+lastUpdated: 2026-07-28
+relatedDocs:
+  - artifact-model.md
+  - runtime-model.md
+  - docs-governance.md
+  - ../patterns/PAT-23c981d4-mutation-before-admission-validation.md
+  - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../work/plans/P-e7e888e6-canonical-product-convergence.md
+reviewCycle: when owning truth changes
+---
+
 # Config Model
 
-Skopos should use one small root-level checked-in config and generate the rest.
-
-## Metadata
-
-- Doc ID: `SKOPOS-ARCH-CONFIG-MODEL`
-- Status: `active`
-- Owner: `skopos-core`
-- Scope: `skopos/architecture`
-- Canonical: `yes`
-- Last Updated: `2026-06-29`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `artifact-model.md`
-  - `runtime-model.md`
-  - `../project/overview.md`
+Skopos uses one small, checked-in root configuration. Explicit project choices live in
+that file or in typed tracked sources under `tools/skopos/**`; inference may propose a
+choice but cannot outrank declared project truth.
 
 ## Changelog
 
-- `2026-06-29`: Clarified that inferred command config must omit missing scripts instead of writing null command keys.
-- `2026-04-10`: Updated the config model to make `workspace.ignore` canonical, so internal, proof, test, and generated roots can stay out of the active workspace model during self-hosting and product development.
-- `2026-04-09`: Updated the config model to make subtree-local self-hosting explicit, so Skopos-on-Skopos uses its own root config and workflow registry instead of borrowing outer repo policy implicitly.
-- `2026-04-09`: Updated the config model to reflect the implemented `.skopos/overrides.json` artifact and `skopos overrides` CLI for declared canonicals that outrank inference.
-- `2026-04-09`: Added the first explicit override-artifact direction so declared canonical choices can outrank inference without bloating the root config.
-- `2026-04-09`: Refined the config model to leave room for artifact-policy hooks, override declarations, and freshness policy without growing into an oversized control surface.
-- `2026-04-09`: Updated the config model to reserve a small root-level workflow registry hook while keeping detailed workflow definitions in repo-authored manifest files.
-- `2026-04-09`: Added the root-config contract so Skopos remains simple at the surface while generated complexity stays internal.
+- `2026-07-28`: Made every project-owned config path workspace-relative, required the
+  start-here router to live inside the configured Memory root, and required complete
+  config preflight before initialization writes.
+- `2026-07-28`: Defined strict docs flags as the adoption boundary: brownfield intake
+  stays readable, while accepted strict projects fail trust on invalid metadata or
+  broken local links.
+- `2026-07-28`: Replaced local override and permanent docs-projection authority with
+  direct tracked configuration and canonical Skopos source owners.
 
-## Config Rules
+## Root Config Contract
 
-1. one checked-in config:
-   - `skopos.config.yaml`
-2. one optional gitignored local override:
-   - `skopos.local.yaml`
-3. users configure policy and project shape, not internal retrieval mechanics
-4. project-specific workflow definitions should live in dedicated manifest files, not inside an oversized root config
-5. artifact durability, override, and freshness hooks should stay compact and policy-oriented, not become low-level runtime wiring
-6. when Skopos is dogfooded on itself, the subtree must still have its own root config rather than inheriting outer-repo execution policy implicitly
+`skopos.config.yaml` owns compact workspace-level choices:
 
-## Primary Config Areas
+1. project identity, archetype, and repository mode
+2. canonical docs root and start-here router
+3. workspace boundaries and ignored roots
+4. canonical agent instruction source and supported host projections
+5. trust, privacy, approval, and decision-escalation defaults
+6. validation selection policy during Action compilation
 
-1. project archetype and scope strategy
-2. canonical commands
-3. workspace boundary policy
-4. docs policy
-5. trust mode
-6. decision escalation mode
-7. agent integration targets
-8. privacy and approval rules
-9. optional workflow manifest directories
-10. artifact policy defaults
-11. canonical override hooks
+The root config does not store runtime indexes, retrieval internals, Session state,
+leases, Evidence, accepted work, or compatibility paths.
 
-## Command Config Rule
+## Dedicated Tracked Sources
 
-Canonical command inference must only write commands that Skopos can resolve to a real string command.
+Detailed project behavior stays out of the root config:
 
-If a project has `build`, `typecheck`, and `lint` scripts but no `test` script, the generated `commands` config should omit `test` instead of writing `test: null`. Missing command keys mean “not detected yet”; they should not make the generated config invalid on the next read.
+| Concern | Source |
+| --- | --- |
+| Scopes | `tools/skopos/scopes.yaml` |
+| Profiles | `tools/skopos/profiles/**` |
+| Actions | `tools/skopos/actions/**` |
+| Guards | `tools/skopos/guards/**` |
+| Policy acceptance and exceptions | `tools/skopos/policies.yaml` |
+| Skill acceptance and project bindings | `tools/skopos/skills/**` |
+| Optional product extensions | `tools/skopos/extensions/**` |
+
+Commands that change these choices write the tracked owner in a deterministic,
+reviewable form. A resolved file under `.skopos/**` is only a projection.
+
+## Declared Truth And Inference
+
+1. An existing root config is read directly; scanning does not reconcile it with a
+   newly inferred replacement.
+2. A missing root config may be proposed during adoption from repository evidence.
+3. Inferred values require review before they become declared truth.
+4. Changing archetype, repository mode, docs root, or another canonical choice means
+   changing its tracked owner.
+5. There is no root `.skopos/overrides.json`, `skopos.local.yaml`, or parallel
+   override command.
+
+## Docs Configuration
+
+`docs.root` and `docs.startHerePath` identify the adopted canonical docs tree. A fully
+adopted project does not keep a permanent path-mapping manifest for an arbitrary old
+layout.
+
+For an existing project, adoption may build a local intake catalog and propose a
+restructure. The coding agent then moves, merges, archives, or deletes docs with user
+review. Once adopted, the normal docs structure and Scope-owned sub-docs are the
+authority.
+
+`docs.strictMetadata` and `docs.strictLinking` distinguish discovery from adopted
+conformance:
+
+1. brownfield discovery defaults both flags to false so Skopos can inventory an
+   arbitrary existing tree without treating inference as accepted truth
+2. greenfield and explicitly adopted or clean-refactor projects enable both flags
+3. strict metadata requires stable identity, owner, declared Scope, semantic role,
+   lifecycle, authority, provenance, and view; Patterns additionally require kind and
+   applicability
+4. when a Scope registry exists, strict metadata rejects unknown Scope ids
+5. strict linking checks local Markdown links and metadata `Related Docs` references
+6. violations remain visible in the intake catalog and fail Readiness; the
+   compiler does not guess missing Pattern semantics
+7. non-strict catalog records remain discovery and restructuring evidence; they never
+   compile into normal Project Memory context merely because inferred or foreign
+   metadata resembles the canonical grammar
 
 ## Workspace Boundary Rule
 
-The checked-in root config may declare compact workspace boundary policy through:
+`workspace.ignore` excludes non-project and generated roots from package discovery,
+diagnosis, accepted-policy scanning, and compiled Scope graphs. Entries must describe
+real project boundaries, not hide architecture drift.
 
-1. `workspace.ignore`
-2. future small boundary policy hooks if needed
+Common examples include fixtures, external vendored trees, test-only workspaces, and
+build output. `.skopos/**` is already a runtime root and must be ignored by version
+control regardless of workspace discovery settings.
 
-The current rule is:
+Every project-owned path in the root config is relative to and contained by the target
+workspace. This includes `workspace.ignore`, `docs.root`, `docs.startHerePath`,
+`agents.canonicalInstructions`, and every `agents.syncMirrors` entry.
+`docs.startHerePath` must be a file path below `docs.root`. Absolute paths, drive-rooted
+or drive-relative paths, and `..` traversal are invalid declared or inferred
+configuration.
 
-1. ignored roots are excluded from active package discovery
-2. ignored roots are excluded from scopes-lite package scopes
-3. ignored roots are excluded from diagnosis, architecture interpretation, and compiled graphs that depend on package discovery
-4. ignored roots are project truth, not UI-only filtering
+Init validates this complete contract before writing config, docs, instructions,
+ignore rules, local state, or lifecycle Evidence. A rejected config is not partially
+installed.
 
-Use `workspace.ignore` for paths such as:
+## Validation Rule
 
-1. `fixtures/`
-2. `internal/`
-3. `tests/`
-4. `docs/generated/`
-
-## Workflow Config Rule
-
-The checked-in root config may later declare a small workflow registry like:
-
-1. default workflow manifest directory
-2. additional trusted workflow directories
-3. workflow policy defaults
-
-The detailed workflow definitions should still live in dedicated repo-authored manifests such as `tools/skopos/workflows/*.yaml`.
-
-## Override And Artifact Policy Rule
-
-The checked-in root config may later declare compact policy hooks for:
-
-1. canonical override locations or override enablement
-2. artifact durability defaults for shared versus local-only runtime state
-3. freshness and lint policy defaults for required generated artifacts
-
-These hooks should stay small. The detailed behavior should live in dedicated artifacts and runtime logic, not in a bloated root config file.
-
-The preferred direction is:
-
-1. keep the root config small
-2. store declared canonical overrides in the dedicated checked-in machine-readable artifact `.skopos/overrides.json`
-3. write and review override artifacts through `skopos overrides` rather than ad hoc handwritten notes
+Skopos selects validation from tracked Actions and Guards according to Task-owned
+paths, Scope, phase, risk, and dependency impact. A command catalog may help adoption
+discover candidate executors, but it is not a second validation authority and never
+means “run every root command.”
 
 ## Self-Hosting Rule
 
-When Skopos runs on its own subtree, the canonical self-hosting root should include:
+Skopos self-hosting uses the same contract as any adopter:
 
-1. `skopos.config.yaml`
-2. `package.json` with the subtree command surface
-3. `pnpm-workspace.yaml`
-4. `AGENTS.md`
-5. `tools/skopos/workflows/*.yaml`
+1. one root `skopos.config.yaml`
+2. one canonical `AGENTS.md`
+3. tracked `tools/skopos/**` sources
+4. canonical docs and tracked work
+5. ignored, rebuildable `.skopos/**`
 
-This keeps Skopos self-hosting explicit and extraction-ready instead of relying on the outer Unisane workspace as an implicit control plane.
-
-When Skopos runs on itself, `workspace.ignore` should exclude proof-only and internal roots so the self-hosted package model reflects the actual SDK family rather than every development artifact in the repo.
+Self-hosting behavior must not rely on an outer repository, hidden local overrides, or
+special compatibility readers.

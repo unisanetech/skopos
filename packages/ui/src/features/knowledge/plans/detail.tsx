@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from '@tanstack/react-router';
 
 import type {
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
 } from '../../../contracts/skopos-ui-console-state.js';
 import { Card } from '../../../patterns/sections/content-primitives.js';
@@ -16,14 +16,14 @@ import {
 } from '../../../patterns/sections/inspector-primitives.js';
 import { formatDateTime } from '../../../support/formatting/console-formatting.js';
 
-const WORKFLOW_RECORDING_STEP_ID = 'record-workflow-lane';
+const ACTION_RECORDING_STEP_ID = 'record-action-lane';
 
 export function PlanDetailInspectorAside({
   planView,
-  relatedMission,
+  relatedTask,
 }: {
   planView: SkoposUiConsolePlanView;
-  relatedMission?: SkoposUiConsoleMissionView;
+  relatedTask?: SkoposUiConsoleTaskView;
 }): React.JSX.Element {
   return (
     <>
@@ -46,7 +46,7 @@ export function PlanDetailInspectorAside({
       <SidebarCard
         title="Validation"
         badge={String(
-          planView.plan.recommendedChecks.length + planView.plan.recommendedWorkflows.length,
+          planView.plan.recommendedChecks.length + planView.plan.recommendedActions.length,
         )}
         collapsible
         defaultOpen={false}
@@ -61,56 +61,56 @@ export function PlanDetailInspectorAside({
             }
           />
           <ReviewRow
-            label="Workflows"
+            label="Actions"
             value={
-              planView.plan.recommendedWorkflows.length > 0
-                ? planView.plan.recommendedWorkflows.map((workflow) => workflow.id).join(' · ')
-                : 'No recommended workflows'
+              planView.plan.recommendedActions.length > 0
+                ? planView.plan.recommendedActions.map((action) => action.id).join(' · ')
+                : 'No recommended actions'
             }
           />
         </div>
       </SidebarCard>
       <SidebarCard
-        title="Related mission"
-        badge={relatedMission ? '1' : '0'}
+        title="Related task"
+        badge={relatedTask ? '1' : '0'}
         collapsible
         defaultOpen={false}
       >
         <SidebarList
-          items={relatedMission ? [relatedMission] : []}
-          getKey={(missionView) => missionView.mission.id}
-          renderItem={(missionView) => (
+          items={relatedTask ? [relatedTask] : []}
+          getKey={(taskView) => taskView.task.id}
+          renderItem={(taskView) => (
             <Link
-              to="/missions/$missionId"
-              params={{ missionId: missionView.mission.id }}
+              to="/tasks/$taskId"
+              params={{ taskId: taskView.task.id }}
               className="block transition-colors hover:bg-[color:rgba(255,252,246,0.5)]"
             >
               <p className="text-[13px] font-medium tracking-[-0.01em]">
-                {missionView.mission.title}
+                {taskView.task.title}
               </p>
               <p className="mt-1.5 text-[12px] leading-5 text-[var(--muted)]">
-                {missionView.mission.state}
+                {taskView.task.state}
               </p>
             </Link>
           )}
-          emptyTitle="No linked mission"
-          emptyDescription="This plan is not currently paired with a mission."
+          emptyTitle="No linked task"
+          emptyDescription="This plan is not currently paired with a task."
         />
       </SidebarCard>
     </>
   );
 }
 
-export function PlanWorkflowRecordingCard({
+export function PlanActionRecordingCard({
   planView,
 }: {
   planView: SkoposUiConsolePlanView;
 }): React.JSX.Element | null {
-  const workflowStep = planView.plan.implementationSteps.find(
-    (step) => step.id === WORKFLOW_RECORDING_STEP_ID,
+  const actionStep = planView.plan.implementationSteps.find(
+    (step) => step.id === ACTION_RECORDING_STEP_ID,
   );
 
-  if (!workflowStep) {
+  if (!actionStep) {
     return null;
   }
 
@@ -120,25 +120,25 @@ export function PlanWorkflowRecordingCard({
       description="Skopos added this guard because the plan has enough scope or risk to need a clear work record."
     >
       <div className="border-y border-[var(--line)]">
-        <WorkflowRecordingRow
-          label="Lane"
-          value="Use a light path for small edits, a normal path for coordinated changes, and a workpack for broad or risky work."
+        <ActionRecordingRow
+          label="Task risk"
+          value="Use light risk for narrow edits, standard risk for coordinated changes, and high-impact risk for broad or sensitive work."
         />
-        <WorkflowRecordingRow
+        <ActionRecordingRow
           label="Record while working"
-          value="Keep mission progress and plan direction current instead of leaving the next developer to reconstruct the story."
+          value="Keep task progress and plan direction current instead of leaving the next developer to reconstruct the story."
         />
-        <WorkflowRecordingRow
+        <ActionRecordingRow
           label="Save durable truth"
           value="Write a decision for lasting product or architecture choices. Write a finding when you discover a structural problem."
         />
         <div className="border-t border-[var(--line)] px-3 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <p className="skopos-metric-label">Guard step</p>
-            <StatusPill value="workflow" tone="info" />
+            <StatusPill value="action" tone="info" />
           </div>
           <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">
-            {workflowStep.detail}
+            {actionStep.detail}
           </p>
         </div>
       </div>
@@ -146,7 +146,7 @@ export function PlanWorkflowRecordingCard({
   );
 }
 
-function WorkflowRecordingRow({
+function ActionRecordingRow({
   label,
   value,
 }: {
@@ -182,10 +182,10 @@ export function PlanFrameCard({
 
 export function PlanDetailGuidanceCard({
   planView,
-  relatedMission,
+  relatedTask,
 }: {
   planView: SkoposUiConsolePlanView;
-  relatedMission?: SkoposUiConsoleMissionView;
+  relatedTask?: SkoposUiConsoleTaskView;
 }): React.JSX.Element {
   const hasDecisionPressure =
     planView.plan.decisionQuestions.length > 0 || planView.plan.risks.length > 0;
@@ -193,7 +193,7 @@ export function PlanDetailGuidanceCard({
   return (
     <Card
       title="How to read this plan"
-      description="Use this plan as the agreed path for the work, then keep mission progress and closure proof in sync with it."
+      description="Use this plan as the agreed path for the work, then keep task progress and closure proof in sync with it."
     >
       <div className="grid gap-3 md:grid-cols-3">
         <GuidancePoint
@@ -211,9 +211,9 @@ export function PlanDetailGuidanceCard({
         <GuidancePoint
           label="Next step"
           text={
-            relatedMission
-              ? 'Use the linked mission to track live progress and closure evidence.'
-              : 'Link this plan to a mission when implementation starts.'
+            relatedTask
+              ? 'Use the linked task to track live progress and closure evidence.'
+              : 'Link this plan to a task when implementation starts.'
           }
         />
       </div>

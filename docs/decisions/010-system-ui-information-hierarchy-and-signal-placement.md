@@ -1,19 +1,24 @@
+---
+title: "Decision: System UI Information Hierarchy And Signal Placement"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-010
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+  - 009-system-ui-app-shell-and-layout-doctrine.md
+---
+
 # Decision: System UI Information Hierarchy And Signal Placement
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-010`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
-  - `009-system-ui-app-shell-and-layout-doctrine.md`
 
 ## Context
 

@@ -39,11 +39,47 @@ export const loadSkoposUiConsoleState = async (): Promise<SkoposUiConsoleState |
 export const refreshSkoposUiConsoleState = async (): Promise<SkoposUiConsoleState | undefined> => {
   const nextState = await resolveSkoposUiConsoleState();
   if (nextState) {
+    if (cachedState?.generatedAt === nextState.generatedAt) {
+      return cachedState;
+    }
     storeSkoposUiConsoleState(nextState);
     return nextState;
   }
 
   return getSkoposUiConsoleState();
+};
+
+export const bindSkoposUiLiveStatePolling = ({
+  enabled,
+  onRefresh = refreshSkoposUiConsoleState,
+  intervalMs = 1_000,
+  schedule = globalThis.setInterval,
+  cancel = globalThis.clearInterval,
+}: {
+  enabled: boolean;
+  onRefresh?: () => Promise<unknown> | unknown;
+  intervalMs?: number;
+  schedule?: typeof globalThis.setInterval;
+  cancel?: typeof globalThis.clearInterval;
+}): (() => void) | undefined => {
+  if (!enabled) {
+    return undefined;
+  }
+
+  let refreshInFlight = false;
+  const interval = schedule(() => {
+    if (refreshInFlight) {
+      return;
+    }
+    refreshInFlight = true;
+    void Promise.resolve(onRefresh()).finally(() => {
+      refreshInFlight = false;
+    });
+  }, intervalMs);
+
+  return () => {
+    cancel(interval);
+  };
 };
 
 export const resetSkoposUiConsoleState = (): void => {

@@ -8,7 +8,7 @@ import type {
 } from '@skopos/model';
 
 import { DISCUSSION_RAW_DIRECTORY } from './token-control-constants.js';
-import { estimateTokens, resolveActiveMissionId } from './token-control-state.js';
+import { estimateTokens, resolveCurrentTaskId } from './token-control-state.js';
 
 export interface AppendSkoposDiscussionTurnRecordResult {
   path: string;
@@ -67,7 +67,7 @@ export const appendSkoposDiscussionTurnRecord = async ({
     excerpt: buildExcerpt(normalizedMessage),
     estimatedTokens: estimateTokens(normalizedMessage),
     transcriptPath,
-    activeMissionId: await resolveActiveMissionId(workspaceRoot),
+    activeTaskId: await resolveCurrentTaskId(workspaceRoot),
   };
 
   if (dryRun) {

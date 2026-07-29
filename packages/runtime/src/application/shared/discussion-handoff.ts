@@ -1,25 +1,21 @@
-import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { join, relative } from 'node:path';
 
 import type {
-  SkoposAgentMissionBriefArtifact,
-  SkoposAgentProgramBriefArtifact,
-  SkoposDiscussionIndexArtifact,
   SkoposDiscussionHandoffArtifact,
-  SkoposWorkflowQuestionArtifact,
-  SkoposWorkflowRecommendationArtifact,
+  SkoposDiscussionIndexArtifact,
+  SkoposTaskQuestionArtifact,
+  SkoposTaskRecommendationArtifact,
+  SkoposTaskIdentity,
 } from '@skopos/model';
 
-import { writeJsonArtifact } from './write-json-artifact.js';
+import { resolveCurrentTaskState } from './current-task-state.js';
 import {
-  AGENT_MISSION_BRIEF_DIRECTORY,
   DISCUSSION_INDEX_ARTIFACT_PATH,
-  LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH,
-  PROGRAM_BRIEF_ARTIFACT_PATH,
-  QUESTIONS_ARTIFACT_PATH,
-  RECOMMENDATIONS_ARTIFACT_PATH,
   TOKEN_BUDGETS,
 } from './token-control-constants.js';
-import { estimateTokens, readJsonIfExists, resolveActiveMissionId } from './token-control-state.js';
+import { estimateTokens, readJsonIfExists } from './token-control-state.js';
+import { writeJsonArtifact } from './write-json-artifact.js';
 
 export interface RefreshSkoposDiscussionHandoffResult {
   path: string;
@@ -29,129 +25,102 @@ export interface RefreshSkoposDiscussionHandoffResult {
 
 export const refreshSkoposDiscussionHandoff = async ({
   workspaceRoot,
+  taskIdentity,
   dryRun = false,
 }: {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   dryRun?: boolean;
 }): Promise<RefreshSkoposDiscussionHandoffResult> => {
-  const activeMissionId = await resolveActiveMissionId(workspaceRoot);
-  const [programBrief, missionBrief, questions, recommendations, discussionIndex] = await Promise.all([
-    readJsonIfExists<SkoposAgentProgramBriefArtifact>(join(workspaceRoot, PROGRAM_BRIEF_ARTIFACT_PATH)),
-    activeMissionId
-      ? readJsonIfExists<SkoposAgentMissionBriefArtifact>(
-          join(workspaceRoot, AGENT_MISSION_BRIEF_DIRECTORY, `${activeMissionId}.json`),
-        )
-      : Promise.resolve(undefined),
-    readJsonIfExists<SkoposWorkflowQuestionArtifact>(join(workspaceRoot, QUESTIONS_ARTIFACT_PATH)),
-    readJsonIfExists<SkoposWorkflowRecommendationArtifact>(
-      join(workspaceRoot, RECOMMENDATIONS_ARTIFACT_PATH),
-    ),
-    readJsonIfExists<SkoposDiscussionIndexArtifact>(join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH)),
+  const current = await resolveCurrentTaskState({ workspaceRoot, taskIdentity });
+  if (!current) {
+    throw new Error(
+      'Task-scoped discussion handoff requires an exact current Task identity.',
+    );
+  }
+  const task = current.task;
+  const [questions, recommendations] = await Promise.all([
+    readJsonIfExists<SkoposTaskQuestionArtifact>(current.questionsPath),
+    readJsonIfExists<SkoposTaskRecommendationArtifact>(current.recommendationsPath),
   ]);
-
-  const acceptedDecisions =
-    questions?.entries
-      .filter((entry) => entry.status === 'resolved' && entry.resolvedOptionId)
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title,
-        resolvedOptionId: entry.resolvedOptionId!,
-        resolvedOptionLabel: entry.options.find((option) => option.id === entry.resolvedOptionId)?.label,
-      })) ?? [];
-  const openQuestions =
-    questions?.entries
-      .filter((entry) => entry.status === 'open')
-      .map((entry) => ({
-        id: entry.id,
-        title: entry.title,
-        blocking: entry.blocking,
-        recommendedOptionId: entry.recommendedOptionId,
-      })) ?? [];
-  const recommendedAction = recommendations?.entries.find((entry) => entry.status === 'open');
+  if (!questions || !recommendations) {
+    throw new Error(`Task ${task.id} is missing exact question or recommendation state.`);
+  }
+  const acceptedDecisions = questions.entries
+    .filter((entry) => entry.status === 'resolved' && entry.resolvedOptionId)
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.question,
+      resolvedOptionId: entry.resolvedOptionId!,
+      resolvedOptionLabel: entry.options.find(
+        (option) => option.id === entry.resolvedOptionId,
+      )?.label,
+    }));
+  const openQuestions = questions.entries
+    .filter((entry) => entry.status === 'open')
+    .map((entry) => ({
+      id: entry.id,
+      title: entry.question,
+      blocking: entry.blocking,
+      recommendedOptionId: entry.recommendedOptionId,
+    }));
+  const recommendation = recommendations.entries.find(
+    (entry) => entry.status === 'open',
+  );
+  const nextStep = task.steps.find(
+    (step) => step.status !== 'complete' && step.status !== 'skipped',
+  );
   const currentDirection =
-    missionBrief?.recommendedActionSummary ??
-    programBrief?.recommendedActionSummary ??
-    recommendedAction?.summary ??
-    'Keep the current active workflow state compact and resume from the latest mission routing state.';
+    recommendation?.summary ??
+    nextStep?.detail ??
+    `Continue Task ${task.id} from its exact Task-local state.`;
+  const recommendedNextCommand = `skopos task show ${task.id}`;
+  const index = await readJsonIfExists<SkoposDiscussionIndexArtifact>(
+    join(workspaceRoot, DISCUSSION_INDEX_ARTIFACT_PATH),
+  );
   const linkedCheckpointIds =
-    discussionIndex?.entries
-      .filter((entry) => !activeMissionId || entry.activeMissionId === activeMissionId)
+    index?.entries
+      .filter((entry) => entry.activeTaskId === task.id)
       .slice(0, 4)
       .map((entry) => entry.id) ?? [];
-  const linkedArtifactPaths = [
-    PROGRAM_BRIEF_ARTIFACT_PATH,
-    activeMissionId ? `${AGENT_MISSION_BRIEF_DIRECTORY}/${activeMissionId}.json` : undefined,
-    QUESTIONS_ARTIFACT_PATH,
-    RECOMMENDATIONS_ARTIFACT_PATH,
-    discussionIndex ? DISCUSSION_INDEX_ARTIFACT_PATH : undefined,
-  ].filter((value): value is string => Boolean(value));
-  const resumeSummary = buildResumeSummary({
-    activeMissionId,
-    currentDirection,
-    openQuestions,
-    acceptedDecisionCount: acceptedDecisions.length,
-    nextCommand: recommendedAction?.command ?? missionBrief?.nextCommand ?? programBrief?.nextCommand,
-  });
+  const resumeSummary = `Resume Task ${task.id}. ${currentDirection} ${acceptedDecisions.length} decision${acceptedDecisions.length === 1 ? '' : 's'} resolved; ${openQuestions.length} question${openQuestions.length === 1 ? '' : 's'} open. Next command: ${recommendedNextCommand}.`;
   const estimatedTokens = estimateTokens(resumeSummary);
+  const now = new Date().toISOString();
   const artifact: SkoposDiscussionHandoffArtifact = {
     schemaVersion: 1,
-    id: 'discussion-handoff-latest-workflow',
+    id: `discussion-handoff-${createHash('sha256')
+      .update(`${task.taskIdentity.worktreeId}\0${task.id}`)
+      .digest('hex')
+      .slice(0, 16)}`,
     type: 'discussion-handoff',
     status: 'generated',
     authority: 'generated',
-    summary: `Compact workflow handoff for ${activeMissionId ?? 'the active workspace state'}.`,
-    updatedAt: new Date().toISOString(),
-    generatedAt: new Date().toISOString(),
+    summary: `Task continuation handoff for ${task.id}.`,
+    updatedAt: now,
+    generatedAt: now,
     workspaceRoot,
-    handoffKind: 'workflow-resume',
-    activeMissionId,
+    handoffKind: 'task-resume',
+    activeTaskId: task.id,
     currentDirection,
     acceptedDecisions,
     openQuestions,
-    recommendedNextCommand:
-      recommendedAction?.command ?? missionBrief?.nextCommand ?? programBrief?.nextCommand,
+    recommendedNextCommand,
     linkedCheckpointIds,
-    linkedArtifactPaths,
+    linkedArtifactPaths: [
+      relative(workspaceRoot, current.taskPath),
+      relative(workspaceRoot, current.questionsPath),
+      relative(workspaceRoot, current.recommendationsPath),
+      ...(index ? [DISCUSSION_INDEX_ARTIFACT_PATH] : []),
+    ],
     resumeSummary,
     estimatedTokens,
     budgetTokens: TOKEN_BUDGETS.handoff,
     overBudget: estimatedTokens > TOKEN_BUDGETS.handoff,
   };
-  const artifactPath = join(workspaceRoot, LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH);
   const write = await writeJsonArtifact({
-    artifactPath,
+    artifactPath: current.handoffPath,
     artifact,
     dryRun,
   });
-
-  return {
-    path: artifactPath,
-    write,
-    artifact,
-  };
-};
-
-const buildResumeSummary = ({
-  activeMissionId,
-  currentDirection,
-  openQuestions,
-  acceptedDecisionCount,
-  nextCommand,
-}: {
-  activeMissionId?: string;
-  currentDirection: string;
-  openQuestions: Array<{ id: string; blocking: boolean }>;
-  acceptedDecisionCount: number;
-  nextCommand?: string;
-}): string => {
-  const openQuestionSummary =
-    openQuestions.length === 0
-      ? 'No workflow questions remain open.'
-      : `${openQuestions.length} workflow question${openQuestions.length === 1 ? '' : 's'} remain open, including ${openQuestions.filter((entry) => entry.blocking).length} blocking.`;
-  const missionSummary = activeMissionId
-    ? `Resume mission ${activeMissionId}.`
-    : 'Resume from the latest workspace workflow state.';
-  const nextStepSummary = nextCommand ? `Next command: ${nextCommand}.` : 'No next command is currently suggested.';
-
-  return `${missionSummary} ${currentDirection} ${acceptedDecisionCount} decision${acceptedDecisionCount === 1 ? '' : 's'} already resolved. ${openQuestionSummary} ${nextStepSummary}`;
+  return { path: current.handoffPath, write, artifact };
 };

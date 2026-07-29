@@ -1,11 +1,10 @@
-import { access, readFile, readdir } from 'node:fs/promises';
+import { access, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import {
   loadSkoposProjectSkillBindings,
-  loadSkoposSkillPacks,
-  loadSkoposWorkflowManifests,
+  loadSkoposSkillPackCatalog,
+  loadSkoposActionManifests,
   buildSkoposCombinedSkillSourceDigest,
   buildSkoposSkillSourceDigest,
 } from '@skopos/indexer';
@@ -15,11 +14,12 @@ import type {
 } from '@skopos/indexer';
 import type {
   SkoposAgentNativeOperatingModel,
-  SkoposExecutionLane,
+  SkoposTaskRisk,
   SkoposSkillHostProjectionArtifact,
   SkoposSkillHostProjectionEntry,
+  SkoposProjectSkillBinding,
   SkoposProjectLifecycle,
-  SkoposResolvedGatesArtifact,
+  SkoposResolvedGuardsArtifact,
   SkoposResolvedSkillArtifact,
   SkoposSelectedSkill,
   SkoposSkillRecommendationArtifact,
@@ -31,30 +31,19 @@ import { SKOPOS_SKILL_PROJECTION_HOST_IDS } from '@skopos/model';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 
-export const SKILL_RECOMMENDATIONS_ARTIFACT_PATH = '.skopos/skills/recommendations.json';
-export const RESOLVED_SKILLS_ARTIFACT_PATH = '.skopos/skills/resolved.json';
-export const SKILL_PROJECTIONS_ARTIFACT_DIRECTORY = '.skopos/skills/projections';
+export const SKILL_RECOMMENDATIONS_ARTIFACT_PATH = '.skopos/index/skills/recommendations.json';
+export const RESOLVED_SKILLS_ARTIFACT_PATH = '.skopos/index/skills/resolved.json';
+export const SKILL_PROJECTIONS_ARTIFACT_DIRECTORY = '.skopos/index/skills/projections';
 
-const BUNDLED_SKILL_PACK_ROOT = join(dirname(fileURLToPath(import.meta.url)), 'skill-packs');
-const SOURCE_SKILL_PACK_ROOT = join(
-  dirname(fileURLToPath(import.meta.url)),
-  '..',
-  '..',
-  '..',
-  '..',
-  '..',
-  'skill-packs',
-);
-const RESOLVED_GATES_ARTIFACT_PATH = '.skopos/gates/resolved.json';
+const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
 
 export const listSkoposSkillPacksRuntime = async ({
   cwd,
 }: {
   cwd: string;
 }): Promise<SkoposLoadedSkillPack[]> =>
-  loadSkoposSkillPacks({
+  loadSkoposSkillPackCatalog({
     cwd: resolve(cwd),
-    packRoots: ['skill-packs', BUNDLED_SKILL_PACK_ROOT, SOURCE_SKILL_PACK_ROOT],
   });
 
 export const listSkoposProjectSkillBindingsRuntime = async ({
@@ -177,16 +166,15 @@ export const recommendSkoposSkillPacksRuntime = async ({
   dryRun?: boolean;
 }): Promise<SkoposSkillRecommendationArtifact> => {
   const workspaceRoot = resolve(cwd);
-  const [packs, bindings, resolvedSkills, operatingModel] = await Promise.all([
+  const [packs, bindings, operatingModel] = await Promise.all([
     listSkoposSkillPacksRuntime({ cwd: workspaceRoot }),
     listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
-    readJsonIfExists<SkoposResolvedSkillArtifact>(
-      join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH),
-    ),
     loadOperatingModelCapabilities(workspaceRoot),
   ]);
   const lifecycle = await inferProjectLifecycle(workspaceRoot);
-  const acceptedIds = new Set(resolvedSkills?.acceptedSkills.map((entry) => entry.packId) ?? []);
+  const acceptedIds = new Set(
+    bindings.filter((binding) => binding.acceptance).map((binding) => binding.packId),
+  );
   const recommendations: SkoposSkillRecommendationEntry[] = [];
 
   for (const pack of packs) {
@@ -273,6 +261,8 @@ export const applySkoposSkillPackRuntime = async ({
   reason: string;
   dryRun?: boolean;
 }): Promise<{
+  bindingPath: string;
+  bindingWrite: 'written' | 'dry-run';
   artifact: SkoposResolvedSkillArtifact;
   artifactPath: string;
   artifactWrite: 'written' | 'dry-run';
@@ -305,43 +295,46 @@ export const applySkoposSkillPackRuntime = async ({
     throw new Error(`Cannot adopt ${pack.packId}: ${validation.diagnostics.join(' ')}`);
   }
 
-  const artifactPath = join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH);
-  const existing = await readJsonIfExists<SkoposResolvedSkillArtifact>(artifactPath);
   const acceptedAt = new Date().toISOString();
-  const acceptedSkills = [
-    ...(existing?.acceptedSkills.filter((entry) => entry.packId !== pack.packId) ?? []),
-    {
-      packId: pack.packId,
-      version: pack.version,
-      bindingId: binding.bindingId,
+  const acceptedBinding: SkoposLoadedProjectSkillBinding = {
+    ...binding,
+    lifecycle: 'accepted',
+    updatedAt: acceptedAt,
+    acceptance: {
       acceptedAt,
       acceptedBy: actorId,
-      reason,
-      sourcePath: pack.sourcePath,
-      bindingPath: binding.sourcePath,
+      reason: reason.trim(),
     },
-  ].sort((left, right) => left.packId.localeCompare(right.packId));
-  const artifact: SkoposResolvedSkillArtifact = {
-    schemaVersion: 1,
-    id: 'resolved-skills',
-    type: 'resolved-skills',
-    status: 'generated',
-    authority: 'generated',
-    summary: `${acceptedSkills.length} project-adapted skill pack${acceptedSkills.length === 1 ? '' : 's'} accepted.`,
-    updatedAt: acceptedAt,
-    generatedAt: acceptedAt,
-    workspaceRoot,
-    acceptedSkills,
-    sourcePaths: [...new Set(acceptedSkills.map((entry) => entry.sourcePath))],
-    bindingPaths: [...new Set(acceptedSkills.map((entry) => entry.bindingPath))],
   };
+  const nextBindings = bindings.map((candidate) =>
+    candidate.bindingId === binding.bindingId ? acceptedBinding : candidate,
+  );
+  const bindingPath = resolve(workspaceRoot, binding.sourcePath);
+  const artifact = await buildResolvedSkillArtifactFromTrackedBindings({
+    workspaceRoot,
+    packs: [pack, ...(await listSkoposSkillPacksRuntime({ cwd: workspaceRoot })).filter(
+      (candidate) => candidate.packId !== pack.packId,
+    )],
+    bindings: nextBindings,
+    operatingModel,
+  });
+  const bindingWrite = await writeProjectSkillBinding({
+    bindingPath,
+    binding: acceptedBinding,
+    dryRun,
+  });
+  const artifactPath = join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH);
   const artifactWrite = await writeJsonArtifact({ artifactPath, artifact, dryRun });
   const projectionResult = await buildSkoposSkillHostProjectionsRuntime({
     cwd: workspaceRoot,
     resolvedSkills: artifact,
+    bindings: nextBindings,
+    operatingModel,
     dryRun,
   });
   return {
+    bindingPath,
+    bindingWrite,
     artifact,
     artifactPath,
     artifactWrite,
@@ -351,30 +344,82 @@ export const applySkoposSkillPackRuntime = async ({
   };
 };
 
+export const resolveSkoposSkillsRuntime = async ({
+  cwd,
+  operatingModel: providedOperatingModel,
+  dryRun = false,
+}: {
+  cwd: string;
+  operatingModel?: SkoposAgentNativeOperatingModel;
+  dryRun?: boolean;
+}): Promise<{
+  artifact: SkoposResolvedSkillArtifact;
+  artifactPath: string;
+  artifactWrite: 'written' | 'dry-run';
+  projections: SkoposSkillHostProjectionArtifact[];
+  projectionWrites: Array<{ path: string; status: 'written' | 'dry-run' }>;
+}> => {
+  const workspaceRoot = resolve(cwd);
+  const [packs, bindings, operatingModel] = await Promise.all([
+    listSkoposSkillPacksRuntime({ cwd: workspaceRoot }),
+    listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
+    providedOperatingModel ?? loadOperatingModelCapabilities(workspaceRoot),
+  ]);
+  const artifact = await buildResolvedSkillArtifactFromTrackedBindings({
+    workspaceRoot,
+    packs,
+    bindings,
+    operatingModel,
+  });
+  const artifactPath = join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH);
+  const artifactWrite = await writeJsonArtifact({ artifactPath, artifact, dryRun });
+  const projectionResult = await buildSkoposSkillHostProjectionsRuntime({
+    cwd: workspaceRoot,
+    resolvedSkills: artifact,
+    bindings,
+    operatingModel,
+    dryRun,
+  });
+  return {
+    artifact,
+    artifactPath,
+    artifactWrite,
+    projections: projectionResult.projections,
+    projectionWrites: projectionResult.writes,
+  };
+};
+
 export const buildSkoposSkillHostProjectionsRuntime = async ({
   cwd,
   resolvedSkills: providedResolvedSkills,
+  bindings: providedBindings,
+  operatingModel: providedOperatingModel,
   dryRun = false,
 }: {
   cwd: string;
   resolvedSkills?: SkoposResolvedSkillArtifact;
+  bindings?: SkoposLoadedProjectSkillBinding[];
+  operatingModel?: SkoposAgentNativeOperatingModel;
   dryRun?: boolean;
 }): Promise<{
   projections: SkoposSkillHostProjectionArtifact[];
   writes: Array<{ path: string; status: 'written' | 'dry-run' }>;
 }> => {
   const workspaceRoot = resolve(cwd);
-  const resolvedSkills =
-    providedResolvedSkills ??
-    (await readJsonIfExists<SkoposResolvedSkillArtifact>(
-      join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH),
-    ));
-  if (!resolvedSkills) return { projections: [], writes: [] };
   const [packs, bindings, operatingModel] = await Promise.all([
     listSkoposSkillPacksRuntime({ cwd: workspaceRoot }),
-    listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
-    loadOperatingModelCapabilities(workspaceRoot),
+    providedBindings ??
+      listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
+    providedOperatingModel ?? loadOperatingModelCapabilities(workspaceRoot),
   ]);
+  const resolvedSkills =
+    providedResolvedSkills ??
+    (await buildResolvedSkillArtifactFromTrackedBindings({
+      workspaceRoot,
+      packs,
+      bindings,
+      operatingModel,
+    }));
   const skills: SkoposSkillHostProjectionEntry[] = [];
 
   for (const accepted of resolvedSkills.acceptedSkills) {
@@ -424,7 +469,7 @@ export const buildSkoposSkillHostProjectionsRuntime = async ({
 
   skills.sort((left, right) => left.packId.localeCompare(right.packId));
   const sourceDigest = buildSkoposCombinedSkillSourceDigest(skills);
-  const generatedAt = new Date().toISOString();
+  const generatedAt = resolvedSkills.generatedAt ?? resolvedSkills.updatedAt ?? EPOCH_TIMESTAMP;
   const acceptedSkillPackIds = skills.map((skill) => skill.packId);
   const projections = SKOPOS_SKILL_PROJECTION_HOST_IDS.map(
     (hostId): SkoposSkillHostProjectionArtifact => ({
@@ -438,7 +483,7 @@ export const buildSkoposSkillHostProjectionsRuntime = async ({
       generatedAt,
       workspaceRoot,
       hostId,
-      sourceAuthority: 'skopos-resolved-skills',
+      sourceAuthority: 'tracked-project-skill-bindings',
       resolvedSkillsPath: RESOLVED_SKILLS_ARTIFACT_PATH,
       acceptedSkillPackIds,
       sourceDigest,
@@ -462,25 +507,27 @@ export const buildSkoposSkillHostProjectionsRuntime = async ({
 export const selectSkoposSkillsForTaskRuntime = async ({
   cwd,
   task,
-  riskLane,
+  taskRisk,
   changedPaths = [],
   operatingModel,
 }: {
   cwd: string;
   task: SkoposTaskContract;
-  riskLane: SkoposExecutionLane;
+  taskRisk: SkoposTaskRisk;
   changedPaths?: string[];
   operatingModel: SkoposAgentNativeOperatingModel;
 }): Promise<{ selectedSkills: SkoposSelectedSkill[]; diagnostics: string[] }> => {
   const workspaceRoot = resolve(cwd);
-  const resolvedSkills = await readJsonIfExists<SkoposResolvedSkillArtifact>(
-    join(workspaceRoot, RESOLVED_SKILLS_ARTIFACT_PATH),
-  );
-  if (!resolvedSkills) return { selectedSkills: [], diagnostics: [] };
   const [packs, bindings] = await Promise.all([
     listSkoposSkillPacksRuntime({ cwd: workspaceRoot }),
     listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
   ]);
+  const resolvedSkills = await buildResolvedSkillArtifactFromTrackedBindings({
+    workspaceRoot,
+    packs,
+    bindings,
+    operatingModel,
+  });
   const selectedSkills: SkoposSelectedSkill[] = [];
   const diagnostics: string[] = [];
   const taskText = [
@@ -501,7 +548,7 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       diagnostics.push(`Accepted skill ${accepted.packId} is missing its pack or binding source.`);
       continue;
     }
-    if (!pack.riskLanes.includes(riskLane)) continue;
+    if (!pack.taskRisks.includes(taskRisk)) continue;
     const validation = await validateSkoposProjectSkillBindingRuntime({
       cwd: workspaceRoot,
       pack,
@@ -600,20 +647,20 @@ export const selectSkoposSkillsForTaskRuntime = async ({
 const loadOperatingModelCapabilities = async (
   workspaceRoot: string,
 ): Promise<SkoposAgentNativeOperatingModel> => {
-  const [workflows, gates] = await Promise.all([
-    loadSkoposWorkflowManifests({ cwd: workspaceRoot }),
-    readJsonIfExists<SkoposResolvedGatesArtifact>(
-      join(workspaceRoot, RESOLVED_GATES_ARTIFACT_PATH),
+  const [actions, guards] = await Promise.all([
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
+    readJsonIfExists<SkoposResolvedGuardsArtifact>(
+      join(workspaceRoot, RESOLVED_GUARDS_ARTIFACT_PATH),
     ),
   ]);
   return {
     schemaVersion: 1,
     context: [],
-    actions: workflows.map((workflow) => ({
-      id: workflow.id,
+    actions: actions.map((action) => ({
+      id: action.id,
     })) as SkoposAgentNativeOperatingModel['actions'],
-    guards: (gates?.gates ?? []).map((gate) => ({
-      id: gate.id,
+    guards: (guards?.guards ?? []).map((guard) => ({
+      id: guard.id,
     })) as SkoposAgentNativeOperatingModel['guards'],
     diagnostics: [],
   };
@@ -624,6 +671,115 @@ const flattenRequiredRoles = (pack: SkoposLoadedSkillPack): string[] => [
   ...pack.requiredProjectRoles.actions,
   ...pack.requiredProjectRoles.guards,
 ];
+
+const EPOCH_TIMESTAMP = '1970-01-01T00:00:00.000Z';
+
+const writeProjectSkillBinding = async ({
+  bindingPath,
+  binding,
+  dryRun,
+}: {
+  bindingPath: string;
+  binding: SkoposLoadedProjectSkillBinding;
+  dryRun: boolean;
+}): Promise<'written' | 'dry-run'> => {
+  if (dryRun) {
+    return 'dry-run';
+  }
+
+  const { sourcePath: _sourcePath, ...projectBinding } = binding;
+  await writeFile(
+    bindingPath,
+    `${JSON.stringify(projectBinding satisfies SkoposProjectSkillBinding, null, 2)}\n`,
+    'utf8',
+  );
+  return 'written';
+};
+
+const buildResolvedSkillArtifactFromTrackedBindings = async ({
+  workspaceRoot,
+  packs,
+  bindings,
+  operatingModel,
+}: {
+  workspaceRoot: string;
+  packs: SkoposLoadedSkillPack[];
+  bindings: SkoposLoadedProjectSkillBinding[];
+  operatingModel: SkoposAgentNativeOperatingModel;
+}): Promise<SkoposResolvedSkillArtifact> => {
+  const acceptedBindings = bindings
+    .filter(
+      (binding) =>
+        Boolean(binding.acceptance) &&
+        (binding.lifecycle === 'accepted' || binding.lifecycle === 'validated'),
+    )
+    .sort((left, right) => left.packId.localeCompare(right.packId));
+  const seenPackIds = new Set<string>();
+  const acceptedSkills: SkoposResolvedSkillArtifact['acceptedSkills'] = [];
+
+  for (const binding of acceptedBindings) {
+    if (seenPackIds.has(binding.packId)) {
+      throw new Error(`Multiple accepted bindings target skill pack ${binding.packId}.`);
+    }
+    seenPackIds.add(binding.packId);
+    const pack = packs.find(
+      (candidate) =>
+        candidate.packId === binding.packId &&
+        candidate.version === binding.packVersion,
+    );
+    if (!pack) {
+      throw new Error(
+        `Accepted skill binding ${binding.bindingId} has no matching ${binding.packId}@${binding.packVersion} pack source.`,
+      );
+    }
+    const validation = await validateSkoposProjectSkillBindingRuntime({
+      cwd: workspaceRoot,
+      pack,
+      binding,
+      operatingModel,
+    });
+    if (validation.status === 'fail') {
+      throw new Error(
+        `Cannot resolve accepted skill ${binding.packId}: ${validation.diagnostics.join(' ')}`,
+      );
+    }
+    const acceptance = binding.acceptance;
+    if (!acceptance) {
+      throw new Error(
+        `Accepted skill binding ${binding.bindingId} is missing acceptance metadata.`,
+      );
+    }
+    acceptedSkills.push({
+      packId: pack.packId,
+      version: pack.version,
+      bindingId: binding.bindingId,
+      acceptedAt: acceptance.acceptedAt,
+      acceptedBy: acceptance.acceptedBy,
+      reason: acceptance.reason,
+      sourcePath: pack.sourcePath,
+      bindingPath: binding.sourcePath,
+    });
+  }
+
+  const updatedAt =
+    acceptedSkills
+      .map((entry) => entry.acceptedAt)
+      .sort((left, right) => right.localeCompare(left))[0] ?? EPOCH_TIMESTAMP;
+  return {
+    schemaVersion: 1,
+    id: 'resolved-skills',
+    type: 'resolved-skills',
+    status: 'generated',
+    authority: 'generated',
+    summary: `${acceptedSkills.length} project-adapted skill pack${acceptedSkills.length === 1 ? '' : 's'} accepted.`,
+    updatedAt,
+    generatedAt: updatedAt,
+    workspaceRoot,
+    acceptedSkills,
+    sourcePaths: [...new Set(acceptedSkills.map((entry) => entry.sourcePath))],
+    bindingPaths: [...new Set(acceptedSkills.map((entry) => entry.bindingPath))],
+  };
+};
 
 export const buildSkoposSkillProjectionSourcePaths = (
   pack: SkoposLoadedSkillPack,

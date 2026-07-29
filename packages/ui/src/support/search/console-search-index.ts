@@ -10,10 +10,6 @@ import {
   documentHrefForCategory,
   knowledgeCategoryForDocument,
 } from '../knowledge/document-routing.js';
-import {
-  resolveProgramItemHref,
-  resolveProgramObligationHref,
-} from '../../platform/console-state/program-selectors.js';
 
 export const buildSkoposConsoleSearchIndex = (
   state: SkoposUiConsoleState,
@@ -34,8 +30,7 @@ export const buildSkoposConsoleSearchEntries = (
     ...buildDocumentSearchEntries(state),
     ...buildDiscussionSearchEntries(state),
     ...buildPlanSearchEntries(state),
-    ...buildMissionSearchEntries(state),
-    ...buildProgramSearchEntries(state),
+    ...buildTaskSearchEntries(state),
     ...buildValidationSearchEntries(state),
     ...buildScopeSearchEntries(state),
     ...buildActivitySearchEntries(state),
@@ -50,22 +45,22 @@ const buildDiscussionSearchEntries = (
   const entries: SkoposUiConsoleSearchEntry[] = [];
 
   if (latestDiscussionHandoff) {
-    const activeMissionId = latestDiscussionHandoff.handoff.activeMissionId;
-    const activeMissionView = activeMissionId
-      ? state.missions.find((missionView) => missionView.mission.id === activeMissionId)
+    const activeTaskId = latestDiscussionHandoff.handoff.activeTaskId;
+    const activeTaskView = activeTaskId
+      ? state.tasks.find((taskView) => taskView.task.id === activeTaskId)
       : undefined;
 
     entries.push({
       id: latestDiscussionHandoff.handoff.id,
       group: 'work',
       kind: 'discussion',
-      title: activeMissionView
-        ? `Discussion: ${activeMissionView.mission.title}`
+      title: activeTaskView
+        ? `Discussion: ${activeTaskView.task.title}`
         : 'Latest discussion handoff',
       summary: latestDiscussionHandoff.handoff.resumeSummary,
       meta: [
         latestDiscussionHandoff.handoff.handoffKind.replaceAll('-', ' '),
-        activeMissionView ? 'active mission' : 'workspace',
+        activeTaskView ? 'active task' : 'workspace',
       ].join(' · '),
       href: '#/discussion',
       aliases: [
@@ -78,7 +73,7 @@ const buildDiscussionSearchEntries = (
         latestDiscussionHandoff.handoff.currentDirection,
         latestDiscussionHandoff.handoff.resumeSummary,
         latestDiscussionHandoff.handoff.recommendedNextCommand,
-        activeMissionView?.mission.title,
+        activeTaskView?.task.title,
         ...latestDiscussionHandoff.handoff.acceptedDecisions.map((decision) => decision.title),
         ...latestDiscussionHandoff.handoff.openQuestions.map((question) => question.title),
       ].filter((value): value is string => Boolean(value)),
@@ -87,16 +82,16 @@ const buildDiscussionSearchEntries = (
       historical: false,
       stale: false,
       updatedAt: latestDiscussionHandoff.handoff.updatedAt,
-      scope: activeMissionView?.mission.scope.scope.id,
+      scope: activeTaskView?.task.scope.scope.id,
       defaultRank: 189,
     });
   }
 
   entries.push(
     ...state.discussionCheckpoints.map((checkpointView, index) => {
-      const missionView = checkpointView.checkpoint.activeMissionId
-        ? state.missions.find(
-            (entry) => entry.mission.id === checkpointView.checkpoint.activeMissionId,
+      const taskView = checkpointView.checkpoint.activeTaskId
+        ? state.tasks.find(
+            (entry) => entry.task.id === checkpointView.checkpoint.activeTaskId,
           )
         : undefined;
 
@@ -104,13 +99,13 @@ const buildDiscussionSearchEntries = (
         id: checkpointView.checkpoint.id,
         group: 'work',
         kind: 'discussion',
-        title: missionView
-          ? `Checkpoint: ${missionView.mission.title}`
+        title: taskView
+          ? `Checkpoint: ${taskView.task.title}`
           : 'Discussion checkpoint',
         summary: checkpointView.checkpoint.resumeSummary,
         meta: [
           'checkpoint',
-          missionView ? 'mission' : 'workspace',
+          taskView ? 'task' : 'workspace',
           checkpointView.checkpoint.checkpointKind.replaceAll('-', ' '),
         ].join(' · '),
         href: '#/discussion',
@@ -120,7 +115,7 @@ const buildDiscussionSearchEntries = (
           checkpointView.checkpoint.currentDirection,
           checkpointView.checkpoint.resumeSummary,
           checkpointView.checkpoint.recommendedNextCommand,
-          missionView?.mission.title,
+          taskView?.task.title,
           ...checkpointView.checkpoint.acceptedDecisions.map((decision) => decision.title),
           ...checkpointView.checkpoint.openQuestions.map((question) => question.title),
         ].filter((value): value is string => Boolean(value)),
@@ -129,7 +124,7 @@ const buildDiscussionSearchEntries = (
         historical: false,
         stale: false,
         updatedAt: checkpointView.checkpoint.updatedAt,
-        scope: missionView?.mission.scope.scope.id,
+        scope: taskView?.task.scope.scope.id,
         defaultRank: index === 0 ? 187 : 168 - Math.min(index, 6),
       } satisfies SkoposUiConsoleSearchEntry;
     }),
@@ -141,11 +136,11 @@ const buildDiscussionSearchEntries = (
 const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
   const aliasesByPath: Record<string, string[]> = {
     '/overview': ['home', 'current work', 'workspace status'],
-    '/missions': ['execution', 'work queue', 'open missions'],
+    '/tasks': ['execution', 'work queue', 'open tasks'],
     '/plans': ['plan library', 'current plans', 'work plans'],
-    '/discussion': ['discussion history', 'workflow handoff', 'checkpoint history'],
+    '/discussion': ['discussion history', 'action handoff', 'checkpoint history'],
     '/activity': ['timeline', 'provenance', 'history'],
-    '/trust': ['readiness', 'quality', 'closure checks'],
+    '/readiness': ['readiness', 'quality', 'closure checks'],
     '/rules': ['policy', 'packs', 'accepted rules', 'drift', 'local exceptions'],
     '/proof': ['evidence', 'scorecard', 'benchmarks', 'validation proof'],
     '/memory': [
@@ -162,12 +157,12 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
   };
   const defaultRanksByPath: Record<string, number> = {
     '/overview': 200,
-    '/missions': 194,
+    '/tasks': 194,
     '/plans': 192,
     '/discussion': 191,
     '/memory': 190,
     '/docs': 190,
-    '/trust': 188,
+    '/readiness': 188,
     '/rules': 187,
     '/proof': 186,
     '/activity': 184,
@@ -322,11 +317,11 @@ const buildDocumentSearchEntries = (
 
 const buildPlanSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSearchEntry[] =>
   state.plans.map((planView) => {
-    const relatedMission = state.missions.find(
-      (missionView) => missionView.mission.planId === planView.plan.id,
+    const relatedTask = state.tasks.find(
+      (taskView) => taskView.task.planIds.includes(planView.plan.id),
     );
     const scopeId = planView.plan.scope?.scope.id ?? planView.plan.scope?.query;
-    const isActive = Boolean(relatedMission && relatedMission.mission.state !== 'complete');
+    const isActive = Boolean(relatedTask && relatedTask.task.state !== 'complete');
 
     return {
       id: planView.plan.id,
@@ -343,7 +338,7 @@ const buildPlanSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSea
         planView.plan.summary,
         planView.plan.scope?.query,
         scopeId,
-        relatedMission?.mission.title,
+        relatedTask?.task.title,
       ].filter((value): value is string => Boolean(value)),
       canonical: true,
       active: isActive,
@@ -355,166 +350,62 @@ const buildPlanSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSea
     } satisfies SkoposUiConsoleSearchEntry;
   });
 
-const buildMissionSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSearchEntry[] =>
-  state.missions.map((missionView) => {
-    const scopeId = missionView.mission.scope?.scope.id ?? missionView.mission.scope?.query;
-    const stateLabel = missionView.mission.state;
+const buildTaskSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSearchEntry[] =>
+  state.tasks.map((taskView) => {
+    const scopeId = taskView.task.scope?.scope.id ?? taskView.task.scope?.query;
+    const stateLabel = taskView.task.state;
 
     return {
-      id: missionView.mission.id,
+      id: taskView.task.id,
       group: 'work',
-      kind: 'mission',
-      title: missionView.mission.title,
-      summary: missionView.mission.summary || missionView.mission.objective || missionView.artifactPath,
+      kind: 'task',
+      title: taskView.task.title,
+      summary: taskView.task.summary || taskView.task.goal || taskView.artifactPath,
       meta: [scopeId, stateLabel].filter(Boolean).join(' · '),
-      href: `#/missions/${encodeURIComponent(missionView.mission.id)}`,
+      href: `#/tasks/${encodeURIComponent(taskView.task.id)}`,
       aliases: [
-        missionView.mission.objective,
-        missionView.mission.planId,
-        missionView.mission.coordination?.claimedBy?.actorId,
+        taskView.task.goal,
+        ...taskView.task.planIds,
+        taskView.task.coordination?.claimedBy?.actorId,
       ].filter((value): value is string => Boolean(value)),
       keywords: [
-        missionView.mission.id,
-        missionView.mission.objective,
-        missionView.mission.summary,
-        missionView.mission.planId,
-        missionView.mission.scope?.query,
+        taskView.task.id,
+        taskView.task.goal,
+        taskView.task.summary,
+        ...taskView.task.planIds,
+        taskView.task.scope?.query,
         scopeId,
-        missionView.mission.coordination?.claimedBy?.actorId,
+        taskView.task.coordination?.claimedBy?.actorId,
       ].filter((value): value is string => Boolean(value)),
       canonical: true,
-      active: missionView.mission.state !== 'complete',
+      active: taskView.task.state !== 'complete',
       historical: false,
       stale: false,
-      updatedAt: missionView.mission.updatedAt,
+      updatedAt: taskView.task.updatedAt,
       scope: scopeId,
-      defaultRank: missionView.mission.state === 'active' ? 194 : 168,
+      defaultRank: taskView.task.state === 'active' ? 194 : 168,
     } satisfies SkoposUiConsoleSearchEntry;
   });
-
-const buildProgramSearchEntries = (
-  state: SkoposUiConsoleState,
-): SkoposUiConsoleSearchEntry[] => {
-  const programState = state.programState;
-
-  if (!programState) {
-    return [];
-  }
-
-  const sequenceItemIds = [
-    programState.sequence.doNow,
-    programState.sequence.doNext,
-    programState.sequence.interruptRecommendation.itemId,
-  ].filter((value, index, values): value is string => Boolean(value) && values.indexOf(value) === index);
-
-  const itemEntries = sequenceItemIds
-    .map((itemId) => programState.items.find((item) => item.id === itemId))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item))
-    .map((item) => {
-      const sequenceLabel =
-        item.id === programState.sequence.doNow
-          ? 'do now'
-          : item.id === programState.sequence.doNext
-            ? 'do next'
-            : 'interrupt';
-
-      return {
-        id: `program-${item.id}`,
-        group: 'work',
-        kind: 'program',
-        title: `${titleCase(sequenceLabel)}: ${item.title}`,
-        summary: item.summary,
-        meta: [item.priority, item.recommendedDisposition.replaceAll('-', ' ')].join(' · '),
-        href: resolveProgramItemHref(state, item) ?? '#/overview',
-        aliases: [sequenceLabel, item.sourceKind, item.scope.title, item.scope.id],
-        keywords: [
-          item.id,
-          item.title,
-          item.summary,
-          item.sourceKind,
-          item.priority,
-          item.recommendedDisposition,
-          item.whyNow,
-          item.scope.id,
-          item.scope.title,
-        ].filter((value): value is string => Boolean(value)),
-        canonical: true,
-        active: item.status !== 'done',
-        historical: false,
-        stale: false,
-        updatedAt: programState.updatedAt,
-        scope: item.scope.id,
-        defaultRank: sequenceLabel === 'do now' ? 198 : sequenceLabel === 'do next' ? 189 : 186,
-      } satisfies SkoposUiConsoleSearchEntry;
-    });
-
-  const obligationEntries = programState.obligations
-    .filter((obligation) => obligation.status === 'open')
-    .map((obligation) => {
-      const linkedItem = programState.items.find((item) => item.id === obligation.linkedItemId);
-      const group =
-        obligation.kind === 'validation' || obligation.kind === 'workflows'
-          ? 'validation'
-          : 'work';
-      const isCurrentItem = linkedItem?.id === programState.sequence.doNow;
-
-      return {
-        id: `obligation-${obligation.id}`,
-        group,
-        kind: 'obligation',
-        title: obligation.title,
-        summary: obligation.reason,
-        meta: [obligation.kind, linkedItem?.title].filter(Boolean).join(' · '),
-        href: resolveProgramObligationHref(state, obligation) ?? '#/overview',
-        aliases: [
-          'program obligation',
-          obligation.kind,
-          obligation.targetRef,
-          linkedItem?.title,
-          linkedItem?.sourceKind,
-        ].filter((value): value is string => Boolean(value)),
-        keywords: [
-          obligation.id,
-          obligation.title,
-          obligation.reason,
-          obligation.kind,
-          obligation.targetRef,
-          linkedItem?.id,
-          linkedItem?.title,
-          linkedItem?.summary,
-        ].filter((value): value is string => Boolean(value)),
-        canonical: true,
-        active: true,
-        historical: false,
-        stale: false,
-        updatedAt: programState.updatedAt,
-        scope: linkedItem?.scope.id,
-        defaultRank: isCurrentItem ? 193 : 176,
-      } satisfies SkoposUiConsoleSearchEntry;
-    });
-
-  return [...itemEntries, ...obligationEntries];
-};
 
 const buildValidationSearchEntries = (
   state: SkoposUiConsoleState,
 ): SkoposUiConsoleSearchEntry[] => {
   const entries: SkoposUiConsoleSearchEntry[] = [
     {
-      id: 'validation-trust',
+      id: 'validation-readiness',
       group: 'validation',
       kind: 'report',
       title: 'Readiness',
-      summary: state.trustReport.summary,
-      meta: `${state.trustReport.trustLevel} · ${state.trustReport.readiness}`,
-      href: '#/trust',
-      aliases: ['trust', 'readiness', 'quality', 'closure'],
+      summary: state.readinessReport.summary ?? 'Project Readiness assessment.',
+      meta: `${state.readinessReport.readiness} · ${state.readinessReport.readiness}`,
+      href: '#/readiness',
+      aliases: ['readiness', 'readiness', 'quality', 'closure'],
       keywords: [
-        state.trustReport.trustLevel,
-        state.trustReport.readiness,
-        ...state.trustReport.checks.flatMap((check) => [check.id, check.summary]),
-        ...state.trustReport.findings,
-        ...state.trustReport.unresolvedAssumptions,
+        state.readinessReport.readiness,
+        state.readinessReport.readiness,
+        ...state.readinessReport.checks.flatMap((check) => [check.id, check.summary]),
+        ...state.readinessReport.blockers,
+        ...state.readinessReport.warnings,
       ],
       canonical: true,
       active: true,
@@ -616,7 +507,7 @@ const buildScopeSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSe
     meta: [
       scopeView.scope.kind,
       scopeView.scope.path,
-      scopeView.relatedMissionCount > 0 ? `${scopeView.relatedMissionCount} mission` : undefined,
+      scopeView.relatedTaskCount > 0 ? `${scopeView.relatedTaskCount} task` : undefined,
     ]
       .filter((value): value is string => Boolean(value))
       .join(' · '),
@@ -630,37 +521,37 @@ const buildScopeSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSe
       ...(scopeView.scope.aliases ?? []),
     ].filter((value): value is string => Boolean(value)),
     canonical: true,
-    active: scopeView.relatedMissionCount > 0 || scopeView.relatedPlanCount > 0,
+    active: scopeView.relatedTaskCount > 0 || scopeView.relatedPlanCount > 0,
     historical: false,
     stale: false,
     updatedAt: state.generatedAt,
     scope: scopeView.scope.id,
-    defaultRank: scopeView.scope.id === 'workspace' ? 186 : 160,
+    defaultRank: scopeView.scope.kind === 'workspace' ? 186 : 160,
   }));
 
 const buildActivitySearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSearchEntry[] => [
-  ...state.activity.workflowRuns.map((workflowRun, index) => ({
-    id: workflowRun.id,
+  ...state.activity.actionRuns.map((actionRun, index) => ({
+    id: actionRun.id,
     group: 'activity' as const,
-    kind: 'workflow' as const,
-    title: workflowRun.workflowTitle,
-    summary: `Workflow run ${workflowRun.runStatus}.`,
-    meta: [workflowRun.runStatus, workflowRun.runByActorId].filter(Boolean).join(' · '),
+    kind: 'action' as const,
+    title: actionRun.actionTitle,
+    summary: `Action run ${actionRun.runStatus}.`,
+    meta: [actionRun.runStatus, actionRun.runByActorId].filter(Boolean).join(' · '),
     href: '#/activity',
-    aliases: [workflowRun.workflowId],
+    aliases: [actionRun.actionId],
     keywords: [
-      workflowRun.id,
-      workflowRun.workflowId,
-      workflowRun.workflowTitle,
-      workflowRun.runStatus,
-      workflowRun.runByActorId,
-      ...workflowRun.outputPaths,
+      actionRun.id,
+      actionRun.actionId,
+      actionRun.actionTitle,
+      actionRun.runStatus,
+      actionRun.runByActorId,
+      ...actionRun.outputPaths,
     ].filter((value): value is string => Boolean(value)),
     canonical: true,
     active: index < 3,
     historical: false,
     stale: false,
-    updatedAt: workflowRun.finishedAt,
+    updatedAt: actionRun.finishedAt,
     defaultRank: index === 0 ? 172 : 154 - index,
   })),
   ...state.activity.operationalEvents.map((event, index) => ({
@@ -693,7 +584,7 @@ const buildGraphSearchEntries = (
     group: 'graphs',
     kind: 'portal',
     title: 'Graph portal',
-    summary: 'Curated relationship views for docs, commands, scopes, missions, and impact.',
+    summary: 'Curated relationship views for docs, commands, scopes, tasks, and impact.',
     meta: `${state.graphs.graphs.length} graph views`,
     href: graphPortalHref,
     external: true,

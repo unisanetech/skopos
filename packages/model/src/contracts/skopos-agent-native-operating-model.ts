@@ -1,6 +1,6 @@
-import type { SkoposExecutionLane } from './skopos-policy-pack.js';
+import type { SkoposTaskRisk } from './skopos-task.js';
 import type { SkoposResolvedScope } from './skopos-scope-lite.js';
-import type { SkoposWorkflowSafety } from './skopos-workflow.js';
+import type { SkoposActionSafety } from './skopos-action.js';
 
 export type SkoposExecutionPhase = 'admission' | 'iteration' | 'stabilization' | 'closure';
 
@@ -14,7 +14,20 @@ export type SkoposKnowledgeAuthority =
 
 export type SkoposKnowledgeKind =
   | 'fact'
+  | 'router'
+  | 'overview'
+  | 'architecture'
+  | 'standard'
+  | 'domain'
+  | 'guide'
+  | 'operation'
   | 'decision'
+  | 'finding'
+  | 'plan'
+  | 'task'
+  | 'reference'
+  | 'document'
+  | 'preferred-pattern'
   | 'retired-pattern'
   | 'rejected-approach'
   | 'failure-pattern'
@@ -32,10 +45,9 @@ export interface SkoposProvenanceReference {
   authority: SkoposKnowledgeAuthority;
   sourceKind:
     | 'task'
-    | 'mission'
     | 'policy'
-    | 'workflow'
-    | 'gate'
+    | 'action'
+    | 'guard'
     | 'project-memory'
     | 'decision'
     | 'finding'
@@ -52,6 +64,7 @@ export interface SkoposKnowledgeEntry {
   kind: SkoposKnowledgeKind;
   title: string;
   summary: string;
+  scopeId?: string;
   authority: SkoposKnowledgeAuthority;
   lifecycle: SkoposKnowledgeLifecycle;
   appliesTo: string[];
@@ -97,7 +110,7 @@ export interface SkoposTaskDecision {
 
 export interface SkoposTaskProofRequirement {
   id: string;
-  kind: 'command' | 'action' | 'acceptance-evidence';
+  kind: 'action' | 'acceptance-evidence';
   summary: string;
 }
 
@@ -126,6 +139,7 @@ export interface SkoposContextEntry {
   kind: SkoposContextKind;
   title: string;
   summary: string;
+  scopeId?: string;
   importance: 'required' | 'recommended' | 'on-demand';
   appliesTo: string[];
   provenance: SkoposProvenanceReference[];
@@ -138,7 +152,7 @@ export interface SkoposStructuredCommand {
 }
 
 export interface SkoposActionEvidenceContract {
-  kind: 'workflow-run';
+  kind: 'action-run';
   requiredOutputPaths: string[];
   recordsActor: boolean;
   recordsExitStatus: boolean;
@@ -155,10 +169,10 @@ export interface SkoposAction {
   inputs: string[];
   outputs: string[];
   affectedPaths: string[];
-  safety: SkoposWorkflowSafety;
+  safety: SkoposActionSafety;
   approval: 'none' | 'required';
   phases: SkoposExecutionPhase[];
-  riskLanes: SkoposExecutionLane[];
+  risks: SkoposTaskRisk[];
   evidence: SkoposActionEvidenceContract;
   provenance: SkoposProvenanceReference[];
 }
@@ -181,7 +195,7 @@ export interface SkoposGuard {
   command?: SkoposStructuredCommand;
   unavailableReason?: string;
   phases: SkoposExecutionPhase[];
-  riskLanes: SkoposExecutionLane[];
+  risks: SkoposTaskRisk[];
   provenance: SkoposProvenanceReference[];
 }
 
@@ -212,7 +226,7 @@ export interface SkoposCompactTaskBrief {
   schemaVersion: 1;
   task: SkoposTaskContract;
   phase: SkoposExecutionPhase;
-  riskLane: SkoposExecutionLane;
+  risk: SkoposTaskRisk;
   context: SkoposCompactCapabilitySelection<SkoposContextEntry>;
   actions: SkoposCompactCapabilitySelection<SkoposAction>;
   guards: SkoposCompactCapabilitySelection<SkoposGuard>;

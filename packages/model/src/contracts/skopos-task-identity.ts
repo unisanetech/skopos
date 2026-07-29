@@ -15,10 +15,7 @@ export interface SkoposTaskStatePaths {
   authorityDirectory: string;
   questionsPath: string;
   recommendationsPath: string;
-  compatibilityQuestionsPath: string;
-  compatibilityRecommendationsPath: string;
   programStatePath?: string;
   programBriefPath?: string;
-  compatibilityProgramStatePath?: string;
-  compatibilityProgramBriefPath?: string;
+  handoffPath?: string;
 }

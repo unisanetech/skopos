@@ -214,9 +214,9 @@ export const writeSkoposProofReportArtifact = async ({
   artifact: SkoposProofReportArtifact;
 }): Promise<string> => {
   const resolvedWorkspaceRoot = resolve(workspaceRoot);
-  const reportPath = join(resolvedWorkspaceRoot, '.skopos', 'proof', 'latest-report.json');
+  const reportPath = join(resolvedWorkspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json');
 
-  await mkdir(join(resolvedWorkspaceRoot, '.skopos', 'proof'), { recursive: true });
+  await mkdir(join(resolvedWorkspaceRoot, '.skopos', 'evidence', 'proof'), { recursive: true });
   await writeFile(reportPath, `${JSON.stringify(artifact, null, 2)}\n`, 'utf8');
 
   return reportPath;

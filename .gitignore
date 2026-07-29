@@ -29,7 +29,6 @@ test-results/
 
 # Skopos generated/runtime state
 .skopos/
-docs/generated/skopos/
 
 # Logs
 logs/

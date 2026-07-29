@@ -1,18 +1,24 @@
+---
+title: "F-20260412-cli-entrypoint-command-ownership-drift: The Skopos CLI
+  Entrypoint Had Become A Command Bucket Instead Of A Thin Tool Surface"
+status: done
+owner: skopos-core
+id: SKOPOS-F-20260412-CLI-ENTRYPOINT-COMMAND-OWNERSHIP-DRIFT
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-06-25
+relatedDocs:
+  - ../README.md
+  - ../../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../../work/archive/P-37fa9180-prototype-roadmap.md
+reviewCycle: per workpack
+---
+
 # F-20260412-cli-entrypoint-command-ownership-drift: The Skopos CLI Entrypoint Had Become A Command Bucket Instead Of A Thin Tool Surface
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260412-CLI-ENTRYPOINT-COMMAND-OWNERSHIP-DRIFT`
-- Status: `done`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-06-25`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `../registry.md`
-  - `../../project/implementation-checklist.md`
-  - `../../project/roadmap.md`
 
 ## Changelog
 
@@ -59,6 +65,6 @@
 
 ## Linked Docs
 
-1. `registry.md`
-2. `../../project/implementation-checklist.md`
-3. `../../project/roadmap.md`
+1. `../README.md`
+2. `../../work/archive/P-b4e43e34-prototype-implementation-checklist.md`
+3. `../../work/archive/P-37fa9180-prototype-roadmap.md`

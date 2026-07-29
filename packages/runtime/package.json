@@ -22,12 +22,13 @@
   },
   "dependencies": {
     "@skopos/config": "workspace:*",
+    "@skopos/docs-engine": "workspace:*",
     "@skopos/indexer": "workspace:*",
     "@skopos/instructions": "workspace:*",
     "@skopos/model": "workspace:*",
     "@skopos/planner": "workspace:*",
     "@skopos/query": "workspace:*",
-    "@skopos/trust": "workspace:*"
+    "@skopos/verification": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.0.0",

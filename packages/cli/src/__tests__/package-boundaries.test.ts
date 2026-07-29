@@ -11,12 +11,13 @@ const PUBLIC_SDK_CORE_PACKAGES = [
   '@skopos/indexer',
   '@skopos/query',
   '@skopos/planner',
+  '@skopos/docs-engine',
   '@skopos/instructions',
-  '@skopos/trust',
+  '@skopos/verification',
   '@skopos/runtime',
 ] as const;
 
-const INTERNAL_PRODUCT_PACKAGES = ['@skopos/docs-engine', '@skopos/ui'] as const;
+const INTERNAL_PRODUCT_PACKAGES = ['@skopos/ui'] as const;
 
 
 const TOOL_SURFACE_PACKAGES = ['@skopos/cli', '@skopos/mcp'] as const;

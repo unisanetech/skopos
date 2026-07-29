@@ -9,7 +9,7 @@ import {
   LocalExceptionsCard,
   PackArchitectureContractCard,
   PackDetailInspectorAside,
-  PackGateStatusCard,
+  PackGuardStatusCard,
   PackOverviewCard,
   PackRoleMappingReviewCard,
   PackRulesCard,
@@ -24,35 +24,32 @@ import {
   RulesGuidanceCard,
   RulesInspectorAside,
   RulesSummaryCard,
-  TrustAttentionCard,
-  TrustGuidanceCard,
-  TrustInspectorAside,
+  ReadinessAttentionCard,
+  ReadinessGuidanceCard,
+  ReadinessInspectorAside,
 } from '../../features/validation/review-sections.js';
-import { ProgramPressureCard } from '../../features/program/program-sections.js';
 import { PageSectionStack } from '../../patterns/pages/shared.js';
 import { ReviewPage } from '../../patterns/pages/review-page.js';
 import {
   Card,
-  TrustCheckGroup,
+  ReadinessCheckGroup,
 } from '../../patterns/sections/content-primitives.js';
 import {
   EmptyMessage,
   StatusPill,
 } from '../../patterns/sections/inspector-primitives.js';
 import { requireConsoleState } from '../../platform/console-state/access.js';
-import { getTrustProgramContext } from '../../platform/console-state/program-selectors.js';
 import {
   getActivityViewContext,
   getPolicyViewContext,
   getProofViewContext,
-  getTrustViewContext,
+  getReadinessViewContext,
 } from '../../platform/console-state/validation-selectors.js';
 import {
   toneForReadiness,
-  toneForTrust,
 } from '../../support/ui/tone-helpers.js';
 
-export function TrustView(): React.JSX.Element {
+export function ReadinessView(): React.JSX.Element {
   const state = requireConsoleState();
   const {
     passChecks,
@@ -62,44 +59,36 @@ export function TrustView(): React.JSX.Element {
     sourceLinks,
     workspaceSignalItems,
     docsPostureItems,
-  } = getTrustViewContext(state);
-  const {
-    doNowItem,
-    doNextItem,
-    closureObligations,
-    openProgramQuestionCount,
-    interruptRecommendation,
-    recommendedAction,
-  } = getTrustProgramContext(state);
+  } = getReadinessViewContext(state);
 
   return (
     <ReviewPage
       kicker="Readiness"
       title="Can this work continue?"
       description={buildReadinessSentence({
-        readiness: state.trustReport.readiness,
+        readiness: state.readinessReport.readiness,
         passCount: passChecks.length,
         warningCount: warningChecks.length,
         failureCount: failureChecks.length,
       })}
       badges={[
         <StatusPill
-          key="trust"
-          value={state.trustReport.trustLevel}
-          tone={toneForTrust(state.trustReport.trustLevel)}
+          key="readiness"
+          value={state.readinessReport.readiness}
+          tone={toneForReadiness(state.readinessReport.readiness)}
         />,
         <StatusPill
           key="readiness"
-          value={state.trustReport.readiness}
-          tone={toneForReadiness(state.trustReport.readiness)}
+          value={state.readinessReport.readiness}
+          tone={toneForReadiness(state.readinessReport.readiness)}
         />,
       ]}
       aside={
-        <TrustInspectorAside
-          checkCount={state.trustReport.checks.length}
+        <ReadinessInspectorAside
+          checkCount={state.readinessReport.checks.length}
           warningCount={warningChecks.length}
           failureCount={failureChecks.length}
-          findingCount={state.trustReport.findings.length}
+          findingCount={state.readinessReport.blockers.length}
           generatedAt={state.generatedAt}
           sourceLinks={sourceLinks}
           docsPostureItems={docsPostureItems}
@@ -108,32 +97,23 @@ export function TrustView(): React.JSX.Element {
         />
       }
     >
-      <TrustGuidanceCard
+      <ReadinessGuidanceCard
         failureCount={failureChecks.length}
         warningCount={warningChecks.length}
-        findingCount={state.trustReport.findings.length}
+        findingCount={state.readinessReport.blockers.length}
       />
-      <TrustAttentionCard
+      <ReadinessAttentionCard
         failureChecks={failureChecks}
         warningChecks={warningChecks}
-        findings={state.trustReport.findings}
-        unresolvedAssumptions={state.trustReport.unresolvedAssumptions}
-      />
-      <ProgramPressureCard
-        state={state}
-        doNowItem={doNowItem}
-        doNextItem={doNextItem}
-        closureObligations={closureObligations}
-        openProgramQuestionCount={openProgramQuestionCount}
-        interruptRecommendation={interruptRecommendation}
-        recommendedAction={recommendedAction}
+        findings={state.readinessReport.blockers}
+        unresolvedAssumptions={state.readinessReport.warnings}
       />
       <Card
         title="Supporting checks"
         description="Passing checks that explain why Skopos is comfortable with the current state."
       >
         {passChecks.length > 0 ? (
-          <TrustCheckGroup title="Passing checks" checks={passChecks} tone="positive" />
+          <ReadinessCheckGroup title="Passing checks" checks={passChecks} tone="positive" />
         ) : (
           <EmptyMessage
             title="No passing checks"
@@ -300,7 +280,7 @@ function SkillPacksCard({
   return (
     <Card
       title="Task skills"
-      description="Accepted skills add compact project guidance and select existing actions and guards. They do not create another workflow or closure authority."
+      description="Accepted skills add compact project guidance and select existing actions and guards. They do not create another action or closure authority."
     >
       {accepted.length > 0 ? (
         <div className="border-y border-[var(--line)]">
@@ -407,7 +387,7 @@ export function PackDetailView({
       <PackStructureTreeCard pack={pack} />
       <PackRoleMappingReviewCard pack={pack} />
       <PackArchitectureContractCard pack={pack} />
-      <PackGateStatusCard pack={pack} />
+      <PackGuardStatusCard pack={pack} />
       <PackRulesCard pack={pack} />
     </ReviewPage>
   );
@@ -421,7 +401,7 @@ export function ActivityView(): React.JSX.Element {
     <ReviewPage
       kicker="Activity"
       title="What changed recently?"
-      description="Recent work, readiness, evidence, and workflow changes recorded by Skopos."
+      description="Recent work, readiness, evidence, and action changes recorded by Skopos."
       aside={
         <ActivityInspectorAside
           postureItems={postureItems}

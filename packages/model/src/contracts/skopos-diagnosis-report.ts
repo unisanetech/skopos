@@ -34,7 +34,7 @@ export interface SkoposDiagnosisFinding {
   requiresHumanDecision: boolean;
 }
 
-export interface SkoposRemediationMission {
+export interface SkoposRemediationTask {
   id: string;
   title: string;
   detail: string;
@@ -53,5 +53,5 @@ export interface SkoposDiagnosisReport extends SkoposArtifactEnvelope<'diagnosis
   workspacePackageCount: number;
   health: SkoposRepoHealth;
   findings: SkoposDiagnosisFinding[];
-  remediationMissions: SkoposRemediationMission[];
+  remediationTasks: SkoposRemediationTask[];
 }

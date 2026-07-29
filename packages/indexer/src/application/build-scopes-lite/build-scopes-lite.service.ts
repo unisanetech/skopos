@@ -1,13 +1,13 @@
 import { basename, dirname, relative } from 'node:path';
 
 import type {
-  SkoposConfidence,
   SkoposScopeLite,
   SkoposScopesLiteArtifact,
   SkoposScanSummary,
 } from '@skopos/model';
 
 import { findFilesNamed, readJsonFile } from '../../adapters/workspace-filesystem.adapter.js';
+import { loadSkoposScopeRegistry } from '../load-scope-registry/load-scope-registry.service.js';
 import { isPackageScopePath } from '../shared/package-scope-path.policy.js';
 import { isWithinSubtree, normalizeSubtreeTarget } from '../shared/subtree-target.policy.js';
 
@@ -23,6 +23,69 @@ export const buildSkoposScopesLite = async ({
   subtreeTarget,
 }: BuildSkoposScopesLiteOptions): Promise<SkoposScopesLiteArtifact> => {
   const focusSubtree = normalizeSubtreeTarget(cwd, subtreeTarget ?? scanSummary.focusSubtree);
+  const scopeRegistry = await loadSkoposScopeRegistry({ cwd });
+  const declaredScopesById = new Map(
+    scopeRegistry?.scopes.map((scope) => [scope.id, scope]) ?? [],
+  );
+  const scopes: SkoposScopeLite[] = scopeRegistry
+    ? scopeRegistry.scopes
+        .filter(
+          (scope) =>
+            scope.kind === 'workspace' ||
+            scope.codeRoots.some((codeRoot) => isWithinSubtree(codeRoot, focusSubtree)),
+        )
+        .map((scope) => ({
+          id: scope.id,
+          kind: scope.kind,
+          title: scope.title,
+          path: scope.path,
+          aliases: uniqueAliases(scope.aliases),
+          summary: `${scope.title} (${scope.profile}).`,
+          confidence: 'high',
+          parent: scope.parent ?? undefined,
+          ancestorIds: resolveAncestorIds(scope.id, declaredScopesById),
+          profile: scope.profile,
+          memoryRoot: scope.memoryRoot,
+          codeRoots: scope.codeRoots,
+          dependsOn: scope.dependsOn,
+          owners: scope.owners,
+        }))
+    : await inferCodeScopes({ cwd, scanSummary, focusSubtree });
+
+  return buildArtifact({ cwd, focusSubtree, scopes });
+};
+
+const buildArtifact = ({
+  cwd,
+  focusSubtree,
+  scopes,
+}: {
+  cwd: string;
+  focusSubtree?: string;
+  scopes: SkoposScopeLite[];
+}): SkoposScopesLiteArtifact => ({
+  schemaVersion: 1,
+  id: 'scopes-lite',
+  type: 'scopes-lite',
+  status: 'generated',
+  authority: 'generated',
+  summary: 'Compact scope cards for exact resolution and compact context assembly.',
+  updatedAt: new Date().toISOString(),
+  generatedAt: new Date().toISOString(),
+  workspaceRoot: cwd,
+  focusSubtree,
+  scopes,
+});
+
+const inferCodeScopes = async ({
+  cwd,
+  scanSummary,
+  focusSubtree,
+}: {
+  cwd: string;
+  scanSummary: SkoposScanSummary;
+  focusSubtree?: string;
+}): Promise<SkoposScopeLite[]> => {
   const packageJsonPaths = await findFilesNamed(cwd, 'package.json');
   const scopes: SkoposScopeLite[] = [
     {
@@ -38,11 +101,10 @@ export const buildSkoposScopesLite = async ({
 
   for (const packageJsonPath of packageJsonPaths) {
     const packageDir = relative(cwd, dirname(packageJsonPath)) || '.';
-    if (!isPackageScopePath(packageDir, scanSummary.ignoredPaths)) {
-      continue;
-    }
-
-    if (!isWithinSubtree(packageDir, focusSubtree)) {
+    if (
+      !isPackageScopePath(packageDir, scanSummary.ignoredPaths) ||
+      !isWithinSubtree(packageDir, focusSubtree)
+    ) {
       continue;
     }
 
@@ -58,48 +120,12 @@ export const buildSkoposScopesLite = async ({
       aliases: uniqueAliases([packageDir, basename(packageDir)]),
       summary: description ?? `Package scope for ${packageName}.`,
       confidence: 'high',
+      parent: 'workspace',
+      ancestorIds: ['workspace'],
     });
   }
 
-  for (const docsRoot of scanSummary.docsRoots) {
-    scopes.push({
-      id: `docs:${docsRoot}`,
-      kind: 'docs-root',
-      title: docsRoot,
-      path: docsRoot,
-      aliases: uniqueAliases([docsRoot]),
-      summary: `Canonical docs root at ${docsRoot}.`,
-      confidence: confidenceFromSummary(scanSummary),
-    });
-  }
-
-  for (const instructionFile of scanSummary.instructionFiles) {
-    const fileName = basename(instructionFile, '.md').toLowerCase();
-
-    scopes.push({
-      id: `instructions:${fileName}`,
-      kind: 'instruction-file',
-      title: instructionFile,
-      path: instructionFile,
-      aliases: uniqueAliases([instructionFile, fileName]),
-      summary: `Instruction surface at ${instructionFile}.`,
-      confidence: confidenceFromSummary(scanSummary),
-    });
-  }
-
-  return {
-    schemaVersion: 1,
-    id: 'scopes-lite',
-    type: 'scopes-lite',
-    status: 'generated',
-    authority: 'generated',
-    summary: 'Compact scope cards for exact resolution and compact context assembly.',
-    updatedAt: new Date().toISOString(),
-    generatedAt: new Date().toISOString(),
-    workspaceRoot: cwd,
-    focusSubtree,
-    scopes,
-  };
+  return scopes;
 };
 
 const asOptionalString = (value: unknown): string | undefined =>
@@ -109,5 +135,22 @@ const uniqueAliases = (aliases: string[]): string[] => [
   ...new Set(aliases.filter((alias) => alias.trim().length > 0)),
 ];
 
-const confidenceFromSummary = (scanSummary: SkoposScanSummary): SkoposConfidence =>
-  scanSummary.confidence;
+const resolveAncestorIds = (
+  scopeId: string,
+  scopesById: Map<string, { id: string; parent: string | null }>,
+): string[] => {
+  const ancestors: string[] = [];
+  const visited = new Set([scopeId]);
+  let parentId = scopesById.get(scopeId)?.parent ?? null;
+
+  while (parentId) {
+    if (visited.has(parentId)) {
+      throw new Error(`Scope ancestry contains a cycle at "${parentId}".`);
+    }
+    visited.add(parentId);
+    ancestors.push(parentId);
+    parentId = scopesById.get(parentId)?.parent ?? null;
+  }
+
+  return ancestors;
+};

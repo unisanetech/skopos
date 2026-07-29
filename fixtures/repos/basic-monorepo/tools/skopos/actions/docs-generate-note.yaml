@@ -1,0 +1,22 @@
+id: docs.generate-note
+title: Generate fixture docs note
+description: Generate a small docs note so Skopos can prove project Action discovery and execution.
+category: docs-generator
+scope:
+  - workspace
+  - docs
+command: node tools/skopos/scripts/generate-doc-note.mjs
+cwd: .
+inputs:
+  - AGENTS.md
+  - docs/00-start-here.md
+outputs:
+  - docs/reference/generated/action-note.md
+affects:
+  - docs/reference/generated
+safety: mutating
+requiresApproval: false
+whenToUse: Run after changing core instructions or docs bootstrap content.
+recommendedAfter:
+  - instructions.sync
+owner: skopos-fixture

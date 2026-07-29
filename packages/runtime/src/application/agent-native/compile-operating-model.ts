@@ -2,48 +2,90 @@ import type {
   SkoposAction,
   SkoposAgentNativeOperatingModel,
   SkoposContextEntry,
-  SkoposExecutionLane,
+  SkoposDocumentKnowledgeEntry,
   SkoposExecutionPhase,
   SkoposGuard,
   SkoposKnowledgeEntry,
   SkoposMemoryDecisionSnapshot,
   SkoposMemoryStateArtifact,
   SkoposPolicyRule,
-  SkoposResolvedGate,
-  SkoposResolvedGatesArtifact,
+  SkoposResolvedGuard,
+  SkoposResolvedGuardsArtifact,
   SkoposResolvedPolicyArtifact,
-  SkoposWorkflowManifest,
+  SkoposActionManifest,
+  SkoposTaskRisk,
 } from '@skopos/model';
+import { isSkoposAdoptedProjectMemoryDocument } from '@skopos/indexer';
 
 import { parseSkoposStructuredCommand } from './structured-command.js';
 
-const RESOLVED_GATES_ARTIFACT_PATH = '.skopos/gates/resolved.json';
-const MEMORY_STATE_ARTIFACT_PATH = '.skopos/memory/state.json';
-const ALL_RISK_LANES: SkoposExecutionLane[] = ['light', 'normal', 'workpack'];
+const RESOLVED_GUARDS_ARTIFACT_PATH = '.skopos/index/guards.json';
+const MEMORY_STATE_ARTIFACT_PATH = '.skopos/index/roles.json';
+const ALL_RISKS: SkoposTaskRisk[] = ['light', 'standard', 'high-impact'];
 
 export interface CompileSkoposAgentNativeOperatingModelOptions {
-  workflows?: SkoposWorkflowManifest[];
+  actions?: SkoposActionManifest[];
   policy?: SkoposResolvedPolicyArtifact;
-  gates?: SkoposResolvedGatesArtifact;
+  guards?: SkoposResolvedGuardsArtifact;
   knowledge?: SkoposKnowledgeEntry[];
   memory?: SkoposMemoryStateArtifact;
 }
 
+export const compileSkoposDocumentKnowledgeEntries = (
+  documents: SkoposDocumentKnowledgeEntry[],
+): SkoposKnowledgeEntry[] =>
+  documents
+    .filter(isSkoposAdoptedProjectMemoryDocument)
+    .map((document) => {
+      const metadata = document.metadata!;
+      const authority = metadata.provenance!;
+      const kind =
+        document.role === 'pattern'
+          ? metadata.patternKind!
+          : document.role;
+
+      return {
+        id: document.id,
+        kind,
+        title: document.title,
+        summary:
+          document.summary ??
+          `Project ${document.role} documented at ${document.path}.`,
+        scopeId: metadata.scope,
+        authority,
+        lifecycle: 'active',
+        appliesTo: [
+          ...(metadata.appliesTo ?? []),
+          document.role,
+          document.path,
+          document.path.split('/').at(-1)?.replace(/\.[^.]+$/, '') ?? document.path,
+        ],
+        provenance: [
+          {
+            authority,
+            sourceKind: 'project-memory',
+            sourceId: document.id,
+            path: document.path,
+          },
+        ],
+      };
+    });
+
 export const compileSkoposAgentNativeOperatingModel = ({
-  workflows = [],
+  actions: actionManifests = [],
   policy,
-  gates,
+  guards,
   knowledge = [],
   memory,
 }: CompileSkoposAgentNativeOperatingModelOptions): SkoposAgentNativeOperatingModel => {
   const diagnostics: string[] = [];
-  const actions = workflows.map((workflow) => compileWorkflowAction(workflow, diagnostics));
+  const actions = actionManifests.map((action) => compileAction(action, diagnostics));
 
   if (!policy) {
     diagnostics.push('Accepted policy context is unavailable.');
   }
 
-  if (!gates) {
+  if (!guards) {
     diagnostics.push('Resolved guard state is unavailable.');
   }
 
@@ -59,7 +101,7 @@ export const compileSkoposAgentNativeOperatingModel = ({
       ...compiledKnowledge.map(compileKnowledgeContext),
     ],
     actions,
-    guards: gates?.gates.map(compileResolvedGate) ?? [],
+    guards: guards?.guards.map(compileResolvedGuard) ?? [],
     diagnostics,
   };
 };
@@ -132,6 +174,7 @@ const compileKnowledgeContext = (entry: SkoposKnowledgeEntry): SkoposContextEntr
     entry.removalCondition && entry.kind === 'temporary-exception'
       ? `${entry.summary} Removal condition: ${entry.removalCondition}`
       : entry.summary,
+  scopeId: entry.scopeId,
   importance:
     entry.authority === 'declared' || entry.authority === 'accepted'
       ? 'recommended'
@@ -164,43 +207,45 @@ const compilePolicyContext = (
         authority: 'accepted',
         sourceKind: 'policy',
         sourceId: pack ? `${pack.packId}@${pack.version}` : rule.id,
-        path: policy.sourcePaths.find((sourcePath) => sourcePath.includes(packId)),
+        path: policy.sourceDependencies
+          .map((dependency) => dependency.path)
+          .find((sourcePath) => sourcePath.includes(packId)),
       },
     ],
   };
 };
 
-const compileWorkflowAction = (
-  workflow: SkoposWorkflowManifest,
+const compileAction = (
+  action: SkoposActionManifest,
   diagnostics: string[],
 ): SkoposAction => {
-  const command = parseSkoposStructuredCommand(workflow.command, workflow.cwd);
+  const command = parseSkoposStructuredCommand(action.command, action.cwd);
   if (!command) {
     diagnostics.push(
-      `Workflow ${workflow.id} uses shell syntax that cannot be projected as a structured action.`,
+      `Action ${action.id} uses shell syntax that cannot be projected safely.`,
     );
   }
 
   return {
-    id: workflow.id,
-    title: workflow.title,
-    description: workflow.description,
+    id: action.id,
+    title: action.title,
+    description: action.description,
     command,
     unavailableReason: command
       ? undefined
-      : 'The legacy workflow command is not a safely structured executable plus arguments.',
-    inputs: workflow.inputs,
-    outputs: workflow.outputs,
-    affectedPaths: workflow.affects,
-    safety: workflow.safety,
+      : 'The Action command is not a safely structured executable plus arguments.',
+    inputs: action.inputs,
+    outputs: action.outputs,
+    affectedPaths: action.affects,
+    safety: action.safety,
     approval:
-      workflow.requiresApproval || workflow.safety === 'destructive' ? 'required' : 'none',
-    phases: resolveSkoposWorkflowActionPhases(workflow),
-    riskLanes: ALL_RISK_LANES,
+      action.requiresApproval || action.safety === 'destructive' ? 'required' : 'none',
+    phases: resolveSkoposActionPhases(action),
+    risks: action.risks ?? ALL_RISKS,
     evidence: {
-      kind: 'workflow-run',
-      requiredOutputPaths: workflow.outputs,
-      recordsActor: workflow.safety !== 'read-only',
+      kind: 'action-run',
+      requiredOutputPaths: action.outputs,
+      recordsActor: action.safety !== 'read-only',
       recordsExitStatus: true,
       sourceBound: true,
       exactCommandOwnership: true,
@@ -208,73 +253,77 @@ const compileWorkflowAction = (
     provenance: [
       {
         authority: 'declared',
-        sourceKind: 'workflow',
-        sourceId: workflow.id,
-        path: workflow.sourcePath,
+        sourceKind: 'action',
+        sourceId: action.id,
+        path: action.sourcePath,
       },
     ],
   };
 };
 
-const compileResolvedGate = (gate: SkoposResolvedGate): SkoposGuard => {
-  const command = gate.command
-    ? parseSkoposStructuredCommand(gate.command, '.')
+const compileResolvedGuard = (guard: SkoposResolvedGuard): SkoposGuard => {
+  const command = guard.command
+    ? parseSkoposStructuredCommand(guard.command, '.')
     : undefined;
   const enforcement =
-    gate.status === 'missing'
+    guard.status === 'missing'
       ? 'unavailable'
       : command
         ? 'command'
         : 'manual-proof';
 
   return {
-    id: gate.id,
-    title: gate.label,
-    summary: gate.summary,
-    kind: gate.kind === 'agent-proof' ? 'evidence' : 'verification',
-    requiredness: gate.requiredness,
+    id: guard.id,
+    title: guard.label,
+    summary: guard.summary,
+    kind: guard.kind === 'agent-observation' ? 'evidence' : 'verification',
+    requiredness: guard.strength,
     enforcement,
     command,
     unavailableReason:
-      gate.status === 'missing'
-        ? gate.missingReason ?? 'The project does not expose this guard.'
-        : gate.command && !command
-          ? 'The gate command cannot be represented as a structured executable plus arguments.'
+      guard.status === 'missing'
+        ? guard.missingReason ?? 'The project does not expose this Guard.'
+        : guard.command && !command
+          ? 'The Guard command cannot be represented as a structured executable plus arguments.'
           : undefined,
     phases: ['closure'],
-    riskLanes: ALL_RISK_LANES,
+    risks: ALL_RISKS,
     provenance: [
       {
         authority: 'accepted',
-        sourceKind: 'gate',
-        sourceId: gate.id,
-        path: RESOLVED_GATES_ARTIFACT_PATH,
+        sourceKind: 'guard',
+        sourceId: guard.id,
+        path: RESOLVED_GUARDS_ARTIFACT_PATH,
       },
     ],
   };
 };
 
-export const resolveSkoposWorkflowActionPhases = (
-  workflow: SkoposWorkflowManifest,
+export const resolveSkoposActionPhases = (
+  action: SkoposActionManifest,
 ): SkoposExecutionPhase[] => {
+  if (action.phases && action.phases.length > 0) {
+    return action.phases;
+  }
+
   if (
-    workflow.id.includes('proof') ||
-    workflow.command.includes('proof') ||
-    workflow.outputs.some((outputPath) => outputPath.includes('.skopos/proof'))
+    action.id.includes('proof') ||
+    action.command.includes('proof') ||
+    action.outputs.some((outputPath) => outputPath.includes('.skopos/evidence/proof'))
   ) {
     return ['closure'];
   }
 
   if (
     ['docs-generator', 'reference-generator', 'graph-generator', 'maintenance'].includes(
-      workflow.category,
+      action.category,
     )
   ) {
     return ['stabilization'];
   }
 
-  if (workflow.category === 'quality-check' || workflow.category === 'docs-validator') {
-    return workflow.requiredForDone ? ['iteration', 'closure'] : ['iteration'];
+  if (action.category === 'quality-check' || action.category === 'docs-validator') {
+    return ['iteration'];
   }
 
   return ['iteration'];

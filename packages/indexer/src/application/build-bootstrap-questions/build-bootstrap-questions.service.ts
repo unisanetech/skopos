@@ -17,7 +17,7 @@ export const buildBootstrapQuestions = ({
     escalation: 'recommend-and-ask',
     question: 'Which project archetype should Skopos treat as canonical for this repo?',
     whyItMatters:
-      'Archetype selection shapes planning defaults, retrieval bias, and future trust checks.',
+      'Archetype selection shapes planning defaults, retrieval bias, and future Readiness checks.',
     recommendedOptionId: scanSummary.archetypeSuggestion,
     options: [
       {
@@ -53,7 +53,7 @@ export const buildBootstrapQuestions = ({
     question:
       'Which docs root should Skopos treat as canonical for human-readable project knowledge?',
     whyItMatters:
-      'Docs routing affects context assembly, trust reporting, and active-vs-archived content selection.',
+      'Docs routing affects context assembly, Readiness reporting, and active-vs-archived content selection.',
     recommendedOptionId: scanSummary.docsRoots[0] ?? 'create-docs-root',
     options: [
       {
@@ -118,7 +118,7 @@ export const buildBootstrapQuestions = ({
           id: 'defer-command-contract',
           label: 'Defer command contract',
           rationale:
-            'Allows fast bootstrap, but increases execution drift and makes trust checks weaker.',
+            'Allows fast bootstrap, but increases execution drift and makes Readiness checks weaker.',
         },
       ],
     });

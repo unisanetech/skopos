@@ -1,14 +1,24 @@
+import { createHash } from 'node:crypto';
 import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { loadSkoposPolicyPacks } from '@skopos/indexer';
+import { loadSkoposConfig } from '@skopos/config';
+import {
+  buildSkoposSourceDependencyDigest,
+  isWorkspaceIgnoredPath,
+  loadSkoposProjectPolicySource,
+  loadSkoposPolicyPacks,
+  normalizeWorkspaceIgnorePaths,
+  serializeSkoposProjectPolicySource,
+  SKOPOS_PROJECT_POLICY_SOURCE_PATH,
+} from '@skopos/indexer';
 import type { SkoposLoadedPolicyPack } from '@skopos/indexer';
 import type {
   SkoposDriftFamily,
   SkoposDriftFinding,
   SkoposDriftReportArtifact,
-  SkoposExecutionLaneRule,
+  SkoposTaskRiskRule,
   SkoposPolicyOverride,
   SkoposPolicyOverrideArtifact,
   SkoposPolicyRecommendationArtifact,
@@ -19,6 +29,7 @@ import type {
   SkoposPolicyRoleMappingDecisionArtifact,
   SkoposPolicyRoleMappingDecisionStatus,
   SkoposProjectLifecycle,
+  SkoposProjectPolicySource,
   SkoposResolvedPolicyArtifact,
 } from '@skopos/model';
 
@@ -34,9 +45,7 @@ import {
 import {
   DRIFT_REPORT_ARTIFACT_PATH,
   POLICY_BRIEF_ARTIFACT_PATH,
-  POLICY_OVERRIDES_ARTIFACT_PATH,
   POLICY_RECOMMENDATIONS_ARTIFACT_PATH,
-  POLICY_ROLE_MAPPING_DECISIONS_ARTIFACT_PATH,
   POLICY_ROLE_MAPPING_ARTIFACT_PATH,
   RESOLVED_POLICY_ARTIFACT_PATH,
 } from '../shared/token-control-constants.js';
@@ -105,6 +114,8 @@ export interface RemoveSkoposPolicyRoleMappingDecisionRuntimeOptions extends Lis
 }
 
 export interface ApplySkoposPolicyPackRuntimeResult {
+  policySourcePath: string;
+  policySourceWrite: 'written' | 'dry-run';
   policy: SkoposResolvedPolicyArtifact;
   policyWrite: 'written' | 'dry-run';
   policyPath: string;
@@ -195,10 +206,10 @@ export const recommendSkoposPolicyPacksRuntime = async ({
   const packs = await listSkoposPolicyPacksRuntime({ cwd: workspaceRoot });
   const projectLifecycle = await inferProjectLifecycle(workspaceRoot);
   const projectSignals = await analyzeProjectPolicySignals(workspaceRoot);
-  const acceptedPolicy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(
-    join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH),
+  const policySource = await loadSkoposProjectPolicySource({ cwd: workspaceRoot });
+  const acceptedPackIds = new Set(
+    policySource?.acceptedPacks.map((pack) => pack.packId) ?? [],
   );
-  const acceptedPackIds = new Set(acceptedPolicy?.acceptedPacks.map((pack) => pack.packId) ?? []);
   const recommendations = packs.map((pack) =>
     recommendPack(pack, projectLifecycle, acceptedPackIds.has(pack.packId), projectSignals),
   );
@@ -213,8 +224,8 @@ export const recommendSkoposPolicyPacksRuntime = async ({
     generatedAt: new Date().toISOString(),
     workspaceRoot,
     projectLifecycle,
-    defaultExecutionLane: 'normal',
-    recommendedExecutionLanes: buildDefaultExecutionLaneRules(),
+    defaultTaskRisk: policySource?.defaultTaskRisk ?? 'standard',
+    recommendedTaskRisks: buildDefaultTaskRiskRules(),
     recommendations,
   };
 
@@ -235,35 +246,154 @@ export const applySkoposPolicyPackRuntime = async ({
   dryRun = false,
 }: ApplySkoposPolicyPackRuntimeOptions): Promise<ApplySkoposPolicyPackRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
-  const actorId = resolveSkoposRuntimeActorId(actor);
+  const actorId = requireTrackedPolicyActor(actor);
+  if (!reason?.trim()) {
+    throw new Error('Policy acceptance requires an explicit reason.');
+  }
   const selected = await showSkoposPolicyPackRuntime({ cwd: workspaceRoot, pack });
-  const projectLifecycle = await inferProjectLifecycle(workspaceRoot);
   const now = new Date().toISOString();
-  const policyPath = join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH);
-  const existingPolicy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(policyPath);
-  const overrides = await readPolicyOverrides({
-    workspaceRoot,
-    fallback: existingPolicy?.overrides ?? [],
+  const existingSource =
+    (await loadSkoposProjectPolicySource({ cwd: workspaceRoot })) ??
+    createEmptyProjectPolicySource(now);
+  const policySource: SkoposProjectPolicySource = {
+    ...existingSource,
+    updatedAt: now,
+    acceptedPacks: [
+      ...existingSource.acceptedPacks.filter((entry) => entry.packId !== selected.packId),
+      {
+        packId: selected.packId,
+        version: selected.version,
+        acceptedAt: now,
+        acceptedBy: actorId,
+        reason: reason.trim(),
+        source: 'manual' as const,
+      },
+    ].sort((left, right) => left.packId.localeCompare(right.packId)),
+  };
+  const policySourcePath = join(workspaceRoot, SKOPOS_PROJECT_POLICY_SOURCE_PATH);
+  if (!dryRun) {
+    await writeResolvedPolicyProjections({
+      workspaceRoot,
+      source: policySource,
+      dryRun: true,
+    });
+  }
+  const policySourceWrite = await writeProjectPolicySource({
+    policySourcePath,
+    source: policySource,
+    dryRun,
   });
-  const acceptedPacks = [
-    ...(existingPolicy?.acceptedPacks.filter((entry) => entry.packId !== selected.packId) ?? []),
-    {
-      packId: selected.packId,
-      version: selected.version,
-      acceptedAt: now,
-      acceptedBy: actorId,
-      reason: reason ?? `Accepted ${selected.displayName} for current project policy.`,
-      source: 'manual' as const,
-    },
-  ];
-  const activeRules = dedupePolicyRules([
-    ...(existingPolicy?.activeRules.filter((rule) => !rule.id.startsWith(`${selected.packId}.`)) ?? []),
-    ...selected.rules,
-  ]);
+  const projections = await writeResolvedPolicyProjections({
+    workspaceRoot,
+    source: policySource,
+    dryRun,
+  });
+  const agentsPath = join(workspaceRoot, 'AGENTS.md');
+  const agentsWrite = await upsertAgentsPolicySection({
+    agentsPath,
+    policy: projections.policy,
+    dryRun,
+  });
+
+  if (!dryRun) {
+    await appendSkoposOperationalLogEntry({
+      workspaceRoot,
+      eventKind: 'policy',
+      status: 'succeeded',
+      summary: `Accepted policy pack ${selected.packId}.`,
+      metadata: {
+        actorId,
+        packId: selected.packId,
+        policySourcePath: SKOPOS_PROJECT_POLICY_SOURCE_PATH,
+        policyPath: RESOLVED_POLICY_ARTIFACT_PATH,
+        roleMappingPath: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
+      },
+    });
+    await refreshSkoposKnowledgeIndex({ workspaceRoot });
+  }
+
+  return {
+    policySourcePath,
+    policySourceWrite,
+    ...projections,
+    agentsPath,
+    agentsWrite,
+    actorId,
+  };
+};
+
+export const resolveSkoposPolicyRuntime = async ({
+  cwd,
+  dryRun = false,
+}: {
+  cwd: string;
+  dryRun?: boolean;
+}): Promise<
+  Omit<
+    ApplySkoposPolicyPackRuntimeResult,
+    'policySourcePath' | 'policySourceWrite' | 'agentsPath' | 'agentsWrite' | 'actorId'
+  > | null
+> => {
+  const workspaceRoot = resolve(cwd);
+  const source = await loadSkoposProjectPolicySource({ cwd: workspaceRoot });
+  if (!source) {
+    return null;
+  }
+
+  const projections = await writeResolvedPolicyProjections({
+    workspaceRoot,
+    source,
+    dryRun,
+  });
+  await upsertAgentsPolicySection({
+    agentsPath: join(workspaceRoot, 'AGENTS.md'),
+    policy: projections.policy,
+    dryRun,
+  });
+  return projections;
+};
+
+const writeResolvedPolicyProjections = async ({
+  workspaceRoot,
+  source,
+  dryRun,
+}: {
+  workspaceRoot: string;
+  source: SkoposProjectPolicySource;
+  dryRun: boolean;
+}): Promise<
+  Omit<
+    ApplySkoposPolicyPackRuntimeResult,
+    'policySourcePath' | 'policySourceWrite' | 'agentsPath' | 'agentsWrite' | 'actorId'
+  >
+> => {
+  const packs = await listSkoposPolicyPacksRuntime({ cwd: workspaceRoot });
+  const projectLifecycle = await inferProjectLifecycle(workspaceRoot);
+  const acceptedPacks = source.acceptedPacks.map((acceptance) => {
+    const matched = packs.find(
+      (candidate) =>
+        candidate.packId === acceptance.packId && candidate.version === acceptance.version,
+    );
+    if (!matched) {
+      throw new Error(
+        `Tracked policy ${acceptance.packId}@${acceptance.version} has no matching pack source.`,
+      );
+    }
+    return { acceptance, pack: matched };
+  });
+  const activeRules = dedupePolicyRules(
+    acceptedPacks.flatMap(({ pack }) => pack.rules),
+  );
   const sourcePaths = dedupeStrings([
-    ...(existingPolicy?.sourcePaths.filter((sourcePath) => sourcePath !== selected.sourcePath) ?? []),
-    selected.sourcePath,
+    SKOPOS_PROJECT_POLICY_SOURCE_PATH,
+    ...acceptedPacks.map(({ pack }) => pack.sourcePath),
   ]);
+  const sourceDependencies = await buildResolvedPolicySourceDependencies({
+    workspaceRoot,
+    source,
+    sourcePaths,
+    dryRun,
+  });
   const policy: SkoposResolvedPolicyArtifact = {
     schemaVersion: 1,
     id: 'resolved-policy',
@@ -271,31 +401,30 @@ export const applySkoposPolicyPackRuntime = async ({
     status: 'generated',
     authority: 'generated',
     summary: `Accepted policy resolves ${acceptedPacks.length} pack${acceptedPacks.length === 1 ? '' : 's'} with ${activeRules.length} active rules.`,
-    updatedAt: now,
-    generatedAt: now,
+    updatedAt: source.updatedAt,
+    generatedAt: source.updatedAt,
     workspaceRoot,
-    profileId: `${projectLifecycle}.${acceptedPacks.map((entry) => entry.packId).join('+')}`,
+    profileId: `${projectLifecycle}.${acceptedPacks.map(({ acceptance }) => acceptance.packId).join('+')}`,
     projectLifecycle,
-    defaultExecutionLane: existingPolicy?.defaultExecutionLane ?? 'normal',
-    recommendedExecutionLanes: existingPolicy?.recommendedExecutionLanes ?? buildDefaultExecutionLaneRules(),
-    acceptedPacks,
-    overrides,
+    defaultTaskRisk: source.defaultTaskRisk,
+    recommendedTaskRisks: buildDefaultTaskRiskRules(),
+    acceptedPacks: acceptedPacks.map(({ acceptance }) => acceptance),
+    overrides: source.overrides,
     activeRules,
-    sourcePaths,
-    generatedDocPaths: existingPolicy?.generatedDocPaths ?? [],
+    sourceDependencies,
+    generatedDocPaths: [],
   };
+  const policyPath = join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH);
   const policyWrite = await writeJsonArtifact({
     artifactPath: policyPath,
     artifact: policy,
     dryRun,
   });
-  const allPacks = await listSkoposPolicyPacksRuntime({ cwd: workspaceRoot });
-  const roleMappingDecisions = await readPolicyRoleMappingDecisions({ workspaceRoot });
   const roleMapping = await buildPolicyRoleMappingArtifact({
     workspaceRoot,
     policy,
-    packs: allPacks,
-    decisions: roleMappingDecisions,
+    packs,
+    decisions: source.roleMappings,
   });
   const roleMappingPath = join(workspaceRoot, POLICY_ROLE_MAPPING_ARTIFACT_PATH);
   const roleMappingWrite = await writeJsonArtifact({
@@ -309,33 +438,15 @@ export const applySkoposPolicyPackRuntime = async ({
       workspaceRoot,
       policy,
       roleMappingPath: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
-      mappedRoleCount: roleMapping.mappings.filter((mapping) => ['confirmed', 'inferred'].includes(mapping.status)).length,
-      missingRequiredRoleCount: roleMapping.mappings.filter((mapping) => mapping.status === 'missing').length,
+      mappedRoleCount: roleMapping.mappings.filter((mapping) =>
+        ['confirmed', 'inferred'].includes(mapping.status),
+      ).length,
+      missingRequiredRoleCount: roleMapping.mappings.filter(
+        (mapping) => mapping.status === 'missing',
+      ).length,
     }),
     dryRun,
   });
-  const agentsPath = join(workspaceRoot, 'AGENTS.md');
-  const agentsWrite = await upsertAgentsPolicySection({
-    agentsPath,
-    policy,
-    dryRun,
-  });
-
-  if (!dryRun) {
-    await appendSkoposOperationalLogEntry({
-      workspaceRoot,
-      eventKind: 'policy',
-      status: 'succeeded',
-      summary: `Accepted policy pack ${selected.packId}.`,
-      metadata: {
-        actorId: actorId ?? null,
-        packId: selected.packId,
-        policyPath: RESOLVED_POLICY_ARTIFACT_PATH,
-        roleMappingPath: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
-      },
-    });
-    await refreshSkoposKnowledgeIndex({ workspaceRoot });
-  }
 
   return {
     policy,
@@ -346,9 +457,6 @@ export const applySkoposPolicyPackRuntime = async ({
     roleMappingWrite,
     policyBriefPath: policyBrief.path,
     policyBriefWrite: policyBrief.write,
-    agentsPath,
-    agentsWrite,
-    actorId,
   };
 };
 
@@ -396,8 +504,8 @@ const buildPolicyRoleMappingArtifact = async ({
       missingRequiredCount === 0
         ? `Mapped ${mappings.length} accepted policy role${mappings.length === 1 ? '' : 's'} to local project paths.`
         : `Mapped accepted policy roles with ${missingRequiredCount} required role${missingRequiredCount === 1 ? '' : 's'} still needing a local mapping.`,
-    updatedAt: new Date().toISOString(),
-    generatedAt: new Date().toISOString(),
+    updatedAt: policy.updatedAt,
+    generatedAt: policy.generatedAt,
     workspaceRoot,
     resolvedPolicyPath: RESOLVED_POLICY_ARTIFACT_PATH,
     mappings,
@@ -503,22 +611,26 @@ export const buildSkoposPolicyDriftRuntime = async ({
 }: BuildSkoposPolicyDriftRuntimeOptions): Promise<BuildSkoposPolicyDriftRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
-  const resolvedPolicyPath = join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH);
-  const policy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(resolvedPolicyPath);
+  const resolved = await resolveSkoposPolicyRuntime({
+    cwd: workspaceRoot,
+    dryRun: true,
+  });
+  const policy = resolved?.policy;
   if (!policy || policy.acceptedPacks.length === 0) {
-    throw new Error('No accepted policy found. Run `skopos policies apply <pack> .` before drift detection.');
+    throw new Error(
+      `No accepted policy found in ${SKOPOS_PROJECT_POLICY_SOURCE_PATH}. Run \`skopos policies apply <pack> .\` before drift detection.`,
+    );
   }
+  const config = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
 
   const rawFindings = await detectPolicyDrift({
     workspaceRoot,
     policy,
+    ignoredPaths: normalizeWorkspaceIgnorePaths(config?.workspace.ignore ?? []),
   });
   const findings = applyPolicyOverridesToFindings({
     findings: rawFindings,
-    overrides: await readPolicyOverrides({
-      workspaceRoot,
-      fallback: policy.overrides,
-    }),
+    overrides: policy.overrides,
   });
   const report: SkoposDriftReportArtifact = {
     schemaVersion: 1,
@@ -578,9 +690,10 @@ export const listSkoposPolicyOverridesRuntime = async ({
   cwd,
 }: ListSkoposPolicyOverridesRuntimeOptions): Promise<SkoposPolicyOverrideArtifact> => {
   const workspaceRoot = resolve(cwd);
+  const source = await readProjectPolicySource(workspaceRoot);
   return buildPolicyOverrideArtifact({
     workspaceRoot,
-    overrides: await readPolicyOverrides({ workspaceRoot }),
+    overrides: source.overrides,
   });
 };
 
@@ -599,10 +712,11 @@ export const addSkoposPolicyOverrideRuntime = async ({
   dryRun = false,
 }: AddSkoposPolicyOverrideRuntimeOptions): Promise<SkoposPolicyOverridesRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
-  const actorId = resolveSkoposRuntimeActorId(actor);
+  const actorId = requireTrackedPolicyActor(actor);
   const now = new Date().toISOString();
   const overrideId = id ?? buildPolicyOverrideId({ findingId, ruleId, packId, sourcePath });
-  const existing = await readPolicyOverrides({ workspaceRoot });
+  const source = await readProjectPolicySource(workspaceRoot);
+  const existing = source.overrides;
   const nextOverride: SkoposPolicyOverride = {
     id: overrideId,
     findingId,
@@ -621,8 +735,9 @@ export const addSkoposPolicyOverrideRuntime = async ({
     ...existing.filter((entry) => entry.id !== overrideId),
     nextOverride,
   ]);
-  return writePolicyOverridesAndSyncResolvedPolicy({
+  return writePolicySourceOverridesAndRefresh({
     workspaceRoot,
+    source,
     overrides,
     dryRun,
     actorId,
@@ -637,15 +752,17 @@ export const removeSkoposPolicyOverrideRuntime = async ({
   dryRun = false,
 }: RemoveSkoposPolicyOverrideRuntimeOptions): Promise<SkoposPolicyOverridesRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
-  const actorId = resolveSkoposRuntimeActorId(actor);
-  const existing = await readPolicyOverrides({ workspaceRoot });
+  const actorId = requireTrackedPolicyActor(actor);
+  const source = await readProjectPolicySource(workspaceRoot);
+  const existing = source.overrides;
   const overrides = existing.filter((entry) => entry.id !== id);
   if (overrides.length === existing.length) {
     throw new Error(`Unknown Skopos policy override: ${id}`);
   }
 
-  return writePolicyOverridesAndSyncResolvedPolicy({
+  return writePolicySourceOverridesAndRefresh({
     workspaceRoot,
+    source,
     overrides,
     dryRun,
     actorId,
@@ -657,9 +774,10 @@ export const listSkoposPolicyRoleMappingDecisionsRuntime = async ({
   cwd,
 }: ListSkoposPolicyPacksRuntimeOptions): Promise<SkoposPolicyRoleMappingDecisionArtifact> => {
   const workspaceRoot = resolve(cwd);
+  const source = await readProjectPolicySource(workspaceRoot);
   return buildPolicyRoleMappingDecisionArtifact({
     workspaceRoot,
-    decisions: await readPolicyRoleMappingDecisions({ workspaceRoot }),
+    decisions: source.roleMappings,
   });
 };
 
@@ -675,10 +793,11 @@ export const upsertSkoposPolicyRoleMappingDecisionRuntime = async ({
   dryRun = false,
 }: UpsertSkoposPolicyRoleMappingDecisionRuntimeOptions): Promise<SkoposPolicyRoleMappingDecisionsRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
-  const actorId = resolveSkoposRuntimeActorId(actor);
+  const actorId = requireTrackedPolicyActor(actor);
   const now = new Date().toISOString();
   const decisionId = buildPolicyRoleMappingDecisionId({ packId, role });
-  const existing = await readPolicyRoleMappingDecisions({ workspaceRoot });
+  const source = await readProjectPolicySource(workspaceRoot);
+  const existing = source.roleMappings;
   const currentDecision = existing.find((entry) => entry.id === decisionId);
   const nextDecision: SkoposPolicyRoleMappingDecision = {
     id: decisionId,
@@ -693,8 +812,9 @@ export const upsertSkoposPolicyRoleMappingDecisionRuntime = async ({
     updatedAt: now,
   };
 
-  return writePolicyRoleMappingDecisionsAndRefresh({
+  return writePolicySourceRoleMappingsAndRefresh({
     workspaceRoot,
+    source,
     decisions: dedupePolicyRoleMappingDecisions([
       ...existing.filter((entry) => entry.id !== decisionId),
       nextDecision,
@@ -712,15 +832,17 @@ export const removeSkoposPolicyRoleMappingDecisionRuntime = async ({
   dryRun = false,
 }: RemoveSkoposPolicyRoleMappingDecisionRuntimeOptions): Promise<SkoposPolicyRoleMappingDecisionsRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
-  const actorId = resolveSkoposRuntimeActorId(actor);
-  const existing = await readPolicyRoleMappingDecisions({ workspaceRoot });
+  const actorId = requireTrackedPolicyActor(actor);
+  const source = await readProjectPolicySource(workspaceRoot);
+  const existing = source.roleMappings;
   const decisions = existing.filter((entry) => entry.id !== id);
   if (decisions.length === existing.length) {
     throw new Error(`Unknown Skopos policy role mapping decision: ${id}`);
   }
 
-  return writePolicyRoleMappingDecisionsAndRefresh({
+  return writePolicySourceRoleMappingsAndRefresh({
     workspaceRoot,
+    source,
     decisions,
     dryRun,
     actorId,
@@ -963,28 +1085,111 @@ const buildSmallProjectRoleFallback = ({
   return undefined;
 };
 
-const readPolicyOverrides = async ({
-  workspaceRoot,
-  fallback = [],
+const createEmptyProjectPolicySource = (
+  updatedAt: string,
+): SkoposProjectPolicySource => ({
+  schemaVersion: 1,
+  updatedAt,
+  defaultTaskRisk: 'standard',
+  acceptedPacks: [],
+  overrides: [],
+  roleMappings: [],
+});
+
+const readProjectPolicySource = async (
+  workspaceRoot: string,
+): Promise<SkoposProjectPolicySource> =>
+  (await loadSkoposProjectPolicySource({ cwd: workspaceRoot })) ??
+  createEmptyProjectPolicySource(new Date().toISOString());
+
+const writeProjectPolicySource = async ({
+  policySourcePath,
+  source,
+  dryRun,
 }: {
-  workspaceRoot: string;
-  fallback?: SkoposPolicyOverride[];
-}): Promise<SkoposPolicyOverride[]> => {
-  const artifact = await readJsonIfExists<SkoposPolicyOverrideArtifact>(
-    join(workspaceRoot, POLICY_OVERRIDES_ARTIFACT_PATH),
+  policySourcePath: string;
+  source: SkoposProjectPolicySource;
+  dryRun: boolean;
+}): Promise<'written' | 'dry-run'> => {
+  if (dryRun) {
+    return 'dry-run';
+  }
+
+  await mkdir(dirname(policySourcePath), { recursive: true });
+  await writeFile(
+    policySourcePath,
+    serializeSkoposProjectPolicySource(source),
+    'utf8',
   );
-  return dedupePolicyOverrides(artifact?.overrides ?? fallback);
+  return 'written';
 };
 
-const readPolicyRoleMappingDecisions = async ({
+const buildResolvedPolicySourceDependencies = async ({
   workspaceRoot,
+  source,
+  sourcePaths,
+  dryRun,
 }: {
   workspaceRoot: string;
-}): Promise<SkoposPolicyRoleMappingDecision[]> => {
-  const artifact = await readJsonIfExists<SkoposPolicyRoleMappingDecisionArtifact>(
-    join(workspaceRoot, POLICY_ROLE_MAPPING_DECISIONS_ARTIFACT_PATH),
+  source: SkoposProjectPolicySource;
+  sourcePaths: string[];
+  dryRun: boolean;
+}): Promise<SkoposResolvedPolicyArtifact['sourceDependencies']> =>
+  Promise.all(
+    [...sourcePaths].sort().map(async (sourcePath) => {
+      if (sourcePath === SKOPOS_PROJECT_POLICY_SOURCE_PATH) {
+        return {
+          path: sourcePath,
+          kind: 'policy-source' as const,
+          existsAtBuild: true,
+          digest: dryRun
+            ? digestProjectedPolicySource(sourcePath, source)
+            : await buildSkoposSourceDependencyDigest(
+                workspaceRoot,
+                sourcePath,
+                'policy-source',
+              ),
+        };
+      }
+
+      const existsAtBuild = await pathExists(resolve(workspaceRoot, sourcePath));
+      if (!existsAtBuild) {
+        throw new Error(`Accepted policy source is missing: ${sourcePath}`);
+      }
+
+      return {
+        path: sourcePath,
+        kind: 'policy-pack' as const,
+        existsAtBuild,
+        digest: await buildSkoposSourceDependencyDigest(
+          workspaceRoot,
+          sourcePath,
+          'policy-pack',
+        ),
+      };
+    }),
   );
-  return dedupePolicyRoleMappingDecisions(artifact?.decisions ?? []);
+
+const digestProjectedPolicySource = (
+  sourcePath: string,
+  source: SkoposProjectPolicySource,
+): string => {
+  const hash = createHash('sha256');
+  hash.update(sourcePath);
+  hash.update('\0');
+  hash.update('file\0');
+  hash.update(
+    Buffer.from(serializeSkoposProjectPolicySource(source), 'utf8').toString('base64'),
+  );
+  return `sha256:${hash.digest('hex')}`;
+};
+
+const requireTrackedPolicyActor = (actor?: string): string => {
+  const actorId = resolveSkoposRuntimeActorId(actor);
+  if (!actorId) {
+    throw new Error('Tracked policy changes require an explicit actor.');
+  }
+  return actorId;
 };
 
 const buildPolicyRoleMappingDecisionArtifact = ({
@@ -997,40 +1202,55 @@ const buildPolicyRoleMappingDecisionArtifact = ({
   schemaVersion: 1,
   id: 'policy-role-mapping-decisions',
   type: 'policy-role-mapping-decisions',
-  status: 'active',
-  authority: 'canonical',
+  status: 'generated',
+  authority: 'generated',
   summary:
     decisions.length === 0
       ? 'No local role mapping decisions are active.'
       : `${decisions.length} local role mapping decision${decisions.length === 1 ? '' : 's'} configured.`,
   updatedAt: new Date().toISOString(),
+  generatedAt: new Date().toISOString(),
   workspaceRoot,
   decisions,
 });
 
-const writePolicyRoleMappingDecisionsAndRefresh = async ({
+const writePolicySourceRoleMappingsAndRefresh = async ({
   workspaceRoot,
+  source,
   decisions,
   dryRun,
   actorId,
   eventSummary,
 }: {
   workspaceRoot: string;
+  source: SkoposProjectPolicySource;
   decisions: SkoposPolicyRoleMappingDecision[];
   dryRun: boolean;
   actorId?: string;
   eventSummary: string;
 }): Promise<SkoposPolicyRoleMappingDecisionsRuntimeResult> => {
+  const nextSource: SkoposProjectPolicySource = {
+    ...source,
+    updatedAt: new Date().toISOString(),
+    roleMappings: decisions,
+  };
+  if (!dryRun) {
+    await writeResolvedPolicyProjections({
+      workspaceRoot,
+      source: nextSource,
+      dryRun: true,
+    });
+  }
   const artifact = buildPolicyRoleMappingDecisionArtifact({ workspaceRoot, decisions });
-  const artifactPath = join(workspaceRoot, POLICY_ROLE_MAPPING_DECISIONS_ARTIFACT_PATH);
-  const artifactWrite = await writeJsonArtifact({
-    artifactPath,
-    artifact,
+  const artifactPath = join(workspaceRoot, SKOPOS_PROJECT_POLICY_SOURCE_PATH);
+  const artifactWrite = await writeProjectPolicySource({
+    policySourcePath: artifactPath,
+    source: nextSource,
     dryRun,
   });
-  const refresh = await refreshPolicyRoleMappingFromResolvedPolicy({
+  const refresh = await writeResolvedPolicyProjections({
     workspaceRoot,
-    decisions,
+    source: nextSource,
     dryRun,
   });
 
@@ -1043,7 +1263,7 @@ const writePolicyRoleMappingDecisionsAndRefresh = async ({
       metadata: {
         actorId: actorId ?? null,
         decisionCount: decisions.length,
-        decisionsPath: POLICY_ROLE_MAPPING_DECISIONS_ARTIFACT_PATH,
+        policySourcePath: SKOPOS_PROJECT_POLICY_SOURCE_PATH,
         roleMappingPath: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
       },
     });
@@ -1063,78 +1283,6 @@ const writePolicyRoleMappingDecisionsAndRefresh = async ({
   };
 };
 
-const refreshPolicyRoleMappingFromResolvedPolicy = async ({
-  workspaceRoot,
-  decisions,
-  dryRun,
-}: {
-  workspaceRoot: string;
-  decisions: SkoposPolicyRoleMappingDecision[];
-  dryRun: boolean;
-}): Promise<Pick<
-  SkoposPolicyRoleMappingDecisionsRuntimeResult,
-  'roleMapping' | 'roleMappingPath' | 'roleMappingWrite' | 'policyBriefPath' | 'policyBriefWrite'
->> => {
-  const resolvedPolicy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(
-    join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH),
-  );
-  if (!resolvedPolicy) {
-    return {
-      roleMapping: buildEmptyPolicyRoleMappingArtifact(workspaceRoot),
-      roleMappingPath: join(workspaceRoot, POLICY_ROLE_MAPPING_ARTIFACT_PATH),
-      roleMappingWrite: 'not-present',
-      policyBriefPath: join(workspaceRoot, POLICY_BRIEF_ARTIFACT_PATH),
-      policyBriefWrite: 'not-present',
-    };
-  }
-
-  const roleMapping = await buildPolicyRoleMappingArtifact({
-    workspaceRoot,
-    policy: resolvedPolicy,
-    packs: await listSkoposPolicyPacksRuntime({ cwd: workspaceRoot }),
-    decisions,
-  });
-  const roleMappingPath = join(workspaceRoot, POLICY_ROLE_MAPPING_ARTIFACT_PATH);
-  const roleMappingWrite = await writeJsonArtifact({
-    artifactPath: roleMappingPath,
-    artifact: roleMapping,
-    dryRun,
-  });
-  const policyBrief = await writeSkoposAgentBrief({
-    artifactPath: join(workspaceRoot, POLICY_BRIEF_ARTIFACT_PATH),
-    artifact: buildSkoposAgentPolicyBrief({
-      workspaceRoot,
-      policy: resolvedPolicy,
-      roleMappingPath: POLICY_ROLE_MAPPING_ARTIFACT_PATH,
-      mappedRoleCount: roleMapping.mappings.filter((mapping) => ['confirmed', 'inferred'].includes(mapping.status)).length,
-      missingRequiredRoleCount: roleMapping.mappings.filter((mapping) => mapping.status === 'missing').length,
-    }),
-    dryRun,
-  });
-
-  return {
-    roleMapping,
-    roleMappingPath,
-    roleMappingWrite,
-    policyBriefPath: policyBrief.path,
-    policyBriefWrite: policyBrief.write,
-  };
-};
-
-const buildEmptyPolicyRoleMappingArtifact = (workspaceRoot: string): SkoposPolicyRoleMappingArtifact => ({
-  schemaVersion: 1,
-  id: 'policy-role-mapping',
-  type: 'policy-role-mapping',
-  status: 'generated',
-  authority: 'generated',
-  summary: 'No accepted policy roles are available to map yet.',
-  updatedAt: new Date().toISOString(),
-  generatedAt: new Date().toISOString(),
-  workspaceRoot,
-  resolvedPolicyPath: RESOLVED_POLICY_ARTIFACT_PATH,
-  mappings: [],
-});
-
 const buildPolicyOverrideArtifact = ({
   workspaceRoot,
   overrides,
@@ -1145,53 +1293,59 @@ const buildPolicyOverrideArtifact = ({
   schemaVersion: 1,
   id: 'policy-overrides',
   type: 'policy-overrides',
-  status: 'active',
-  authority: 'canonical',
+  status: 'generated',
+  authority: 'generated',
   summary:
     overrides.length === 0
       ? 'No local policy overrides are active.'
       : `${overrides.length} local policy override${overrides.length === 1 ? '' : 's'} configured.`,
   updatedAt: new Date().toISOString(),
+  generatedAt: new Date().toISOString(),
   workspaceRoot,
   overrides,
 });
 
-const writePolicyOverridesAndSyncResolvedPolicy = async ({
+const writePolicySourceOverridesAndRefresh = async ({
   workspaceRoot,
+  source,
   overrides,
   dryRun,
   actorId,
   eventSummary,
 }: {
   workspaceRoot: string;
+  source: SkoposProjectPolicySource;
   overrides: SkoposPolicyOverride[];
   dryRun: boolean;
   actorId?: string;
   eventSummary: string;
 }): Promise<SkoposPolicyOverridesRuntimeResult> => {
-  const artifact = buildPolicyOverrideArtifact({ workspaceRoot, overrides });
-  const artifactPath = join(workspaceRoot, POLICY_OVERRIDES_ARTIFACT_PATH);
-  const artifactWrite = await writeJsonArtifact({
-    artifactPath,
-    artifact,
-    dryRun,
-  });
-  const resolvedPolicyPath = join(workspaceRoot, RESOLVED_POLICY_ARTIFACT_PATH);
-  const resolvedPolicy = await readJsonIfExists<SkoposResolvedPolicyArtifact>(resolvedPolicyPath);
-  let resolvedPolicyWrite: SkoposPolicyOverridesRuntimeResult['resolvedPolicyWrite'] = 'not-present';
-
-  if (resolvedPolicy) {
-    resolvedPolicyWrite = await writeJsonArtifact({
-      artifactPath: resolvedPolicyPath,
-      artifact: {
-        ...resolvedPolicy,
-        summary: `Accepted policy resolves ${resolvedPolicy.acceptedPacks.length} pack${resolvedPolicy.acceptedPacks.length === 1 ? '' : 's'} with ${resolvedPolicy.activeRules.length} active rules and ${overrides.length} override${overrides.length === 1 ? '' : 's'}.`,
-        updatedAt: new Date().toISOString(),
-        overrides,
-      },
-      dryRun,
+  const nextSource: SkoposProjectPolicySource = {
+    ...source,
+    updatedAt: new Date().toISOString(),
+    overrides,
+  };
+  if (!dryRun) {
+    await writeResolvedPolicyProjections({
+      workspaceRoot,
+      source: nextSource,
+      dryRun: true,
     });
   }
+  const artifact = buildPolicyOverrideArtifact({ workspaceRoot, overrides });
+  const artifactPath = join(workspaceRoot, SKOPOS_PROJECT_POLICY_SOURCE_PATH);
+  const artifactWrite = await writeProjectPolicySource({
+    policySourcePath: artifactPath,
+    source: nextSource,
+    dryRun,
+  });
+  const resolved = await writeResolvedPolicyProjections({
+    workspaceRoot,
+    source: nextSource,
+    dryRun,
+  });
+  const resolvedPolicyPath = resolved.policyPath;
+  const resolvedPolicyWrite = resolved.policyWrite;
 
   if (!dryRun) {
     await appendSkoposOperationalLogEntry({
@@ -1202,7 +1356,7 @@ const writePolicyOverridesAndSyncResolvedPolicy = async ({
       metadata: {
         actorId: actorId ?? null,
         overrideCount: overrides.length,
-        overridesPath: POLICY_OVERRIDES_ARTIFACT_PATH,
+        policySourcePath: SKOPOS_PROJECT_POLICY_SOURCE_PATH,
       },
     });
     await refreshSkoposKnowledgeIndex({ workspaceRoot });
@@ -1229,12 +1383,14 @@ const buildPolicyOverrideId = ({
   packId?: string;
   sourcePath?: string;
 }): string => {
-  const basis = findingId ?? ruleId ?? packId;
+  const basis = findingId ?? ruleId ?? packId ?? sourcePath;
   if (!basis) {
-    throw new Error('Policy override needs at least one of --finding, --rule, or --pack.');
+    throw new Error(
+      'Policy override needs at least one of --finding, --rule, --pack, or --source-path.',
+    );
   }
 
-  const pathSuffix = sourcePath ? `-${sourcePath}` : '';
+  const pathSuffix = sourcePath && sourcePath !== basis ? `-${sourcePath}` : '';
   return `override-${`${basis}${pathSuffix}`.replace(/[^a-zA-Z0-9._-]+/g, '-').replace(/^-+|-+$/g, '')}`;
 };
 
@@ -1274,7 +1430,7 @@ const applyPolicyOverridesToFindings = ({
       return {
         ...finding,
         severity: override.severity,
-        trustStatus: trustStatusForPolicySeverity(override.severity),
+        verificationStatus: verificationStatusForPolicySeverity(override.severity),
         overrideId: override.id,
         evidence: [
           ...finding.evidence,
@@ -1286,7 +1442,7 @@ const applyPolicyOverridesToFindings = ({
     return {
       ...finding,
       status: 'suppressed',
-      trustStatus: 'pass',
+      verificationStatus: 'pass',
       overrideId: override.id,
       evidence: [
         ...finding.evidence,
@@ -1328,19 +1484,25 @@ const isExpiredPolicyOverride = (override: SkoposPolicyOverride): boolean => {
   return Number.isFinite(expiresAt) && expiresAt < Date.now();
 };
 
-const trustStatusForPolicySeverity = (
+const verificationStatusForPolicySeverity = (
   severity: NonNullable<SkoposPolicyOverride['severity']>,
-): SkoposDriftFinding['trustStatus'] =>
+): SkoposDriftFinding['verificationStatus'] =>
   severity === 'must' ? 'fail' : severity === 'should' ? 'warn' : 'pass';
 
 const detectPolicyDrift = async ({
   workspaceRoot,
   policy,
+  ignoredPaths,
 }: {
   workspaceRoot: string;
   policy: SkoposResolvedPolicyArtifact;
+  ignoredPaths: string[];
 }): Promise<SkoposDriftFinding[]> => {
-  const sourceFiles = await listFilesUnder(workspaceRoot, ['.ts', '.tsx', '.js', '.jsx']);
+  const sourceFiles = await listFilesUnder(
+    workspaceRoot,
+    ['.ts', '.tsx', '.js', '.jsx'],
+    ignoredPaths,
+  );
   const relativeSourceFiles = sourceFiles.map((filePath) => relative(workspaceRoot, filePath));
   const fileContents = new Map<string, string>();
   for (const filePath of sourceFiles) {
@@ -1619,7 +1781,7 @@ const buildFinding = ({
     family,
     status: 'open',
     severity,
-    trustStatus: severity === 'must' ? 'fail' : severity === 'should' ? 'warn' : 'pass',
+    verificationStatus: severity === 'must' ? 'fail' : severity === 'should' ? 'warn' : 'pass',
     summary,
     ruleId: rule?.id,
     packId,
@@ -1726,29 +1888,29 @@ const findFeatureNounsInText = (contents: string): string[] => {
 };
 
 
-const buildDefaultExecutionLaneRules = (): SkoposExecutionLaneRule[] => [
+const buildDefaultTaskRiskRules = (): SkoposTaskRiskRule[] => [
   {
-    lane: 'light',
+    risk: 'light',
     summary: 'Use for narrow local edits with no project-truth or architecture impact.',
     triggers: [
       'single-file copy or styling edit',
       'small bug fix inside one owner',
       'no public API, data, security, or architecture impact',
     ],
-    defaultGates: ['focused test or typecheck when available'],
+    defaultEvidence: ['focused test or typecheck when available'],
   },
   {
-    lane: 'normal',
+    risk: 'standard',
     summary: 'Use for ordinary feature and maintenance work that touches a bounded area.',
     triggers: [
       'multiple related files in one feature or package',
       'new behavior that needs tests or docs sync',
       'accepted policy remains unchanged',
     ],
-    defaultGates: ['typecheck', 'relevant unit or e2e tests'],
+    defaultEvidence: ['typecheck', 'relevant unit or e2e tests'],
   },
   {
-    lane: 'workpack',
+    risk: 'high-impact',
     summary: 'Use for big, risky, or cross-cutting work that needs durable checkpoints and staged closure.',
     triggers: [
       'public API or package boundary change',
@@ -1756,7 +1918,7 @@ const buildDefaultExecutionLaneRules = (): SkoposExecutionLaneRule[] => [
       'multi-package refactor',
       'long-running work that may need resume or handoff',
     ],
-    defaultGates: ['focused checks per phase', 'full affected validation before closure'],
+    defaultEvidence: ['focused checks per phase', 'full affected verification before closure'],
   },
 ];
 
@@ -1795,12 +1957,13 @@ const upsertAgentsPolicySection = async ({
   const existing = await readTextIfExists(agentsPath);
   const section = [
     startMarker,
-    '## Skopos Accepted Policy',
+    '## Skopos Accepted Policy (Derived Projection)',
     '',
-    `- Source of truth: \`${RESOLVED_POLICY_ARTIFACT_PATH}\``,
+    '- This block is generated from tracked project policy; do not edit it directly.',
+    `- Source of truth: \`${SKOPOS_PROJECT_POLICY_SOURCE_PATH}\``,
     `- Accepted packs: ${policy.acceptedPacks.map((entry) => `\`${entry.packId}@${entry.version}\``).join(', ')}`,
-    `- Default execution lane: \`${policy.defaultExecutionLane}\``,
-    '- Progressive workflow rule: keep small tasks light, use normal gates for bounded feature work, and create/use a workpack for public API, architecture, stack, security, migration, multi-package, or long-running changes.',
+    `- Default Task risk: \`${policy.defaultTaskRisk}\``,
+    '- Progressive verification: keep small Tasks light, use proportional Actions and Guards for standard work, and use detailed high-impact Tasks or child Tasks for public API, architecture, stack, security, migration, multi-Scope, or long-running changes.',
     `- Agent brief: \`${POLICY_BRIEF_ARTIFACT_PATH}\``,
     '',
     endMarker,
@@ -1892,6 +2055,7 @@ const readChildDirectoryPaths = async (directoryPath: string): Promise<string[]>
 };
 
 const SCAN_IGNORED_DIRS = new Set([
+  '.cache',
   '.git',
   '.next',
   '.skopos',
@@ -1900,18 +2064,17 @@ const SCAN_IGNORED_DIRS = new Set([
   'coverage',
   'dist',
   'fixtures',
-  'gate-packs',
   'internal',
   'node_modules',
   'policy-packs',
   'stack-packs',
   'tests',
-  'workflow-packs',
 ]);
 
 const listFilesUnder = async (
   root: string,
   extensions: string[],
+  ignoredPaths: string[] = [],
 ): Promise<string[]> => {
   if (!(await pathExists(root))) {
     return [];
@@ -1924,6 +2087,9 @@ const listFilesUnder = async (
     const entries = await readdir(directory, { withFileTypes: true });
     for (const entry of entries) {
       const entryPath = join(directory, entry.name);
+      if (isWorkspaceIgnoredPath(relative(root, entryPath), ignoredPaths)) {
+        continue;
+      }
       if (entry.isDirectory()) {
         if (!SCAN_IGNORED_DIRS.has(entry.name)) {
           await visit(entryPath);

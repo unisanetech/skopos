@@ -20,7 +20,7 @@ export const buildSkoposUiConsoleApp = async ({
   const workspaceRoot = resolve(cwd);
   const resolvedOutputDirectory = resolve(
     workspaceRoot,
-    outputDirectory ?? 'docs/generated/skopos/app',
+    outputDirectory ?? '.skopos/ui/app',
   );
   const state = await buildSkoposUiConsoleState({
     cwd: workspaceRoot,
@@ -74,8 +74,7 @@ export const buildSkoposUiConsoleApp = async ({
     assetPaths: dryRun ? [] : await listBuiltFiles(resolvedOutputDirectory),
     writeStatus: dryRun ? 'dry-run' : 'written',
     generatedAt: state.generatedAt,
-    trustLevel: state.trustReport.trustLevel,
-    readiness: state.trustReport.readiness,
+    readiness: state.readinessReport.readiness,
     state,
   };
 };

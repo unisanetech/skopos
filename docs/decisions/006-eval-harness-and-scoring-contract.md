@@ -1,21 +1,26 @@
+---
+title: "Decision 006: Eval Harness And Scoring Contract"
+status: active
+owner: skopos-core
+id: SKOPOS-DECISION-006
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+lastUpdated: 2026-04-09
+relatedDocs:
+  - README.md
+  - ../work/archive/P-067e15c4-proof-and-benchmarking.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+reviewCycle: per convergence phase
+---
+
 # Decision 006: Eval Harness And Scoring Contract
 
 Use this decision to keep Skopos proof work comparable, durable, and resistant to feature-led drift.
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-006`
-- Status: `active`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-04-09`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `README.md`
-  - `../project/proof-phase-plan.md`
-  - `../project/missing-decisions-checklist.md`
-  - `../project/implementation-checklist.md`
 
 ## Changelog
 

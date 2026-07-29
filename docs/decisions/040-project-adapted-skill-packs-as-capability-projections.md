@@ -1,21 +1,36 @@
+---
+title: "Decision: Project-Adapted Skill Packs As Capability Projections"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-040
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-07-25
+lastUpdated: 2026-07-28
+relatedDocs:
+  - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../work/plans/P-e7e888e6-canonical-product-convergence.md
+  - ../architecture/agent-native-operating-model.md
+  - ../architecture/action-extension-model.md
+  - ../work/archive/P1-W12-project-adapted-skill-packs.md
+---
+
 # Decision: Project-Adapted Skill Packs As Capability Projections
 
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-040`
-- Status: `accepted`
-- Date: `2026-07-25`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Last Updated: `2026-07-25`
-- Related Docs:
-  - `../architecture/agent-native-operating-model.md`
-  - `../architecture/workflow-extension-model.md`
-  - `039-agent-native-single-control-plane-and-project-adoption-contract.md`
-  - `../project/execution/archive/P1-W12-project-adapted-skill-packs.md`
-
 ## Changelog
+
+- `2026-07-28`: Made the product Skill catalog one shared discovery boundary for
+  Runtime mutation and Trust verification. Workspace-local packs still determine
+  optional pre-adoption guidance, while accepted bindings resolve their exact
+  `packId@version` from the same project, bundled, or source catalog used by
+  `skills apply`.
+- `2026-07-28`: Retained only the principle that Skills project task-selective guidance
+  into existing Memory, Actions, and Guards. Skills cannot own Task state, execution,
+  Evidence authority, or closure.
 
 - `2026-07-25`: Accepted project-adapted skill packs as task-selective projections over
   the existing pack catalog and context/action/guard model.
@@ -29,8 +44,8 @@ rules, but they do not teach the judgment needed to apply project truth well in 
 specific task.
 
 Adding an independent skills workflow, memory store, command runner, or host-specific
-prompt collection would duplicate the single-control-plane contract accepted in
-Decision 039.
+prompt collection would duplicate the authority contract accepted in Decision
+D-8d32a27b.
 
 ## Decision
 
@@ -54,6 +69,9 @@ Decision 039.
    freshness rules, and proof fixtures.
 10. Effectiveness is measured through task relevance, context cost, repeated
     corrections, guard failures, supervision, and false-closure effects.
+11. Runtime commands and Trust resolve accepted Skill sources through one product
+    catalog owner. A bundled pack must not be accepted by one consumer and reported
+    missing by another.
 
 ## Consequences
 

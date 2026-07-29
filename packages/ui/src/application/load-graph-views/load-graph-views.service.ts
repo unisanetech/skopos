@@ -72,8 +72,8 @@ const graphTitle = (graph: SkoposGraphArtifact): string => {
       return 'Scope Relations Graph';
     case 'impact':
       return 'Impact Graph';
-    case 'mission':
-      return 'Mission Graph';
+    case 'task':
+      return 'Task Graph';
     default:
       return 'Graph';
   }
@@ -83,47 +83,43 @@ const buildHighlights = (graph: SkoposGraphArtifact): SkoposUiGraphHighlightGrou
   switch (graph.graphKind) {
     case 'workspace':
       return [
-        buildHighlightGroup(graph, 'scopes', 'Scopes', ['scope', 'docs-root', 'instruction-file']),
+        buildHighlightGroup(graph, 'scopes', 'Scopes', ['scope']),
         buildHighlightGroup(graph, 'commands', 'Commands', ['command']),
-        buildHighlightGroup(graph, 'workflows', 'Registered Workflows', ['workflow']),
+        buildHighlightGroup(graph, 'actions', 'Registered Actions', ['action']),
       ];
     case 'docs':
       return [
         buildHighlightGroup(graph, 'docs-roots', 'Docs Roots', ['docs-root']),
         buildHighlightGroup(graph, 'instructions', 'Instruction Surfaces', ['instruction-file']),
-        buildHighlightGroup(graph, 'docs-workflows', 'Docs Workflows', ['workflow']),
+        buildHighlightGroup(graph, 'docs-actions', 'Docs Actions', ['action']),
       ];
     case 'commands':
       return [
         buildHighlightGroup(graph, 'commands', 'Canonical Commands', ['command']),
-        buildHighlightGroup(graph, 'workflows', 'Operational Workflows', ['workflow']),
+        buildHighlightGroup(graph, 'actions', 'Operational Actions', ['action']),
         buildHighlightGroup(graph, 'targeted-scopes', 'Targeted Scopes', ['scope']),
       ];
     case 'scope-relations':
-      return [buildHighlightGroup(graph, 'packages', 'Package Scopes', ['scope'])];
-    case 'mission':
+      return [buildHighlightGroup(graph, 'scopes', 'Declared Scopes', ['scope'])];
+    case 'task':
       return [
         buildHighlightGroup(graph, 'decisions', 'Decision Gates', ['decision-question']),
         buildHighlightGroup(
           graph,
-          'workflows',
-          'Workflow Steps',
-          ['workflow', 'mission-item'],
+          'actions',
+          'Action Steps',
+          ['action', 'task-step'],
           (node) =>
-            node.kind === 'workflow' ||
-            (node.kind === 'mission-item' && node.id.startsWith('mission-item:workflow-')),
+            node.kind === 'action' ||
+            (node.kind === 'task-step' && node.id.startsWith('task-step:action-')),
         ),
         buildHighlightGroup(graph, 'validation', 'Validation', ['command']),
       ];
     case 'impact':
       return [
         buildHighlightGroup(graph, 'changed', 'Changed Paths', ['changed-path']),
-        buildHighlightGroup(graph, 'affected', 'Affected Scopes', [
-          'scope',
-          'docs-root',
-          'instruction-file',
-        ]),
-        buildHighlightGroup(graph, 'required-workflows', 'Required Workflows', ['workflow']),
+        buildHighlightGroup(graph, 'affected', 'Affected Scopes', ['scope']),
+        buildHighlightGroup(graph, 'required-actions', 'Required Actions', ['action']),
       ];
     default:
       return [];

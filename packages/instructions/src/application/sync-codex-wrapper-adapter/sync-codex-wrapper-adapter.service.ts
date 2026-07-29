@@ -3,6 +3,8 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
 
+import { buildHostActorBinding } from '../host-actor-binding/host-actor-binding.js';
+
 export interface SyncCodexWrapperAdapterOptions {
   cwd: string;
   dryRun?: boolean;
@@ -20,9 +22,9 @@ export interface SyncCodexWrapperAdapterResult {
   writes: CodexWrapperAdapterWrite[];
 }
 
-const MANIFEST_RELATIVE_PATH = '.skopos/tooling/codex/adapter-manifest.json';
-const ENTRYPOINT_RELATIVE_PATH = '.skopos/tooling/codex/codex-discussion-adapter.mjs';
-const README_RELATIVE_PATH = '.skopos/tooling/codex/README.md';
+const MANIFEST_RELATIVE_PATH = '.skopos/cache/tooling/codex/adapter-manifest.json';
+const ENTRYPOINT_RELATIVE_PATH = '.skopos/cache/tooling/codex/codex-discussion-adapter.mjs';
+const README_RELATIVE_PATH = '.skopos/cache/tooling/codex/README.md';
 
 export const syncCodexWrapperAdapter = async ({
   cwd,
@@ -77,9 +79,10 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
       supportTier: 'wrapper-mediated',
       summary:
         'Wrapper-mediated discussion-memory adapter for Codex hosts using the shared skopos discuss runtime.',
+      actorBinding: buildHostActorBinding(),
       projectModel: projectionModel
         ? {
-            path: '.skopos/enforcement.json',
+            path: '.skopos/index/enforcement.json',
             authority: projectionModel.authority,
             enforcementRuleIds:
               projectionModel.hosts.find((host) => host.hostId === 'codex')
@@ -91,7 +94,7 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
         sessionStart: {
           command: `node ${ENTRYPOINT_RELATIVE_PATH} session-start`,
           output:
-            'JSON with compact resume context plus the current `skopos program next --json` workflow recommendation.',
+            'JSON with compact Session, Task, Work Queue, and decision context.',
         },
         userTurn: {
           command: `node ${ENTRYPOINT_RELATIVE_PATH} user-turn`,
@@ -111,7 +114,7 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
         stop: {
           command: `node ${ENTRYPOINT_RELATIVE_PATH} stop`,
           output:
-            'JSON decision that blocks on the current workflow-router command before falling back to `skopos done --json`.',
+            'JSON decision based on the current Task and close Readiness.',
         },
       },
     },
@@ -186,64 +189,6 @@ const parseJsonOutput = (result) => {
   }
 };
 
-const buildWorkflowContext = (programReport) => {
-  if (!programReport || typeof programReport !== 'object') {
-    return '';
-  }
-
-  const summary =
-    typeof programReport.summary === 'string' ? programReport.summary.trim() : '';
-  const nextCommand =
-    typeof programReport.nextCommand === 'string' ? programReport.nextCommand.trim() : '';
-  const recommendedCommand =
-    typeof programReport.recommendedAction?.command === 'string'
-      ? programReport.recommendedAction.command.trim()
-      : '';
-  const command = recommendedCommand || nextCommand;
-  const lines = ['Skopos workflow router:'];
-
-  if (summary.length > 0) {
-    lines.push(summary);
-  }
-
-  if (command.length > 0) {
-    lines.push(\`Next command: \${command}\`);
-  }
-
-  return lines.length > 1 ? lines.join('\\n') : '';
-};
-
-const combineAdditionalContext = (discussionReport, programReport) =>
-  [
-    typeof discussionReport?.additionalContext === 'string'
-      ? discussionReport.additionalContext.trim()
-      : '',
-    buildWorkflowContext(programReport),
-  ]
-    .filter((entry) => entry.length > 0)
-    .join('\\n\\n');
-
-const buildStopReason = (programReport, fallbackSummary) => {
-  const recommendedSummary =
-    typeof programReport?.recommendedAction?.summary === 'string'
-      ? programReport.recommendedAction.summary
-      : '';
-  const summary =
-    recommendedSummary ||
-    (typeof programReport?.summary === 'string' ? programReport.summary.trim() : '') ||
-    fallbackSummary;
-  const recommendedCommand =
-    typeof programReport?.recommendedAction?.command === 'string'
-      ? programReport.recommendedAction.command.trim()
-      : '';
-  const nextCommand =
-    typeof programReport?.nextCommand === 'string' ? programReport.nextCommand.trim() : '';
-  const command = recommendedCommand || nextCommand;
-
-  return [summary, command.length > 0 ? \`Run \\\`\${command}\\\` before stopping.\` : '']
-    .filter((entry) => entry.length > 0)
-    .join(' ');
-};
 `;
 
 const renderCodexEntrypoint = (): string => `#!/usr/bin/env node
@@ -278,19 +223,12 @@ let result;
 
 switch (eventName) {
   case 'session-start': {
-    const discussionResult = runSkopos(projectDir, ['discuss', 'recent', projectDir, '--json']);
-    const programResult = runSkopos(projectDir, ['program', 'next', projectDir, '--json']);
-    const discussionReport = parseJsonOutput(discussionResult);
-    const programReport = parseJsonOutput(programResult);
-
-    process.stdout.write(
-      JSON.stringify({
-        ...discussionReport,
-        program: programReport,
-        additionalContext: combineAdditionalContext(discussionReport, programReport),
-      }),
-    );
-    process.exit(0);
+    const contextArgs = ['session', 'context', projectDir, '--host', 'codex', '--json'];
+    if (typeof payload.sessionId === 'string' && payload.sessionId.trim().length > 0) {
+      contextArgs.push('--session-id', payload.sessionId.trim());
+    }
+    result = runSkopos(projectDir, contextArgs);
+    break;
   }
   case 'user-turn':
     result = runSkopos(projectDir, buildTurnArgs('user', 'user-prompt-submit'), { input: messageInput });
@@ -310,70 +248,52 @@ switch (eventName) {
     }
 
     runSkopos(projectDir, ['discuss', 'checkpoint', projectDir, '--json']);
-    const programResult = runSkopos(projectDir, ['program', 'next', projectDir, '--json']);
-    const programReport = parseJsonOutput(programResult);
-    const recommendedCommand =
-      typeof programReport.recommendedAction?.command === 'string'
-        ? programReport.recommendedAction.command.trim()
-        : '';
-    const nextCommand =
-      typeof programReport.nextCommand === 'string' ? programReport.nextCommand.trim() : '';
-
-    if (recommendedCommand.length > 0 || nextCommand.length > 0) {
+    const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'codex', '--json']);
+    const context = parseJsonOutput(contextResult);
+    if (contextResult.status !== 0) {
       process.stdout.write(
         JSON.stringify({
           decision: 'block',
-          reason: buildStopReason(
-            programReport,
-            'Skopos requires the next workflow router step before stopping.',
-          ),
-          program: programReport,
+          reason: 'Skopos could not load current Session context. Repair Session or Task state before stopping.',
         }),
       );
       process.exit(0);
     }
 
-    const doneResult = runSkopos(projectDir, ['done', '--cwd', projectDir, '--json']);
-
-    if (doneResult.status !== 0) {
+    if (typeof context.nextCommand === 'string' && context.nextCommand.trim().length > 0) {
       process.stdout.write(
         JSON.stringify({
           decision: 'block',
-          reason:
-            'Skopos stop enforcement could not verify closure. Run \`skopos done --cwd <project-root>\` manually.',
+          reason: \`Skopos has an unresolved next step. Run \\\`\${context.nextCommand.trim()}\\\` before stopping.\`,
+          context,
         }),
       );
       process.exit(0);
     }
 
-    const doneReport = parseJsonOutput(doneResult);
-    if (doneReport?.closureStatus === 'complete') {
+    if (typeof context.currentTaskId !== 'string' || context.currentTaskId.length === 0) {
       process.stdout.write(
         JSON.stringify({
           decision: 'allow',
-          done: doneReport,
+          context,
         }),
       );
       process.exit(0);
     }
 
-    const actions = Array.isArray(doneReport?.requiredActions)
-      ? doneReport.requiredActions.slice(0, 3).join(' | ')
-      : '';
-    const reason = [
-      typeof doneReport?.summary === 'string'
-        ? doneReport.summary
-        : 'Skopos closure is not complete.',
-      actions,
-    ]
-      .filter((entry) => entry.length > 0)
-      .join(' ');
+    const readinessArgs = ['readiness', context.currentTaskId, projectDir, '--for', 'close', '--json'];
+    pushOptionalFlag(readinessArgs, '--actor', process.env.SKOPOS_ACTOR);
+    const readinessResult = runSkopos(projectDir, readinessArgs);
+    const readiness = parseJsonOutput(readinessResult);
+    const allow = readinessResult.status === 0 && readiness.readiness === 'ready';
 
     process.stdout.write(
       JSON.stringify({
-        decision: 'block',
-        reason,
-        done: doneReport,
+        decision: allow ? 'allow' : 'block',
+        reason: allow
+          ? readiness.summary
+          : readiness.summary || 'Task is not ready to close. Resolve its Readiness blockers first.',
+        readiness,
       }),
     );
     process.exit(0);
@@ -396,16 +316,26 @@ process.exit(result.status ?? 0);
 
 const renderCodexReadme = (): string => `# Codex Discussion Adapter
 
-This wrapper-mediated adapter keeps Codex on the same discussion-memory lane as Claude Code while also surfacing the current workflow-router recommendation on session start. The wrapper should treat \`AGENTS.md\` plus \`.skopos/agent/communication-brief.json\` as the default agent operating contract.
+This wrapper-mediated adapter keeps Codex on the same Task, Session, and discussion-memory contract as Claude Code. The wrapper should treat \`AGENTS.md\` plus \`.skopos/agent/communication-brief.json\` as the default agent operating contract.
+
+## Actor binding
+
+Before launching this adapter, set \`SKOPOS_ACTOR\` to the dedicated claimant actor id used to start or claim the Task. Skopos requires that binding for Task-specific routing and mutation; without it, routing intentionally stays at the Project Work Queue or fails closed.
+
+\`sessionId\` identifies both discussion continuity and local coordination Session
+identity. \`threadId\` remains discussion metadata. The wrapper must not use either
+value as an actor id, and this adapter has no actor fallback. Keep the claimant actor
+binding explicit in the host environment and pass the stable host Session id in every
+session lifecycle payload.
 
 Use the generated entrypoint at \`${ENTRYPOINT_RELATIVE_PATH}\` from an external Codex wrapper or host integration. Event mapping:
 
-- \`session-start\` -> merge \`skopos discuss recent --json\` with \`skopos program next --json\`
+- \`session-start\` -> open or heartbeat the coordination Session and inject the shared \`skopos session context --json\` response and decision contract
 - \`user-turn\` -> \`skopos discuss append-turn --role user --message-stdin --json\`
 - \`assistant-turn\` -> \`skopos discuss append-turn --role assistant --message-stdin --json\`
 - \`major-state-change\` -> \`skopos discuss checkpoint --json\`
 - \`pre-compact\` -> \`skopos discuss handoff --json\`
-- \`stop\` -> consult \`skopos program next --json\` first, then fall back to \`skopos done --json\`
+- \`stop\` -> load \`skopos session context --json\`, then assess the current Task with \`skopos readiness <task-id> --for close --json\`
 
-The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context plus workflow guidance. The agent should choose light, normal, or workpack lane before editing and should not claim complete until \`skopos done\` or the routed next step allows closure. Do not replay raw discussion journals into the prompt.
+The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context. The agent should follow the Task risk and detail selected by Skopos and should not claim completion until close Readiness is ready. Do not replay raw discussion journals into the prompt.
 `;

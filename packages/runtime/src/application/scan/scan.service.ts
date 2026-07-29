@@ -39,10 +39,10 @@ export const buildSkoposScanRuntime = async ({
 }: BuildSkoposScanRuntimeOptions): Promise<BuildSkoposScanRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
-  const diagnosisPath = join(workspaceRoot, '.skopos', 'diagnosis.json');
-  const symbolsPath = join(workspaceRoot, '.skopos', 'references', 'symbols.json');
-  const duplicatesPath = join(workspaceRoot, '.skopos', 'references', 'duplicates.json');
-  const contradictionsPath = join(workspaceRoot, '.skopos', 'references', 'contradictions.json');
+  const diagnosisPath = join(workspaceRoot, '.skopos', 'index', 'diagnosis.json');
+  const symbolsPath = join(workspaceRoot, '.skopos', 'index', 'references', 'symbols.json');
+  const duplicatesPath = join(workspaceRoot, '.skopos', 'index', 'references', 'duplicates.json');
+  const contradictionsPath = join(workspaceRoot, '.skopos', 'index', 'references', 'contradictions.json');
   const diagnosis = await buildSkoposDiagnosisReport({
     cwd: workspaceRoot,
     subtreeTarget,
@@ -82,7 +82,7 @@ export const buildSkoposScanRuntime = async ({
       packageCount: diagnosis.packageCount,
       workspacePackageCount: diagnosis.workspacePackageCount,
       findingCount: diagnosis.findings.length,
-      remediationMissionCount: diagnosis.remediationMissions.length,
+      remediationTaskCount: diagnosis.remediationTasks.length,
       focusSubtree: diagnosis.focusSubtree ?? null,
     },
   });

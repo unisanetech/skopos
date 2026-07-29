@@ -3,27 +3,59 @@ import type {
   SkoposGraphEdge,
   SkoposGraphNode,
   SkoposScopesLiteArtifact,
-  SkoposWorkflowManifest,
+  SkoposActionManifest,
 } from '@skopos/model';
+
+interface ProjectSurface {
+  id: string;
+  kind: 'docs-root' | 'instruction-file';
+  title: string;
+  path: string;
+  summary: string;
+}
 
 export interface BuildSkoposDocsGraphOptions {
   workspaceRoot: string;
+  actions: SkoposActionManifest[];
   scopesLite: SkoposScopesLiteArtifact;
-  workflows: SkoposWorkflowManifest[];
+  docsRoots: string[];
+  instructionFiles: string[];
 }
 
 export const buildSkoposDocsGraph = ({
   workspaceRoot,
+  actions,
   scopesLite,
-  workflows,
+  docsRoots,
+  instructionFiles,
 }: BuildSkoposDocsGraphOptions): SkoposGraphArtifact => {
   const generatedAt = new Date().toISOString();
   const nodes = new Map<string, SkoposGraphNode>();
   const edges = new Map<string, SkoposGraphEdge>();
   const workspaceNodeId = 'workspace';
-  const docsScopes = scopesLite.scopes.filter((scope) => scope.kind === 'docs-root');
-  const instructionScopes = scopesLite.scopes.filter((scope) => scope.kind === 'instruction-file');
-  const relevantWorkflows = workflows.filter(isDocsWorkflow);
+  const resolvedDocsRoots = [
+    ...new Set([
+      ...docsRoots,
+      ...scopesLite.scopes.flatMap((scope) =>
+        scope.memoryRoot ? [scope.memoryRoot] : [],
+      ),
+    ]),
+  ];
+  const docsSurfaces: ProjectSurface[] = resolvedDocsRoots.map((path) => ({
+    id: path,
+    kind: 'docs-root',
+    title: path,
+    path,
+    summary: `Canonical docs root at ${path}.`,
+  }));
+  const instructionSurfaces: ProjectSurface[] = instructionFiles.map((path) => ({
+    id: path,
+    kind: 'instruction-file',
+    title: path,
+    path,
+    summary: `Instruction surface at ${path}.`,
+  }));
+  const relevantWorkflows = actions.filter(isDocsWorkflow);
 
   addNode(nodes, {
     id: workspaceNodeId,
@@ -34,15 +66,15 @@ export const buildSkoposDocsGraph = ({
     summary: 'Workspace root for documentation and instruction surfaces.',
   });
 
-  for (const scope of [...docsScopes, ...instructionScopes]) {
-    const nodeId = `scope:${scope.id}`;
+  for (const surface of [...docsSurfaces, ...instructionSurfaces]) {
+    const nodeId = surfaceNodeId(surface);
     addNode(nodes, {
       id: nodeId,
-      kind: scope.kind === 'docs-root' ? 'docs-root' : 'instruction-file',
-      label: scope.title,
+      kind: surface.kind,
+      label: surface.title,
       state: 'active',
-      path: scope.path,
-      summary: scope.summary,
+      path: surface.path,
+      summary: surface.summary,
     });
     addEdge(edges, {
       id: `${workspaceNodeId}->${nodeId}:contains`,
@@ -53,19 +85,18 @@ export const buildSkoposDocsGraph = ({
     });
   }
 
-  for (const workflow of relevantWorkflows) {
-    const nodeId = `workflow:${workflow.id}`;
+  for (const action of relevantWorkflows) {
+    const nodeId = `action:${action.id}`;
     addNode(nodes, {
       id: nodeId,
-      kind: 'workflow',
-      label: workflow.id,
-      state: workflow.requiredForDone ? 'required' : 'recommended',
-      path: workflow.sourcePath,
-      summary: workflow.description,
+      kind: 'action',
+      label: action.id,
+      state: 'recommended',
+      path: action.sourcePath,
+      summary: action.description,
       metadata: {
-        category: workflow.category,
-        safety: workflow.safety,
-        requiredForDone: workflow.requiredForDone,
+        category: action.category,
+        safety: action.safety,
       },
     });
     addEdge(edges, {
@@ -73,35 +104,37 @@ export const buildSkoposDocsGraph = ({
       kind: 'contains',
       from: workspaceNodeId,
       to: nodeId,
-      state: workflow.requiredForDone ? 'required' : 'recommended',
+      state: 'recommended',
     });
 
-    for (const docsScope of docsScopes) {
-      if (workflowTouchesPathFamily(workflow, docsScope.path)) {
+    for (const docsSurface of docsSurfaces) {
+      if (actionTouchesPathFamily(action, docsSurface.path)) {
+        const targetNodeId = surfaceNodeId(docsSurface);
         addEdge(edges, {
-          id: `${nodeId}->scope:${docsScope.id}:touches`,
+          id: `${nodeId}->${targetNodeId}:touches`,
           kind: 'touches',
           from: nodeId,
-          to: `scope:${docsScope.id}`,
-          state: workflow.requiredForDone ? 'required' : 'recommended',
+          to: targetNodeId,
+          state: 'recommended',
         });
       }
     }
 
-    for (const instructionScope of instructionScopes) {
-      if (workflowTouchesExactPath(workflow, instructionScope.path)) {
+    for (const instructionSurface of instructionSurfaces) {
+      if (actionTouchesExactPath(action, instructionSurface.path)) {
+        const targetNodeId = surfaceNodeId(instructionSurface);
         addEdge(edges, {
-          id: `${nodeId}->scope:${instructionScope.id}:touches`,
+          id: `${nodeId}->${targetNodeId}:touches`,
           kind: 'touches',
           from: nodeId,
-          to: `scope:${instructionScope.id}`,
-          state: workflow.requiredForDone ? 'required' : 'recommended',
+          to: targetNodeId,
+          state: 'recommended',
         });
       }
     }
   }
 
-  const focusScope = docsScopes[0] ?? instructionScopes[0];
+  const focusSurface = docsSurfaces[0] ?? instructionSurfaces[0];
 
   return {
     schemaVersion: 1,
@@ -110,31 +143,33 @@ export const buildSkoposDocsGraph = ({
     status: 'generated',
     authority: 'generated',
     summary:
-      'Typed docs graph for canonical docs roots, instruction surfaces, and docs-affecting workflows.',
+      'Typed docs graph for canonical docs roots, instruction surfaces, and docs-affecting actions.',
     updatedAt: generatedAt,
     generatedAt,
     workspaceRoot,
     graphKind: 'docs',
-    focusId: focusScope ? `scope:${focusScope.id}` : workspaceNodeId,
+    focusId: focusSurface ? surfaceNodeId(focusSurface) : workspaceNodeId,
     nodes: [...nodes.values()],
     edges: [...edges.values()],
   };
 };
 
-const isDocsWorkflow = (workflow: SkoposWorkflowManifest): boolean =>
-  ['docs-generator', 'docs-validator', 'reference-generator', 'graph-generator'].includes(
-    workflow.category,
-  ) ||
-  workflow.outputs.some((path) => path.startsWith('docs/')) ||
-  workflow.affects.some((path) => path.startsWith('docs/'));
+const surfaceNodeId = (surface: ProjectSurface): string => `${surface.kind}:${surface.id}`;
 
-const workflowTouchesPathFamily = (workflow: SkoposWorkflowManifest, pathPrefix: string): boolean =>
-  [...workflow.outputs, ...workflow.affects].some(
+const isDocsWorkflow = (action: SkoposActionManifest): boolean =>
+  ['docs-generator', 'docs-validator', 'reference-generator', 'graph-generator'].includes(
+    action.category,
+  ) ||
+  action.outputs.some((path) => path.startsWith('docs/')) ||
+  action.affects.some((path) => path.startsWith('docs/'));
+
+const actionTouchesPathFamily = (action: SkoposActionManifest, pathPrefix: string): boolean =>
+  [...action.outputs, ...action.affects].some(
     (path) => path === pathPrefix || path.startsWith(`${pathPrefix}/`),
   );
 
-const workflowTouchesExactPath = (workflow: SkoposWorkflowManifest, targetPath: string): boolean =>
-  [...workflow.outputs, ...workflow.affects].some((path) => path === targetPath);
+const actionTouchesExactPath = (action: SkoposActionManifest, targetPath: string): boolean =>
+  [...action.outputs, ...action.affects].some((path) => path === targetPath);
 
 const addNode = (nodes: Map<string, SkoposGraphNode>, node: SkoposGraphNode): void => {
   nodes.set(node.id, node);

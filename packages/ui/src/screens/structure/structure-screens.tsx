@@ -15,20 +15,20 @@ import { requireConsoleState } from '../../platform/console-state/access.js';
 
 export function ScopesView(): React.JSX.Element {
   const state = requireConsoleState();
-  const packageScopes = state.scopes.filter((scope) => scope.scope.kind === 'package');
-  const docsScopes = state.scopes.filter((scope) => scope.scope.kind === 'docs-root');
+  const projectScopes = state.scopes.filter((scope) => scope.scope.kind !== 'workspace');
+  const workspaceScopes = state.scopes.filter((scope) => scope.scope.kind === 'workspace');
 
   return (
     <ListPage
       kicker="Project map"
       title="Project areas"
-      description="Packages, docs roots, and instruction files Skopos understands."
+      description="Declared project Scope boundaries Skopos can resolve reliably."
       aside={
         <ScopesInspectorAside
           scopeCount={state.scopes.length}
-          packageCount={packageScopes.length}
-          docsRootCount={docsScopes.length}
-          activeWorkCount={state.scopes.filter((scope) => scope.relatedMissionCount > 0).length}
+          projectScopeCount={projectScopes.length}
+          workspaceCount={workspaceScopes.length}
+          activeWorkCount={state.scopes.filter((scope) => scope.relatedTaskCount > 0).length}
         />
       }
     >
@@ -62,8 +62,8 @@ export function ScopeDetailView({
   }
 
   const relatedPlans = state.plans.filter((plan) => scopeView.relatedPlanIds.includes(plan.plan.id));
-  const relatedMissions = state.missions.filter((mission) =>
-    scopeView.relatedMissionIds.includes(mission.mission.id),
+  const relatedTasks = state.tasks.filter((task) =>
+    scopeView.relatedTaskIds.includes(task.task.id),
   );
   const relatedGraphs = state.graphs.graphs.filter(
     (graph) =>
@@ -92,7 +92,7 @@ export function ScopeDetailView({
       aside={
         <ScopeDetailInspectorAside
           scopeView={scopeView}
-          relatedMissions={relatedMissions}
+          relatedTasks={relatedTasks}
           relatedPlans={relatedPlans}
           relatedGraphs={relatedGraphs}
         />
@@ -101,10 +101,10 @@ export function ScopeDetailView({
       <PageSectionStack>
         <ScopeFrameCard
           scopeView={scopeView}
-          relatedMissionCount={relatedMissions.length}
+          relatedTaskCount={relatedTasks.length}
           relatedPlanCount={relatedPlans.length}
         />
-        <ScopeCurrentWorkCard plans={relatedPlans} missions={relatedMissions} />
+        <ScopeCurrentWorkCard plans={relatedPlans} tasks={relatedTasks} />
       </PageSectionStack>
     </DetailPage>
   );

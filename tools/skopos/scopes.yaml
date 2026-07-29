@@ -1,0 +1,225 @@
+schemaVersion: 1
+scopes:
+  - id: skopos
+    title: Skopos Workspace
+    kind: workspace
+    path: .
+    memoryRoot: docs
+    codeRoots:
+      - .
+    parent: null
+    profile: core.workspace
+    dependsOn: []
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/workspace"
+
+  - id: skopos-cli
+    title: Skopos CLI
+    kind: tool
+    path: packages/cli
+    memoryRoot: docs/scopes/skopos-cli
+    codeRoots:
+      - packages/cli
+    parent: skopos
+    profile: core.tool
+    dependsOn:
+      - skopos-model
+      - skopos-runtime
+      - skopos-ui
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/cli"
+
+  - id: skopos-config
+    title: Skopos Config
+    kind: package
+    path: packages/config
+    memoryRoot: docs/scopes/skopos-config
+    codeRoots:
+      - packages/config
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-model
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/config"
+
+  - id: skopos-docs-engine
+    title: Skopos Docs Engine
+    kind: package
+    path: packages/docs-engine
+    memoryRoot: docs/scopes/skopos-docs-engine
+    codeRoots:
+      - packages/docs-engine
+    parent: skopos
+    profile: core.internal-package
+    dependsOn:
+      - skopos-model
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/docs-engine"
+
+  - id: skopos-indexer
+    title: Skopos Indexer
+    kind: package
+    path: packages/indexer
+    memoryRoot: docs/scopes/skopos-indexer
+    codeRoots:
+      - packages/indexer
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-config
+      - skopos-model
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/indexer"
+
+  - id: skopos-instructions
+    title: Skopos Instructions
+    kind: package
+    path: packages/instructions
+    memoryRoot: docs/scopes/skopos-instructions
+    codeRoots:
+      - packages/instructions
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-model
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/instructions"
+
+  - id: skopos-mcp
+    title: Skopos MCP
+    kind: tool
+    path: packages/mcp
+    memoryRoot: docs/scopes/skopos-mcp
+    codeRoots:
+      - packages/mcp
+    parent: skopos
+    profile: core.tool
+    dependsOn:
+      - skopos-runtime
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/mcp"
+
+  - id: skopos-model
+    title: Skopos Model
+    kind: package
+    path: packages/model
+    memoryRoot: docs/scopes/skopos-model
+    codeRoots:
+      - packages/model
+    parent: skopos
+    profile: core.public-library
+    dependsOn: []
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/model"
+
+  - id: skopos-planner
+    title: Skopos Planner
+    kind: package
+    path: packages/planner
+    memoryRoot: docs/scopes/skopos-planner
+    codeRoots:
+      - packages/planner
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-config
+      - skopos-model
+      - skopos-query
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/planner"
+
+  - id: skopos-query
+    title: Skopos Query
+    kind: package
+    path: packages/query
+    memoryRoot: docs/scopes/skopos-query
+    codeRoots:
+      - packages/query
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-config
+      - skopos-indexer
+      - skopos-model
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/query"
+
+  - id: skopos-runtime
+    title: Skopos Runtime
+    kind: package
+    path: packages/runtime
+    memoryRoot: docs/scopes/skopos-runtime
+    codeRoots:
+      - packages/runtime
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-config
+      - skopos-indexer
+      - skopos-instructions
+      - skopos-model
+      - skopos-planner
+      - skopos-query
+      - skopos-verification
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/runtime"
+
+  - id: skopos-verification
+    title: Skopos Verification
+    kind: package
+    path: packages/verification
+    memoryRoot: docs/scopes/skopos-verification
+    codeRoots:
+      - packages/verification
+    parent: skopos
+    profile: core.public-library
+    dependsOn:
+      - skopos-config
+      - skopos-indexer
+      - skopos-instructions
+      - skopos-model
+      - skopos-query
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/verification"
+
+  - id: skopos-ui
+    title: Skopos UI
+    kind: application
+    path: packages/ui
+    memoryRoot: docs/scopes/skopos-ui
+    codeRoots:
+      - packages/ui
+    parent: skopos
+    profile: core.application
+    dependsOn:
+      - skopos-model
+      - skopos-runtime
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/ui"

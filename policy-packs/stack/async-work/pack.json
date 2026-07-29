@@ -182,9 +182,8 @@
     "policies/operations.md"
   ],
   "generatedArtifacts": [
-    ".skopos/policies/resolved.json",
-    ".skopos/agent/policy-brief.json",
-    ".skopos/stack/recommendations.json"
+    ".skopos/index/policies/resolved.json",
+    ".skopos/cache/agent/policy-brief.json"
   ],
   "driftCheckIds": [
     "stack.async-work.unjustified-queue-dependency",

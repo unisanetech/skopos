@@ -1,0 +1,20 @@
+id: instructions.source-requires-sync
+title: Instruction source changes require synchronized mirrors
+description: Require fresh instruction-mirror Evidence whenever the canonical agent instruction source changes.
+owner: skopos-core
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - AGENTS.md
+  phases:
+    - stabilization
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - instructions.sync-mirrors
+  evidence: source-bound-action

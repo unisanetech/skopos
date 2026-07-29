@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Link } from '@tanstack/react-router';
 
 import type {
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
 } from '../../../contracts/skopos-ui-console-state.js';
 import {
@@ -88,7 +88,7 @@ export function PlanListCard({
   title,
   description,
   plans,
-  linkedMissionByPlanId,
+  linkedTaskByPlanId,
   compact = false,
   emptyTitle,
   emptyDescription,
@@ -96,7 +96,7 @@ export function PlanListCard({
   title: string;
   description: string;
   plans: SkoposUiConsolePlanView[];
-  linkedMissionByPlanId?: Map<string, SkoposUiConsoleMissionView>;
+  linkedTaskByPlanId?: Map<string, SkoposUiConsoleTaskView>;
   compact?: boolean;
   emptyTitle: string;
   emptyDescription: string;
@@ -109,7 +109,7 @@ export function PlanListCard({
             <PlanListRow
               key={planView.plan.id}
               planView={planView}
-              linkedMission={linkedMissionByPlanId?.get(planView.plan.id)}
+              linkedTask={linkedTaskByPlanId?.get(planView.plan.id)}
               compact={compact}
               bordered={index > 0}
             />
@@ -143,12 +143,12 @@ function GuidancePoint({
 
 function PlanListRow({
   planView,
-  linkedMission,
+  linkedTask,
   compact,
   bordered,
 }: {
   planView: SkoposUiConsolePlanView;
-  linkedMission?: SkoposUiConsoleMissionView;
+  linkedTask?: SkoposUiConsoleTaskView;
   compact: boolean;
   bordered: boolean;
 }): React.JSX.Element {
@@ -165,7 +165,7 @@ function PlanListRow({
             tone={planView.plan.confidence === 'high' ? 'positive' : 'warning'}
           />
           <StatusPill value={planView.plan.scope.scope.title} tone="neutral" />
-          {linkedMission ? <StatusPill value={linkedMission.mission.state} tone="info" /> : null}
+          {linkedTask ? <StatusPill value={linkedTask.task.state} tone="info" /> : null}
         </div>
         <p
           className={cn(
@@ -185,9 +185,9 @@ function PlanListRow({
         >
           {planView.plan.summary}
         </p>
-        {linkedMission ? (
+        {linkedTask ? (
           <p className="mt-2 text-[12.25px] leading-[1.4rem] text-[var(--muted)]">
-            Linked mission · {linkedMission.mission.title}
+            Linked task · {linkedTask.task.title}
           </p>
         ) : null}
         <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.25px] text-[var(--muted)]">

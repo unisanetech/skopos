@@ -27,8 +27,8 @@
       "@skopos/query": [
         "../query/src/index.ts"
       ],
-      "@skopos/trust": [
-        "../trust/src/index.ts"
+      "@skopos/verification": [
+        "../verification/src/index.ts"
       ],
       "@skopos/*": [
         "../*/src"

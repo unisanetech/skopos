@@ -1,19 +1,24 @@
+---
+title: "Decision: System UI App-Shell And Layout Doctrine"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-009
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+  - 008-system-ui-routed-app-stack.md
+---
+
 # Decision: System UI App-Shell And Layout Doctrine
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-009`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
-  - `008-system-ui-routed-app-stack.md`
 
 ## Context
 

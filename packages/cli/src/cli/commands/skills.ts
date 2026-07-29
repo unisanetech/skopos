@@ -73,7 +73,7 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
       `- required action roles: ${result.requiredProjectRoles.actions.join(', ') || 'none'}`,
       `- required guard roles: ${result.requiredProjectRoles.guards.join(', ') || 'none'}`,
       `- summary: ${result.plainLanguageSummary}`,
-      '- authority: Skopos remains workflow, task-state, and closure authority.',
+      '- authority: Skopos remains Task, Action, Evidence, and Readiness authority.',
     ]);
     return;
   }
@@ -123,9 +123,10 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
       `- status: ${parsed.dryRun ? 'preview only' : 'accepted'}`,
       `- pack: ${parsed.pack}`,
       `- binding: ${parsed.binding}`,
+      `- tracked binding: ${result.bindingPath} (${result.bindingWrite})`,
       `- accepted skills: ${result.artifact.acceptedSkills.length}`,
-      `- resolved artifact: ${result.artifactPath}`,
-      '- skill context is task-selected; Skopos remains the only workflow and closure authority.',
+      `- resolved local projection: ${result.artifactPath}`,
+      '- Skill context is Task-selected; Skopos remains the only Task and Readiness authority.',
     ]);
     return;
   }

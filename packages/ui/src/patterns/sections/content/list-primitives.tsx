@@ -90,13 +90,13 @@ export function RouteFilterBar({
   );
 }
 
-export function TrustCheckGroup({
+export function ReadinessCheckGroup({
   title,
   checks,
   tone,
 }: {
   title: string;
-  checks: SkoposUiConsoleState['trustReport']['checks'];
+  checks: SkoposUiConsoleState['readinessReport']['checks'];
   tone: 'positive' | 'warning' | 'danger';
 }): React.JSX.Element {
   return (

@@ -5,7 +5,7 @@ export type SkoposGraphKind =
   | 'docs'
   | 'commands'
   | 'scope-relations'
-  | 'mission'
+  | 'task'
   | 'impact';
 
 export type SkoposGraphNodeKind =
@@ -14,11 +14,11 @@ export type SkoposGraphNodeKind =
   | 'docs-root'
   | 'instruction-file'
   | 'command'
-  | 'workflow'
+  | 'action'
   | 'plan'
-  | 'mission'
+  | 'task'
   | 'decision-question'
-  | 'mission-item'
+  | 'task-step'
   | 'changed-path';
 
 export type SkoposGraphEdgeKind =

@@ -9,7 +9,7 @@ import {
   syncManualHostAdapter,
   type SyncInstructionMirrorsResult,
 } from '@skopos/instructions';
-import { loadSkoposWorkflowManifests } from '@skopos/indexer';
+import { loadSkoposActionManifests, loadSkoposGuardManifests } from '@skopos/indexer';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -37,13 +37,17 @@ export const syncSkoposInstructions = async ({
   const existingConfig = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
   const instructionSourcePath =
     existingConfig?.agents.canonicalInstructions ?? 'AGENTS.md';
-  const workflows = await loadSkoposWorkflowManifests({
-    cwd: workspaceRoot,
-  });
+  const instructionMirrorPaths = existingConfig?.agents.syncMirrors;
+  const [actions, guards] = await Promise.all([
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
+  ]);
   const enforcement = buildSkoposEnforcementProfile({
     cwd: workspaceRoot,
-    workflows,
+    actions,
+    guards,
     instructionSourcePath,
+    instructionMirrorPaths,
   });
   const projectionModel = enforcement.hostProjectionModel;
   const [result, claudeAdapter, codexAdapter, manualHostAdapter] = await Promise.all([
@@ -69,7 +73,7 @@ export const syncSkoposInstructions = async ({
       projectionModel,
     }),
   ]);
-  const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
+  const enforcementPath = join(workspaceRoot, '.skopos', 'index', 'enforcement.json');
   await writeJsonArtifact({
     artifactPath: enforcementPath,
     artifact: enforcement,

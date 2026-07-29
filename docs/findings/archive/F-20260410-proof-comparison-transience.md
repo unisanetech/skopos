@@ -1,19 +1,25 @@
+---
+title: "F-20260410-proof-comparison-transience: Proof Comparison Lived Only In
+  Transient Harness Output"
+status: done
+owner: skopos-core
+id: SKOPOS-F-20260410-PROOF-COMPARISON-TRANSIENCE
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-04-10
+relatedDocs:
+  - ../README.md
+  - ../../architecture/artifact-model.md
+  - ../../work/plans/P-067e15c4-proof-and-benchmarking.md
+  - ../../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+reviewCycle: per workpack
+---
+
 # F-20260410-proof-comparison-transience: Proof Comparison Lived Only In Transient Harness Output
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260410-PROOF-COMPARISON-TRANSIENCE`
-- Status: `done`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-04-10`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `../registry.md`
-  - `../../architecture/artifact-model.md`
-  - `../../project/proof-phase-plan.md`
-  - `../../project/implementation-checklist.md`
 
 ## Changelog
 
@@ -53,6 +59,6 @@
 
 ## Linked Docs
 
-1. `../registry.md`
+1. `../README.md`
 2. `../../architecture/artifact-model.md`
-3. `../../project/proof-phase-plan.md`
+3. `../../work/plans/P-067e15c4-proof-and-benchmarking.md`

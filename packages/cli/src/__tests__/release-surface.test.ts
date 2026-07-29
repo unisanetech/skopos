@@ -11,12 +11,12 @@ const PACKAGE_NAMES = [
   '@skopos/indexer',
   '@skopos/query',
   '@skopos/planner',
+  '@skopos/docs-engine',
   '@skopos/instructions',
-  '@skopos/trust',
+  '@skopos/verification',
   '@skopos/runtime',
   '@skopos/cli',
   '@skopos/mcp',
-  '@skopos/docs-engine',
   '@skopos/ui',
 ] as const;
 
@@ -26,8 +26,9 @@ const CANDIDATE_PACKAGES = [
   '@skopos/indexer',
   '@skopos/query',
   '@skopos/planner',
+  '@skopos/docs-engine',
   '@skopos/instructions',
-  '@skopos/trust',
+  '@skopos/verification',
   '@skopos/runtime',
   '@skopos/cli',
   '@skopos/mcp',
@@ -115,14 +116,14 @@ describe('skopos release surface contract', () => {
     expect(actualCandidatePackages.sort()).toEqual([...CANDIDATE_PACKAGES].sort());
   });
 
-  it('keeps internal product packages out of the candidate release set', async () => {
+  it('keeps only the UI internal while docs governance remains an SDK capability', async () => {
     const docsEngine = await loadPackageJson('@skopos/docs-engine');
     const ui = await loadPackageJson('@skopos/ui');
 
     expect(docsEngine.skopos).toEqual(
       expect.objectContaining({
-        surface: 'internal-product',
-        releaseTarget: 'internal-only',
+        surface: 'public-sdk-core',
+        releaseTarget: 'candidate',
       }),
     );
     expect(ui.skopos).toEqual(

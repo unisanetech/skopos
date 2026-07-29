@@ -57,7 +57,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
       `- workspace: ${result.workspaceRoot}`,
       `- portal: ${result.outputPath} (${result.writeStatus})`,
       `- graph portal: ${result.graphPortalPath} (${result.graphPortalWriteStatus})`,
-      `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       `- graphs: ${result.graphCount}`,
     ]);
@@ -83,7 +82,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
       `- app: ${result.entryHtmlPath} (${result.writeStatus})`,
       `- state: ${result.statePath} (${result.writeStatus})`,
       `- search index: ${result.searchIndexPath} (${result.writeStatus})`,
-      `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       `- assets: ${result.assetPaths.length}`,
     ]);
@@ -125,7 +123,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
         assetPaths: result.assetPaths,
         writeStatus: result.writeStatus,
         generatedAt: result.generatedAt,
-        trustLevel: result.trustLevel,
         readiness: result.readiness,
         host: result.host,
         port: result.port,
@@ -143,7 +140,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
       `- url: ${result.url}`,
       '- mode: snapshot; restart this command after workspace state changes',
       '- live mode: use skopos ui dev for auto-refreshing workspace state',
-      `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       '- stop: Ctrl+C',
     ]);
@@ -187,7 +183,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
         stateEndpointPath: result.stateEndpointPath,
         fileEndpointPath: result.fileEndpointPath,
         generatedAt: result.generatedAt,
-        trustLevel: result.trustLevel,
         readiness: result.readiness,
       });
       return;
@@ -200,7 +195,6 @@ export const runUiCommand = async (args: string[]): Promise<void> => {
       `- state endpoint: ${result.stateEndpointPath}`,
       `- file endpoint: ${result.fileEndpointPath}`,
       '- mode: live; refreshes when docs or .skopos state changes',
-      `- trust: ${result.trustLevel}`,
       `- readiness: ${result.readiness}`,
       '- stop: Ctrl+C',
     ]);

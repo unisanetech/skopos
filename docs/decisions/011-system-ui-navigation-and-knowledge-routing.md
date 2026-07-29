@@ -1,20 +1,25 @@
+---
+title: "Decision: System UI Navigation And Knowledge Routing"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-011
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-10
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../scopes/skopos-ui/overview.md
+  - 009-system-ui-app-shell-and-layout-doctrine.md
+  - 010-system-ui-information-hierarchy-and-signal-placement.md
+---
+
 # Decision: System UI Navigation And Knowledge Routing
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-011`
-- Status: `accepted`
-- Date: `2026-04-10`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/roadmap.md`
-  - `../project/implementation-checklist.md`
-  - `../scopes/ui.md`
-  - `009-system-ui-app-shell-and-layout-doctrine.md`
-  - `010-system-ui-information-hierarchy-and-signal-placement.md`
 
 ## Context
 

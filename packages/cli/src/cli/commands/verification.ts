@@ -1,0 +1,132 @@
+import { resolve } from 'node:path';
+
+import {
+  assessSkoposTaskReadinessRuntime,
+  verifySkoposTaskRuntime,
+} from '@skopos/runtime';
+import type {
+  SkoposReadinessTarget,
+  SkoposVerificationPhase,
+} from '@skopos/model';
+
+import { writeJsonOutput, writeLines } from '../shared/output.js';
+
+export const runVerifyCommand = async (args: string[]): Promise<void> => {
+  const parsed = parseVerificationArgs(args, 'verify');
+  const result = await verifySkoposTaskRuntime({
+    cwd: parsed.cwd,
+    taskId: parsed.taskId,
+    phase: parsed.phase,
+    dryRun: parsed.dryRun,
+  });
+  if (parsed.json) {
+    writeJsonOutput(result);
+    return;
+  }
+  writeLines([
+    'Skopos Verify',
+    `Task: ${result.taskId}`,
+    `Phase: ${result.phase}`,
+    `Status: ${result.verificationStatus}`,
+    `Summary: ${result.summary}`,
+    `Changed paths: ${result.changedPaths.length}`,
+    `Guards: ${result.matchedGuards.length}`,
+    `Action Evidence: ${result.actionEvidence.filter((entry) => entry.status === 'pass').length}/${result.actionEvidence.length} valid`,
+    `Acceptance: ${result.acceptanceCoverage.filter((entry) => entry.status === 'covered').length}/${result.acceptanceCoverage.length} covered`,
+    ...(result.blockers.length > 0
+      ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
+      : []),
+  ]);
+};
+
+export const runReadinessCommand = async (args: string[]): Promise<void> => {
+  const parsed = parseVerificationArgs(args, 'readiness');
+  const result = await assessSkoposTaskReadinessRuntime({
+    cwd: parsed.cwd,
+    taskId: parsed.taskId,
+    target: parsed.target,
+    actor: parsed.actor,
+    advance: parsed.advance,
+    dryRun: parsed.dryRun,
+  });
+  if (parsed.json) {
+    writeJsonOutput(result);
+    return;
+  }
+  writeLines([
+    'Skopos Readiness',
+    `Task: ${result.taskId}`,
+    `Target: ${result.target}`,
+    `Readiness: ${result.readiness}`,
+    `Summary: ${result.summary}`,
+    `Evidence: ${result.evidenceSummary.valid}/${result.evidenceSummary.required} valid`,
+    ...(result.blockers.length > 0
+      ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
+      : []),
+  ]);
+};
+
+const parseVerificationArgs = (
+  args: string[],
+  command: 'verify' | 'readiness',
+): {
+  taskId: string;
+  cwd: string;
+  phase: SkoposVerificationPhase;
+  target: SkoposReadinessTarget;
+  actor?: string;
+  advance: boolean;
+  dryRun: boolean;
+  json: boolean;
+} => {
+  let taskId: string | undefined;
+  let cwd = process.cwd();
+  let phase: SkoposVerificationPhase = 'closure';
+  let target: SkoposReadinessTarget = 'integrate';
+  let dryRun = false;
+  let actor: string | undefined;
+  let advance = false;
+  let json = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!;
+    if (argument === '--json') json = true;
+    else if (argument === '--dry-run') dryRun = true;
+    else if (argument === '--advance') advance = true;
+    else if (argument === '--actor') actor = requireValue(args, ++index, '--actor');
+    else if (argument.startsWith('--actor=')) actor = argument.slice('--actor='.length);
+    else if (argument === '--phase') {
+      phase = parsePhase(requireValue(args, ++index, '--phase'));
+    } else if (argument.startsWith('--phase=')) {
+      phase = parsePhase(argument.slice('--phase='.length));
+    } else if (argument === '--for') {
+      target = parseTarget(requireValue(args, ++index, '--for'));
+    } else if (argument.startsWith('--for=')) {
+      target = parseTarget(argument.slice('--for='.length));
+    } else if (argument.startsWith('-')) {
+      throw new Error(`Unknown Skopos ${command} flag: ${argument}`);
+    } else if (!taskId) taskId = argument;
+    else cwd = resolve(argument);
+  }
+  if (!taskId) throw new Error(`Missing Task id for skopos ${command}.`);
+  return { taskId, cwd, phase, target, actor, advance, dryRun, json };
+};
+
+const parsePhase = (value: string): SkoposVerificationPhase => {
+  if (['admission', 'iteration', 'stabilization', 'closure'].includes(value)) {
+    return value as SkoposVerificationPhase;
+  }
+  throw new Error(`Unknown verification phase: ${value}`);
+};
+
+const parseTarget = (value: string): SkoposReadinessTarget => {
+  if (['continue', 'integrate', 'close'].includes(value)) {
+    return value as SkoposReadinessTarget;
+  }
+  throw new Error(`Unknown Readiness target: ${value}`);
+};
+
+const requireValue = (args: string[], index: number, flag: string): string => {
+  const value = args[index];
+  if (!value || value.startsWith('-')) throw new Error(`Missing value for ${flag}.`);
+  return value;
+};

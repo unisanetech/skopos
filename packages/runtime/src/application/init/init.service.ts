@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
@@ -5,6 +6,7 @@ import { dirname, join, relative, resolve } from 'node:path';
 import {
   loadSkoposConfig,
   reconcileGeneratedSkoposConfig,
+  skoposRootConfigSchema,
   writeSkoposConfig,
 } from '@skopos/config';
 import {
@@ -14,7 +16,8 @@ import {
   buildSkoposDocsGraph,
   buildSkoposScopeRelationsGraph,
   buildSkoposWorkspaceGraph,
-  loadSkoposWorkflowManifests,
+  loadSkoposActionManifests,
+  loadSkoposGuardManifests,
 } from '@skopos/indexer';
 import {
   buildSkoposEnforcementProfile,
@@ -24,11 +27,14 @@ import {
   syncManualHostAdapter,
 } from '@skopos/instructions';
 import type {
+  SkoposAgentNativeOperatingModel,
   SkoposDocsScaffoldArtifact,
   SkoposFallbackRegistryArtifact,
   SkoposGitignoreScaffoldArtifact,
   SkoposInitMode,
   SkoposInitResult,
+  SkoposScopeLite,
+  SkoposScopeRegistryScaffoldArtifact,
 } from '@skopos/model';
 
 import {
@@ -38,7 +44,11 @@ import {
 import { refreshSkoposMemoryState } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
-import { writeSkoposCompactProjectProjection } from '../agent-native/artifact-lifecycle.js';
+import { writeSkoposProjectArtifact } from '../agent-native/project-artifact.js';
+import { buildSkoposAdoptionAssessmentRuntime } from '../adoption/adoption.service.js';
+import { resolveSkoposGuardsRuntime } from '../guards/guards.service.js';
+import { resolveSkoposPolicyRuntime } from '../policies/policies.service.js';
+import { resolveSkoposSkillsRuntime } from '../skills/skills.service.js';
 
 export interface InitSkoposProjectOptions {
   cwd: string;
@@ -64,17 +74,17 @@ export const initSkoposProject = async ({
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   const configPath = join(workspaceRoot, 'skopos.config.yaml');
-  const bootstrapPath = join(workspaceRoot, '.skopos', 'bootstrap.json');
-  const scopesLitePath = join(workspaceRoot, '.skopos', 'scopes-lite.json');
-  const diagnosisPath = join(workspaceRoot, '.skopos', 'diagnosis.json');
-  const architecturePath = join(workspaceRoot, '.skopos', 'architecture.json');
-  const enforcementPath = join(workspaceRoot, '.skopos', 'enforcement.json');
-  const fallbackRegistryPath = join(workspaceRoot, '.skopos', 'fallbacks', 'registry.json');
-  const indexPath = join(workspaceRoot, '.skopos', 'index.json');
-  const logPath = join(workspaceRoot, '.skopos', 'log.jsonl');
-  const symbolsPath = join(workspaceRoot, '.skopos', 'references', 'symbols.json');
-  const duplicatesPath = join(workspaceRoot, '.skopos', 'references', 'duplicates.json');
-  const contradictionsPath = join(workspaceRoot, '.skopos', 'references', 'contradictions.json');
+  const bootstrapPath = join(workspaceRoot, '.skopos', 'index', 'bootstrap.json');
+  const scopesLitePath = join(workspaceRoot, '.skopos', 'index', 'scopes.json');
+  const diagnosisPath = join(workspaceRoot, '.skopos', 'index', 'diagnosis.json');
+  const architecturePath = join(workspaceRoot, '.skopos', 'index', 'architecture.json');
+  const enforcementPath = join(workspaceRoot, '.skopos', 'index', 'enforcement.json');
+  const fallbackRegistryPath = join(workspaceRoot, '.skopos', 'cache', 'fallbacks', 'registry.json');
+  const indexPath = join(workspaceRoot, '.skopos', 'index', 'memory.json');
+  const logPath = join(workspaceRoot, '.skopos', 'runs', 'operations.jsonl');
+  const symbolsPath = join(workspaceRoot, '.skopos', 'index', 'references', 'symbols.json');
+  const duplicatesPath = join(workspaceRoot, '.skopos', 'index', 'references', 'duplicates.json');
+  const contradictionsPath = join(workspaceRoot, '.skopos', 'index', 'references', 'contradictions.json');
   const workspaceGraphPath = join(workspaceRoot, '.skopos', 'graph', 'workspace.json');
   const existingConfig = await loadSkoposConfig(configPath);
   let { bootstrap, scopesLite, diagnosis, architecture } = await buildSkoposBootstrapArtifacts({
@@ -83,6 +93,7 @@ export const initSkoposProject = async ({
     existingConfig,
     subtreeTarget,
   });
+  skoposRootConfigSchema.parse(bootstrap.recommendedConfig);
   const configWrite = await writeConfigIfNeeded({
     configPath,
     config: bootstrap.recommendedConfig,
@@ -90,14 +101,29 @@ export const initSkoposProject = async ({
     dryRun,
     force,
   });
-  const docsScaffold = await scaffoldDocsStartHere({
-    workspaceRoot,
-    projectName: bootstrap.recommendedConfig.project.name,
-    docsRoot: bootstrap.recommendedConfig.docs.root,
-    startHerePath: bootstrap.recommendedConfig.docs.startHerePath,
-    commands: bootstrap.recommendedConfig.commands,
-    dryRun,
-  });
+  const docsScaffold =
+    mode === 'greenfield'
+      ? await scaffoldDocsStartHere({
+          workspaceRoot,
+          projectName: bootstrap.recommendedConfig.project.name,
+          workspaceScopeId:
+            scopesLite.scopes.find((scope) => scope.kind === 'workspace')?.id ??
+            'workspace',
+          docsRoot: bootstrap.recommendedConfig.docs.root,
+          startHerePath: bootstrap.recommendedConfig.docs.startHerePath,
+          commands: bootstrap.recommendedConfig.commands,
+          dryRun,
+        })
+      : undefined;
+  const scopeRegistryScaffold =
+    mode === 'greenfield'
+      ? await scaffoldScopeRegistry({
+          workspaceRoot,
+          scopes: scopesLite.scopes,
+          docsRoot: bootstrap.recommendedConfig.docs.root,
+          dryRun,
+        })
+      : undefined;
   const gitignoreScaffold = await scaffoldGitignore({
     workspaceRoot,
     dryRun,
@@ -120,8 +146,10 @@ export const initSkoposProject = async ({
 
   if (
     !dryRun &&
-    (docsScaffold.status === 'written' ||
-      docsScaffold.status === 'updated-placeholder' ||
+    ((docsScaffold &&
+      (docsScaffold.status === 'written' ||
+        docsScaffold.status === 'updated-placeholder')) ||
+      scopeRegistryScaffold?.status === 'written' ||
       (instructionScaffold &&
         (instructionScaffold.status === 'written' ||
           instructionScaffold.status === 'overwritten' ||
@@ -135,13 +163,42 @@ export const initSkoposProject = async ({
     }));
   }
 
-  const workflows = await loadSkoposWorkflowManifests({
+  const policyProjection = await resolveSkoposPolicyRuntime({
     cwd: workspaceRoot,
+    dryRun,
+  });
+  const [actions, guards] = await Promise.all([
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
+  ]);
+  const guardsProjection = await resolveSkoposGuardsRuntime({
+    cwd: workspaceRoot,
+    actor: actorId,
+    policy: policyProjection?.policy,
+    dryRun,
+  });
+  const skillOperatingModel: SkoposAgentNativeOperatingModel = {
+    schemaVersion: 1,
+    context: [],
+    actions: actions.map((action) => ({
+      id: action.id,
+    })) as SkoposAgentNativeOperatingModel['actions'],
+    guards: guardsProjection.artifact.guards.map((guard) => ({
+      id: guard.id,
+    })) as SkoposAgentNativeOperatingModel['guards'],
+    diagnostics: [],
+  };
+  const skillsProjection = await resolveSkoposSkillsRuntime({
+    cwd: workspaceRoot,
+    operatingModel: skillOperatingModel,
+    dryRun,
   });
   const enforcement = buildSkoposEnforcementProfile({
     cwd: workspaceRoot,
-    workflows,
+    actions,
+    guards,
     instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
+    instructionMirrorPaths: bootstrap.recommendedConfig.agents.syncMirrors,
   });
   const references = await buildSkoposReferenceArtifacts({
     cwd: workspaceRoot,
@@ -153,18 +210,20 @@ export const initSkoposProject = async ({
     workspaceRoot,
     bootstrap,
     scopesLite,
-    workflows,
+    actions,
   });
   const docsGraph = buildSkoposDocsGraph({
     workspaceRoot,
+    actions,
     scopesLite,
-    workflows,
+    docsRoots: bootstrap.detected.docsRoots,
+    instructionFiles: bootstrap.detected.instructionFiles,
   });
   const commandsGraph = buildSkoposCommandsGraph({
     workspaceRoot,
     bootstrap,
     scopesLite,
-    workflows,
+    actions,
   });
   const scopeRelationsGraph = await buildSkoposScopeRelationsGraph({
     workspaceRoot,
@@ -196,7 +255,7 @@ export const initSkoposProject = async ({
     artifact: enforcement,
     dryRun,
   });
-  const compactProject = await writeSkoposCompactProjectProjection({
+  const projectArtifact = await writeSkoposProjectArtifact({
     workspaceRoot,
     dryRun,
   });
@@ -261,6 +320,12 @@ export const initSkoposProject = async ({
     artifact: scopeRelationsGraph,
     dryRun,
   });
+  const adoptionAssessment = dryRun
+    ? undefined
+    : await buildSkoposAdoptionAssessmentRuntime({
+        cwd: workspaceRoot,
+        actor: actorId,
+      });
   const logWrite = await appendSkoposOperationalLogEntry({
     workspaceRoot,
     eventKind: 'init',
@@ -273,7 +338,7 @@ export const initSkoposProject = async ({
       diagnosisPath,
       architecturePath,
       enforcementPath,
-      compactProject.projectPath,
+      projectArtifact.projectPath,
       fallbackRegistryPath,
       symbolsPath,
       duplicatesPath,
@@ -282,8 +347,19 @@ export const initSkoposProject = async ({
       docsGraphPath,
       commandsGraphPath,
       scopeRelationsGraphPath,
-      docsScaffold.path,
+      ...(docsScaffold ? [docsScaffold.path] : []),
+      ...(scopeRegistryScaffold ? [scopeRegistryScaffold.path] : []),
       gitignoreScaffold.path,
+      ...(policyProjection
+        ? [
+            policyProjection.policyPath,
+            policyProjection.roleMappingPath,
+            policyProjection.policyBriefPath,
+          ]
+        : []),
+      join(workspaceRoot, guardsProjection.artifactPath),
+      skillsProjection.artifactPath,
+      ...skillsProjection.projectionWrites.map((write) => write.path),
       ...(instructionScaffold ? [instructionScaffold.path] : []),
     ],
     metadata: {
@@ -296,10 +372,17 @@ export const initSkoposProject = async ({
       workspacePackageCount: bootstrap.detected.workspacePackageCount,
       instructionScaffoldStatus: instructionScaffold?.status ?? null,
       instructionScaffoldPath: instructionScaffold?.relativePath ?? null,
-      docsScaffoldStatus: docsScaffold.status,
-      docsScaffoldPath: docsScaffold.relativePath,
+      docsScaffoldStatus: docsScaffold?.status ?? null,
+      docsScaffoldPath: docsScaffold?.relativePath ?? null,
+      scopeRegistryScaffoldStatus: scopeRegistryScaffold?.status ?? null,
+      scopeRegistryScaffoldPath: scopeRegistryScaffold?.relativePath ?? null,
+      adoptionState: adoptionAssessment?.adoptionState ?? null,
+      adoptionIntakePath: adoptionAssessment?.intakePath ?? null,
       gitignoreScaffoldStatus: gitignoreScaffold.status,
       gitignoreScaffoldPath: gitignoreScaffold.relativePath,
+      acceptedPolicyCount: policyProjection?.policy.acceptedPacks.length ?? 0,
+      resolvedGuardCount: guardsProjection.artifact.guards.length,
+      acceptedSkillCount: skillsProjection.artifact.acceptedSkills.length,
     },
     dryRun,
   });
@@ -314,7 +397,7 @@ export const initSkoposProject = async ({
 
   return {
     configPath,
-    projectPath: compactProject.projectPath,
+    projectPath: projectArtifact.projectPath,
     bootstrapPath,
     memoryPath: memoryState.memoryPath,
     communicationBriefPath: memoryState.communicationBriefPath,
@@ -371,10 +454,12 @@ export const initSkoposProject = async ({
     ],
     toolAdapterArtifacts: enforcement.toolAdapters,
     docsScaffold,
+    scopeRegistryScaffold,
     gitignoreScaffold,
     instructionScaffold,
+    adoptionAssessment,
     configWrite,
-    projectWrite: compactProject.write,
+    projectWrite: projectArtifact.write,
     bootstrapWrite,
     scopesLiteWrite,
     diagnosisWrite,
@@ -393,6 +478,90 @@ export const initSkoposProject = async ({
     architecture,
     enforcement,
     fallbackRegistry,
+  };
+};
+
+const scaffoldScopeRegistry = async ({
+  workspaceRoot,
+  scopes,
+  docsRoot,
+  dryRun,
+}: {
+  workspaceRoot: string;
+  scopes: SkoposScopeLite[];
+  docsRoot: string;
+  dryRun: boolean;
+}): Promise<SkoposScopeRegistryScaffoldArtifact> => {
+  const relativePath = 'tools/skopos/scopes.yaml';
+  const path = join(workspaceRoot, relativePath);
+  if (existsSync(path)) {
+    return {
+      path,
+      relativePath,
+      status: 'skipped-existing',
+      scopeCount: scopes.length,
+    };
+  }
+
+  const workspaceScope =
+    scopes.find((scope) => scope.kind === 'workspace') ?? scopes[0];
+  if (!workspaceScope) {
+    throw new Error('Greenfield Scope registry requires a discovered workspace Scope.');
+  }
+  const scopeIds = new Set(scopes.map((scope) => scope.id));
+  const contents = [
+    'schemaVersion: 1',
+    'scopes:',
+    ...scopes.flatMap((scope) => {
+      const pathValue = scope.path || '.';
+      const codeRoots = Array.from(
+        new Set([pathValue, ...(scope.codeRoots ?? [])]),
+      );
+      const parent =
+        scope.kind === 'workspace'
+          ? null
+          : scope.parent && scopeIds.has(scope.parent)
+            ? scope.parent
+            : workspaceScope.id;
+      const memoryRoot =
+        scope.memoryRoot ??
+        (scope.kind === 'workspace'
+          ? docsRoot
+          : join(docsRoot, 'scopes', scope.id));
+
+      return [
+        `  - id: ${JSON.stringify(scope.id)}`,
+        `    title: ${JSON.stringify(scope.title)}`,
+        `    kind: ${JSON.stringify(scope.kind)}`,
+        `    path: ${JSON.stringify(pathValue)}`,
+        `    memoryRoot: ${JSON.stringify(memoryRoot)}`,
+        `    codeRoots: ${JSON.stringify(codeRoots)}`,
+        `    parent: ${parent === null ? 'null' : JSON.stringify(parent)}`,
+        `    profile: ${JSON.stringify(scope.profile ?? 'default')}`,
+        `    dependsOn: ${JSON.stringify(
+          (scope.dependsOn ?? []).filter(
+            (dependency) => scopeIds.has(dependency) && dependency !== scope.id,
+          ),
+        )}`,
+        `    owners: ${JSON.stringify(['project-maintainers'])}`,
+        `    aliases: ${JSON.stringify(
+          scope.aliases.filter((alias) => alias !== scope.id),
+        )}`,
+      ];
+    }),
+    '',
+  ].join('\n');
+
+  if (!dryRun) {
+    await mkdir(dirname(path), { recursive: true });
+    await writeFile(path, contents, 'utf8');
+  }
+
+  return {
+    path,
+    relativePath,
+    status: dryRun ? 'dry-run' : 'written',
+    scopeCount: scopes.length,
   };
 };
 
@@ -422,6 +591,7 @@ const buildFallbackRegistryArtifact = ({
 const scaffoldDocsStartHere = async ({
   workspaceRoot,
   projectName,
+  workspaceScopeId,
   docsRoot,
   startHerePath,
   commands,
@@ -429,6 +599,7 @@ const scaffoldDocsStartHere = async ({
 }: {
   workspaceRoot: string;
   projectName: string;
+  workspaceScopeId: string;
   docsRoot: string;
   startHerePath?: string;
   commands: Record<string, string | undefined>;
@@ -445,6 +616,7 @@ const scaffoldDocsStartHere = async ({
           absolutePath,
           buildStartHereContents({
             projectName,
+            workspaceScopeId,
             docsRoot,
             commands,
             links: await collectStartHereLinks({
@@ -479,6 +651,7 @@ const scaffoldDocsStartHere = async ({
       absolutePath,
       buildStartHereContents({
         projectName,
+        workspaceScopeId,
         docsRoot,
         commands,
         links: await collectStartHereLinks({
@@ -507,15 +680,30 @@ interface StartHereLink {
 
 const buildStartHereContents = ({
   projectName,
+  workspaceScopeId,
   docsRoot,
   commands,
   links,
 }: {
   projectName: string;
+  workspaceScopeId: string;
   docsRoot: string;
   commands: Record<string, string | undefined>;
   links: StartHereLink[];
-}): string => `# ${projectName} Start Here
+}): string => `---
+title: ${JSON.stringify(`${projectName} Start Here`)}
+status: active
+owner: project-maintainers
+id: ${buildStartHereDocumentId(projectName)}
+scope: ${workspaceScopeId}
+role: router
+lifecycle: active
+authority: canonical
+provenance: declared
+view: current
+---
+
+# ${projectName} Start Here
 
 This is the first page to read before changing the project. It points agents to the existing project rules, docs, and validation commands without replacing the current documentation.
 
@@ -538,6 +726,19 @@ ${formatStartHereCommands(commands)}
 Durable project docs should stay under \`${docsRoot}/\` unless the team chooses another source of truth. Keep this page as a small router, not a second copy of every rule.
 `;
 
+const buildStartHereDocumentId = (projectName: string): string => {
+  const slug = projectName
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase()
+    .slice(0, 32) || 'project';
+  const digest = createHash('sha256')
+    .update(`${projectName}:project-memory-router`)
+    .digest('hex')
+    .slice(0, 8);
+  return `DOC-${slug}-${digest}`;
+};
+
 const formatStartHereCommands = (commands: Record<string, string | undefined>): string => {
   const entries = Object.entries(commands).filter((entry): entry is [string, string] => Boolean(entry[1]?.trim()));
 
@@ -558,7 +759,7 @@ const formatStartHereLinks = (links: StartHereLink[]): string => {
 
 const isGeneratedStartHerePlaceholder = (contents: string): boolean =>
   contents.includes('This is the project knowledge start page for Skopos.') &&
-  contents.includes('Add the current product goal, architecture notes, and important workflow links here');
+  contents.includes('Add the current product goal, architecture notes, and important action links here');
 
 const collectStartHereLinks = async ({
   workspaceRoot,
@@ -647,7 +848,7 @@ const scaffoldGitignore = async ({
 }): Promise<SkoposGitignoreScaffoldArtifact> => {
   const gitignorePath = join(workspaceRoot, '.gitignore');
   const existing = await readTextIfExists(gitignorePath);
-  const ignoredPaths = ['.skopos/', 'docs/generated/skopos/'];
+  const ignoredPaths = ['.skopos/'];
   const missingEntries = ignoredPaths.filter((entry) => !hasGitignoreEntry(existing ?? '', entry));
 
   if (missingEntries.length === 0) {

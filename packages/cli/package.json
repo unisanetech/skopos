@@ -5,6 +5,9 @@
   "type": "module",
   "description": "CLI entrypoint for the Skopos SDK",
   "license": "Apache-2.0",
+  "engines": {
+    "node": ">=22.5.0"
+  },
   "files": [
     "dist",
     "README.md",
@@ -32,10 +35,10 @@
     "build": "tsup && node scripts/copy-policy-packs.mjs && node scripts/copy-skill-packs.mjs && node scripts/copy-ui-app.mjs",
     "dev": "tsup --watch",
     "check-types": "tsc --noEmit",
-    "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/compact-output.test.ts src/__tests__/agent-native-operating-model.test.ts src/__tests__/workflow-receipts.test.ts src/__tests__/task-worktree-state.test.ts src/__tests__/host-projection-model.test.ts src/__tests__/artifact-lifecycle.test.ts src/__tests__/skill-packs.test.ts",
-    "test:e2e": "vitest run src/__tests__/cli.e2e.test.ts",
-    "proof": "vitest run src/__tests__/proof-phase.e2e.test.ts",
-    "release:smoke": "vitest run src/__tests__/release-install-smoke.test.ts"
+    "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/canonical-surface.test.ts src/__tests__/action-evidence.test.ts src/__tests__/task-change-scope.test.ts src/__tests__/task-portability.test.ts src/__tests__/host-projection-model.test.ts src/__tests__/host-actor-binding.test.ts src/__tests__/session-context-contract.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/coordination-lifecycle.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-approval.test.ts src/__tests__/adoption-verification.test.ts src/__tests__/project-artifact.test.ts src/__tests__/source-dependency-digest.test.ts src/__tests__/document-catalog.test.ts src/__tests__/scope-registry.test.ts",
+    "test:e2e": "vitest run src/__tests__/canonical-surface.test.ts src/__tests__/task-portability.test.ts",
+    "proof": "vitest run src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-verification.test.ts",
+    "release:smoke": "vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts"
   },
   "dependencies": {
     "typescript": "^5.9.3",
@@ -43,6 +46,10 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@skopos/instructions": "workspace:*",
+    "@skopos/model": "workspace:*",
+    "@skopos/runtime": "workspace:*",
+    "@skopos/ui": "workspace:*",
     "tsup": "^8.0.0",
     "typescript": "^5.9.2",
     "vitest": "^4.0.17"

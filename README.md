@@ -1,121 +1,183 @@
 # Skopos
 
-**Persistent project memory for coding agents.**
+**The repo-native operating memory layer for coding agents.**
 
-Skopos helps Codex, Claude, Cursor, and other coding agents understand your project before they edit it. It keeps project knowledge, rules, decisions, and work status close to the code so agents drift less and developers get clearer answers.
+Skopos helps Codex, Claude Code, Cursor, and other coding agents understand, continue,
+change, verify, and maintain a software project without losing intent or drifting from
+project truth.
 
-Use it in a new project or an existing project. Skopos is framework-agnostic.
+It works with the coding agent rather than replacing it:
 
-## 🚀 Install
+- the agent reasons, edits, communicates, and chooses tools
+- Skopos supplies authoritative project Memory, scoped context, Task continuity,
+  project Actions, deterministic Guards, Evidence, and explainable Readiness
 
-Run this inside your project:
+Skopos is project-agnostic. Unisane inspired the original problem, but Unisane-specific
+architecture, commands, and gates do not belong in Skopos core.
 
-```bash
-npx @skopos/cli init .
-```
+## Pre-Release Status
 
-Other options:
+Skopos has not launched. This repository implements the first-release contract directly:
 
-```bash
-pnpm dlx @skopos/cli init .
-npm exec --package @skopos/cli -- skopos init .
-```
+- no prototype compatibility layer or old-state migration
+- no overlapping work or closure authorities
+- no public release until clean-clone, cross-project, package-install, and Unisane
+  adoption proof pass
 
-## 🤖 Use With Your Coding Agent
+Start with the [accepted product decision](docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md)
+and [canonical convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md).
 
-After `init`, tell your agent:
+## Why Developers Use Skopos
 
-```txt
-Read AGENTS.md first, then use Skopos context before editing.
-```
+A coding-agent chat is temporary. A real project is not.
 
-Skopos creates project guidance that helps the agent answer and code in the right way for your repo.
+Without a durable operating layer, every new Session must rediscover architecture,
+ownership, conventions, current intent, validation, and unfinished work. Long or
+parallel Sessions also lose context, duplicate work, overwrite one another, and claim
+completion without stable proof.
 
-Good agent prompt:
+Skopos makes those project-level concerns durable and queryable:
 
-```txt
-Use Skopos. Check the project memory, follow AGENTS.md, make the smallest safe change, run the right checks, and update memory if project truth changed.
-```
+1. canonical, scoped Project Memory
+2. agent-guided adoption and documentation restructuring
+3. one Task model for executable work
+4. durable Plans for multi-Task direction
+5. a derived Work Queue
+6. project-defined Actions selected by deterministic Guards
+7. acceptance-linked Evidence and Readiness
+8. safe continuation, handoff, and same-working-directory coordination
 
-## 🧠 What Skopos Does
+The local broker coordinates Session leases, Task reservations, resource claims,
+mutation records, contamination audits, audited takeover, and immutable Task
+snapshots. It reports `cooperative`: direct filesystem and Git mutations can still
+bypass Skopos, so preventive safety is not claimed.
 
-- remembers important project facts
-- writes agent-friendly `AGENTS.md`
-- recommends architecture, stack, and validation rules
-- tracks missions/workpacks for bigger changes
-- shows next steps, blockers, decisions, and proof
-- helps check whether work is really done
+## Canonical Project Shape
 
-## 📦 What Gets Added
-
-```txt
-your-project/
-  AGENTS.md      # guidance for coding agents
-  .skopos/       # local project memory and workflow state
-```
-
-The files are written for humans too. You should be able to open them and understand what Skopos knows.
-
-## 🛠 Common Commands
-
-```bash
-skopos understand .
-skopos knowledge . --compact
-skopos policies recommend .
-skopos policies apply .
-skopos policies drift .
-skopos gates resolve .
-skopos program next . --compact
-skopos mission item complete <mission-id> <item-id> .
-skopos eval . --mission <mission-id> --check-timeout-ms 120000 --compact
-skopos trust . --compact
-skopos done . --compact
-```
-
-Use normal text output when you are reading. Use `--json` when another tool needs structured output.
-
-## 🧭 Light Work vs Big Work
-
-Small change:
+Durable human and project truth stays in normal tracked files:
 
 ```txt
-read context → edit files → run focused check → update memory only if needed
+project/
+├── README.md
+├── AGENTS.md
+├── skopos.config.*
+├── tools/skopos/
+│   ├── scopes.yaml
+│   ├── profiles/
+│   ├── actions/
+│   ├── guards/
+│   ├── policies.yaml
+│   ├── skills/
+│   └── extensions/
+└── docs/
+    ├── 00-start-here.md
+    ├── overview.md
+    ├── architecture/
+    ├── standards/
+    ├── domains/
+    ├── guides/
+    ├── operations/
+    ├── decisions/
+    ├── findings/
+    ├── patterns/
+    ├── work/
+    │   ├── plans/
+    │   ├── tasks/
+    │   └── archive/
+    ├── reference/
+    │   └── generated/
+    ├── archive/
+    └── scopes/
+        └── <stable-scope-id>/
 ```
 
-Large or risky change:
+Only `docs/00-start-here.md` and `docs/overview.md` are universal. The other families
+exist only when they own real project truth. `patterns/` contains both
+`preferred-pattern` and `failure-pattern` entries; there is no separate
+`failure-patterns/` tree.
+
+The tree is a standard, not empty ceremony. Nested Scopes provide the same relative
+roles for monorepos, platforms, packages, services, or other project-specific units.
+Their default Memory root is `docs/scopes/<stable-scope-id>/`; a project may explicitly
+declare a colocated root in `tools/skopos/scopes.yaml`.
+
+`.skopos/**` is ignored, local, generated, and rebuildable. It contains indexes,
+caches, Session state, coordination leases, Evidence envelopes, and generated UI
+assets—not the only copy of durable project truth. Human-facing generated reference may be tracked under
+`docs/reference/generated/**`; runtime UI and machine indexes stay under `.skopos/**`.
+
+## Existing And New Projects
+
+For an existing project, Skopos first discovers the real code, docs, instructions,
+commands, CI, and local conventions without changing them. A coding agent then analyzes
+facts, inferences, contradictions, and missing knowledge. Skopos produces a reviewable
+`keep`/`move`/`merge`/`split`/`rewrite`/`archive`/`delete` restructuring proposal and
+changes human-authored docs only after approval. Actual existing-project init creates
+the assessment artifacts automatically but does not invent `docs/00-start-here.md` or
+`tools/skopos/scopes.yaml` before that review.
+
+Mapping is an intake technique, not a permanent adopted state. Full adoption converges
+the project on the Memory standard. A developer may stop at assessment-only mode, but
+Skopos must report the resulting Readiness honestly.
+
+For a new project, Skopos scaffolds the minimum useful root Memory router and declared
+Scope registry, reports adoption-aware Readiness, and expands the tree only as real
+Scopes and project truth emerge.
+
+## Target Agent Lifecycle
+
+Every supported coding-agent host projects the same lifecycle:
 
 ```txt
-mission/workpack → phases → decisions → gates → proof
+Session start
+  → Task start or resume
+  → targeted Memory and Scope context
+  → claimed edits and Actions
+  → checkpoint and handoff
+  → snapshot verification
+  → Readiness and closure
 ```
 
-Skopos is meant to be progressive. Small work should stay fast. Bigger work should get more structure.
-
-## 🧩 Policy Packs
-
-Policy packs are reusable project rules.
-
-Examples:
-
-- clean code and maintainability
-- architecture boundaries
-- stack choices like Redis, queues, cron, or durable workflows
-- UI/component structure
-- naming and folder rules
-- validation gates
-
-For existing projects, Skopos should respect proven local structure. It maps rules to your codebase instead of forcing every repo into the same folder names.
-
-## ✅ Status
-
-Skopos is preparing for its first public npm release:
+The primary CLI vocabulary is:
 
 ```txt
-@skopos/cli@0.1.0
+skopos adopt
+skopos knowledge
+skopos session context
+skopos start
+skopos task show
+skopos work next
+skopos decide
+skopos actions list
+skopos actions run
+skopos evidence record
+skopos verify
+skopos readiness
+skopos coordination status
 ```
 
-The first release should use the `next` tag. `latest` should wait until registry install tests pass.
+The current coordination core is available through:
 
-## 🧑‍💻 Contributing
+```txt
+skopos coordination session open
+skopos coordination session heartbeat
+skopos coordination task reserve
+skopos coordination claim add
+skopos coordination status
+```
+
+Supported host adapters pass stable Claude Code or Codex Session identity into:
+
+```txt
+skopos session context . --actor <actor> --host <host> --session-id <id>
+skopos start "<goal>" . --actor <actor> --host <host> --session-id <id> --own <path>
+```
+
+These lifecycle commands open or renew the Session, reserve one writing Task, and
+publish declared owned-path claims. They report cooperative enforcement and do not
+claim that direct filesystem or Git writes are prevented.
+
+## Contributing
 
 Install dependencies:
 
@@ -123,31 +185,15 @@ Install dependencies:
 pnpm install
 ```
 
-Run checks:
+The CLI currently requires Node.js 22.5 or newer for the local SQLite coordination
+broker.
 
-```bash
-pnpm release:check
-pnpm typecheck
-pnpm release:smoke
-```
+Discover current repository commands from `package.json`. Run focused proof for the
+surface being changed; release proof remains blocked until the convergence Plan is
+complete.
 
-Build:
+Repository orientation begins at [docs/00-start-here.md](docs/00-start-here.md).
 
-```bash
-pnpm build
-```
-
-## 📁 Repo Layout
-
-- `packages/cli`: public bundled CLI
-- `packages/runtime`: memory, workflows, policies, program logic
-- `packages/model`: shared data contracts
-- `packages/indexer`: project scanning
-- `packages/trust`: done/trust reports
-- `packages/ui`: local console UI
-- `policy-packs`: built-in policy packs
-- `docs`: product and architecture docs
-
-## 📄 License
+## License
 
 Apache-2.0

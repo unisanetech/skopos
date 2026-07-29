@@ -1,0 +1,14 @@
+id: api.source-requires-reference-refresh
+title: API source changes require refreshed reference Evidence
+description: Require the declared API reference Action when the API source changes.
+owner: fixture
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - packages/api/src
+requires:
+  actionIds:
+    - reference.refresh-api-note
+  evidence: source-bound-action

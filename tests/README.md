@@ -18,13 +18,12 @@ Proof-phase benchmark coverage now also lives in `packages/cli/src/__tests__/pro
 5. `fixtures/repos/approval-workflow-repo`
 6. `fixtures/repos/large-monorepo`
 7. `fixtures/repos/stale-docs-repo`
-8. `fixtures/repos/canonical-override-repo`
-9. `fixtures/repos/boundary-aware-workspace`
-10. `fixtures/repos/self-hosted-tooling-workspace`
-11. `fixtures/repos/mixed-brownfield-monorepo`
-12. `fixtures/repos/library-structure-drift`
-13. `fixtures/repos/brownfield-stabilization-delta-before`
-14. `fixtures/repos/brownfield-stabilization-delta-after`
+8. `fixtures/repos/boundary-aware-workspace`
+9. `fixtures/repos/self-hosted-tooling-workspace`
+10. `fixtures/repos/mixed-brownfield-monorepo`
+11. `fixtures/repos/library-structure-drift`
+12. `fixtures/repos/brownfield-stabilization-delta-before`
+13. `fixtures/repos/brownfield-stabilization-delta-after`
 
 The current proof scorecard now covers:
 
@@ -34,14 +33,13 @@ The current proof scorecard now covers:
 4. workflow-sensitive closure
 5. approval-sensitive workflow enforcement for destructive workflows that require explicit approval
 6. stale-docs trust for weak canonical docs routing and overdue docs metadata
-7. override and canonicalization behavior when human-declared truth outranks inference
-8. current-state versus recommended-state architecture interpretation
-9. large-repo subtree targeting and sliced compiled artifacts
-10. tool-native enforcement through generated Claude Code hook execution
-11. deterministic self-hosted dogfooding coverage for workflow discovery, trust readiness, and portal rendering
-12. mixed brownfield diagnosis coverage for repos that should land in `needs-stabilization` without being treated as high-conflict
-13. partial architecture-drift coverage for a library-style multi-package repo that should stay `partial`, not `divergent`
-14. before-versus-after brownfield comparison coverage where stabilization must produce a measurable repo-health and trust delta
+7. current-state versus recommended-state architecture interpretation
+8. large-repo subtree targeting and sliced compiled artifacts
+9. tool-native enforcement through generated Claude Code hook execution
+10. deterministic self-hosted dogfooding coverage for workflow discovery, trust readiness, and portal rendering
+11. mixed brownfield diagnosis coverage for repos that should land in `needs-stabilization` without being treated as high-conflict
+12. partial architecture-drift coverage for a library-style multi-package repo that should stay `partial`, not `divergent`
+13. before-versus-after brownfield comparison coverage where stabilization must produce a measurable repo-health and trust delta
 
 The proof harness now uses a shared scorecard contract with:
 
@@ -56,4 +54,4 @@ The proof harness now also compares the latest scorecard against:
 
 The same proof run now also persists the latest scorecard and baseline comparison to:
 
-1. `.skopos/proof/latest-report.json`
+1. `.skopos/evidence/proof/latest-report.json`

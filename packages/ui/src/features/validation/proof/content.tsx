@@ -71,7 +71,7 @@ export function ProofGuidanceCard({
               ? 'No proof report is available yet for this workspace snapshot.'
               : isPassing
               ? 'The current evidence is passing against the recorded baseline.'
-              : 'Review failed checks or regressions before closing the mission.'
+              : 'Review failed checks or regressions before closing the task.'
           }
         />
         <GuidancePoint
@@ -85,7 +85,7 @@ export function ProofGuidanceCard({
               ? 'Run the proof command when the current work needs test or benchmark evidence.'
               : hasRegression
               ? 'Fix or explain the regressed benchmark, then rerun proof.'
-              : 'Keep this evidence with the mission closure summary if the work is ready.'
+              : 'Keep this evidence with the task closure summary if the work is ready.'
           }
         />
       </div>

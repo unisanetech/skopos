@@ -4,6 +4,6 @@ export {
   PlanDetailGuidanceCard,
   PlanDetailInspectorAside,
   PlanFrameCard,
-  PlanWorkflowRecordingCard,
+  PlanActionRecordingCard,
   PlanWorkPlanCard,
 } from './detail.js';

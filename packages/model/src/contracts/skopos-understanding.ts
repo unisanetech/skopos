@@ -1,4 +1,5 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
+import type { SkoposMemoryRoleKind } from './skopos-memory-state.js';
 import type { SkoposDecisionQuestion } from './skopos-decision-question.js';
 import type { SkoposProjectMode } from './skopos-root-config.js';
 import type { SkoposConfidence } from './skopos-scan-summary.js';
@@ -123,6 +124,9 @@ export interface SkoposAgentAnalysisDurableOutput {
   id: string;
   title: string;
   path: string;
+  recommendedPath?: string;
+  mappedPaths?: string[];
+  sourceRole?: SkoposMemoryRoleKind;
   purpose: string;
   status: 'present' | 'missing';
   required: boolean;

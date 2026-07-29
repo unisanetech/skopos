@@ -1,6 +1,6 @@
 import { join, resolve } from 'node:path';
 
-import { buildSkoposImpactGraph, buildSkoposImpactReport } from '@skopos/trust';
+import { buildSkoposImpactGraph, buildSkoposImpactReport } from '@skopos/verification';
 import type { SkoposImpactReport } from '@skopos/model';
 
 import {
@@ -50,7 +50,7 @@ export const buildSkoposImpactRuntime = async ({
       actorId: actorId ?? null,
       changedPathCount: impact.changedPaths.length,
       affectedScopeCount: impact.affectedScopes.length,
-      requiredWorkflowCount: impact.requiredWorkflows.length,
+      requiredActionCount: impact.requiredActions.length,
     },
   });
   await refreshSkoposKnowledgeIndex({

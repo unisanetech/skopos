@@ -8,7 +8,8 @@ import type {
   SkoposDiscussionHandoffArtifact,
   SkoposEnforcementProfileArtifact,
   SkoposDriftReportArtifact,
-  SkoposMissionArtifact,
+  SkoposTaskArtifact,
+  SkoposTaskQuestionArtifact,
   SkoposPlanArtifact,
   SkoposPolicyPackManifest,
   SkoposPolicyOverrideArtifact,
@@ -20,17 +21,18 @@ import type {
   SkoposUnderstandingSetupReviewArtifact,
   SkoposAgentCommunicationBriefArtifact,
   SkoposMemoryStateArtifact,
-  SkoposResolvedGatesArtifact,
+  SkoposResolvedGuardsArtifact,
   SkoposResolvedPolicyArtifact,
   SkoposResolvedSkillArtifact,
   SkoposSkillHostProjectionArtifact,
   SkoposSkillRecommendationArtifact,
-  SkoposProgramStateArtifact,
   SkoposProofReportArtifact,
   SkoposScopesLiteArtifact,
-  SkoposWorkflowQuestionArtifact,
 } from '@skopos/model';
-import { buildSkoposProgramSyncRuntime, buildSkoposTrustRuntime } from '@skopos/runtime';
+import {
+  assessSkoposProjectReadinessRuntime,
+  resolveCurrentTaskState,
+} from '@skopos/runtime';
 
 import { loadSkoposActivityArtifacts } from '../../adapters/activity-artifact-loader.adapter.js';
 import { loadSkoposUiActivityViews } from '../load-activity-views/load-activity-views.service.js';
@@ -38,7 +40,7 @@ import { loadSkoposUiGraphViews } from '../load-graph-views/load-graph-views.ser
 import { buildDocsLinks, buildDocuments } from './document-projections.js';
 import { buildSkoposConsoleSearchIndex } from '../../support/search/console-search-index.js';
 import type {
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleDiscussionCheckpointView,
   SkoposUiConsolePolicyStructureMatchNode,
@@ -68,22 +70,23 @@ export const buildSkoposUiConsoleState = async ({
   const workspaceRoot = resolve(cwd);
   const resolvedOutputDirectory = resolve(
     workspaceRoot,
-    outputDirectory ?? 'docs/generated/skopos/app',
+    outputDirectory ?? '.skopos/ui/app',
   );
-  await buildSkoposProgramSyncRuntime({
-    cwd: workspaceRoot,
+  const activityArtifacts = await loadSkoposActivityArtifacts(workspaceRoot);
+  const { actorId: selectedActorId } = await resolveSkoposUiCurrentTaskRouting(workspaceRoot);
+  const currentTaskState = await resolveCurrentTaskState({
+    workspaceRoot,
+    actorId: selectedActorId,
   });
   const [
-    activityArtifacts,
     activity,
     graphs,
-    trustReport,
+    readinessReport,
     artifactCounts,
     indexArtifact,
     scopesArtifact,
     proofReport,
-    programState,
-    workflowQuestions,
+    taskQuestions,
     adapterSupport,
     understanding,
     memoryView,
@@ -93,39 +96,48 @@ export const buildSkoposUiConsoleState = async ({
     discussionCheckpoints,
   ] =
     await Promise.all([
-      loadSkoposActivityArtifacts(workspaceRoot),
       loadSkoposUiActivityViews({ cwd: workspaceRoot }),
       loadSkoposUiGraphViews({ cwd: workspaceRoot }),
-      buildSkoposTrustRuntime({ cwd: workspaceRoot }),
+      assessSkoposProjectReadinessRuntime({ cwd: workspaceRoot }),
       collectArtifactCounts(workspaceRoot),
-      loadJsonArtifact<SkoposContentIndexArtifact>(join(workspaceRoot, '.skopos', 'index.json')),
-      loadJsonArtifact<SkoposScopesLiteArtifact>(join(workspaceRoot, '.skopos', 'scopes-lite.json')),
+      loadJsonArtifact<SkoposContentIndexArtifact>(join(workspaceRoot, '.skopos', 'index', 'memory.json')),
+      loadJsonArtifact<SkoposScopesLiteArtifact>(join(workspaceRoot, '.skopos', 'index', 'scopes.json')),
       loadJsonArtifact<SkoposProofReportArtifact>(
-        join(workspaceRoot, '.skopos', 'proof', 'latest-report.json'),
+        join(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json'),
       ),
-      loadJsonArtifact<SkoposProgramStateArtifact>(
-        join(workspaceRoot, '.skopos', 'program', 'state.json'),
-      ),
-      loadJsonArtifact<SkoposWorkflowQuestionArtifact>(
-        join(workspaceRoot, '.skopos', 'questions.json'),
-      ),
+      currentTaskState
+        ? loadJsonArtifact<SkoposTaskQuestionArtifact>(
+            currentTaskState.questionsPath,
+          ).then((artifact) => artifact ?? undefined)
+        : Promise.resolve(undefined),
       loadAdapterSupportView(workspaceRoot),
       loadUnderstandingView(workspaceRoot),
       loadMemoryView(workspaceRoot),
       loadPolicyReviewView(workspaceRoot),
       loadSkillReviewView(workspaceRoot),
-      loadDiscussionHandoffView(workspaceRoot),
+      loadDiscussionHandoffView(currentTaskState?.handoffPath),
       loadDiscussionCheckpointViews(workspaceRoot),
     ]);
 
-  const plans = activityArtifacts.plans
-    .map((plan) => buildPlanView(workspaceRoot, plan))
+  const plans = buildTrackedPlanViews(workspaceRoot, indexArtifact, scopesArtifact)
     .sort((left, right) => sortByTimestamp(left.plan.updatedAt, right.plan.updatedAt));
+  activity.plans = plans.slice(0, 5).map((planView) => ({
+    id: planView.plan.id,
+    title: planView.plan.title,
+    goal: planView.plan.goal,
+    summary: planView.plan.summary,
+    parentPlanId: planView.plan.parentPlanId,
+    scopeId: planView.plan.scope.scope.id,
+    confidence: planView.plan.confidence,
+    createdByActorId: planView.plan.createdByActorId,
+    updatedAt: planView.plan.updatedAt,
+    artifactPath: planView.artifactPath,
+  }));
   const planById = new Map(plans.map((plan) => [plan.plan.id, plan]));
-  const missions = activityArtifacts.missions
-    .map((mission) => buildMissionView(workspaceRoot, mission, planById.get(mission.planId)))
-    .sort((left, right) => sortByTimestamp(left.mission.updatedAt, right.mission.updatedAt));
-  const scopes = buildScopeViews(scopesArtifact, plans, missions);
+  const tasks = activityArtifacts.tasks
+    .map((task) => buildTaskView(workspaceRoot, task, planById.get(task.planIds[0] ?? '')))
+    .sort((left, right) => sortByTimestamp(left.task.updatedAt, right.task.updatedAt));
+  const scopes = buildScopeViews(scopesArtifact, plans, tasks);
   const docsLinks = await buildDocsLinks({
     workspaceRoot,
     outputDirectory: resolvedOutputDirectory,
@@ -142,15 +154,14 @@ export const buildSkoposUiConsoleState = async ({
     outputDirectory: resolvedOutputDirectory,
     generatedAt,
     artifactCounts,
-    trustReport,
-    programState,
-    workflowQuestions,
+    readinessReport,
+    taskQuestions,
     indexArtifact,
     proofReport,
     activity,
     graphs,
     plans,
-    missions,
+    tasks,
     scopes,
     adapterSupport,
     understanding,
@@ -169,17 +180,32 @@ export const buildSkoposUiConsoleState = async ({
   };
 };
 
+export const resolveSkoposUiCurrentTaskRouting = async (
+  workspaceRoot: string,
+): Promise<{
+  taskId?: string;
+  actorId?: string;
+}> => {
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot });
+
+  return {
+    taskId: currentTask?.task.id,
+    actorId: currentTask?.task.coordination.claimedBy?.actorId,
+  };
+};
+
 const loadSkillReviewView = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleState['skillReview']> => {
-  const resolvedPath = join(workspaceRoot, '.skopos', 'skills', 'resolved.json');
+  const resolvedPath = join(workspaceRoot, '.skopos', 'index', 'skills', 'resolved.json');
   const recommendationsPath = join(
     workspaceRoot,
     '.skopos',
+    'index',
     'skills',
     'recommendations.json',
   );
-  const projectionDirectory = join(workspaceRoot, '.skopos', 'skills', 'projections');
+  const projectionDirectory = join(workspaceRoot, '.skopos', 'index', 'skills', 'projections');
   const [resolved, recommendations, projectionNames] = await Promise.all([
     loadJsonArtifact<SkoposResolvedSkillArtifact>(resolvedPath),
     loadJsonArtifact<SkoposSkillRecommendationArtifact>(recommendationsPath),
@@ -218,10 +244,10 @@ const loadSkillReviewView = async (
 const loadUnderstandingView = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleState['understanding']> => {
-  const summaryPath = join(workspaceRoot, '.skopos', 'understanding', 'repo-summary.json');
-  const featureInventoryPath = join(workspaceRoot, '.skopos', 'understanding', 'feature-inventory.json');
-  const hotspotsPath = join(workspaceRoot, '.skopos', 'understanding', 'hotspots.json');
-  const setupReviewPath = join(workspaceRoot, '.skopos', 'understanding', 'setup-review.json');
+  const summaryPath = join(workspaceRoot, '.skopos', 'index', 'understanding', 'repo-summary.json');
+  const featureInventoryPath = join(workspaceRoot, '.skopos', 'index', 'understanding', 'feature-inventory.json');
+  const hotspotsPath = join(workspaceRoot, '.skopos', 'index', 'understanding', 'hotspots.json');
+  const setupReviewPath = join(workspaceRoot, '.skopos', 'index', 'understanding', 'setup-review.json');
   const [summary, featureInventory, hotspots, setupReview] = await Promise.all([
     loadJsonArtifact<SkoposRepoUnderstandingSummaryArtifact>(summaryPath),
     loadJsonArtifact<SkoposFeatureInventoryArtifact>(featureInventoryPath),
@@ -248,8 +274,8 @@ const loadUnderstandingView = async (
 const loadMemoryView = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleState['memoryView']> => {
-  const memoryPath = join(workspaceRoot, '.skopos', 'memory', 'state.json');
-  const communicationBriefPath = join(workspaceRoot, '.skopos', 'agent', 'communication-brief.json');
+  const memoryPath = join(workspaceRoot, '.skopos', 'index', 'roles.json');
+  const communicationBriefPath = join(workspaceRoot, '.skopos', 'cache', 'agent', 'communication-brief.json');
   const [memory, communicationBrief] = await Promise.all([
     loadJsonArtifact<SkoposMemoryStateArtifact>(memoryPath),
     loadJsonArtifact<SkoposAgentCommunicationBriefArtifact>(communicationBriefPath),
@@ -270,19 +296,19 @@ const loadMemoryView = async (
 const loadPolicyReviewView = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleState['policyReview']> => {
-  const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'policies', 'resolved.json');
-  const recommendationsPath = join(workspaceRoot, '.skopos', 'policies', 'recommendations.json');
-  const overridesPath = join(workspaceRoot, '.skopos', 'policies', 'overrides.json');
-  const roleMappingPath = join(workspaceRoot, '.skopos', 'policies', 'role-mapping.json');
-  const driftReportPath = join(workspaceRoot, '.skopos', 'drift', 'report.json');
-  const gatesPath = join(workspaceRoot, '.skopos', 'gates', 'resolved.json');
-  const [resolvedPolicy, recommendations, overrides, roleMapping, driftReport, gates] = await Promise.all([
+  const resolvedPolicyPath = join(workspaceRoot, '.skopos', 'index', 'policies', 'resolved.json');
+  const recommendationsPath = join(workspaceRoot, '.skopos', 'index', 'policies', 'recommendations.json');
+  const overridesPath = join(workspaceRoot, '.skopos', 'index', 'policies', 'overrides.json');
+  const roleMappingPath = join(workspaceRoot, '.skopos', 'index', 'policies', 'role-mapping.json');
+  const driftReportPath = join(workspaceRoot, '.skopos', 'index', 'policies', 'drift.json');
+  const guardsPath = join(workspaceRoot, '.skopos', 'index', 'guards.json');
+  const [resolvedPolicy, recommendations, overrides, roleMapping, driftReport, guards] = await Promise.all([
     loadJsonArtifact<SkoposResolvedPolicyArtifact>(resolvedPolicyPath),
     loadJsonArtifact<SkoposPolicyRecommendationArtifact>(recommendationsPath),
     loadJsonArtifact<SkoposPolicyOverrideArtifact>(overridesPath),
     loadJsonArtifact<SkoposPolicyRoleMappingArtifact>(roleMappingPath),
     loadJsonArtifact<SkoposDriftReportArtifact>(driftReportPath),
-    loadJsonArtifact<SkoposResolvedGatesArtifact>(gatesPath),
+    loadJsonArtifact<SkoposResolvedGuardsArtifact>(guardsPath),
   ]);
   const packManifests = await loadPolicyPackManifestViews({
     workspaceRoot,
@@ -290,7 +316,7 @@ const loadPolicyReviewView = async (
     recommendations,
   });
 
-  if (!resolvedPolicy && !recommendations && !overrides && !roleMapping && !driftReport && !gates && packManifests.length === 0) {
+  if (!resolvedPolicy && !recommendations && !overrides && !roleMapping && !driftReport && !guards && packManifests.length === 0) {
     return undefined;
   }
 
@@ -325,10 +351,10 @@ const loadPolicyReviewView = async (
           report: driftReport,
         }
       : undefined,
-    gates: gates
+    guards: guards
       ? {
-          artifactPath: gatesPath,
-          resolved: gates,
+          artifactPath: guardsPath,
+          resolved: guards,
         }
       : undefined,
     packManifests,
@@ -350,8 +376,8 @@ const loadPolicyPackManifestViews = async ({
     candidatePaths.add(manifestPath);
   }
 
-  for (const sourcePath of resolvedPolicy?.sourcePaths ?? []) {
-    candidatePaths.add(sourcePath);
+  for (const dependency of resolvedPolicy?.sourceDependencies ?? []) {
+    candidatePaths.add(dependency.path);
   }
 
   for (const recommendation of recommendations?.recommendations ?? []) {
@@ -520,50 +546,102 @@ const relativePathFromWorkspace = (workspaceRoot: string, absolutePath: string):
   return relativePath === absolutePath ? absolutePath : relativePath;
 };
 
-const buildPlanView = (
+const buildTrackedPlanViews = (
   workspaceRoot: string,
-  plan: SkoposPlanArtifact,
-): SkoposUiConsolePlanView => ({
-  artifactPath: join(workspaceRoot, '.skopos', 'plans', `${plan.id}.json`),
-  plan,
-});
+  indexArtifact: SkoposContentIndexArtifact | undefined,
+  scopesArtifact: SkoposScopesLiteArtifact | undefined,
+): SkoposUiConsolePlanView[] =>
+  (indexArtifact?.documents ?? [])
+    .filter(
+      (document) =>
+        document.role === 'plan' &&
+        document.adoption === 'adopted' &&
+        document.lifecycle === 'active',
+    )
+    .map((document) => {
+      const scope =
+        scopesArtifact?.scopes.find((candidate) => candidate.id === document.metadata?.scope) ??
+        scopesArtifact?.scopes.find((candidate) => candidate.kind === 'workspace');
+      if (!scope) return undefined;
+      const summary = document.summary ?? `Durable Plan at ${document.path}.`;
+      const plan: SkoposPlanArtifact = {
+        schemaVersion: 1,
+        id: document.metadata?.id ?? document.id,
+        type: 'plan',
+        status: 'active',
+        authority: 'canonical',
+        updatedAt: document.updatedAt,
+        workspaceRoot,
+        goal: summary,
+        title: document.title,
+        summary,
+        scope: {
+          query: document.metadata?.scope ?? scope.id,
+          matchedBy: document.metadata?.scope ? 'id' : 'default-root',
+          scope,
+        },
+        confidence: scope.confidence,
+        references: [],
+        implementationSteps: [],
+        recommendedChecks: [],
+        recommendedActions: [],
+        decisionQuestions: [],
+        risks: [],
+        nextSteps: [],
+        taskIds: [],
+      };
+      return {
+        artifactPath: join(workspaceRoot, document.path),
+        plan,
+      };
+    })
+    .filter((plan): plan is SkoposUiConsolePlanView => Boolean(plan));
 
-const buildMissionView = (
+const buildTaskView = (
   workspaceRoot: string,
-  mission: SkoposMissionArtifact,
+  task: SkoposTaskArtifact,
   plan?: SkoposUiConsolePlanView,
-): SkoposUiConsoleMissionView => ({
-  artifactPath: join(workspaceRoot, '.skopos', 'missions', `${mission.id}.json`),
-  mission,
+): SkoposUiConsoleTaskView => ({
+  artifactPath: join(
+    workspaceRoot,
+    '.skopos',
+    'tasks',
+    task.taskIdentity.worktreeId,
+    task.id,
+    'task.json',
+  ),
+  task,
   plan,
 });
 
 const buildScopeViews = (
   scopesArtifact: SkoposScopesLiteArtifact | undefined,
   plans: SkoposUiConsolePlanView[],
-  missions: SkoposUiConsoleMissionView[],
+  tasks: SkoposUiConsoleTaskView[],
 ): SkoposUiConsoleScopeView[] =>
   (scopesArtifact?.scopes ?? []).map((scope) => {
     const relatedPlanIds = plans
       .filter((plan) => plan.plan.scope.scope.id === scope.id)
       .map((plan) => plan.plan.id);
-    const relatedMissionIds = missions
-      .filter((mission) => mission.mission.scope.scope.id === scope.id)
-      .map((mission) => mission.mission.id);
+    const relatedTaskIds = tasks
+      .filter((task) => task.task.scope.scope.id === scope.id)
+      .map((task) => task.task.id);
 
     return {
       scope,
       relatedPlanIds,
-      relatedMissionIds,
+      relatedTaskIds,
       relatedPlanCount: relatedPlanIds.length,
-      relatedMissionCount: relatedMissionIds.length,
+      relatedTaskCount: relatedTaskIds.length,
     };
   });
 
 const loadDiscussionHandoffView = async (
-  workspaceRoot: string,
+  artifactPath?: string,
 ): Promise<SkoposUiConsoleDiscussionHandoffView | undefined> => {
-  const artifactPath = join(workspaceRoot, '.skopos', 'discussions', 'handoffs', 'latest-workflow.json');
+  if (!artifactPath) {
+    return undefined;
+  }
   const handoff = await loadJsonArtifact<SkoposDiscussionHandoffArtifact>(artifactPath);
 
   if (!handoff) {
@@ -579,7 +657,7 @@ const loadDiscussionHandoffView = async (
 const loadAdapterSupportView = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleState['adapterSupport']> => {
-  const artifactPath = join(workspaceRoot, '.skopos', 'enforcement.json');
+  const artifactPath = join(workspaceRoot, '.skopos', 'index', 'enforcement.json');
   const enforcement = await loadJsonArtifact<SkoposEnforcementProfileArtifact>(artifactPath);
 
   if (!enforcement) {
@@ -597,7 +675,7 @@ const loadDiscussionCheckpointViews = async (
   workspaceRoot: string,
 ): Promise<SkoposUiConsoleDiscussionCheckpointView[]> => {
   const index = await loadJsonArtifact<SkoposDiscussionIndexArtifact>(
-    join(workspaceRoot, '.skopos', 'discussions', 'index.json'),
+    join(workspaceRoot, '.skopos', 'sessions', 'index.json'),
   );
 
   if (!index) {
@@ -625,8 +703,8 @@ const loadDiscussionCheckpointViews = async (
 };
 
 const collectArtifactCounts = async (workspaceRoot: string): Promise<SkoposUiArtifactCounts> => ({
-  plans: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'plans')),
-  missions: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'missions')),
+  plans: await countFiles(join(workspaceRoot, 'docs', 'work', 'plans'), '.md'),
+  tasks: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'tasks')),
   runs: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'runs')),
   graphArtifacts: await countJsonArtifacts(join(workspaceRoot, '.skopos', 'graph')),
 });
@@ -635,6 +713,22 @@ const countJsonArtifacts = async (directoryPath: string): Promise<number> => {
   try {
     const entries = await readdir(directoryPath, { withFileTypes: true });
     return entries.filter((entry) => entry.isFile() && entry.name.endsWith('.json')).length;
+  } catch {
+    return 0;
+  }
+};
+
+const countFiles = async (directoryPath: string, extension: string): Promise<number> => {
+  try {
+    const entries = await readdir(directoryPath, { withFileTypes: true });
+    const counts = await Promise.all(
+      entries.map((entry) =>
+        entry.isDirectory()
+          ? countFiles(join(directoryPath, entry.name), extension)
+          : Number(entry.isFile() && entry.name.endsWith(extension)),
+      ),
+    );
+    return counts.reduce((sum, count) => sum + count, 0);
   } catch {
     return 0;
   }

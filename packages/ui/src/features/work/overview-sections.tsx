@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router';
 import type {
   SkoposUiConsoleAdapterSupportView,
   SkoposUiConsoleMemoryView,
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleUnderstandingView,
 } from '../../contracts/skopos-ui-console-state.js';
@@ -15,33 +15,27 @@ import {
   SidebarCard,
   StatusPill,
 } from '../../patterns/sections/inspector-primitives.js';
-import { countPendingMissionItems } from '../../support/execution/mission-metrics.js';
+import { countPendingTaskItems } from '../../support/execution/task-metrics.js';
 import { formatDateTime } from '../../support/formatting/console-formatting.js';
-import { toneForMissionState } from '../../support/ui/tone-helpers.js';
+import { toneForTaskState } from '../../support/ui/tone-helpers.js';
 
 export function OverviewInspectorAside({
-  activeMissionCount,
+  activeTaskCount,
   attentionLabel,
   proofPassRate,
-  programItemCount,
-  openObligationCount,
   generatedAt,
 }: {
-  activeMissionCount: number;
+  activeTaskCount: number;
   attentionLabel: string;
   proofPassRate: string;
-  programItemCount: number;
-  openObligationCount: number;
   generatedAt?: string;
 }): React.JSX.Element {
   return (
     <SidebarCard title="At a glance">
       <KeyValueList
         items={[
-          { label: 'Active missions', value: String(activeMissionCount) },
+          { label: 'Active tasks', value: String(activeTaskCount) },
           { label: 'Attention', value: attentionLabel },
-          { label: 'Program items', value: String(programItemCount) },
-          { label: 'Open obligations', value: String(openObligationCount) },
           { label: 'Evidence pass rate', value: proofPassRate },
           { label: 'Generated', value: formatDateTime(generatedAt) },
         ]}
@@ -50,23 +44,23 @@ export function OverviewInspectorAside({
   );
 }
 
-export function MissionFocusCard({
-  missions,
+export function TaskFocusCard({
+  tasks,
 }: {
-  missions: SkoposUiConsoleMissionView[];
+  tasks: SkoposUiConsoleTaskView[];
 }): React.JSX.Element {
   return (
     <Card
       title="Current focus"
       description="The work Skopos is actively tracking right now."
     >
-      {missions.length > 0 ? (
+      {tasks.length > 0 ? (
         <div className="border-y border-[var(--line)]">
-          {missions.slice(0, 3).map((missionView, index) => (
+          {tasks.slice(0, 3).map((taskView, index) => (
             <Link
-              key={missionView.mission.id}
-              to="/missions/$missionId"
-              params={{ missionId: missionView.mission.id }}
+              key={taskView.task.id}
+              to="/tasks/$taskId"
+              params={{ taskId: taskView.task.id }}
               className={`block py-3.5 transition-colors hover:bg-[color:rgba(255,252,246,0.4)] ${
                 index > 0 ? 'border-t border-[var(--line)]' : ''
               }`}
@@ -75,26 +69,26 @@ export function MissionFocusCard({
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill
-                      value={missionView.mission.state}
-                      tone={toneForMissionState(missionView.mission.state)}
+                      value={taskView.task.state}
+                      tone={toneForTaskState(taskView.task.state)}
                     />
-                    {missionView.mission.coordination.claimedBy?.actorId ? (
+                    {taskView.task.coordination.claimedBy?.actorId ? (
                       <StatusPill
-                        value={`claimed ${missionView.mission.coordination.claimedBy.actorId}`}
+                        value={`claimed ${taskView.task.coordination.claimedBy.actorId}`}
                         tone="neutral"
                       />
                     ) : null}
                   </div>
                   <h3 className="mt-2 text-[14px] font-semibold tracking-[-0.03em]">
-                    {missionView.mission.title}
+                    {taskView.task.title}
                   </h3>
                   <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
-                    {missionView.mission.summary}
+                    {taskView.task.summary}
                   </p>
                 </div>
                 <div className="grid gap-1.5 text-right text-[12px] text-[var(--muted)]">
-                  <span>{missionView.mission.scope.scope.title}</span>
-                  <span>{countPendingMissionItems(missionView.mission)} pending items</span>
+                  <span>{taskView.task.scope.scope.title}</span>
+                  <span>{countPendingTaskItems(taskView.task)} pending items</span>
                 </div>
               </div>
             </Link>
@@ -102,8 +96,8 @@ export function MissionFocusCard({
         </div>
       ) : (
         <EmptyMessage
-          title="No active missions"
-          description="Skopos is not tracking an active work session yet. If files are changing, start or claim a mission so progress, decisions, and evidence stay connected."
+          title="No active tasks"
+          description="Skopos is not tracking an active work session yet. If files are changing, start or claim a task so progress, decisions, and evidence stay connected."
         />
       )}
     </Card>
@@ -265,7 +259,7 @@ export function OverviewProjectKnowledgeCard({
       ) : (
         <EmptyMessage
           title="Project knowledge is not available"
-          description="Run `skopos init` or `skopos trust` to generate the project knowledge view."
+          description="Run `skopos init` or `skopos readiness` to generate the project knowledge view."
         />
       )}
     </Card>
@@ -327,7 +321,7 @@ export function OverviewAdapterSupportCard({
         <div className="border-y border-[var(--line)]">
           {adapterSupport.adapters.map((adapter, index) => {
             const coveredEvents = Object.values(adapter.lifecycleCoverage).filter(Boolean).length;
-            const workflowRouterCoverageCount = Object.values(adapter.workflowRouterCoverage).filter(
+            const actionRouterCoverageCount = Object.values(adapter.actionRouterCoverage).filter(
               Boolean,
             ).length;
             return (
@@ -350,26 +344,26 @@ export function OverviewAdapterSupportCard({
                   </div>
                   <div className="grid gap-1.5 text-right text-[12px] text-[var(--muted)]">
                     <span>{coveredEvents}/5 lifecycle events</span>
-                    <span>{workflowRouterCoverageCount}/2 router boundaries</span>
+                    <span>{actionRouterCoverageCount}/2 router boundaries</span>
                     <span>{adapter.installMode}</span>
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <StatusPill
                     value={
-                      adapter.workflowRouterCoverage.sessionStart
+                      adapter.actionRouterCoverage.sessionStart
                         ? 'router-guided resume'
                         : 'no router resume'
                     }
-                    tone={adapter.workflowRouterCoverage.sessionStart ? 'positive' : 'neutral'}
+                    tone={adapter.actionRouterCoverage.sessionStart ? 'positive' : 'neutral'}
                   />
                   <StatusPill
                     value={
-                      adapter.workflowRouterCoverage.stopBoundary
+                      adapter.actionRouterCoverage.stopBoundary
                         ? 'router-enforced stop'
                         : 'no stop enforcement'
                     }
-                    tone={adapter.workflowRouterCoverage.stopBoundary ? 'positive' : 'neutral'}
+                    tone={adapter.actionRouterCoverage.stopBoundary ? 'positive' : 'neutral'}
                   />
                 </div>
               </div>

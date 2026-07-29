@@ -1,21 +1,23 @@
+---
+title: "Decision: System UI Search And Command Dock"
+status: accepted
+owner: skopos-core
+id: SKOPOS-DECISION-017
+scope: skopos
+role: decision
+lifecycle: durable
+authority: canonical
+provenance: accepted
+view: current
+date: 2026-04-11
+relatedDocs:
+  - ../work/archive/P-11229565-system-ui.md
+  - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
+  - ../work/archive/P-37fa9180-prototype-roadmap.md
+  - ../scopes/skopos-ui/overview.md
+---
+
 # Decision: System UI Search And Command Dock
-
-## Metadata
-
-- Doc ID: `SKOPOS-DECISION-017`
-- Status: `accepted`
-- Date: `2026-04-11`
-- Owner: `skopos-core`
-- Scope: `skopos/decisions`
-- Canonical: `yes`
-- Related Docs:
-  - `../project/system-ui-plan.md`
-  - `../project/implementation-checklist.md`
-  - `../project/roadmap.md`
-  - `../scopes/ui.md`
-- `../scopes/query.md`
-- `../architecture/retrieval-and-query-strategy.md`
-- `011-system-ui-navigation-and-knowledge-routing.md`
 
 ## Changelog
 

@@ -1,20 +1,20 @@
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
-import type { SkoposAgentPromptBriefArtifact, SkoposTokenTelemetryArtifact } from '@skopos/model';
+import type {
+  SkoposAgentPromptBriefArtifact,
+  SkoposTaskIdentity,
+  SkoposTokenTelemetryArtifact,
+} from '@skopos/model';
 
 import { writeJsonArtifact } from './write-json-artifact.js';
 import {
-  DONE_BRIEF_ARTIFACT_PATH,
-  LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH,
   POLICY_BRIEF_ARTIFACT_PATH,
-  PROGRAM_BRIEF_ARTIFACT_PATH,
   PROMPT_BRIEF_ARTIFACT_PATH,
   TOKEN_BUDGETS,
   TOKEN_TELEMETRY_ARTIFACT_PATH,
-  TRUST_BRIEF_ARTIFACT_PATH,
-  AGENT_MISSION_BRIEF_DIRECTORY,
 } from './token-control-constants.js';
-import { readJsonIfExists, readTextIfExists, resolveActiveMissionId, estimateTokens } from './token-control-state.js';
+import { resolveCurrentTaskState } from './current-task-state.js';
+import { readJsonIfExists, readTextIfExists, estimateTokens } from './token-control-state.js';
 
 export interface RefreshSkoposTokenTelemetryResult {
   path: string;
@@ -24,12 +24,27 @@ export interface RefreshSkoposTokenTelemetryResult {
 
 export const refreshSkoposTokenTelemetry = async ({
   workspaceRoot,
+  taskIdentity,
   dryRun = false,
 }: {
   workspaceRoot: string;
+  taskIdentity?: SkoposTaskIdentity;
   dryRun?: boolean;
 }): Promise<RefreshSkoposTokenTelemetryResult> => {
-  const activeMissionId = await resolveActiveMissionId(workspaceRoot);
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot, taskIdentity });
+  const activeTaskId = currentTask?.task.id;
+  const taskPath = currentTask
+    ? relative(workspaceRoot, currentTask.taskPath)
+    : undefined;
+  const questionsPath = currentTask
+    ? relative(workspaceRoot, currentTask.questionsPath)
+    : undefined;
+  const recommendationsPath = currentTask
+    ? relative(workspaceRoot, currentTask.recommendationsPath)
+    : undefined;
+  const handoffPath = currentTask
+    ? relative(workspaceRoot, currentTask.handoffPath)
+    : undefined;
   const promptBrief = await readJsonIfExists<SkoposAgentPromptBriefArtifact>(
     join(workspaceRoot, PROMPT_BRIEF_ARTIFACT_PATH),
   );
@@ -43,38 +58,31 @@ export const refreshSkoposTokenTelemetry = async ({
   const measurements = [
     ...(policyMeasurement.status === 'missing' ? [] : [policyMeasurement]),
     await buildMeasurement(workspaceRoot, {
-      id: 'trust-brief',
-      title: 'Trust brief',
+      id: 'task',
+      title: 'Current Task',
       surfaceKind: 'agent-brief',
-      path: TRUST_BRIEF_ARTIFACT_PATH,
-      budgetTokens: TOKEN_BUDGETS.trustBrief,
+      path: taskPath,
+      budgetTokens: TOKEN_BUDGETS.task,
     }),
     await buildMeasurement(workspaceRoot, {
-      id: 'done-brief',
-      title: 'Done brief',
+      id: 'task-questions',
+      title: 'Task questions',
       surfaceKind: 'agent-brief',
-      path: DONE_BRIEF_ARTIFACT_PATH,
-      budgetTokens: TOKEN_BUDGETS.doneBrief,
+      path: questionsPath,
+      budgetTokens: TOKEN_BUDGETS.taskQuestions,
     }),
     await buildMeasurement(workspaceRoot, {
-      id: 'program-brief',
-      title: 'Program brief',
+      id: 'task-recommendations',
+      title: 'Task recommendations',
       surfaceKind: 'agent-brief',
-      path: PROGRAM_BRIEF_ARTIFACT_PATH,
-      budgetTokens: TOKEN_BUDGETS.programBrief,
-    }),
-    await buildMeasurement(workspaceRoot, {
-      id: 'mission-brief',
-      title: 'Mission brief',
-      surfaceKind: 'agent-brief',
-      path: activeMissionId ? `${AGENT_MISSION_BRIEF_DIRECTORY}/${activeMissionId}.json` : undefined,
-      budgetTokens: TOKEN_BUDGETS.missionBrief,
+      path: recommendationsPath,
+      budgetTokens: TOKEN_BUDGETS.taskRecommendations,
     }),
     await buildMeasurement(workspaceRoot, {
       id: 'latest-handoff',
-      title: 'Latest handoff',
+      title: 'Current task handoff',
       surfaceKind: 'discussion-handoff',
-      path: LATEST_WORKFLOW_HANDOFF_ARTIFACT_PATH,
+      path: handoffPath,
       budgetTokens: TOKEN_BUDGETS.handoff,
     }),
     {
@@ -105,7 +113,7 @@ export const refreshSkoposTokenTelemetry = async ({
     updatedAt: new Date().toISOString(),
     generatedAt: new Date().toISOString(),
     workspaceRoot,
-    activeMissionId,
+    activeTaskId,
     measurementCount: measurements.length,
     overBudgetCount,
     missingCount,
@@ -194,7 +202,7 @@ const buildSuggestedActions = ({
   const actions: string[] = [];
 
   if (latestHandoffStatus === 'missing') {
-    actions.push('Generate a workflow handoff artifact before relying on cross-thread resume context.');
+    actions.push('Generate a Task handoff before relying on cross-session continuation context.');
   }
 
   if (overBudgetCount > 0) {

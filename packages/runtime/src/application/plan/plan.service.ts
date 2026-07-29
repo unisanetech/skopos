@@ -1,22 +1,19 @@
-import { readFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { dirname, join, resolve } from 'node:path';
 
-import { loadSkoposWorkflowManifests, matchSkoposPlanWorkflows } from '@skopos/indexer';
-import type { SkoposPlanRunResult } from '@skopos/model';
+import { loadSkoposActionManifests, matchSkoposPlanActions } from '@skopos/indexer';
+import type { SkoposPlanResult, SkoposPlanRunResult } from '@skopos/model';
 import {
-  buildSkoposMissionGraph,
   buildSkoposPlan,
   buildSkoposPlanArtifacts,
   type SkoposPlanPackageValidationSurface,
 } from '@skopos/planner';
 import { buildSkoposContext, loadSkoposQueryState } from '@skopos/query';
-import { buildSkoposTaskIdentity, resolveSkoposWorkspaceIdentity } from '@skopos/trust';
 
 import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
-import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 
 export interface BuildSkoposPlanRuntimeOptions {
   cwd: string;
@@ -25,18 +22,19 @@ export interface BuildSkoposPlanRuntimeOptions {
   dryRun?: boolean;
   actor?: string;
   parentPlanId?: string;
-  parentMissionId?: string;
 }
 
-export const buildSkoposPlanRuntime = async ({
+export interface PrepareSkoposPlanRuntimeOptions {
+  cwd: string;
+  goal: string;
+  scope?: string;
+}
+
+export const prepareSkoposPlanRuntime = async ({
   cwd,
   goal,
   scope,
-  dryRun = false,
-  actor,
-  parentPlanId,
-  parentMissionId,
-}: BuildSkoposPlanRuntimeOptions): Promise<SkoposPlanRunResult> => {
+}: PrepareSkoposPlanRuntimeOptions): Promise<SkoposPlanResult> => {
   const workspaceRoot = resolve(cwd);
   const { bootstrap, scopesLite } = await loadSkoposQueryState({
     cwd: workspaceRoot,
@@ -45,11 +43,11 @@ export const buildSkoposPlanRuntime = async ({
     cwd: workspaceRoot,
     scope,
   });
-  const workflows = await loadSkoposWorkflowManifests({
+  const actions = await loadSkoposActionManifests({
     cwd: workspaceRoot,
   });
-  const recommendedWorkflows = matchSkoposPlanWorkflows({
-    workflows,
+  const recommendedActions = matchSkoposPlanActions({
+    actions,
     goal,
     scope: context.scope,
   });
@@ -58,55 +56,47 @@ export const buildSkoposPlanRuntime = async ({
     scopes: scopesLite.scopes,
   });
 
-  const plan = buildSkoposPlan({
+  return buildSkoposPlan({
     workspaceRoot,
     goal,
     context,
     scanSummary: bootstrap.detected,
     config: bootstrap.recommendedConfig,
-    recommendedWorkflows,
+    recommendedActions,
     packageValidationSurfaces,
+  });
+};
+
+export const buildSkoposPlanRuntime = async ({
+  cwd,
+  goal,
+  scope,
+  dryRun = false,
+  actor,
+  parentPlanId,
+}: BuildSkoposPlanRuntimeOptions): Promise<SkoposPlanRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const plan = await prepareSkoposPlanRuntime({
+    cwd: workspaceRoot,
+    goal,
+    scope,
   });
   const artifacts = buildSkoposPlanArtifacts({
     plan,
     actorId: resolvePlanActorId(actor),
     parentPlanId,
-    parentMissionId,
   });
-  const taskIdentity = buildSkoposTaskIdentity({
-    workspace: await resolveSkoposWorkspaceIdentity(workspaceRoot),
-    taskId: artifacts.missionArtifact.id,
-    actorId: resolvePlanActorId(actor),
-  });
-  const planArtifact = {
-    ...artifacts.planArtifact,
-    taskIdentity,
-  };
-  const missionArtifact = {
-    ...artifacts.missionArtifact,
-    taskIdentity,
-  };
-  const missionGraph = buildSkoposMissionGraph({
+  const planArtifact = artifacts.planArtifact;
+  const planPath = join(
     workspaceRoot,
-    plan: planArtifact,
-    mission: missionArtifact,
-  });
-  const planPath = join(workspaceRoot, '.skopos', 'plans', `${planArtifact.id}.json`);
-  const missionPath = join(workspaceRoot, '.skopos', 'missions', `${missionArtifact.id}.json`);
-  const graphPath = join(workspaceRoot, '.skopos', 'graph', `${missionArtifact.id}.json`);
-  const planWrite = await writeArtifact({
+    'docs',
+    'work',
+    'plans',
+    `${planArtifact.id}-${slugify(planArtifact.title)}.md`,
+  );
+  const planWrite = await writePlanDocument({
     artifactPath: planPath,
-    artifact: planArtifact,
-    dryRun,
-  });
-  const missionWrite = await writeArtifact({
-    artifactPath: missionPath,
-    artifact: missionArtifact,
-    dryRun,
-  });
-  const graphWrite = await writeJsonArtifact({
-    artifactPath: graphPath,
-    artifact: missionGraph,
+    plan: planArtifact,
     dryRun,
   });
   await appendSkoposOperationalLogEntry({
@@ -114,16 +104,14 @@ export const buildSkoposPlanRuntime = async ({
     eventKind: 'plan',
     status: dryRun ? 'dry-run' : 'succeeded',
     summary: `Built plan ${planArtifact.id} for ${plan.scope.scope.id}.`,
-    relatedArtifactPaths: [planPath, missionPath, graphPath],
+    relatedArtifactPaths: [planPath],
     metadata: {
       goal,
       scopeId: plan.scope.scope.id,
       actorId: resolvePlanActorId(actor) ?? null,
-      missionId: missionArtifact.id,
       parentPlanId: parentPlanId ?? null,
-      parentMissionId: parentMissionId ?? null,
       decisionQuestionCount: plan.decisionQuestions.length,
-      recommendedWorkflowCount: plan.recommendedWorkflows.length,
+      recommendedActionCount: plan.recommendedActions.length,
     },
     dryRun,
   });
@@ -139,33 +127,102 @@ export const buildSkoposPlanRuntime = async ({
     planWrite,
     actorId: planArtifact.createdByActorId,
     parentPlanId: planArtifact.parentPlanId,
-    parentMissionId: planArtifact.parentMissionId,
-    missionId: missionArtifact.id,
-    missionPath,
-    missionWrite,
-    graphPath,
-    graphWrite,
-    mission: missionArtifact,
   };
 };
 
-interface WriteArtifactOptions {
+interface WritePlanDocumentOptions {
   artifactPath: string;
-  artifact: unknown;
+  plan: ReturnType<typeof buildSkoposPlanArtifacts>['planArtifact'];
   dryRun: boolean;
 }
 
-const writeArtifact = async ({
+const writePlanDocument = async ({
   artifactPath,
-  artifact,
+  plan,
   dryRun,
-}: WriteArtifactOptions): Promise<'written' | 'dry-run'> => {
-  return writeJsonArtifact({
-    artifactPath,
-    artifact,
-    dryRun,
-  });
+}: WritePlanDocumentOptions): Promise<'written' | 'dry-run'> => {
+  if (dryRun) {
+    return 'dry-run';
+  }
+  await mkdir(dirname(artifactPath), { recursive: true });
+  const temporaryPath = `${artifactPath}.tmp`;
+  await writeFile(temporaryPath, renderPlanDocument(plan), 'utf8');
+  await rename(temporaryPath, artifactPath);
+  return 'written';
 };
+
+const renderPlanDocument = (
+  plan: ReturnType<typeof buildSkoposPlanArtifacts>['planArtifact'],
+): string => {
+  const date = (plan.updatedAt ?? new Date().toISOString()).slice(0, 10);
+  const lines = [
+    '---',
+    `title: ${yamlString(plan.title)}`,
+    'status: active',
+    `owner: ${yamlString(plan.createdByActorId ?? 'project')}`,
+    `id: ${yamlString(plan.id)}`,
+    `scope: ${yamlString(plan.scope.scope.id)}`,
+    'role: plan',
+    'lifecycle: active',
+    'authority: canonical',
+    'provenance: accepted',
+    'view: target',
+    `lastUpdated: ${date}`,
+    ...(plan.parentPlanId ? [`parentPlanId: ${yamlString(plan.parentPlanId)}`] : []),
+    '---',
+    '',
+    `# ${plan.title}`,
+    '',
+    '## Changelog',
+    '',
+    `- \`${date}\`: Created and accepted this Plan through Skopos.`,
+    '',
+    '## Goal',
+    '',
+    plan.goal,
+    '',
+    '## Summary',
+    '',
+    plan.summary,
+    '',
+    '## Implementation',
+    '',
+    ...plan.implementationSteps.map(
+      (step, index) => `${index + 1}. **${step.title}** — ${step.detail}`,
+    ),
+    '',
+    '## Actions',
+    '',
+    ...(plan.recommendedActions.length > 0
+      ? plan.recommendedActions.map((action) => `- \`${action.id}\`: ${action.reason}`)
+      : ['- No project Action is preselected. Tasks derive their own Actions from changed scope.']),
+    '',
+    '## Decisions Needed',
+    '',
+    ...(plan.decisionQuestions.length > 0
+      ? plan.decisionQuestions.map((question) => `- ${question.question}`)
+      : ['- None at creation.']),
+    '',
+    '## Risks',
+    '',
+    ...(plan.risks.length > 0 ? plan.risks.map((risk) => `- ${risk}`) : ['- None identified.']),
+    '',
+    '## Next Steps',
+    '',
+    ...plan.nextSteps.map((step) => `- ${step}`),
+    '',
+  ];
+  return `${lines.join('\n')}\n`;
+};
+
+const yamlString = (value: string): string => JSON.stringify(value);
+
+const slugify = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 56) || 'plan';
 
 const resolvePlanActorId = (actor?: string): string | undefined => {
   const candidate = actor ?? process.env.SKOPOS_ACTOR;
@@ -184,9 +241,9 @@ const loadPackageValidationSurfaces = async ({
   workspaceRoot: string;
   scopes: Array<{ id: string; kind: string; title: string; aliases: string[]; path: string }>;
 }): Promise<SkoposPlanPackageValidationSurface[]> => {
-  const packageScopes = scopes.filter((scope) => scope.kind === 'package');
+  const packageBackedScopes = scopes.filter((scope) => scope.kind !== 'workspace');
   const surfaces = await Promise.all(
-    packageScopes.map(async (scope) => {
+    packageBackedScopes.map(async (scope) => {
       const manifestPath = join(workspaceRoot, scope.path, 'package.json');
 
       try {

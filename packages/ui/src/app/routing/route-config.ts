@@ -3,7 +3,7 @@ export interface RouteMeta {
   description: string;
 }
 
-export type MissionListView = 'open' | 'blocked' | 'claimed' | 'complete';
+export type TaskListView = 'open' | 'blocked' | 'claimed' | 'complete';
 export type PlanListView = 'current' | 'library' | 'all';
 export type KnowledgeListView = 'entries' | 'reference' | 'all';
 
@@ -12,19 +12,19 @@ const appRouteMeta = {
     title: 'Current Work',
     description: 'What is happening now, what needs attention, and the next useful action.',
   },
-  missions: {
-    title: 'Missions',
+  tasks: {
+    title: 'Tasks',
     description: 'Active and historical execution slices, ownership, and linked work.',
   },
   plans: {
     title: 'Plans',
-    description: 'Scoped plan intent, validation lanes, and linked mission context.',
+    description: 'Scoped plan intent, validation lanes, and linked task context.',
   },
   discussion: {
     title: 'Discussion',
-    description: 'Latest workflow handoff, checkpoint history, and accepted direction across threads.',
+    description: 'Latest action handoff, checkpoint history, and accepted direction across threads.',
   },
-  trust: {
+  readiness: {
     title: 'Readiness',
     description: 'Checks, warnings, blockers, assumptions, and whether the project is ready to continue.',
   },
@@ -38,7 +38,7 @@ const appRouteMeta = {
   },
   scopes: {
     title: 'Project Map',
-    description: 'Packages, docs roots, and instruction surfaces Skopos understands.',
+    description: 'Declared project Scope boundaries Skopos understands.',
   },
   docs: {
     title: 'Docs',
@@ -59,7 +59,7 @@ const appRouteMeta = {
   activity: {
     title: 'Activity',
     description:
-      'Recent operational history across plans, missions, workflows, and lifecycle events.',
+      'Recent operational history across plans, tasks, actions, and lifecycle events.',
   },
 } satisfies Record<string, RouteMeta>;
 
@@ -71,7 +71,7 @@ export const navSections = [
   {
     label: 'Work',
     items: [
-      { to: '/missions', label: 'Missions' },
+      { to: '/tasks', label: 'Tasks' },
       { to: '/plans', label: 'Plans' },
       { to: '/discussion', label: 'Discussion' },
       { to: '/activity', label: 'Activity' },
@@ -80,7 +80,7 @@ export const navSections = [
   {
     label: 'Quality',
     items: [
-      { to: '/trust', label: 'Readiness' },
+      { to: '/readiness', label: 'Readiness' },
       { to: '/rules', label: 'Rules' },
       { to: '/proof', label: 'Evidence' },
     ],
@@ -101,8 +101,8 @@ export const navSections = [
 ] as const;
 
 export const resolveRouteMeta = (pathname: string): RouteMeta => {
-  if (pathname.startsWith('/missions')) {
-    return appRouteMeta.missions;
+  if (pathname.startsWith('/tasks')) {
+    return appRouteMeta.tasks;
   }
   if (pathname.startsWith('/plans')) {
     return appRouteMeta.plans;
@@ -110,8 +110,8 @@ export const resolveRouteMeta = (pathname: string): RouteMeta => {
   if (pathname.startsWith('/discussion')) {
     return appRouteMeta.discussion;
   }
-  if (pathname.startsWith('/trust')) {
-    return appRouteMeta.trust;
+  if (pathname.startsWith('/readiness')) {
+    return appRouteMeta.readiness;
   }
   if (pathname.startsWith('/rules')) {
     return appRouteMeta.rules;
@@ -140,7 +140,7 @@ export const resolveRouteMeta = (pathname: string): RouteMeta => {
   return appRouteMeta.overview;
 };
 
-export const normalizeMissionListView = (value: unknown): MissionListView => {
+export const normalizeTaskListView = (value: unknown): TaskListView => {
   switch (value) {
     case 'blocked':
     case 'claimed':

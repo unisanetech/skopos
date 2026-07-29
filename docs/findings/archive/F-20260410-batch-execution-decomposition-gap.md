@@ -1,20 +1,26 @@
+---
+title: "F-20260410-batch-execution-decomposition-gap: Batch Execution Exists,
+  But Scope Narrowing Still Falls Back To Manual Decomposition"
+status: done
+owner: skopos-core
+id: SKOPOS-F-20260410-BATCH-EXECUTION-DECOMPOSITION-GAP
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-04-10
+relatedDocs:
+  - ../README.md
+  - ../../00-start-here.md
+  - ../../operations/local-development.md
+  - ../../work/plans/P-067e15c4-proof-and-benchmarking.md
+  - ../../decisions/archive/007-multi-actor-mission-coordination.md
+reviewCycle: per workpack
+---
+
 # F-20260410-batch-execution-decomposition-gap: Batch Execution Exists, But Scope Narrowing Still Falls Back To Manual Decomposition
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260410-BATCH-EXECUTION-DECOMPOSITION-GAP`
-- Status: `done`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-04-10`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `../registry.md`
-  - `../../00-start-here.md`
-  - `../../runbooks/local-development.md`
-  - `../../project/proof-phase-plan.md`
-  - `../../decisions/007-multi-actor-mission-coordination.md`
 
 ## Changelog
 
@@ -56,6 +62,6 @@
 
 ## Linked Docs
 
-1. `../registry.md`
-2. `../../runbooks/local-development.md`
-3. `../../project/proof-phase-plan.md`
+1. `../README.md`
+2. `../../operations/local-development.md`
+3. `../../work/plans/P-067e15c4-proof-and-benchmarking.md`

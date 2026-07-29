@@ -19,23 +19,23 @@ import {
   SearchDock,
   getSkoposSearchShortcutLabel,
 } from '../patterns/shells/search-dock.js';
-import { toneForReadiness, toneForTrust } from '../support/ui/tone-helpers.js';
+import { toneForReadiness } from '../support/ui/tone-helpers.js';
 import { SKOPOS_APP_SHELL_GRID_CLASS } from './layout-tokens.js';
 import {
   navSections,
   normalizeKnowledgeListView,
-  normalizeMissionListView,
+  normalizeTaskListView,
   normalizePlanListView,
   resolveRouteMeta,
   type KnowledgeListView,
-  type MissionListView,
+  type TaskListView,
   type PlanListView,
   type RouteMeta,
 } from './routing/route-config.js';
 import {
   ExecutionDiscussionView,
-  ExecutionMissionDetailView,
-  ExecutionMissionsView,
+  ExecutionTaskDetailView,
+  ExecutionTasksView,
   ExecutionOverviewView,
 } from '../screens/work/execution-screens.js';
 import {
@@ -49,7 +49,7 @@ import {
   PlanDetailView,
   PlansView,
 } from '../screens/knowledge/knowledge-screens.js';
-import { ActivityView, PackDetailView, ProofView, RulesView, TrustView } from '../screens/validation/review-screens.js';
+import { ActivityView, PackDetailView, ProofView, RulesView, ReadinessView } from '../screens/validation/review-screens.js';
 import { ScopeDetailView, ScopesView } from '../screens/structure/structure-screens.js';
 import { getSkoposUiConsoleState } from './state.js';
 
@@ -71,19 +71,19 @@ const overviewRoute = createRoute({
   component: OverviewView,
 });
 
-const missionsRoute = createRoute({
+const tasksRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/missions',
+  path: '/tasks',
   validateSearch: (search: Record<string, unknown>) => ({
-    view: normalizeMissionListView(search.view),
+    view: normalizeTaskListView(search.view),
   }),
-  component: MissionsView,
+  component: TasksView,
 });
 
-const missionDetailRoute = createRoute({
+const taskDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/missions/$missionId',
-  component: MissionDetailRouteView,
+  path: '/tasks/$taskId',
+  component: TaskDetailRouteView,
 });
 
 const plansRoute = createRoute({
@@ -107,10 +107,10 @@ const planDetailRoute = createRoute({
   component: PlanDetailRouteView,
 });
 
-const trustRoute = createRoute({
+const readinessRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/trust',
-  component: TrustView,
+  path: '/readiness',
+  component: ReadinessView,
 });
 
 const rulesRoute = createRoute({
@@ -200,12 +200,12 @@ const activityRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   overviewRoute,
-  missionsRoute,
-  missionDetailRoute,
+  tasksRoute,
+  taskDetailRoute,
   plansRoute,
   planDetailRoute,
   discussionRoute,
-  trustRoute,
+  readinessRoute,
   rulesRoute,
   rulePackDetailRoute,
   proofRoute,
@@ -238,8 +238,8 @@ function RootShell(): React.JSX.Element {
     select: (routerState) => routerState.location.pathname,
   });
   const routeMeta = resolveRouteMeta(locationPath);
-  const activeMissionCount = state?.missions.filter(
-    (mission) => mission.mission.state !== 'complete',
+  const activeTaskCount = state?.tasks.filter(
+    (task) => task.task.state !== 'complete',
   ).length;
   const [searchOpenSignal, setSearchOpenSignal] = React.useState(0);
   const searchShortcutLabel = React.useMemo(() => getSkoposSearchShortcutLabel(), []);
@@ -305,23 +305,23 @@ function RootShell(): React.JSX.Element {
                   <div className="skopos-sidebar-status-row">
                     <span className="skopos-sidebar-status-label">Readiness</span>
                     <StatusPill
-                      value={state?.trustReport.readiness ?? 'build-needed'}
-                      tone={toneForReadiness(state?.trustReport.readiness)}
+                      value={state?.readinessReport.readiness ?? 'build-needed'}
+                      tone={toneForReadiness(state?.readinessReport.readiness)}
                       className="skopos-sidebar-status-pill"
                     />
                   </div>
                   <div className="skopos-sidebar-status-row">
                     <span className="skopos-sidebar-status-label">Confidence</span>
                     <StatusPill
-                      value={state?.trustReport.trustLevel ?? 'unknown'}
-                      tone={toneForTrust(state?.trustReport.trustLevel)}
+                      value={state?.readinessReport.readiness ?? 'unknown'}
+                      tone={toneForReadiness(state?.readinessReport.readiness)}
                       className="skopos-sidebar-status-pill"
                     />
                   </div>
                   <div className="skopos-sidebar-status-row">
-                    <span className="skopos-sidebar-status-label">Missions</span>
+                    <span className="skopos-sidebar-status-label">Tasks</span>
                     <span className="skopos-sidebar-status-value">
-                      {activeMissionCount ?? 0} active
+                      {activeTaskCount ?? 0} active
                     </span>
                   </div>
                 </div>
@@ -363,14 +363,14 @@ function OverviewView(): React.JSX.Element {
   return <ExecutionOverviewView />;
 }
 
-function MissionsView(): React.JSX.Element {
-  const search = missionsRoute.useSearch();
-  return <ExecutionMissionsView search={search} />;
+function TasksView(): React.JSX.Element {
+  const search = tasksRoute.useSearch();
+  return <ExecutionTasksView search={search} />;
 }
 
-function MissionDetailRouteView(): React.JSX.Element {
-  const { missionId } = missionDetailRoute.useParams();
-  return <ExecutionMissionDetailView missionId={missionId} />;
+function TaskDetailRouteView(): React.JSX.Element {
+  const { taskId } = taskDetailRoute.useParams();
+  return <ExecutionTaskDetailView taskId={taskId} />;
 }
 
 function PlansRouteView(): React.JSX.Element {

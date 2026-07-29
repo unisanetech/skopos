@@ -6,7 +6,7 @@ import type {
   SkoposRootConfig,
   SkoposScanSummary,
   SkoposPlanResult,
-  SkoposWorkflowRequirement,
+  SkoposActionRequirement,
 } from '@skopos/model';
 
 export interface SkoposPlanPackageValidationSurface {
@@ -49,7 +49,7 @@ const CODE_LIKE_GOAL_PATTERNS = [
   'lint',
   'typecheck',
   'proof',
-  'eval',
+  'verify',
   'cli',
   'ui',
   'watch',
@@ -67,7 +67,7 @@ export interface BuildSkoposPlanOptions {
   context: SkoposContextBundle;
   scanSummary: SkoposScanSummary;
   config: SkoposRootConfig;
-  recommendedWorkflows?: SkoposWorkflowRequirement[];
+  recommendedActions?: SkoposActionRequirement[];
   packageValidationSurfaces?: SkoposPlanPackageValidationSurface[];
 }
 
@@ -77,7 +77,7 @@ export const buildSkoposPlan = ({
   context,
   scanSummary,
   config,
-  recommendedWorkflows = [],
+  recommendedActions = [],
   packageValidationSurfaces = [],
 }: BuildSkoposPlanOptions): SkoposPlanResult => {
   const normalizedGoal = goal.trim();
@@ -107,13 +107,13 @@ export const buildSkoposPlan = ({
     scopeKind: context.scope.scope.kind,
     decisionQuestions,
     recommendedChecks,
-    recommendedWorkflows,
+    recommendedActions,
   });
   const nextSteps = buildNextSteps({
     scopeKind: context.scope.scope.kind,
     decisionQuestions,
     recommendedChecks,
-    recommendedWorkflows,
+    recommendedActions,
   });
 
   return {
@@ -126,7 +126,7 @@ export const buildSkoposPlan = ({
     references: context.references,
     implementationSteps,
     recommendedChecks,
-    recommendedWorkflows,
+    recommendedActions,
     decisionQuestions,
     risks,
     nextSteps,
@@ -187,22 +187,22 @@ const buildDecisionQuestions = ({
       category: 'scope',
       escalation: 'recommend-and-ask',
       question:
-        'Should this change stay at workspace scope, or should it be narrowed to one package or domain?',
+        'Should this change stay at workspace scope, or should it be narrowed to one declared Scope?',
       whyItMatters:
-        'Wide-scope plans in monorepos drift faster and make trust reports less precise.',
+        'Wide-scope Plans in monorepos drift faster and make Readiness less precise.',
       recommendedOptionId: 'narrow-scope-first',
       options: [
         {
           id: 'narrow-scope-first',
           label: 'Narrow scope first',
           rationale:
-            'Recommended because a single package or domain keeps context, checks, and docs impact easier to control.',
+            'Recommended because one declared Scope keeps context, checks, and docs impact easier to control.',
         },
         {
           id: 'keep-workspace-scope',
           label: 'Keep workspace scope',
           rationale:
-            'Useful when the change truly spans multiple packages and you intend to coordinate a multi-scope rollout.',
+            'Useful when the change truly spans multiple Scopes and you intend to coordinate a cross-Scope rollout.',
         },
       ],
     });
@@ -227,7 +227,7 @@ const buildDecisionQuestions = ({
       escalation: 'must-ask',
       question: `Does this plan intentionally change the current architecture or package boundaries around ${scopeTitle}?`,
       whyItMatters:
-        'Architecture changes should be explicit so future retrieval and trust rules do not model the wrong pattern as canonical.',
+        'Architecture changes should be explicit so future retrieval and Readiness rules do not model the wrong pattern as canonical.',
       recommendedOptionId: 'preserve-current-boundaries',
       options: [
         {
@@ -291,7 +291,7 @@ const buildDecisionQuestions = ({
           id: 'stage-the-change',
           label: 'Stage the change',
           rationale:
-            'Recommended because staged rollouts reduce drift and make trust checks easier to reason about.',
+            'Recommended because staged rollouts reduce drift and make Readiness easier to reason about.',
         },
         {
           id: 'hard-cutover',
@@ -404,7 +404,7 @@ const buildRisks = ({
 
   if (scopeKind === 'workspace' && scanSummary.repoMode === 'monorepo') {
     risks.push(
-      `Planning at workspace scope for ${scopeTitle} may broaden change impact across multiple packages.`,
+      `Planning at workspace scope for ${scopeTitle} may broaden change impact across multiple declared Scopes.`,
     );
   }
 
@@ -440,6 +440,10 @@ const buildRecommendedChecks = ({
   goal: string;
   packageValidationSurfaces?: SkoposPlanPackageValidationSurface[];
 }): string[] => {
+  if (config.validation?.mode === 'actions') {
+    return [];
+  }
+
   if (isDocsOnlyValidationLane({ scope, goal })) {
     return [];
   }
@@ -449,6 +453,19 @@ const buildRecommendedChecks = ({
     goal,
     packageValidationSurfaces: packageValidationSurfaces ?? [],
   });
+
+  if (!packageValidationSurface) {
+    if (scope.scope.kind === 'workspace' && config.project.repoMode === 'single') {
+      return COMMAND_NAMES.flatMap((commandName) => {
+        const configuredCommand = config.commands[commandName];
+        return typeof configuredCommand === 'string' && configuredCommand.trim().length > 0
+          ? [configuredCommand]
+          : [];
+      });
+    }
+
+    return [];
+  }
 
   return COMMAND_NAMES.flatMap((commandName) => {
     const configuredCommand = config.commands[commandName];
@@ -461,9 +478,9 @@ const buildRecommendedChecks = ({
         commandName,
         configuredCommand,
         packageValidationSurface,
-      }) ?? configuredCommand
+      })
     );
-  });
+  }).filter((command): command is string => Boolean(command));
 };
 
 const isDocsOnlyValidationLane = ({
@@ -473,10 +490,6 @@ const isDocsOnlyValidationLane = ({
   scope: SkoposContextBundle['scope'];
   goal: string;
 }): boolean => {
-  if (scope.scope.kind === 'docs-root' || scope.scope.kind === 'instruction-file') {
-    return true;
-  }
-
   const normalizedGoal = goal.toLowerCase();
   return (
     DOCS_ONLY_GOAL_PATTERNS.some((pattern) => normalizedGoal.includes(pattern)) &&
@@ -531,12 +544,8 @@ const resolveValidationSurfaceForPlan = ({
     return undefined;
   }
 
-  if (scope.scope.kind === 'package') {
-    return packageValidationSurfaces.find((entry) => entry.scopeId === scope.scope.id);
-  }
-
   if (scope.scope.kind !== 'workspace') {
-    return undefined;
+    return packageValidationSurfaces.find((entry) => entry.scopeId === scope.scope.id);
   }
 
   const normalizedGoal = normalizeMatchValue(goal);
@@ -560,7 +569,7 @@ interface BuildImplementationStepsInput {
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
   recommendedChecks: string[];
-  recommendedWorkflows: SkoposWorkflowRequirement[];
+  recommendedActions: SkoposActionRequirement[];
 }
 
 const buildImplementationSteps = ({
@@ -569,7 +578,7 @@ const buildImplementationSteps = ({
   scopeKind,
   decisionQuestions,
   recommendedChecks,
-  recommendedWorkflows,
+  recommendedActions,
 }: BuildImplementationStepsInput) => {
   const steps: SkoposPlanStep[] = [];
 
@@ -586,13 +595,13 @@ const buildImplementationSteps = ({
     scopeKind,
     decisionQuestions,
     recommendedChecks,
-    recommendedWorkflows,
+    recommendedActions,
   })) {
     steps.push({
-      id: 'record-workflow-lane',
-      title: 'Record the workflow lane before editing',
+      id: 'record-task-risk',
+      title: 'Record Task risk and detail before editing',
       detail:
-        'Confirm whether this is light, normal, or workpack work. Keep the active mission and plan current for normal/workpack work, add a decision when a durable product or architecture choice is made, and add or update a finding when a structural gap is discovered.',
+        'Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.',
     });
   }
 
@@ -616,11 +625,11 @@ const buildImplementationSteps = ({
     },
   );
 
-  if (recommendedWorkflows.length > 0) {
+  if (recommendedActions.length > 0) {
     steps.push({
-      id: 'run-workflows',
-      title: 'Run registered project workflows',
-      detail: `Use the registered workflow surface where needed: ${recommendedWorkflows.map((workflow) => workflow.id).join(' | ')}`,
+      id: 'run-actions',
+      title: 'Run selected project Actions',
+      detail: `Use the registered Action surface where needed: ${recommendedActions.map((action) => action.id).join(' | ')}`,
     });
   }
 
@@ -639,12 +648,12 @@ const buildNextSteps = ({
   scopeKind,
   decisionQuestions,
   recommendedChecks,
-  recommendedWorkflows,
+  recommendedActions,
 }: {
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
   recommendedChecks: string[];
-  recommendedWorkflows: SkoposWorkflowRequirement[];
+  recommendedActions: SkoposActionRequirement[];
 }): string[] => {
   const nextSteps = ['Review the compact references before making code changes.'];
 
@@ -656,10 +665,10 @@ const buildNextSteps = ({
     scopeKind,
     decisionQuestions,
     recommendedChecks,
-    recommendedWorkflows,
+    recommendedActions,
   })) {
     nextSteps.push(
-      'Before editing, confirm the workflow lane and record mission, decision, or finding artifacts when the work changes durable project truth.',
+      'Before editing, confirm Task risk and detail, then record Task, Decision, Finding, or Plan Memory only when the work requires it.',
     );
   }
 
@@ -667,13 +676,13 @@ const buildNextSteps = ({
     nextSteps.push('Use the canonical command surface for validation rather than ad hoc commands.');
   }
 
-  if (recommendedWorkflows.length > 0) {
+  if (recommendedActions.length > 0) {
     nextSteps.push(
-      `Run the registered workflow surface when applicable: ${recommendedWorkflows.map((workflow) => workflow.id).join(', ')}.`,
+      `Run the registered Action surface when applicable: ${recommendedActions.map((action) => action.id).join(', ')}.`,
     );
   }
 
-  nextSteps.push('Keep docs and trust surfaces in sync as part of the same change.');
+  nextSteps.push('Keep docs and Readiness surfaces in sync as part of the same change.');
 
   return nextSteps;
 };
@@ -682,14 +691,14 @@ const requiresWorkflowRecordGuard = ({
   scopeKind,
   decisionQuestions,
   recommendedChecks,
-  recommendedWorkflows,
+  recommendedActions,
 }: {
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
   decisionQuestions: SkoposDecisionQuestion[];
   recommendedChecks: string[];
-  recommendedWorkflows: SkoposWorkflowRequirement[];
+  recommendedActions: SkoposActionRequirement[];
 }): boolean =>
   scopeKind === 'workspace' ||
   decisionQuestions.some((question) => question.escalation === 'must-ask') ||
-  recommendedWorkflows.length >= 2 ||
+  recommendedActions.length >= 2 ||
   recommendedChecks.length >= 4;

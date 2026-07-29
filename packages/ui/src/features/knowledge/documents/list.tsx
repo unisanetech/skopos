@@ -47,6 +47,13 @@ export function KnowledgeDocumentListCard({
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill value={document.format} tone="info" />
+                  {document.role ? <StatusPill value={document.role} tone="neutral" /> : null}
+                  {document.lifecycle !== 'durable' ? (
+                    <StatusPill
+                      value={document.lifecycle}
+                      tone={document.lifecycle === 'active' ? 'positive' : 'warning'}
+                    />
+                  ) : null}
                   {!document.exists ? <StatusPill value="missing" tone="danger" /> : null}
                 </div>
                 <p

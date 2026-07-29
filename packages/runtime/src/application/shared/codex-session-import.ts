@@ -6,7 +6,7 @@ import { dirname, join, relative, sep } from 'node:path';
 import type { SkoposDiscussionRawJournalTurn } from '@skopos/model';
 
 import { resolveDiscussionRawJournalRelativePath } from './discussion-raw-journal.js';
-import { estimateTokens, resolveActiveMissionId } from './token-control-state.js';
+import { estimateTokens, resolveCurrentTaskId } from './token-control-state.js';
 
 export interface SyncLatestCodexDiscussionJournalResult {
   source: 'codex-session-log';
@@ -74,7 +74,7 @@ export const syncLatestCodexDiscussionJournal = async ({
   const existingTurnByKey = new Map(
     existingTurns.map((turn) => [`${turn.recordedAt}|${turn.role}|${turn.message}`, turn]),
   );
-  const activeMissionId = await resolveActiveMissionId(workspaceRoot);
+  const activeTaskId = await resolveCurrentTaskId(workspaceRoot);
 
   const nextTurns = latestSession.messages.map<SkoposDiscussionRawJournalTurn>((message) => {
     const turnKey = `${message.recordedAt}|${message.role}|${message.message}`;
@@ -93,7 +93,7 @@ export const syncLatestCodexDiscussionJournal = async ({
         excerpt: buildExcerpt(message.message),
         estimatedTokens: estimateTokens(message.message),
         transcriptPath: latestSession.sessionPath,
-        activeMissionId,
+        activeTaskId,
       }
     );
   });

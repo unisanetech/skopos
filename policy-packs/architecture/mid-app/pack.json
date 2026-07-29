@@ -36,7 +36,7 @@
   "agentUse": [
     "Load this pack after project bootstrap when architecture or file placement matters.",
     "Use accepted local names first, then apply this pack's ownership and dependency direction rules.",
-    "Escalate to normal or workpack lane when changing boundaries, generated outputs, or validation lanes."
+    "Escalate to normal or high-impact risk when changing boundaries, generated outputs, or verification strategys."
   ],
   "structureTree": {
     "title": "Mid-app structure tree",
@@ -217,12 +217,12 @@
           "src/generated",
           "generated",
           ".skopos",
-          "docs/generated",
+          "docs/reference/generated",
           "packages/*/src/generated",
           "apps/*/src/generated"
         ],
         "examples": [
-          "docs/generated/**",
+          "docs/reference/generated/**",
           ".skopos/**"
         ],
         "antiPatterns": [
@@ -331,7 +331,7 @@
       ]
     }
   ],
-  "gates": {
+  "guards": {
     "required": [
       "pnpm typecheck"
     ],
@@ -346,10 +346,10 @@
       "Search for existing patterns for routing, services, repositories, validation, config, and generated outputs.",
       "Decide whether this is feature-local, shared code, infrastructure/adapter work, generated-output work, docs, or public-contract work."
     ],
-    "beforeDone": [
+    "beforeReadiness": [
       "Confirm no second routing, DI, state, config, validation, or generated-output pattern was introduced.",
       "Confirm changed public contracts have migration notes or explicit user approval.",
-      "Confirm validation gates match the layer touched."
+      "Confirm verification Guards match the layer touched."
     ]
   },
   "projectLifecycles": [
@@ -380,7 +380,7 @@
     },
     {
       "id": "signal.validation-needs-lanes",
-      "summary": "The project needs more than one validation lane but does not need a large-platform governance program.",
+      "summary": "The project needs more than one verification strategy but does not need a large-platform governance program.",
       "confidence": "medium",
       "evidence": [
         "Unit and typecheck commands exist",
@@ -576,7 +576,7 @@
       ]
     },
     {
-      "id": "architecture.mid-app.validation-lanes-are-declared",
+      "id": "architecture.mid-app.verification-strategys-are-declared",
       "title": "Validation lanes are declared",
       "severity": "should",
       "summary": "Projects should declare fast local checks, targeted feature checks, and slower release checks so agents know what proof is proportional to a change.",
@@ -597,7 +597,7 @@
         "Agent must guess which test proves a UI or API change"
       ],
       "checkIds": [
-        "architecture.mid-app.missing-validation-lanes"
+        "architecture.mid-app.missing-verification-strategys"
       ]
     },
     {
@@ -634,9 +634,9 @@
     "policies/examples.md"
   ],
   "generatedArtifacts": [
-    ".skopos/policies/resolved.json",
-    ".skopos/drift/report.json",
-    ".skopos/agent/brief.json"
+    ".skopos/index/policies/resolved.json",
+    ".skopos/index/policies/drift.json",
+    ".skopos/cache/agent/brief.json"
   ],
   "driftCheckIds": [
     "architecture.mid-app.runtime-wiring-outside-features",
@@ -646,7 +646,7 @@
     "architecture.mid-app.reverse-platform-import",
     "architecture.mid-app.deep-feature-import",
     "architecture.mid-app.unvalidated-boundary-input",
-    "architecture.mid-app.missing-validation-lanes",
+    "architecture.mid-app.missing-verification-strategys",
     "architecture.mid-app.generated-owner-missing"
   ],
   "proofFixtureIds": [

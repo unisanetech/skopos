@@ -1,25 +1,34 @@
+---
+title: Decision Escalation Model
+status: active
+owner: skopos-core
+id: SKOPOS-ARCH-DECISION-ESCALATION-MODEL
+scope: skopos
+role: architecture
+lifecycle: durable
+authority: canonical
+provenance: declared
+view: current
+lastUpdated: 2026-07-29
+relatedDocs:
+  - evidence-and-readiness-model.md
+  - config-model.md
+  - ../domains/product/positioning.md
+reviewCycle: when owning truth changes
+---
+
 # Decision Escalation Model
 
 Skopos should force agents to ask humans when a choice should not be guessed.
 
-## Metadata
-
-- Doc ID: `SKOPOS-ARCH-DECISION-ESCALATION-MODEL`
-- Status: `active`
-- Owner: `skopos-core`
-- Scope: `skopos/architecture`
-- Canonical: `yes`
-- Last Updated: `2026-04-12`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `trust-and-closure-model.md`
-  - `config-model.md`
-  - `../project/positioning.md`
-
 ## Changelog
 
-- `2026-04-12`: Updated the decision-escalation model after `skopos next` landed, so unresolved human choices are now refreshed through a real ongoing-work router instead of staying only in the planned control-plane contract.
-- `2026-04-11`: Expanded the decision model into the planned workflow-router contract, so unresolved human choices are no longer treated as temporary chat prompts only: the next system slice should persist them in `.skopos/questions.json` and resolve them through `skopos decide`.
+- `2026-07-28`: Bound question and recommendation state to the exact Task and
+  worktree projection under
+  `.skopos/tasks/<worktree-id>/<task-id>/{questions,recommendations}.json`; removed
+  workspace-global question and recommendation paths from the operating contract.
+- `2026-07-29`: Routed ongoing questions through the current Task and
+  `skopos work next`, removing the prototype router command.
 - `2026-04-09`: Updated the decision model to reflect that `skopos plan` now emits scope-aware implementation ask-back questions based on goal text and configured decision categories.
 - `2026-04-09`: Updated the decision model to reflect that `init` now emits recommended bootstrap questions with one preferred option first.
 - `2026-04-09`: Added the first decision-escalation baseline so agents know when to defer to humans instead of improvising.
@@ -39,17 +48,20 @@ Skopos should force agents to ask humans when a choice should not be guessed.
 4. state what the agent will do after the user answers
 5. ask only when the runtime question surface says the choice is still unresolved
 
-## Router Fit
+## Task Fit
 
-The workflow-router baseline now makes decision escalation runtime-owned instead of prompt-owned.
+Task state makes decision escalation runtime-owned instead of prompt-owned.
 
 The intended command flow is:
 
 1. `skopos start` emits initial questions and recommendations for new work
-2. `skopos next` refreshes unresolved questions during ongoing work
+2. `skopos work next` refreshes unresolved questions during ongoing work
 3. `skopos decide` records the chosen option and clears the blocker
 
-Questions should not live only in chat output. They should become durable workflow state under `.skopos/questions.json`.
+Questions should not live only in chat output. They are persisted as local Task state
+under `.skopos/tasks/<worktree-id>/<task-id>/questions.json`. Every read and write must
+resolve the exact Task identity; there is no workspace-global current-question
+projection.
 
 ## Question Contract
 
@@ -62,7 +74,7 @@ Each question should include:
 5. bounded alternative options
 6. why the decision matters
 7. what Skopos will do after the answer
-8. linked plan or mission ids
+8. linked Plan or Task ids
 
 ## Recommendation Contract
 
@@ -76,6 +88,13 @@ Recommendations should:
 2. point to a concrete next action or command
 3. explain the reason compactly
 4. remain grounded in compiled state rather than generic assistant wording
+5. persist only beside the owning Task at
+   `.skopos/tasks/<worktree-id>/<task-id>/recommendations.json`
+
+Accepted decisions that change durable project truth are promoted to the owning
+Decision, Task, Plan, or other canonical Memory surface. The Task-local question and
+recommendation files remain rebuildable execution state rather than a second durable
+authority.
 
 ## Mandatory Human Decisions
 

@@ -28,7 +28,8 @@ describe('host projection model', () => {
 
     const profile = buildSkoposEnforcementProfile({
       cwd: workspaceRoot,
-      workflows: [],
+      actions: [],
+      guards: [],
     });
     const projectionModel = profile.hostProjectionModel;
 
@@ -49,9 +50,9 @@ describe('host projection model', () => {
         readFile(join(workspaceRoot, 'CLAUDE.md'), 'utf8'),
         readFile(join(workspaceRoot, '.cursor/rules/project.mdc'), 'utf8'),
         readFile(join(workspaceRoot, '.github/copilot-instructions.md'), 'utf8'),
-        readFile(join(workspaceRoot, '.skopos/tooling/claude-code/settings.json'), 'utf8'),
-        readFile(join(workspaceRoot, '.skopos/tooling/codex/adapter-manifest.json'), 'utf8'),
-        readFile(join(workspaceRoot, '.skopos/tooling/manual-hosts/README.md'), 'utf8'),
+        readFile(join(workspaceRoot, '.skopos/cache/tooling/claude-code/settings.json'), 'utf8'),
+        readFile(join(workspaceRoot, '.skopos/cache/tooling/codex/adapter-manifest.json'), 'utf8'),
+        readFile(join(workspaceRoot, '.skopos/cache/tooling/manual-hosts/README.md'), 'utf8'),
       ]);
 
     for (const mirror of [claudeMirror, cursorMirror, copilotMirror]) {
@@ -73,7 +74,8 @@ describe('host projection model', () => {
   it('rejects a host projection that drops a Skopos enforcement rule', () => {
     const profile = buildSkoposEnforcementProfile({
       cwd: '/workspace',
-      workflows: [],
+      actions: [],
+      guards: [],
     });
     profile.hostProjectionModel.hosts[0]!.enforcementRuleIds =
       profile.hostProjectionModel.hosts[0]!.enforcementRuleIds.slice(1);
@@ -84,5 +86,40 @@ describe('host projection model', () => {
         'Host projection codex does not carry the full enforcement contract.',
       ],
     });
+  });
+
+  it('projects configured mirror paths without restoring default mirror authority', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-configured-mirrors-'));
+    temporaryRoots.push(workspaceRoot);
+    await writeFile(join(workspaceRoot, 'AGENTS.md'), '# Canonical instructions\n', 'utf8');
+    const configuredMirrorPaths = [
+      'CLAUDE.md',
+      '.cursor/rules/unisane-core.mdc',
+      '.github/copilot-instructions.md',
+    ];
+
+    const profile = buildSkoposEnforcementProfile({
+      cwd: workspaceRoot,
+      actions: [],
+      guards: [],
+      instructionMirrorPaths: configuredMirrorPaths,
+    });
+
+    expect(validateSkoposHostProjectionModel(profile, configuredMirrorPaths)).toEqual({
+      status: 'pass',
+      diagnostics: [],
+    });
+
+    await syncInstructionMirrors({
+      cwd: workspaceRoot,
+      projectionModel: profile.hostProjectionModel,
+    });
+
+    expect(
+      await readFile(join(workspaceRoot, '.cursor/rules/unisane-core.mdc'), 'utf8'),
+    ).toContain('# Canonical instructions');
+    await expect(
+      readFile(join(workspaceRoot, '.cursor/rules/project.mdc'), 'utf8'),
+    ).rejects.toThrow();
   });
 });

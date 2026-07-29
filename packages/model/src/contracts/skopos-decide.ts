@@ -1,34 +1,28 @@
-import type { SkoposMissionArtifact } from './skopos-plan.js';
-import type { SkoposTaskStatePaths } from './skopos-task-identity.js';
 import type {
-  SkoposWorkflowQuestionArtifact,
-  SkoposWorkflowQuestionEntry,
-} from './skopos-workflow-question.js';
-import type {
-  SkoposWorkflowRecommendationArtifact,
-  SkoposWorkflowExecutionSurfaceRecommendation,
-  SkoposWorkflowRecommendationEntry,
-} from './skopos-workflow-recommendation.js';
+  SkoposTaskArtifact,
+  SkoposTaskQuestion,
+  SkoposTaskQuestionArtifact,
+  SkoposTaskRecommendation,
+  SkoposTaskRecommendationArtifact,
+} from './skopos-task.js';
 
 export interface SkoposDecideRunResult {
   workspaceRoot: string;
-  actorId?: string;
+  actorId: string;
+  taskId: string;
   questionId: string;
   selectedOptionId: string;
   summary: string;
   codeAllowed: boolean;
-  taskState?: SkoposTaskStatePaths;
   questionsPath: string;
   questionsWrite: 'written' | 'dry-run';
-  questions: SkoposWorkflowQuestionArtifact;
+  questions: SkoposTaskQuestionArtifact;
   recommendationsPath: string;
   recommendationsWrite: 'written' | 'dry-run';
-  executionSurface: SkoposWorkflowExecutionSurfaceRecommendation;
-  recommendations: SkoposWorkflowRecommendationArtifact;
-  resolvedQuestion: SkoposWorkflowQuestionEntry;
-  recommendedAction?: SkoposWorkflowRecommendationEntry;
-  nextCommand?: string;
-  mission?: SkoposMissionArtifact;
-  missionPath?: string;
-  missionWrite?: 'written' | 'dry-run';
+  recommendations: SkoposTaskRecommendationArtifact;
+  resolvedQuestion: SkoposTaskQuestion;
+  recommendedAction?: SkoposTaskRecommendation;
+  task: SkoposTaskArtifact;
+  taskPath: string;
+  taskWrite: 'written' | 'dry-run';
 }

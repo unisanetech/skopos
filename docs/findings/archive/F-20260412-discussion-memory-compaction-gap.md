@@ -1,21 +1,27 @@
+---
+title: "F-20260412-discussion-memory-compaction-gap: Discussion Continuity Still
+  Depends Too Much On Transient Chat Memory"
+status: historical
+owner: skopos-core
+id: SKOPOS-F-20260412-DISCUSSION-MEMORY-COMPACTION-GAP
+scope: skopos
+role: finding
+lifecycle: historical
+authority: supporting
+provenance: observed
+view: transition
+lastUpdated: 2026-06-25
+relatedDocs:
+  - ../README.md
+  - ../../domains/product/vision.md
+  - ../../overview.md
+  - ../../architecture/artifact-model.md
+  - ../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md
+  - ../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
+reviewCycle: per workpack
+---
+
 # F-20260412-discussion-memory-compaction-gap: Discussion Continuity Still Depends Too Much On Transient Chat Memory
-
-## Metadata
-
-- Doc ID: `SKOPOS-F-20260412-DISCUSSION-MEMORY-COMPACTION-GAP`
-- Status: `historical`
-- Owner: `skopos-core`
-- Scope: `skopos/findings`
-- Canonical: `yes`
-- Last Updated: `2026-06-25`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `registry.md`
-  - `../project/vision.md`
-  - `../project/overview.md`
-  - `../architecture/artifact-model.md`
-  - `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-  - `../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
 
 ## Changelog
 
@@ -73,11 +79,11 @@
 
 ## Linked Docs
 
-1. `registry.md`
-2. `../project/vision.md`
-3. `../project/overview.md`
-4. `../architecture/artifact-model.md`
-5. `../decisions/020-workflow-router-questions-recommendations-and-eval-contract.md`
-6. `../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
-7. `../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md`
-8. `../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md`
+1. `../README.md`
+2. `../../domains/product/vision.md`
+3. `../../overview.md`
+4. `../../architecture/artifact-model.md`
+5. `../../decisions/archive/020-workflow-router-questions-recommendations-and-eval-contract.md`
+6. `../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md`
+7. `../../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md`
+8. `../../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md`

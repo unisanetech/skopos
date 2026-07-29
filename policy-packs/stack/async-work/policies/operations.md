@@ -25,7 +25,7 @@ Any accepted async stack addition should document:
 7. observability and alerting expectation
 8. focused test or smoke command
 
-## Closure Gate
+## Readiness Check
 
 Do not close async stack work until the agent can show:
 

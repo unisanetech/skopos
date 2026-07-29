@@ -14,8 +14,10 @@ import { ReaderPage } from '../../patterns/pages/reader-page.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
 import { Card, RouteFilterBar } from '../../patterns/sections/content-primitives.js';
 import {
+  filterProjectDocuments,
   getKnowledgeDocumentCollections,
   getKnowledgeDocumentDetailContext,
+  type ProjectDocumentView,
 } from '../../platform/console-state/knowledge-selectors.js';
 import { requireConsoleState } from '../../platform/console-state/access.js';
 import type { KnowledgeCategory } from '../../support/knowledge/document-routing.js';
@@ -116,7 +118,13 @@ function DocumentListView({
   const state = requireConsoleState();
   const { primaryDocuments, referenceDocuments, latestDocument } =
     getKnowledgeDocumentCollections(state, category);
-  const visiblePrimaryDocuments = view === 'reference' ? [] : primaryDocuments;
+  const [projectView, setProjectView] = React.useState<ProjectDocumentView>('essentials');
+  const visiblePrimaryDocuments =
+    category === 'docs'
+      ? filterProjectDocuments(primaryDocuments, projectView)
+      : view === 'reference'
+        ? []
+        : primaryDocuments;
   const visibleReferenceDocuments = view === 'entries' ? [] : referenceDocuments;
   const guidance = getKnowledgeGuidance(category);
 
@@ -135,7 +143,25 @@ function DocumentListView({
         />
       }
       filters={
-        category !== 'docs' ? (
+        category === 'docs' ? (
+          <RouteFilterBar label="Document view">
+            {([
+              ['essentials', 'Essentials'],
+              ['work', 'Plans & tasks'],
+              ['other', 'Other'],
+              ['all', 'All'],
+            ] as const).map(([valueOption, label]) => (
+              <button
+                key={valueOption}
+                type="button"
+                onClick={() => setProjectView(valueOption)}
+                className={filterChipClass(projectView === valueOption)}
+              >
+                {label}
+              </button>
+            ))}
+          </RouteFilterBar>
+        ) : (
           <RouteFilterBar label="List view">
             {([
               ['entries', 'Entries'],
@@ -152,7 +178,7 @@ function DocumentListView({
               </Link>
             ))}
           </RouteFilterBar>
-        ) : null
+        )
       }
     >
       <KnowledgeRouteGuidanceCard guidance={guidance} />
@@ -216,7 +242,7 @@ const getKnowledgeGuidance = (category: KnowledgeCategory): KnowledgeRouteGuidan
     return {
       useCase: 'Read decisions when you need to understand why a pattern exists before changing it.',
       listTitle: 'Decision records',
-      listDescription: 'Use these before changing architecture, workflow, policy, or product direction.',
+      listDescription: 'Use these before changing architecture, action, policy, or product direction.',
       emptyTitle: 'No decisions recorded',
       emptyDescription:
         'No decision records are available yet. Add one when a choice should guide future work.',
@@ -253,8 +279,8 @@ const getKnowledgeGuidance = (category: KnowledgeCategory): KnowledgeRouteGuidan
       'No project documents are available yet. Build or refresh Skopos state after adding docs.',
     points: [
       { label: 'Use before', text: 'Starting work, onboarding to the repo, or checking project rules.' },
-      { label: 'Look for', text: 'The current source of truth, command workflow, and package boundaries.' },
-      { label: 'Update when', text: 'A rule, workflow, architecture decision, or setup step changes.' },
+      { label: 'Look for', text: 'The current source of truth, command action, and package boundaries.' },
+      { label: 'Update when', text: 'A rule, action, architecture decision, or setup step changes.' },
     ],
   };
 };
@@ -298,6 +324,14 @@ function DocumentDetailView({
       description={document.summary}
       badges={[
         <StatusPill key="format" value={document.format} tone="info" />,
+        ...(document.role
+          ? [<StatusPill key="role" value={document.role} tone="neutral" />]
+          : []),
+        <StatusPill
+          key="lifecycle"
+          value={document.lifecycle}
+          tone={document.lifecycle === 'active' ? 'positive' : 'neutral'}
+        />,
         <StatusPill
           key="availability"
           value={document.exists ? 'available' : 'missing'}

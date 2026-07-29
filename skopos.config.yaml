@@ -10,6 +10,8 @@ commands:
   build: pnpm build
   test: pnpm test
   typecheck: pnpm typecheck
+validation:
+  mode: commands
 workspace:
   ignore:
     - policy-packs
@@ -19,7 +21,7 @@ workspace:
     - fixtures
     - internal
     - tests
-    - docs/generated
+    - .skopos
 docs:
   root: docs
   startHerePath: docs/00-start-here.md
@@ -33,10 +35,10 @@ agents:
     - .cursor/rules/project.mdc
     - .github/copilot-instructions.md
   mcp: true
-trust:
+verification:
   mode: balanced
   requireDocsSync: true
-  requireProofForDone: true
+  requireEvidenceForReadiness: true
 decisions:
   mode: balanced
   askFor:

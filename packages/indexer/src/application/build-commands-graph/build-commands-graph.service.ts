@@ -4,27 +4,29 @@ import type {
   SkoposGraphEdge,
   SkoposGraphNode,
   SkoposScopesLiteArtifact,
-  SkoposWorkflowManifest,
+  SkoposActionManifest,
 } from '@skopos/model';
 
 export interface BuildSkoposCommandsGraphOptions {
   workspaceRoot: string;
   bootstrap: SkoposBootstrapArtifact;
   scopesLite: SkoposScopesLiteArtifact;
-  workflows: SkoposWorkflowManifest[];
+  actions: SkoposActionManifest[];
 }
 
 export const buildSkoposCommandsGraph = ({
   workspaceRoot,
   bootstrap,
   scopesLite,
-  workflows,
+  actions,
 }: BuildSkoposCommandsGraphOptions): SkoposGraphArtifact => {
   const generatedAt = new Date().toISOString();
   const nodes = new Map<string, SkoposGraphNode>();
   const edges = new Map<string, SkoposGraphEdge>();
   const workspaceNodeId = 'workspace';
-  const packageScopes = scopesLite.scopes.filter((scope) => scope.kind === 'package');
+  const projectScopes = scopesLite.scopes.filter((scope) => scope.kind !== 'workspace');
+  const workspaceScope = scopesLite.scopes.find((scope) => scope.kind === 'workspace');
+  const projectScopeIds = new Set(projectScopes.map((scope) => scope.id));
 
   addNode(nodes, {
     id: workspaceNodeId,
@@ -32,10 +34,10 @@ export const buildSkoposCommandsGraph = ({
     label: bootstrap.recommendedConfig.project.name,
     state: 'active',
     path: '.',
-    summary: 'Workspace root for canonical commands and operational workflows.',
+    summary: 'Workspace root for canonical commands and operational actions.',
   });
 
-  for (const scope of packageScopes) {
+  for (const scope of projectScopes) {
     const nodeId = `scope:${scope.id}`;
     addNode(nodes, {
       id: nodeId,
@@ -44,6 +46,9 @@ export const buildSkoposCommandsGraph = ({
       state: 'active',
       path: scope.path,
       summary: scope.summary,
+      metadata: {
+        scopeKind: scope.kind,
+      },
     });
   }
 
@@ -72,7 +77,7 @@ export const buildSkoposCommandsGraph = ({
       label: 'canonical command',
     });
 
-    for (const scope of packageScopes) {
+    for (const scope of projectScopes) {
       if (!commandTargetsScope(command, scope.id, scope.path, scope.aliases)) {
         continue;
       }
@@ -87,18 +92,18 @@ export const buildSkoposCommandsGraph = ({
     }
   }
 
-  for (const workflow of workflows) {
-    const nodeId = `workflow:${workflow.id}`;
+  for (const action of actions) {
+    const nodeId = `action:${action.id}`;
     addNode(nodes, {
       id: nodeId,
-      kind: 'workflow',
-      label: workflow.id,
-      state: workflow.requiredForDone ? 'required' : 'recommended',
-      path: workflow.sourcePath,
-      summary: workflow.description,
+      kind: 'action',
+      label: action.id,
+      state: 'recommended',
+      path: action.sourcePath,
+      summary: action.description,
       metadata: {
-        category: workflow.category,
-        safety: workflow.safety,
+        category: action.category,
+        safety: action.safety,
       },
     });
     addEdge(edges, {
@@ -106,20 +111,26 @@ export const buildSkoposCommandsGraph = ({
       kind: 'contains',
       from: workspaceNodeId,
       to: nodeId,
-      state: workflow.requiredForDone ? 'required' : 'recommended',
+      state: 'recommended',
     });
 
-    for (const scopeId of workflow.scope) {
-      if (!packageScopes.some((scope) => scope.id === scopeId)) {
+    for (const scopeId of action.scope) {
+      const targetNodeId =
+        scopeId === 'workspace' || scopeId === workspaceScope?.id
+          ? workspaceNodeId
+          : projectScopeIds.has(scopeId)
+            ? `scope:${scopeId}`
+            : null;
+      if (!targetNodeId) {
         continue;
       }
 
       addEdge(edges, {
-        id: `${nodeId}->scope:${scopeId}:targets`,
+        id: `${nodeId}->${targetNodeId}:targets`,
         kind: 'targets',
         from: nodeId,
-        to: `scope:${scopeId}`,
-        state: workflow.requiredForDone ? 'required' : 'recommended',
+        to: targetNodeId,
+        state: 'recommended',
       });
     }
   }
@@ -131,7 +142,7 @@ export const buildSkoposCommandsGraph = ({
     status: 'generated',
     authority: 'generated',
     summary:
-      'Typed commands graph for canonical root commands, operational workflows, and targeted package scopes.',
+      'Typed commands graph for canonical root commands, operational actions, and targeted project Scopes.',
     updatedAt: generatedAt,
     generatedAt,
     workspaceRoot,

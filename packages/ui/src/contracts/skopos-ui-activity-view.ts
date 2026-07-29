@@ -1,7 +1,8 @@
-import type { SkoposTrustCheckStatus, SkoposWorkflowRunStatus } from '@skopos/model';
 import type {
+  SkoposActionRunStatus,
   SkoposOperationalLogEventKind,
   SkoposOperationalLogStatus,
+  SkoposTaskState,
 } from '@skopos/model';
 
 export interface SkoposUiPlanSummary {
@@ -9,7 +10,7 @@ export interface SkoposUiPlanSummary {
   title: string;
   goal: string;
   summary: string;
-  parentMissionId?: string;
+  parentPlanId?: string;
   scopeId: string;
   confidence: string;
   createdByActorId?: string;
@@ -17,27 +18,27 @@ export interface SkoposUiPlanSummary {
   artifactPath: string;
 }
 
-export interface SkoposUiMissionSummary {
+export interface SkoposUiTaskSummary {
   id: string;
   title: string;
   summary: string;
-  parentMissionId?: string;
-  state: 'planned' | 'active' | 'blocked' | 'complete';
+  parentTaskId?: string;
+  state: SkoposTaskState;
   scopeId: string;
-  pendingItemCount: number;
-  linkedSliceCount: number;
-  recommendedWorkflowIds: string[];
+  pendingStepCount: number;
+  childTaskCount: number;
+  selectedActionIds: string[];
   claimedByActorId?: string;
   lastUpdatedByActorId?: string;
   updatedAt?: string;
   artifactPath: string;
 }
 
-export interface SkoposUiWorkflowRunSummary {
+export interface SkoposUiActionRunSummary {
   id: string;
-  workflowId: string;
-  workflowTitle: string;
-  runStatus: SkoposWorkflowRunStatus;
+  actionId: string;
+  actionTitle: string;
+  runStatus: SkoposActionRunStatus;
   outputPaths: string[];
   runByActorId?: string;
   finishedAt?: string;
@@ -53,23 +54,10 @@ export interface SkoposUiOperationalEventSummary {
   timestamp: string;
 }
 
-export interface SkoposUiTrustSnapshot {
-  trustLevel: string;
-  readiness: string;
-  summary: string;
-  checks: Array<{
-    id: string;
-    status: SkoposTrustCheckStatus;
-    summary: string;
-  }>;
-  unresolvedAssumptions: string[];
-  findings: string[];
-}
-
 export interface SkoposUiActivityViewsResult {
   workspaceRoot: string;
   plans: SkoposUiPlanSummary[];
-  missions: SkoposUiMissionSummary[];
-  workflowRuns: SkoposUiWorkflowRunSummary[];
+  tasks: SkoposUiTaskSummary[];
+  actionRuns: SkoposUiActionRunSummary[];
   operationalEvents: SkoposUiOperationalEventSummary[];
 }

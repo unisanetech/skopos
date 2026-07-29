@@ -3,6 +3,8 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
 
+import { buildHostActorBinding } from '../host-actor-binding/host-actor-binding.js';
+
 export interface SyncClaudeCodeHookAdapterOptions {
   cwd: string;
   dryRun?: boolean;
@@ -20,13 +22,16 @@ export interface SyncClaudeCodeHookAdapterResult {
   writes: ClaudeCodeHookAdapterWrite[];
 }
 
-const SETTINGS_RELATIVE_PATH = '.skopos/tooling/claude-code/settings.json';
-const SESSION_START_HOOK_RELATIVE_PATH = '.skopos/tooling/claude-code/hooks/session-start-hook.mjs';
+const SETTINGS_RELATIVE_PATH = '.skopos/cache/tooling/claude-code/settings.json';
+const SESSION_START_HOOK_RELATIVE_PATH =
+  '.skopos/cache/tooling/claude-code/hooks/session-start-hook.mjs';
 const USER_PROMPT_SUBMIT_HOOK_RELATIVE_PATH =
-  '.skopos/tooling/claude-code/hooks/user-prompt-submit-hook.mjs';
-const POST_EDIT_HOOK_RELATIVE_PATH = '.skopos/tooling/claude-code/hooks/post-edit-hook.mjs';
-const PRE_COMPACT_HOOK_RELATIVE_PATH = '.skopos/tooling/claude-code/hooks/pre-compact-hook.mjs';
-const STOP_HOOK_RELATIVE_PATH = '.skopos/tooling/claude-code/hooks/stop-hook.mjs';
+  '.skopos/cache/tooling/claude-code/hooks/user-prompt-submit-hook.mjs';
+const POST_EDIT_HOOK_RELATIVE_PATH =
+  '.skopos/cache/tooling/claude-code/hooks/post-edit-hook.mjs';
+const PRE_COMPACT_HOOK_RELATIVE_PATH =
+  '.skopos/cache/tooling/claude-code/hooks/pre-compact-hook.mjs';
+const STOP_HOOK_RELATIVE_PATH = '.skopos/cache/tooling/claude-code/hooks/stop-hook.mjs';
 
 export const syncClaudeCodeHookAdapter = async ({
   cwd,
@@ -90,16 +95,19 @@ export const syncClaudeCodeHookAdapter = async ({
 const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): string =>
   `${JSON.stringify(
     {
-      skoposProjection: projectionModel
-        ? {
-            schemaVersion: projectionModel.schemaVersion,
-            authority: projectionModel.authority,
-            projectModelPath: '.skopos/enforcement.json',
-            enforcementRuleIds:
-              projectionModel.hosts.find((host) => host.hostId === 'claude-code')
-                ?.enforcementRuleIds ?? [],
-          }
-        : undefined,
+      skoposProjection: {
+        schemaVersion: projectionModel?.schemaVersion ?? 1,
+        actorBinding: buildHostActorBinding(),
+        ...(projectionModel
+          ? {
+              authority: projectionModel.authority,
+              projectModelPath: '.skopos/index/enforcement.json',
+              enforcementRuleIds:
+                projectionModel.hosts.find((host) => host.hostId === 'claude-code')
+                  ?.enforcementRuleIds ?? [],
+            }
+          : {}),
+      },
       hooks: {
         SessionStart: [
           {
@@ -107,7 +115,7 @@ const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): 
               {
                 type: 'command',
                 command:
-                  'node "$CLAUDE_PROJECT_DIR/.skopos/tooling/claude-code/hooks/session-start-hook.mjs"',
+                  'node "$CLAUDE_PROJECT_DIR/.skopos/cache/tooling/claude-code/hooks/session-start-hook.mjs"',
               },
             ],
           },
@@ -118,7 +126,7 @@ const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): 
               {
                 type: 'command',
                 command:
-                  'node "$CLAUDE_PROJECT_DIR/.skopos/tooling/claude-code/hooks/user-prompt-submit-hook.mjs"',
+                  'node "$CLAUDE_PROJECT_DIR/.skopos/cache/tooling/claude-code/hooks/user-prompt-submit-hook.mjs"',
               },
             ],
           },
@@ -130,7 +138,7 @@ const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): 
               {
                 type: 'command',
                 command:
-                  'node "$CLAUDE_PROJECT_DIR/.skopos/tooling/claude-code/hooks/post-edit-hook.mjs"',
+                  'node "$CLAUDE_PROJECT_DIR/.skopos/cache/tooling/claude-code/hooks/post-edit-hook.mjs"',
               },
             ],
           },
@@ -142,7 +150,7 @@ const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): 
               {
                 type: 'command',
                 command:
-                  'node "$CLAUDE_PROJECT_DIR/.skopos/tooling/claude-code/hooks/pre-compact-hook.mjs"',
+                  'node "$CLAUDE_PROJECT_DIR/.skopos/cache/tooling/claude-code/hooks/pre-compact-hook.mjs"',
               },
             ],
           },
@@ -153,7 +161,7 @@ const renderClaudeCodeSettings = (projectionModel?: SkoposHostProjectionModel): 
               {
                 type: 'command',
                 command:
-                  'node "$CLAUDE_PROJECT_DIR/.skopos/tooling/claude-code/hooks/stop-hook.mjs"',
+                  'node "$CLAUDE_PROJECT_DIR/.skopos/cache/tooling/claude-code/hooks/stop-hook.mjs"',
               },
             ],
           },
@@ -221,42 +229,6 @@ const parseJsonOutput = (result) => {
   }
 };
 
-const buildWorkflowContext = (programReport) => {
-  if (!programReport || typeof programReport !== 'object') {
-    return '';
-  }
-
-  const summary =
-    typeof programReport.summary === 'string' ? programReport.summary.trim() : '';
-  const nextCommand =
-    typeof programReport.nextCommand === 'string' ? programReport.nextCommand.trim() : '';
-  const recommendedCommand =
-    typeof programReport.recommendedAction?.command === 'string'
-      ? programReport.recommendedAction.command.trim()
-      : '';
-  const command = recommendedCommand || nextCommand;
-  const lines = ['Skopos workflow router:'];
-
-  if (summary.length > 0) {
-    lines.push(summary);
-  }
-
-  if (command.length > 0) {
-    lines.push(\`Next command: \${command}\`);
-  }
-
-  return lines.length > 1 ? lines.join('\\n') : '';
-};
-
-const combineAdditionalContext = (discussionReport, programReport) =>
-  [
-    typeof discussionReport?.additionalContext === 'string'
-      ? discussionReport.additionalContext.trim()
-      : '',
-    buildWorkflowContext(programReport),
-  ]
-    .filter((entry) => entry.length > 0)
-    .join('\\n\\n');
 `;
 
 const renderSessionStartHookScript = (): string => `#!/usr/bin/env node
@@ -264,16 +236,21 @@ ${renderSharedRunner()}
 
 const input = await readInput();
 const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
-const discussionResult = runSkopos(projectDir, ['discuss', 'recent', projectDir, '--json']);
-const programResult = runSkopos(projectDir, ['program', 'next', projectDir, '--json']);
+const contextArgs = ['session', 'context', projectDir, '--host', 'claude-code', '--json'];
+if (typeof input.session_id === 'string' && input.session_id.trim().length > 0) {
+  contextArgs.push('--session-id', input.session_id.trim());
+}
+const contextResult = runSkopos(projectDir, contextArgs);
 
-if (discussionResult.status !== 0 && programResult.status !== 0) {
+if (contextResult.status !== 0) {
   process.exit(0);
 }
 
-const discussionReport = parseJsonOutput(discussionResult);
-const programReport = parseJsonOutput(programResult);
-const additionalContext = combineAdditionalContext(discussionReport, programReport);
+const contextReport = parseJsonOutput(contextResult);
+const additionalContext =
+  typeof contextReport.additionalContext === 'string'
+    ? contextReport.additionalContext
+    : '';
 
 if (additionalContext.trim().length === 0) {
   process.exit(0);
@@ -390,68 +367,46 @@ if (lastAssistantMessage.length > 0) {
 }
 
 runSkopos(projectDir, ['discuss', 'checkpoint', projectDir, '--json']);
-const programResult = runSkopos(projectDir, ['program', 'next', projectDir, '--json']);
-const programReport = parseJsonOutput(programResult);
-const recommendedCommand =
-  typeof programReport.recommendedAction?.command === 'string'
-    ? programReport.recommendedAction.command.trim()
-    : '';
-
-if (recommendedCommand.length > 0) {
-  const reason = [
-    typeof programReport.recommendedAction?.summary === 'string'
-      ? programReport.recommendedAction.summary
-      : typeof programReport.summary === 'string'
-        ? programReport.summary
-        : 'Skopos requires the next workflow router step before stopping.',
-    \`Run \\\`\${recommendedCommand}\\\` before stopping.\`,
-  ].join(' ');
-
+const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'claude-code', '--json']);
+const context = parseJsonOutput(contextResult);
+if (contextResult.status !== 0) {
   process.stdout.write(
     JSON.stringify({
       decision: 'block',
-      reason,
+      reason: 'Skopos could not load current Session context. Repair Session or Task state before stopping.',
     }),
   );
   process.exit(0);
 }
 
-const result = runSkopos(projectDir, ['done', '--cwd', projectDir, '--json']);
-
-if (result.status !== 0) {
+if (typeof context.nextCommand === 'string' && context.nextCommand.trim().length > 0) {
   process.stdout.write(
     JSON.stringify({
       decision: 'block',
-      reason: 'Skopos stop enforcement could not verify closure. Run \`skopos done --cwd <project-root>\` manually.',
+      reason: \`Skopos has an unresolved next step. Run \\\`\${context.nextCommand.trim()}\\\` before stopping.\`,
     }),
   );
   process.exit(0);
 }
 
-let report;
-try {
-  report = JSON.parse(result.stdout || '{}');
-} catch {
-  process.stdout.write(
-    JSON.stringify({
-      decision: 'block',
-      reason: 'Skopos stop enforcement received invalid closure output. Run \`skopos done --cwd <project-root>\` manually.',
-    }),
-  );
+if (typeof context.currentTaskId !== 'string' || context.currentTaskId.length === 0) {
   process.exit(0);
 }
 
-if (report.closureStatus === 'complete') {
+const readinessArgs = ['readiness', context.currentTaskId, projectDir, '--for', 'close', '--json'];
+if (typeof process.env.SKOPOS_ACTOR === 'string' && process.env.SKOPOS_ACTOR.trim().length > 0) {
+  readinessArgs.push('--actor', process.env.SKOPOS_ACTOR.trim());
+}
+const readinessResult = runSkopos(projectDir, readinessArgs);
+const readiness = parseJsonOutput(readinessResult);
+if (readinessResult.status === 0 && readiness.readiness === 'ready') {
   process.exit(0);
 }
-
-const actions = Array.isArray(report.requiredActions) ? report.requiredActions.slice(0, 3).join(' | ') : '';
-const reason = [report.summary || 'Skopos closure is not complete.', actions].filter(Boolean).join(' ');
 
 process.stdout.write(
   JSON.stringify({
     decision: 'block',
-    reason,
+    reason: readiness.summary || 'Task is not ready to close. Resolve its Readiness blockers first.',
   }),
 );
 `;

@@ -31,7 +31,7 @@ export interface SkoposConsoleSearchQuery {
     kind?: string;
     route?: string;
     doc?: string;
-    mission?: string;
+    task?: string;
     plan?: string;
   };
   hasFilters: boolean;
@@ -138,7 +138,7 @@ const parseConsoleSearchQuery = (rawQuery: string): SkoposConsoleSearchQuery => 
   const textTokens: string[] = [];
 
   for (const part of rawQuery.trim().split(/\s+/)) {
-    const match = /^(scope|kind|route|doc|mission|plan):(.+)$/i.exec(part);
+    const match = /^(scope|kind|route|doc|task|plan):(.+)$/i.exec(part);
     if (match) {
       const [, key, value] = match;
       const normalizedValue = normalizeSearchValue(value);
@@ -356,12 +356,12 @@ const matchesConsoleSearchFilters = (
     }
   }
 
-  if (filters.mission) {
+  if (filters.task) {
     if (
-      entry.kind !== 'mission' ||
+      entry.kind !== 'task' ||
       ![entry.title, entry.id, entry.summary]
         .map((value) => normalizeSearchValue(value))
-        .some((value) => value.includes(filters.mission!))
+        .some((value) => value.includes(filters.task!))
     ) {
       return false;
     }

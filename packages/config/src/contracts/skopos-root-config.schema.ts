@@ -20,7 +20,7 @@ export const skoposProjectModeSchema = z.enum([
 
 export const skoposScopeStrategySchema = z.enum(['package', 'domain', 'service', 'hybrid']);
 
-export const skoposTrustModeSchema = z.enum(['fast', 'balanced', 'strict', 'stabilize']);
+export const skoposVerificationModeSchema = z.enum(['fast', 'balanced', 'strict', 'stabilize']);
 
 export const skoposDecisionModeSchema = z.enum(['fast', 'balanced', 'strict']);
 
@@ -36,6 +36,14 @@ export const skoposCommandMapSchema = z
   })
   .strict();
 
+const workspaceRelativePathSchema = (label: string) =>
+  z
+    .string()
+    .min(1)
+    .refine(isWorkspaceRelativePath, (value) => ({
+      message: `Skopos ${label} must stay inside the workspace: ${value}`,
+    }));
+
 export const skoposRootConfigSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -49,15 +57,23 @@ export const skoposRootConfigSchema = z
       })
       .strict(),
     commands: skoposCommandMapSchema,
+    validation: z
+      .object({
+        mode: z.enum(['commands', 'actions']),
+      })
+      .strict()
+      .default({
+        mode: 'commands',
+      }),
     workspace: z
       .object({
-        ignore: z.array(z.string().min(1)),
+        ignore: z.array(workspaceRelativePathSchema('workspace ignore path')),
       })
       .strict(),
     docs: z
       .object({
-        root: z.string().min(1),
-        startHerePath: z.string().min(1).optional(),
+        root: workspaceRelativePathSchema('memory root'),
+        startHerePath: workspaceRelativePathSchema('docs start-here path').optional(),
         usePerDomainArchive: z.boolean(),
         strictMetadata: z.boolean(),
         strictLinking: z.boolean(),
@@ -65,16 +81,16 @@ export const skoposRootConfigSchema = z
       .strict(),
     agents: z
       .object({
-        canonicalInstructions: z.string().min(1),
-        syncMirrors: z.array(z.string().min(1)),
+        canonicalInstructions: workspaceRelativePathSchema('canonical instructions path'),
+        syncMirrors: z.array(workspaceRelativePathSchema('instruction mirror path')),
         mcp: z.boolean(),
       })
       .strict(),
-    trust: z
+    verification: z
       .object({
-        mode: skoposTrustModeSchema,
+        mode: skoposVerificationModeSchema,
         requireDocsSync: z.boolean(),
-        requireProofForDone: z.boolean(),
+        requireEvidenceForReadiness: z.boolean(),
       })
       .strict(),
     decisions: z
@@ -90,6 +106,42 @@ export const skoposRootConfigSchema = z
       })
       .strict(),
   })
-  .strict();
+  .strict()
+  .superRefine((config, context) => {
+    const startHerePath = config.docs.startHerePath;
+    if (
+      startHerePath &&
+      isWorkspaceRelativePath(startHerePath) &&
+      !isPathWithinRoot(startHerePath, config.docs.root)
+    ) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['docs', 'startHerePath'],
+        message: `Skopos docs start-here path must stay inside the configured memory root ${config.docs.root}: ${startHerePath}`,
+      });
+    }
+  });
 
 export type ParsedSkoposRootConfig = z.infer<typeof skoposRootConfigSchema>;
+
+function isWorkspaceRelativePath(value: string): boolean {
+  const normalized = value.replaceAll('\\', '/');
+  return (
+    normalized === '.' ||
+    (!normalized.startsWith('/') &&
+      !/^[a-zA-Z]:/.test(normalized) &&
+      normalized.split('/').every((segment) => segment !== '..' && segment.length > 0))
+  );
+}
+
+function isPathWithinRoot(path: string, root: string): boolean {
+  const normalizedPath = normalizeWorkspacePath(path);
+  const normalizedRoot = normalizeWorkspacePath(root);
+  return normalizedRoot === '.'
+    ? normalizedPath !== '.'
+    : normalizedPath.startsWith(`${normalizedRoot}/`);
+}
+
+function normalizeWorkspacePath(value: string): string {
+  return value.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/+$/, '') || '.';
+}

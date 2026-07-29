@@ -38,7 +38,7 @@ const sortGraphArtifacts = (left: SkoposGraphArtifact, right: SkoposGraphArtifac
     commands: 2,
     'scope-relations': 3,
     impact: 4,
-    mission: 5,
+    task: 5,
   };
 
   if (kindOrder[left.graphKind] !== kindOrder[right.graphKind]) {

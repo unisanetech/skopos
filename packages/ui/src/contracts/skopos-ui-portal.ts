@@ -1,8 +1,6 @@
-import type { SkoposReadiness, SkoposTrustLevel } from '@skopos/model';
-
 export interface SkoposUiArtifactCounts {
   plans: number;
-  missions: number;
+  tasks: number;
   runs: number;
   graphArtifacts: number;
 }
@@ -14,9 +12,8 @@ export interface SkoposUiPortalRenderResult {
   writeStatus: 'written' | 'dry-run';
   graphPortalWriteStatus: 'written' | 'dry-run';
   graphCount: number;
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
-  trustSummary: string;
+  readiness: 'ready' | 'attention' | 'blocked';
+  readinessSummary: string;
   artifactCounts: SkoposUiArtifactCounts;
   html: string;
   graphHtml: string;

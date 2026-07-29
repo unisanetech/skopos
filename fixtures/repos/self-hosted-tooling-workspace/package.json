@@ -11,7 +11,7 @@
     "instructions:sync": "echo instructions sync",
     "skopos:init": "echo skopos init",
     "skopos:scan": "echo skopos scan",
-    "skopos:trust": "echo skopos trust",
+    "skopos:readiness": "echo skopos readiness",
     "skopos:ui": "echo skopos ui",
     "skopos:ui:app": "echo skopos ui app"
   }

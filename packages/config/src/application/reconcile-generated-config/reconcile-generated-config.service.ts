@@ -40,9 +40,9 @@ export const reconcileGeneratedSkoposConfig = ({
         repoMode: recommendedConfig.project.repoMode,
         scopeStrategy: recommendedConfig.project.scopeStrategy,
       },
-      trust: {
-        ...nextConfig.trust,
-        mode: recommendedConfig.trust.mode,
+      verification: {
+        ...nextConfig.verification,
+        mode: recommendedConfig.verification.mode,
       },
     };
     refreshedManagedFields = true;
@@ -95,13 +95,15 @@ export const reconcileGeneratedSkoposConfig = ({
   }
 
   if (
-    existingConfig.trust.requireProofForDone !== recommendedConfig.trust.requireProofForDone
+    existingConfig.verification.requireEvidenceForReadiness !==
+    recommendedConfig.verification.requireEvidenceForReadiness
   ) {
     nextConfig = {
       ...nextConfig,
-      trust: {
-        ...nextConfig.trust,
-        requireProofForDone: recommendedConfig.trust.requireProofForDone,
+      verification: {
+        ...nextConfig.verification,
+        requireEvidenceForReadiness:
+          recommendedConfig.verification.requireEvidenceForReadiness,
       },
     };
     refreshedManagedFields = true;

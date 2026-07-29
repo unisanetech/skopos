@@ -1,29 +1,29 @@
 import type {
   SkoposUiConsoleDiscussionCheckpointView,
   SkoposUiConsoleDiscussionHandoffView,
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
 
 export interface OverviewDiscussionContext {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
   recentDiscussionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
-  activeMissionView?: SkoposUiConsoleMissionView;
+  activeTaskView?: SkoposUiConsoleTaskView;
 }
 
-export interface MissionDiscussionContext {
+export interface TaskDiscussionContext {
   latestDiscussionHandoff?: SkoposUiConsoleDiscussionHandoffView;
-  missionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
-  activeMissionView?: SkoposUiConsoleMissionView;
+  taskCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
+  activeTaskView?: SkoposUiConsoleTaskView;
 }
 
 export const getOverviewDiscussionContext = (
   state: SkoposUiConsoleState,
 ): OverviewDiscussionContext => {
   const latestDiscussionHandoff = state.latestDiscussionHandoff;
-  const activeMissionView = latestDiscussionHandoff?.handoff.activeMissionId
-    ? state.missions.find(
-        (missionView) => missionView.mission.id === latestDiscussionHandoff.handoff.activeMissionId,
+  const activeTaskView = latestDiscussionHandoff?.handoff.activeTaskId
+    ? state.tasks.find(
+        (taskView) => taskView.task.id === latestDiscussionHandoff.handoff.activeTaskId,
       )
     : undefined;
   const recentDiscussionCheckpoints = state.discussionCheckpoints.slice(0, 4);
@@ -31,30 +31,30 @@ export const getOverviewDiscussionContext = (
   return {
     latestDiscussionHandoff,
     recentDiscussionCheckpoints,
-    activeMissionView,
+    activeTaskView,
   };
 };
 
-export const getMissionDiscussionContext = (
+export const getTaskDiscussionContext = (
   state: SkoposUiConsoleState,
-  missionId: string,
-): MissionDiscussionContext => {
+  taskId: string,
+): TaskDiscussionContext => {
   const latestDiscussionHandoff = state.latestDiscussionHandoff;
-  const missionCheckpoints = state.discussionCheckpoints.filter(
-    (checkpointView) => checkpointView.checkpoint.activeMissionId === missionId,
+  const taskCheckpoints = state.discussionCheckpoints.filter(
+    (checkpointView) => checkpointView.checkpoint.activeTaskId === taskId,
   );
 
-  if (!latestDiscussionHandoff || latestDiscussionHandoff.handoff.activeMissionId !== missionId) {
+  if (!latestDiscussionHandoff || latestDiscussionHandoff.handoff.activeTaskId !== taskId) {
     return {
-      missionCheckpoints,
+      taskCheckpoints,
     };
   }
 
-  const activeMissionView = state.missions.find((missionView) => missionView.mission.id === missionId);
+  const activeTaskView = state.tasks.find((taskView) => taskView.task.id === taskId);
 
   return {
     latestDiscussionHandoff,
-    missionCheckpoints,
-    activeMissionView,
+    taskCheckpoints,
+    activeTaskView,
   };
 };

@@ -33,7 +33,7 @@ export function MemoryView(): React.JSX.Element {
       >
         <EmptyMessage
           title="Project knowledge is not available"
-          description="Run skopos init or skopos trust to generate the project knowledge view for this workspace."
+          description="Run skopos init or skopos readiness to generate the project knowledge view for this workspace."
         />
       </ListPage>
     );
@@ -258,7 +258,7 @@ function MemoryAgentCommunicationCard({
       >
         <EmptyMessage
           title="Agent communication guide is missing"
-          description="Run skopos init or skopos trust to refresh generated agent guidance."
+          description="Run skopos init or skopos readiness to refresh generated agent guidance."
         />
       </Card>
     );

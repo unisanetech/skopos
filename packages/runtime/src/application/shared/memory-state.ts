@@ -1,5 +1,5 @@
 import { access, readFile, readdir, stat } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import type {
   SkoposAgentCommunicationBriefArtifact,
@@ -14,12 +14,10 @@ import type {
   SkoposMemorySourceProbe,
   SkoposMemoryStateArtifact,
   SkoposMemorySuggestion,
-  SkoposMissionArtifact,
   SkoposProjectKnowledgeGuidance,
-  SkoposReadiness,
   SkoposResolvedPolicyArtifact,
-  SkoposTrustLevel,
 } from '@skopos/model';
+import { SKOPOS_COMMUNICATION_CONTRACT } from '@skopos/instructions';
 
 import {
   BOOTSTRAP_ARTIFACT_PATH,
@@ -31,12 +29,12 @@ import {
   POLICY_BRIEF_ARTIFACT_PATH,
   RESOLVED_POLICY_ARTIFACT_PATH,
 } from './token-control-constants.js';
+import { resolveCurrentTaskState } from './current-task-state.js';
 import { writeJsonArtifact } from './write-json-artifact.js';
 
 export interface RefreshSkoposMemoryStateOptions {
   workspaceRoot: string;
-  trustLevel?: SkoposTrustLevel | 'unknown';
-  readiness?: SkoposReadiness | 'unknown';
+  readiness?: 'ready' | 'attention' | 'blocked' | 'unknown';
   dryRun?: boolean;
 }
 
@@ -51,8 +49,7 @@ export interface RefreshSkoposMemoryStateResult {
 
 export interface BuildSkoposProjectKnowledgeGuidanceOptions {
   workspaceRoot: string;
-  trustLevel?: SkoposTrustLevel | 'unknown';
-  readiness?: SkoposReadiness | 'unknown';
+  readiness?: 'ready' | 'attention' | 'blocked' | 'unknown';
   dryRun?: boolean;
 }
 
@@ -71,11 +68,19 @@ interface RoleCandidate {
   required?: boolean;
 }
 
+export interface BuildSkoposMemoryRolesOptions {
+  workspaceRoot: string;
+  bootstrap?: SkoposBootstrapArtifact;
+  resolvedPolicy?: SkoposResolvedPolicyArtifact;
+  driftReport?: SkoposDriftReportArtifact;
+  latestHandoffPath?: string;
+  latestTaskPath?: string;
+}
+
 const MAX_ROLE_SOURCES = 8;
 
 export const refreshSkoposMemoryState = async ({
   workspaceRoot,
-  trustLevel = 'unknown',
   readiness = 'unknown',
   dryRun = false,
 }: RefreshSkoposMemoryStateOptions): Promise<RefreshSkoposMemoryStateResult> => {
@@ -89,15 +94,21 @@ export const refreshSkoposMemoryState = async ({
   const driftReport = await readJsonIfExists<SkoposDriftReportArtifact>(
     join(workspaceRoot, DRIFT_REPORT_ARTIFACT_PATH),
   );
-  const latestHandoffPath = await resolveLatestHandoffPath(workspaceRoot);
-  const latestMissionPath = await resolveLatestMissionPath(workspaceRoot);
-  const roles = await buildMemoryRoles({
+  const currentTask = await resolveCurrentTaskState({ workspaceRoot });
+  const latestHandoffPath =
+    currentTask && (await pathExists(currentTask.handoffPath))
+      ? relative(workspaceRoot, currentTask.handoffPath)
+      : undefined;
+  const latestTaskPath = currentTask
+    ? relative(workspaceRoot, currentTask.taskPath)
+    : undefined;
+  const roles = await buildSkoposMemoryRoles({
     workspaceRoot,
     bootstrap,
     resolvedPolicy,
     driftReport,
     latestHandoffPath,
-    latestMissionPath,
+    latestTaskPath,
   });
   const suggestions = buildMemorySuggestions(roles);
   const freshness = deriveMemoryFreshness(roles);
@@ -112,7 +123,6 @@ export const refreshSkoposMemoryState = async ({
     updatedAt: now,
     generatedAt: now,
     workspaceRoot,
-    trustLevel,
     readiness,
     freshness,
     roles,
@@ -167,13 +177,11 @@ export const refreshSkoposMemoryState = async ({
 
 export const buildSkoposProjectKnowledgeGuidance = async ({
   workspaceRoot,
-  trustLevel = 'unknown',
   readiness = 'unknown',
   dryRun = false,
 }: BuildSkoposProjectKnowledgeGuidanceOptions): Promise<SkoposProjectKnowledgeGuidance> => {
   const result = await refreshSkoposMemoryState({
     workspaceRoot,
-    trustLevel,
     readiness,
     dryRun,
   });
@@ -206,21 +214,14 @@ export const buildSkoposProjectKnowledgeGuidance = async ({
   };
 };
 
-const buildMemoryRoles = async ({
+export const buildSkoposMemoryRoles = async ({
   workspaceRoot,
   bootstrap,
   resolvedPolicy,
   driftReport,
   latestHandoffPath,
-  latestMissionPath,
-}: {
-  workspaceRoot: string;
-  bootstrap?: SkoposBootstrapArtifact;
-  resolvedPolicy?: SkoposResolvedPolicyArtifact;
-  driftReport?: SkoposDriftReportArtifact;
-  latestHandoffPath?: string;
-  latestMissionPath?: string;
-}): Promise<SkoposMemoryRole[]> => {
+  latestTaskPath,
+}: BuildSkoposMemoryRolesOptions): Promise<SkoposMemoryRole[]> => {
   const docsRoot = bootstrap?.recommendedConfig?.docs.root ?? 'docs';
   const startHerePath = bootstrap?.recommendedConfig?.docs.startHerePath ?? `${docsRoot}/00-start-here.md`;
   const instructionPath = bootstrap?.recommendedConfig?.agents.canonicalInstructions ?? 'AGENTS.md';
@@ -304,7 +305,7 @@ const buildMemoryRoles = async ({
       suggestedPaths: [`${docsRoot}/architecture.md`, `${docsRoot}/00-start-here.md`],
     },
     {
-      role: 'validation-gates',
+      role: 'verification-guards',
       title: 'Validation and gates',
       sourcePaths: [
         {
@@ -413,20 +414,20 @@ const buildMemoryRoles = async ({
       role: 'active-work',
       title: 'Active work and proof history',
       sourcePaths: [
-        ...(latestMissionPath
+        ...(latestTaskPath
           ? [
               {
-                path: latestMissionPath,
-                kind: 'workflow-artifact' as const,
+                path: latestTaskPath,
+                kind: 'task-artifact' as const,
                 authority: 'generated' as const,
-                summary: 'Latest active mission or work item.',
+                summary: 'Latest active Task state.',
               },
             ]
           : []),
       ],
       missingSummary: 'No active work artifact is mapped yet.',
-      nextAction: 'Use `skopos start` for normal or risky work so execution state is durable.',
-      suggestedPaths: ['.skopos/missions'],
+      nextAction: 'Use `skopos start` for standard or high-impact work so Task intent and Evidence remain connected.',
+      suggestedPaths: ['docs/work/tasks', '.skopos/tasks'],
     },
     {
       role: 'discussion-handoff',
@@ -435,7 +436,7 @@ const buildMemoryRoles = async ({
         ? [
             {
               path: latestHandoffPath,
-              kind: 'workflow-artifact',
+              kind: 'task-artifact',
               authority: 'generated',
               summary: 'Latest compact handoff for context continuation.',
             },
@@ -548,13 +549,13 @@ const nextActionForRole = (role: SkoposMemoryRoleKind): string => {
     'agent-entrypoint': 'Create or map AGENTS.md before broad agent-led work.',
     'project-overview': 'Map README.md or a project overview doc.',
     'architecture-structure': 'Map existing architecture guidance or add a short architecture note.',
-    'validation-gates': 'Add validation lane guidance to AGENTS.md or the docs router.',
+    'verification-guards': 'Declare project Guards and verification guidance.',
     'decisions-rationale': 'Create or map a lightweight decision log.',
     'findings-drift': 'Map known findings or run policy drift after accepting packs.',
     'generated-artifacts': 'Document generated-output ownership and ignored generated paths.',
     'accepted-policy': 'Run policy recommendations and accept suitable packs before broad agent work.',
     'stack-decisions': 'Record stack decisions when infrastructure choices are made.',
-    'active-work': 'Use skopos start for normal or risky work.',
+    'active-work': 'Use skopos start for standard or high-impact work.',
     'discussion-handoff': 'Create a compact handoff before long work crosses chats.',
   };
   return actions[role];
@@ -565,13 +566,13 @@ const suggestedPathsForRole = (role: SkoposMemoryRoleKind): string[] => {
     'agent-entrypoint': ['AGENTS.md'],
     'project-overview': ['README.md', 'docs/00-start-here.md'],
     'architecture-structure': ['docs/architecture.md'],
-    'validation-gates': ['AGENTS.md', 'docs/00-start-here.md'],
+    'verification-guards': ['AGENTS.md', 'tools/skopos/guards'],
     'decisions-rationale': ['docs/decisions'],
     'findings-drift': ['docs/findings', DRIFT_REPORT_ARTIFACT_PATH],
     'generated-artifacts': ['AGENTS.md', '.gitignore'],
     'accepted-policy': [RESOLVED_POLICY_ARTIFACT_PATH],
     'stack-decisions': ['docs/stack-decisions.md', 'docs/decisions'],
-    'active-work': ['.skopos/missions'],
+    'active-work': ['docs/work/tasks', '.skopos/tasks'],
     'discussion-handoff': [DISCUSSION_HANDOFF_DIRECTORY],
   };
   return paths[role];
@@ -643,7 +644,7 @@ const buildLayerSummaries = ({
     status: roles.some((role) => role.role === 'active-work' && role.status === 'mapped')
       ? 'fresh'
       : 'partial',
-    summary: 'Mission, proof, discussion, and drift artifacts describe current operational state when present.',
+    summary: 'Task, Evidence, discussion, and drift artifacts describe current operational state when present.',
     artifactPaths: [
       ...(driftReport ? [DRIFT_REPORT_ARTIFACT_PATH] : []),
       ...roles
@@ -654,7 +655,7 @@ const buildLayerSummaries = ({
     missingSourceCount: 0,
   },
   {
-    kind: 'agent-ready',
+    kind: 'agent-context',
     status: 'fresh',
     summary: 'Communication guidance is generated for coding agents.',
     artifactPaths: [COMMUNICATION_BRIEF_ARTIFACT_PATH],
@@ -688,7 +689,7 @@ const buildAgentCommunicationBrief = ({
   type: 'agent-brief',
   status: 'generated',
   authority: 'generated',
-  summary: 'Project-specific guidance for how coding agents should explain, ask, progress, validate, and close work with Skopos.',
+  summary: 'Generated project state layered onto the canonical Skopos agent response contract.',
   updatedAt: generatedAt,
   generatedAt,
   workspaceRoot,
@@ -696,10 +697,10 @@ const buildAgentCommunicationBrief = ({
   audience: 'beginner-mid-level',
   startupRules: [
     'Read AGENTS.md first.',
-    'Run or inspect `skopos program next . --compact --json` before broad scanning or implementation.',
-    'If Skopos state is missing or stale, run `skopos init .` and re-check program next.',
-    'Choose light, normal, or workpack lane before editing.',
-    'Load this communication brief when available so answers, questions, progress, and closure stay user-friendly.',
+    'Run or inspect `skopos session context . --json` before broad scanning or implementation.',
+    'If Skopos state is missing or stale, run `skopos init .` and re-check Session context.',
+    'Use the host-injected `skopos session context . --json` payload when available.',
+    'Use the Task risk and detail selected for substantial editing, but mention it only when useful.',
   ],
   tone: [
     'Use clear, calm, simple English.',
@@ -707,10 +708,7 @@ const buildAgentCommunicationBrief = ({
     'Keep small-task updates brief and make risky-work updates more explicit.',
   ],
   defaultResponseShape: [
-    'State the lane and why it fits.',
-    'Give the immediate plan or next action.',
-    'Call out blockers or user decisions only when they affect direction.',
-    'End completed work with proof and remaining risk.',
+    ...SKOPOS_COMMUNICATION_CONTRACT.coreRules,
   ],
   questionRules: [
     'Ask only when the answer changes implementation direction, risk, docs, policy, or public behavior.',
@@ -726,7 +724,7 @@ const buildAgentCommunicationBrief = ({
   closureRules: [
     'List checks run and whether they passed, failed, or were skipped with reason.',
     'Mention memory updates when project truth changed.',
-    'Do not claim done if trust, eval, accepted-policy drift, or mission state blocks closure.',
+    'Do not claim completion if Readiness, accepted-policy drift, missing Evidence, or Task state blocks closure.',
   ],
   memoryUpdateRules: [
     `Memory freshness is currently ${memory.freshness}.`,
@@ -736,21 +734,21 @@ const buildAgentCommunicationBrief = ({
   ],
   escalationRules: [
     {
-      id: 'lane.light',
+      id: 'risk.light',
       situation: 'Small local edit with low risk.',
       agentShouldDo: 'Use a light path: read compact context, inspect relevant files, edit, run a focused check, and update memory only if project truth changed.',
       userFacingTemplate: 'I will treat this as a light change because it is local and low risk.',
     },
     {
-      id: 'lane.normal',
+      id: 'risk.standard',
       situation: 'Feature, docs, policy, or multi-file work with moderate risk.',
-      agentShouldDo: 'Use a normal tracked mission, keep decisions current, run proportional gates, and summarize proof before closure.',
-      userFacingTemplate: 'I will treat this as normal-lane work because it changes durable project behavior or guidance.',
+      agentShouldDo: 'Use a standard tracked Task, keep decisions current, run proportional Actions and Guards, and summarize Evidence before Readiness.',
+      userFacingTemplate: 'I will treat this as standard-risk work because it changes durable project behavior or guidance.',
     },
     {
-      id: 'lane.workpack',
+      id: 'risk.high-impact',
       situation: 'Architecture, stack, migration, security, public API, or long-running work.',
-      agentShouldDo: 'Use a workpack-level path with phases, explicit decisions, staged gates, memory sync, and closure proof.',
+      agentShouldDo: 'Use a detailed high-impact Task or child Tasks with explicit decisions, staged Guards and Evidence, Memory sync, and close Readiness.',
       userFacingTemplate: 'This needs a heavier path because it can affect future agents or production behavior.',
     },
   ],
@@ -772,7 +770,7 @@ const buildRecommendedKnowledgeReads = (
   const priorityRoles: SkoposMemoryRoleKind[] = [
     'agent-entrypoint',
     'project-overview',
-    'validation-gates',
+    'verification-guards',
     'architecture-structure',
   ];
   const reads: SkoposProjectKnowledgeGuidance['recommendedReads'] = [];
@@ -852,32 +850,6 @@ const listMarkdownFiles = async (
   }
 
   return results;
-};
-
-const resolveLatestHandoffPath = async (workspaceRoot: string): Promise<string | undefined> => {
-  const directory = join(workspaceRoot, DISCUSSION_HANDOFF_DIRECTORY);
-  const entries = await readdir(directory).catch(() => []);
-  const latest = entries.filter((entry) => entry.endsWith('.json')).sort().at(-1);
-  return latest ? `${DISCUSSION_HANDOFF_DIRECTORY}/${latest}` : undefined;
-};
-
-const resolveLatestMissionPath = async (workspaceRoot: string): Promise<string | undefined> => {
-  const directory = join(workspaceRoot, '.skopos', 'missions');
-  const entries = await readdir(directory).catch(() => []);
-  const missionPaths = entries
-    .filter((entry) => entry.endsWith('.json'))
-    .sort()
-    .reverse();
-
-  for (const entry of missionPaths) {
-    const path = `.skopos/missions/${entry}`;
-    const mission = await readJsonIfExists<SkoposMissionArtifact>(join(workspaceRoot, path));
-    if (mission?.state === 'active') {
-      return path;
-    }
-  }
-
-  return missionPaths[0] ? `.skopos/missions/${missionPaths[0]}` : undefined;
 };
 
 const readJsonIfExists = async <T>(path: string): Promise<T | undefined> => {

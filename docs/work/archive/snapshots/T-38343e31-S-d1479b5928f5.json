@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-d1479b5928f5",
+  "taskId": "T-38343e31",
+  "sessionId": "skopos-finalization",
+  "actorId": "codex",
+  "baseRevision": "e9c7e831c2ce3cc4efe508dc14a453c45eab75f1",
+  "paths": [
+    {
+      "path": "AGENTS.md",
+      "digest": "f95a85d869090230fe8c50710c92c9eebee847a6b7eb49de3acae15a6434989c"
+    },
+    {
+      "path": "README.md",
+      "digest": "0137b439709aa9c3bd915686f72742dfaec0e74eabf261a6b95b8efe78ce9fa8"
+    },
+    {
+      "path": "package.json",
+      "digest": "1f3e5d0b57ab5d9a9f4ec39d8fd765253fb5202180da68d66fa42918f6773d7e"
+    }
+  ],
+  "digest": "d1479b5928f550e74b6fd7e30ab4a409aaf1920b1937b1fd5605cf6888fdac73",
+  "createdAt": "2026-07-29T14:37:35.111Z",
+  "artifactPath": "docs/work/archive/snapshots/T-38343e31-S-d1479b5928f5.json"
+}

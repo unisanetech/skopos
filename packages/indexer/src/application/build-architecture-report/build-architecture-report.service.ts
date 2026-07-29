@@ -110,37 +110,51 @@ const buildArchitectureUnits = async ({
   detected,
   scopesLite,
 }: BuildArchitectureUnitsInput): Promise<SkoposArchitectureUnit[]> => {
+  const workspaceScope = scopesLite.scopes.find((scope) => scope.kind === 'workspace');
   const units: SkoposArchitectureUnit[] = [
     {
-      scopeId: 'workspace',
-      title: basename(cwd),
-      path: '.',
+      scopeId: workspaceScope?.id ?? 'workspace',
+      title: workspaceScope?.title ?? basename(cwd),
+      path: workspaceScope?.path ?? '.',
       role: detectWorkspaceRole(detected),
-      confidence: detected.confidence,
-      summary: buildWorkspaceUnitSummary(detected),
+      confidence: workspaceScope?.confidence ?? detected.confidence,
+      summary: workspaceScope?.summary ?? buildWorkspaceUnitSummary(detected),
     },
   ];
 
-  const packageScopes = scopesLite.scopes.filter((scope) => scope.kind === 'package');
+  const projectScopes = scopesLite.scopes.filter((scope) => scope.kind !== 'workspace');
 
-  for (const scope of packageScopes) {
-    const packageSignals = await loadPackageSignals({
-      cwd,
-      scope,
-    });
-    const role = detectPackageRole(packageSignals);
+  for (const scope of projectScopes) {
+    const role = await detectScopeRole({ cwd, scope });
 
     units.push({
       scopeId: scope.id,
       title: scope.title,
       path: scope.path,
       role,
-      confidence: role === 'unknown' ? 'medium' : 'high',
-      summary: buildPackageUnitSummary(scope, role),
+      confidence: scope.confidence,
+      summary: buildScopeUnitSummary(scope, role),
     });
   }
 
   return units;
+};
+
+const detectScopeRole = async ({
+  cwd,
+  scope,
+}: {
+  cwd: string;
+  scope: SkoposScopeLite;
+}): Promise<SkoposArchitectureUnitRole> => {
+  if (scope.kind === 'workspace') {
+    return 'workspace-root';
+  }
+  if (scope.kind === 'package') {
+    return detectPackageRole(await loadPackageSignals({ cwd, scope }));
+  }
+
+  return scope.kind;
 };
 
 const loadPackageSignals = async ({
@@ -211,7 +225,7 @@ const buildWorkspaceUnitSummary = (detected: SkoposScanSummary): string => {
   }
 
   if (detected.repoMode !== 'single') {
-    return 'Workspace root behaves like the composition and workflow surface for multiple packages.';
+    return 'Workspace root behaves like the composition and workflow surface for multiple declared Scopes.';
   }
 
   return 'Workspace root role is present but still weakly classified.';
@@ -237,13 +251,17 @@ const detectPackageRole = (packageSignals: PackageSignals): SkoposArchitectureUn
     return 'web-app';
   }
 
-  return 'unknown';
+  return 'package';
 };
 
-const buildPackageUnitSummary = (
+const buildScopeUnitSummary = (
   scope: SkoposScopeLite,
   role: SkoposArchitectureUnitRole,
 ): string => {
+  if (scope.kind !== 'package') {
+    return `${scope.title} is the declared ${scope.kind} Scope at ${scope.path}.`;
+  }
+
   if (role === 'service') {
     return `Package ${scope.id} behaves like a service/runtime boundary.`;
   }
@@ -256,7 +274,7 @@ const buildPackageUnitSummary = (
     return `Package ${scope.id} behaves like a shared library boundary.`;
   }
 
-  return `Package ${scope.id} is present, but its role is still weakly classified.`;
+  return `Package ${scope.id} is a declared package boundary without stronger runtime-role signals.`;
 };
 
 const buildUnresolvedDecisions = (diagnosis: SkoposDiagnosisReport): SkoposArchitectureDecision[] =>
@@ -336,27 +354,25 @@ const deriveCurrentTopology = ({
   diagnosis,
   units,
 }: BuildArchitectureViewInput): SkoposArchitectureTopology => {
-  const packageRoles = units
-    .filter((unit) => unit.scopeId !== 'workspace')
-    .map((unit) => unit.role);
+  const scopeRoles = units.slice(1).map((unit) => unit.role);
 
   if (detected.repoMode === 'single') {
     return deriveSingleTopology(detected);
   }
 
-  if (packageRoles.includes('service') && packageRoles.includes('web-app')) {
+  if (scopeRoles.includes('service') && scopeRoles.includes('web-app')) {
     return diagnosis.health === 'healthy' ? 'platform-monorepo' : 'mixed-monorepo';
   }
 
-  if (packageRoles.includes('service')) {
+  if (scopeRoles.includes('service')) {
     return 'service-monorepo';
   }
 
-  if (packageRoles.includes('web-app')) {
+  if (scopeRoles.includes('web-app')) {
     return 'web-monorepo';
   }
 
-  if (packageRoles.includes('library')) {
+  if (scopeRoles.includes('library')) {
     return 'library-monorepo';
   }
 
@@ -372,27 +388,25 @@ const deriveRecommendedTopology = ({
   detected: SkoposScanSummary;
   units: SkoposArchitectureUnit[];
 }): SkoposArchitectureTopology => {
-  const packageRoles = units
-    .filter((unit) => unit.scopeId !== 'workspace')
-    .map((unit) => unit.role);
+  const scopeRoles = units.slice(1).map((unit) => unit.role);
 
   if (detected.repoMode === 'single') {
     return deriveSingleTopology(detected);
   }
 
-  if (packageRoles.includes('service') && packageRoles.includes('web-app')) {
+  if (scopeRoles.includes('service') && scopeRoles.includes('web-app')) {
     return 'platform-monorepo';
   }
 
-  if (packageRoles.includes('service')) {
+  if (scopeRoles.includes('service')) {
     return 'service-monorepo';
   }
 
-  if (packageRoles.includes('web-app')) {
+  if (scopeRoles.includes('web-app')) {
     return 'web-monorepo';
   }
 
-  if (packageRoles.includes('library')) {
+  if (scopeRoles.includes('library')) {
     return 'library-monorepo';
   }
 

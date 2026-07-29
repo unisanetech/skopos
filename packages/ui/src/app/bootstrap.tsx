@@ -6,6 +6,8 @@ import { RouterProvider } from '@tanstack/react-router';
 import { skoposUiDevStateUpdatedEvent } from '../contracts/skopos-ui-dev-channel.js';
 import { router } from './router.js';
 import {
+  bindSkoposUiLiveStatePolling,
+  getSkoposUiConsoleState,
   getSkoposUiConsoleStateRevision,
   loadSkoposUiConsoleState,
   refreshSkoposUiConsoleState,
@@ -68,7 +70,16 @@ function SkoposUiAppShell(): React.JSX.Element {
   );
 
   React.useEffect(() => {
-    return bindSkoposUiDevStateUpdates(import.meta.hot);
+    const disposeHotUpdates = bindSkoposUiDevStateUpdates(import.meta.hot);
+    const disposePolling = bindSkoposUiLiveStatePolling({
+      enabled: !import.meta.hot && getSkoposUiConsoleState()?.uiMode === 'live',
+      onRefresh: refreshSkoposUiAppState,
+    });
+
+    return () => {
+      disposeHotUpdates?.();
+      disposePolling?.();
+    };
   }, []);
 
   return <RouterProvider router={router} />;

@@ -1,96 +1,123 @@
+---
+title: Skopos Architecture
+status: active
+owner: skopos-core
+id: SKOPOS-ARCH-BASELINE
+scope: skopos
+role: architecture
+lifecycle: durable
+authority: canonical
+provenance: declared
+view: current
+lastUpdated: 2026-07-29
+relatedDocs:
+  - package-boundaries.md
+  - runtime-model.md
+  - config-model.md
+  - artifact-model.md
+  - agent-native-operating-model.md
+  - docs-governance.md
+  - evidence-and-readiness-model.md
+  - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+reviewCycle: when owning truth changes
+---
+
 # Skopos Architecture
 
-This is the canonical architecture baseline for Skopos itself.
-
-## Metadata
-
-- Doc ID: `SKOPOS-ARCH-BASELINE`
-- Status: `active`
-- Owner: `skopos-core`
-- Scope: `skopos/architecture`
-- Canonical: `yes`
-- Last Updated: `2026-07-25`
-- Review Cycle: `per workpack`
-- Related Docs:
-  - `package-boundaries.md`
-  - `runtime-model.md`
-  - `config-model.md`
-  - `artifact-model.md`
-  - `agent-native-operating-model.md`
+Skopos is a project-agnostic, repo-native operating Memory layer used by coding agents.
+It does not replace the agent: the agent reasons and edits; Skopos preserves project
+truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
-- `2026-07-25`: Adopted the agent-native single-control-plane architecture. Skopos now
-  treats context, actions, and guards as the smallest public model; separates task
-  admission, iteration, stabilization, and closure; and lets downstream projects supply
-  domain-specific capabilities without maintaining a parallel LLM workflow.
+- `2026-07-29`: Promoted the clean first-release architecture built around Project
+  Memory, Task, Action, Guard, Evidence, Work Queue, and Readiness.
 
-- `2026-06-24`: Removed the repo-specific Unisane adapter from the active Skopos package model now that Skopos lives as a standalone project.
-- `2026-04-10`: Updated the architecture baseline to make public-versus-internal surface classification explicit and to require config-driven workspace-ignore policy so proof and development roots do not contaminate compiled active package state.
-- `2026-04-09`: Updated the architecture baseline to make subtree-targeted compilation and sliced artifacts part of the large-repo operating contract.
-- `2026-04-09`: Updated the architecture baseline to make current-state and recommended-state architecture interpretation a first-class compiled artifact for brownfield repos.
-- `2026-04-09`: Refined the architecture baseline around compiled project knowledge, an explicit ingest-compile-query-lint-trust loop, and a brownfield-first proof direction.
-- `2026-04-09`: Updated the architecture baseline to reflect broader graph coverage for docs, commands, and cross-scope relationships in addition to workspace, mission, and impact.
-- `2026-04-09`: Updated the architecture baseline to reflect that the first internal typed graph artifacts now exist for workspace, mission, and impact relationships.
-- `2026-04-09`: Updated the architecture baseline to require a governed workflow extension model for project-specific scripts instead of arbitrary command guessing.
-- `2026-04-09`: Updated the architecture baseline to require an internal graph backbone with selective, high-signal UI graph views instead of generic graph rendering.
-- `2026-04-09`: Added the first canonical architecture baseline for Skopos before package implementation begins.
+## Package Layers
 
-## Layer Model
+1. `model`: public schemas and contracts
+2. `config`: configuration loading and validation
+3. `indexer`: repository discovery and compiled project indexes
+4. `query`: scoped retrieval over compiled and source truth
+5. `planner`: optional durable Plans and Task recommendations
+6. `docs-engine`: document catalog, metadata, adoption intake, and restructuring contract
+7. `instructions`: host-neutral agent instructions and host adapters
+8. `verification`: change scope, Evidence, verification, Readiness, and provenance
+9. `runtime`: application use cases and orchestration
+10. `cli` and `mcp`: public tool surfaces
+11. `ui`: an internal projection over the same canonical model
 
-1. `model`: schemas, ids, lifecycle and authority contracts
-2. `config`: root config load, normalize, validate, migrate, and declare durable policy hooks
-3. `indexer`: ingest raw repo signals and compile machine-readable project knowledge
-4. `query`: resolve scope, symbols, commands, indexes, compact context, and filtered relationship slices
-5. `planner`: build plans, missions, questions, and next-step recommendations
-6. `docs-engine`: own docs generation, metadata, archive, and link discipline
-7. `instructions`: own instruction mirror generation and checking
-8. `trust`: own impact analysis, lint and freshness checks, done checks, trust reports, and provenance
-9. `runtime`: orchestrate command use cases and registered project workflows without re-owning package logic
-10. `cli`, `mcp`, `ui`: thin user and tool surfaces
+Dependencies point inward. Tool surfaces do not own domain behavior, and runtime does
+not duplicate package logic.
 
-## Surface Classification
+## Canonical Operating Loop
 
-1. the public SDK core is narrower than the full product workspace
-2. `model`, `config`, `indexer`, `query`, `planner`, `instructions`, `trust`, and `runtime` form the core SDK family
-3. `cli` and `mcp` are tool surfaces on top of that family
-4. `ui` and `docs-engine` are internal product surfaces during incubation and self-hosting, not default core-SDK surfaces
-5. proof, fixture, test, and generated roots support development but must not be compiled as active package scopes
+```text
+adopt Project Memory
+  -> open Session
+  -> start or resume Task
+  -> retrieve Scope context
+  -> claim resources
+  -> edit and run Actions
+  -> record Evidence
+  -> Verify acceptance
+  -> assess Readiness
+  -> close or hand off
+```
 
-## Operating Loop
+Plan is optional durable direction across Tasks. Work Queue is compiled from tracked
+Tasks, Plans, Findings, material questions, dependencies, and Readiness blockers.
 
-1. ingest raw project signals from code, docs, configs, workflows, and diffs
-2. compile them into durable project knowledge and focused generated views
-3. index and log the current knowledge state so humans and agents can navigate it cheaply
-4. query compiled knowledge first and reach back to raw sources only when needed
-5. lint the knowledgebase for stale state, contradictions, gaps, and orphaned knowledge
-6. enforce trust and closure through evidence-backed gates
-7. file useful outputs back into the knowledgebase so repo understanding compounds over time
+## Project Memory
 
-## Core Rules
+Tracked sources own durable truth:
 
-1. keep Skopos core provider-agnostic and agent-agnostic
-2. generated artifacts must not become hand-authored sources of truth
-3. active docs and active generated routes must exclude archive material by default
-4. poor project patterns should be diagnosed and contained, not normalized blindly
-5. compiled project knowledge should be the default working memory, not raw broad-repo rescans
-6. keep an internal typed graph backbone for relationships, but expose only filtered, high-signal graph views to humans
-7. project-specific scripts must be surfaced through registered workflow manifests rather than hidden shell conventions
-8. graph artifacts should be runtime-managed evidence surfaces, not hand-edited documentation
-9. brownfield reliability is the primary proof target for the next phase
-10. brownfield architecture must keep current-state and recommended-state views distinct so Skopos does not confuse diagnosis with prescription
-11. large-repo mode should prefer explicit subtree-targeted compiled slices before broader full-workspace recompilation
-12. config-driven workspace-ignore policy must keep internal, proof-only, and generated roots out of active package discovery when they are not real product scopes
-13. the full repo used to build Skopos may be larger than the public SDK contract, and compiled workspace state must preserve that distinction instead of flattening everything into one package family
-14. Skopos is the single workflow and memory control plane for an adopting project;
-    project providers contribute context, actions, and guards but do not own parallel
-    task admission or closure
-15. let the coding agent own general reasoning, planning, tool use, and subagent
-    coordination; Skopos owns project truth, capabilities, deterministic enforcement,
-    and evidence
-16. execution phase and risk are independent: admission, iteration, stabilization, and
-    closure must not collapse into repeated final proof
-17. task intent, acceptance criteria, non-goals, and constraints must stay distinct from
-    durable project memory
-18. generated projections must justify their supervision or retrieval value and must
-    not multiply merely because another command or host needs a different view
+1. root instructions and configuration
+2. canonical and supporting documents
+3. Scope registry and Scope Memory
+4. Decisions, Findings, and Patterns
+5. Plans and tracked Tasks
+6. Action, Guard, Policy, and Skill declarations
+
+`.skopos/**` contains only rebuildable indexes, caches, Session and coordination state,
+Evidence envelopes, and UI assets. A clean clone can reconstruct Project Memory and
+tracked Task projections without old local state.
+
+## Extension Boundary
+
+Projects contribute:
+
+1. Scopes and Profiles
+2. canonical Memory
+3. Actions with explicit effects and concurrency
+4. deterministic Guards
+5. Policies and task-selective Skills
+
+They do not create another Task, execution, or closure authority. Ordinary user and
+system workflows remain valid domain concepts; they are not Skopos primitives.
+
+## Coordination
+
+The local SQLite broker serializes cooperating Session, Task, claim, mutation,
+contamination, takeover, and snapshot operations. Enforcement is reported honestly:
+
+1. `observed`
+2. `cooperative`
+3. `hooked`
+4. `mediated`
+
+Only hooked or mediated environments may claim preventive safety. The current host
+baseline is cooperative and therefore reports `preventiveSafety: false`.
+
+## Core Invariants
+
+1. one public vocabulary and one owner for every authority
+2. no prototype aliases, dual readers, or old-state migrations
+3. no durable truth only under `.skopos/**`
+4. no permanent brownfield mapping as the adopted end state
+5. no broad command guessing; executable capabilities are declared Actions
+6. no Action self-selects global closure requirements; Guards and Task acceptance do
+7. no completion claim without fresh acceptance-linked Evidence
+8. no Unisane-specific architecture in Skopos core
+9. generated artifacts never masquerade as hand-authored truth
+10. retrieval is Scope- and Task-selective, not a broad documentation dump

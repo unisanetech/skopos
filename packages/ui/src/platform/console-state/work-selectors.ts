@@ -1,41 +1,41 @@
 import type {
-  SkoposUiConsoleMissionView,
+  SkoposUiConsoleTaskView,
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
 
 export interface ExecutionOverviewContext {
-  activeMissions: SkoposUiConsoleMissionView[];
-  warningChecks: SkoposUiConsoleState['trustReport']['checks'];
+  activeTasks: SkoposUiConsoleTaskView[];
+  warningChecks: SkoposUiConsoleState['readinessReport']['checks'];
   proofSummary: SkoposUiConsoleState['proofReport'];
   recentPlans: SkoposUiConsoleState['plans'];
 }
 
-export interface MissionCollections {
-  openMissions: SkoposUiConsoleMissionView[];
-  allCompletedMissions: SkoposUiConsoleMissionView[];
-  completedMissions: SkoposUiConsoleMissionView[];
-  blockedMissionCount: number;
-  claimedMissionCount: number;
-  latestMission?: SkoposUiConsoleMissionView;
+export interface TaskCollections {
+  openTasks: SkoposUiConsoleTaskView[];
+  allCompletedTasks: SkoposUiConsoleTaskView[];
+  completedTasks: SkoposUiConsoleTaskView[];
+  blockedTaskCount: number;
+  claimedTaskCount: number;
+  latestTask?: SkoposUiConsoleTaskView;
 }
 
-export interface MissionListContext extends MissionCollections {
-  primaryMissions: SkoposUiConsoleMissionView[];
+export interface TaskListContext extends TaskCollections {
+  primaryTasks: SkoposUiConsoleTaskView[];
   primaryTitle: string;
   primaryDescription: string;
 }
 
-export interface MissionDetailContext {
-  missionView?: SkoposUiConsoleMissionView;
-  missionWorkflows: SkoposUiConsoleState['activity']['workflowRuns'];
-  linkedMissionViews: SkoposUiConsoleMissionView[];
-  guidance?: MissionGuidanceContext;
+export interface TaskDetailContext {
+  taskView?: SkoposUiConsoleTaskView;
+  taskActions: SkoposUiConsoleState['activity']['actionRuns'];
+  linkedTaskViews: SkoposUiConsoleTaskView[];
+  guidance?: TaskGuidanceContext;
 }
 
 const compareOptionalTimestamps = (left?: string, right?: string): number =>
   (left ?? '').localeCompare(right ?? '');
 
-export interface MissionGuidanceContext {
+export interface TaskGuidanceContext {
   percentComplete: number;
   completedCount: number;
   totalCount: number;
@@ -46,57 +46,57 @@ export interface MissionGuidanceContext {
   findingText: string;
   blockerText: string;
   proofText: string;
-  openQuestions: NonNullable<SkoposUiConsoleState['workflowQuestions']>['entries'];
+  openQuestions: NonNullable<SkoposUiConsoleState['taskQuestions']>['entries'];
 }
 
 export const getExecutionOverviewContext = (
   state: SkoposUiConsoleState,
 ): ExecutionOverviewContext => ({
-  activeMissions: state.missions.filter((mission) => mission.mission.state !== 'complete'),
-  warningChecks: state.trustReport.checks.filter((check) => check.status !== 'pass'),
+  activeTasks: state.tasks.filter((task) => task.task.state !== 'complete'),
+  warningChecks: state.readinessReport.checks.filter((check) => check.status !== 'pass'),
   proofSummary: state.proofReport,
   recentPlans: state.plans.slice(0, 4),
 });
 
-export const getMissionCollections = (state: SkoposUiConsoleState): MissionCollections => {
-  const openMissions = [...state.missions.filter((mission) => mission.mission.state !== 'complete')].sort(
+export const getTaskCollections = (state: SkoposUiConsoleState): TaskCollections => {
+  const openTasks = [...state.tasks.filter((task) => task.task.state !== 'complete')].sort(
     (left, right) => {
-      if (left.mission.state !== right.mission.state) {
-        return left.mission.state === 'active' ? -1 : 1;
+      if (left.task.state !== right.task.state) {
+        return left.task.state === 'active' ? -1 : 1;
       }
 
-      return compareOptionalTimestamps(right.mission.updatedAt, left.mission.updatedAt);
+      return compareOptionalTimestamps(right.task.updatedAt, left.task.updatedAt);
     },
   );
-  const allCompletedMissions = [...state.missions.filter((mission) => mission.mission.state === 'complete')].sort(
-    (left, right) => compareOptionalTimestamps(right.mission.updatedAt, left.mission.updatedAt),
+  const allCompletedTasks = [...state.tasks.filter((task) => task.task.state === 'complete')].sort(
+    (left, right) => compareOptionalTimestamps(right.task.updatedAt, left.task.updatedAt),
   );
 
   return {
-    openMissions,
-    allCompletedMissions,
-    completedMissions: allCompletedMissions.slice(0, 8),
-    blockedMissionCount: openMissions.filter((mission) => mission.mission.state === 'blocked').length,
-    claimedMissionCount: openMissions.filter(
-      (mission) => mission.mission.coordination.claimedBy?.actorId,
+    openTasks,
+    allCompletedTasks,
+    completedTasks: allCompletedTasks.slice(0, 8),
+    blockedTaskCount: openTasks.filter((task) => task.task.state === 'blocked').length,
+    claimedTaskCount: openTasks.filter(
+      (task) => task.task.coordination.claimedBy?.actorId,
     ).length,
-    latestMission: [...state.missions].sort((left, right) =>
-      compareOptionalTimestamps(right.mission.updatedAt, left.mission.updatedAt),
+    latestTask: [...state.tasks].sort((left, right) =>
+      compareOptionalTimestamps(right.task.updatedAt, left.task.updatedAt),
     )[0],
   };
 };
 
-export const getMissionListContext = (
+export const getTaskListContext = (
   state: SkoposUiConsoleState,
   view: 'open' | 'blocked' | 'claimed' | 'complete',
-): MissionListContext => {
-  const collections = getMissionCollections(state);
-  const filteredOpenMissions = collections.openMissions.filter((mission) => {
+): TaskListContext => {
+  const collections = getTaskCollections(state);
+  const filteredOpenTasks = collections.openTasks.filter((task) => {
     switch (view) {
       case 'blocked':
-        return mission.mission.state === 'blocked';
+        return task.task.state === 'blocked';
       case 'claimed':
-        return Boolean(mission.mission.coordination.claimedBy?.actorId);
+        return Boolean(task.task.coordination.claimedBy?.actorId);
       default:
         return true;
     }
@@ -104,15 +104,15 @@ export const getMissionListContext = (
 
   return {
     ...collections,
-    primaryMissions: view === 'complete' ? collections.completedMissions : filteredOpenMissions,
+    primaryTasks: view === 'complete' ? collections.completedTasks : filteredOpenTasks,
     primaryTitle:
       view === 'blocked'
-        ? 'Blocked mission queue'
+        ? 'Blocked task queue'
         : view === 'claimed'
-          ? 'Claimed mission queue'
+          ? 'Claimed task queue'
           : view === 'complete'
             ? 'Recently closed'
-            : 'Open mission queue',
+            : 'Open task queue',
     primaryDescription:
       view === 'blocked'
         ? 'Blocked execution is isolated so intervention pressure is obvious.'
@@ -124,53 +124,54 @@ export const getMissionListContext = (
   };
 };
 
-export const getMissionDetailContext = (
+export const getTaskDetailContext = (
   state: SkoposUiConsoleState,
-  missionId: string,
-): MissionDetailContext => {
-  const missionView = state.missions.find((mission) => mission.mission.id === missionId);
+  taskId: string,
+): TaskDetailContext => {
+  const taskView = state.tasks.find((task) => task.task.id === taskId);
 
-  if (!missionView) {
+  if (!taskView) {
     return {
-      missionWorkflows: [],
-      linkedMissionViews: [],
+      taskActions: [],
+      linkedTaskViews: [],
     };
   }
 
-  const mission = missionView.mission;
+  const task = taskView.task;
 
   return {
-    missionView,
-    missionWorkflows: state.activity.workflowRuns.filter((run) =>
-      mission.recommendedWorkflowIds.includes(run.workflowId),
+    taskView,
+    taskActions: state.activity.actionRuns.filter((run) =>
+      task.selectedActions.some((action) => action.id === run.actionId),
     ),
-    linkedMissionViews: mission.linkedSlices
-      .map((linkedSlice) =>
-        state.missions.find((candidate) => candidate.mission.id === linkedSlice.missionId),
+    linkedTaskViews: task.childTasks
+      .map((childTask) =>
+        state.tasks.find((candidate) => candidate.task.id === childTask.taskId),
       )
-      .filter((linkedSlice): linkedSlice is SkoposUiConsoleMissionView => Boolean(linkedSlice)),
-    guidance: buildMissionGuidanceContext(state, missionView),
+      .filter((childTask): childTask is SkoposUiConsoleTaskView => Boolean(childTask)),
+    guidance: buildTaskGuidanceContext(state, taskView),
   };
 };
 
-export const buildMissionGuidanceContext = (
+export const buildTaskGuidanceContext = (
   state: SkoposUiConsoleState,
-  missionView: SkoposUiConsoleMissionView,
-): MissionGuidanceContext => {
-  const mission = missionView.mission;
-  const completedItems = mission.items.filter((item) => item.status === 'complete');
-  const pendingItems = mission.items.filter((item) => item.status !== 'complete');
-  const decisionItems = mission.items.filter((item) => item.kind === 'decision');
+  taskView: SkoposUiConsoleTaskView,
+): TaskGuidanceContext => {
+  const task = taskView.task;
+  const completedItems = task.steps.filter((step) => step.status === 'complete');
+  const pendingItems = task.steps.filter((step) => step.status !== 'complete');
+  const decisionItems = task.steps.filter((step) => step.kind === 'decision');
   const pendingDecisionItems = decisionItems.filter((item) => item.status !== 'complete');
-  const openQuestions = (state.workflowQuestions?.entries ?? []).filter(
-    (question) => question.status === 'open' && question.linkedMissionId === mission.id,
-  );
-  const visibleFindings = state.trustReport.findings.length;
-  const linkedSliceCount = mission.linkedSlices.length;
-  const totalCount = mission.items.length;
+  const openQuestions =
+    state.taskQuestions?.taskId === task.id
+      ? state.taskQuestions.entries.filter((question) => question.status === 'open')
+      : [];
+  const visibleFindings = state.readinessReport.blockers.length;
+  const childTaskCount = task.childTasks.length;
+  const totalCount = task.steps.length;
   const percentComplete = totalCount === 0 ? 100 : Math.round((completedItems.length / totalCount) * 100);
-  const phase = deriveMissionPhase({
-    mission,
+  const phase = deriveTaskPhase({
+    task,
     pendingItems,
     pendingDecisionItems,
     openQuestionCount: openQuestions.length,
@@ -188,19 +189,19 @@ export const buildMissionGuidanceContext = (
     doingNowText: openQuestions[0]?.question ?? pendingItems[0]?.title ?? 'Nothing is active right now.',
     decisionText:
       decisionItems.length === 0
-        ? 'No decision items are tracked for this mission.'
+        ? 'No decision items are tracked for this task.'
         : pendingDecisionItems.length === 0
           ? `${decisionItems.length} of ${decisionItems.length} decisions complete.`
           : `${pendingDecisionItems.length} of ${decisionItems.length} decision${decisionItems.length === 1 ? '' : 's'} still ${pendingDecisionItems.length === 1 ? 'needs' : 'need'} attention.`,
     findingText:
-      visibleFindings === 0 && linkedSliceCount === 0
+      visibleFindings === 0 && childTaskCount === 0
         ? 'No active findings or follow-up slices are linked here.'
         : [
             visibleFindings > 0
-              ? `${visibleFindings} finding${visibleFindings === 1 ? '' : 's'} visible in trust.`
+              ? `${visibleFindings} finding${visibleFindings === 1 ? '' : 's'} visible in readiness.`
               : undefined,
-            linkedSliceCount > 0
-              ? `${linkedSliceCount} linked follow-up slice${linkedSliceCount === 1 ? '' : 's'}.`
+            childTaskCount > 0
+              ? `${childTaskCount} linked follow-up slice${childTaskCount === 1 ? '' : 's'}.`
               : undefined,
           ]
             .filter(Boolean)
@@ -208,37 +209,35 @@ export const buildMissionGuidanceContext = (
     blockerText:
       openQuestions.length > 0
         ? `${openQuestions.length} open question${openQuestions.length === 1 ? '' : 's'} ${openQuestions.length === 1 ? 'needs' : 'need'} an answer before implementation is fully safe.`
-        : mission.state === 'blocked'
-          ? 'This mission is marked blocked. Review the checklist and trust route before continuing.'
-          : 'No blocking workflow questions are open for this mission.',
+        : task.state === 'blocked'
+          ? 'This task is marked blocked. Review its steps and readiness blockers before continuing.'
+          : 'No blocking Task questions are open for this task.',
     proofText:
-      mission.state === 'complete'
-        ? 'Mission is complete. Keep eval and done evidence with the closed work.'
-        : mission.recommendedWorkflowIds.length > 0
-          ? `Run or review ${mission.recommendedWorkflowIds.length} required workflow${mission.recommendedWorkflowIds.length === 1 ? '' : 's'} before closure.`
-          : mission.recommendedChecks.length > 0
-            ? `Run ${mission.recommendedChecks.length} recommended check${mission.recommendedChecks.length === 1 ? '' : 's'} before closure.`
-            : 'Run focused checks, then use eval and done before closing.',
+      task.state === 'complete'
+        ? 'Task is complete and its Evidence remains attached to the closed work.'
+        : task.selectedActions.length > 0
+          ? `Run or review ${task.selectedActions.length} selected Action${task.selectedActions.length === 1 ? '' : 's'} before Readiness.`
+          : 'Capture focused Evidence for the acceptance criteria before requesting Readiness.',
     openQuestions,
   };
 };
 
-const deriveMissionPhase = ({
-  mission,
+const deriveTaskPhase = ({
+  task,
   pendingItems,
   pendingDecisionItems,
   openQuestionCount,
 }: {
-  mission: SkoposUiConsoleMissionView['mission'];
-  pendingItems: SkoposUiConsoleMissionView['mission']['items'];
-  pendingDecisionItems: SkoposUiConsoleMissionView['mission']['items'];
+  task: SkoposUiConsoleTaskView['task'];
+  pendingItems: SkoposUiConsoleTaskView['task']['steps'];
+  pendingDecisionItems: SkoposUiConsoleTaskView['task']['steps'];
   openQuestionCount: number;
-}): MissionGuidanceContext['phase'] => {
-  if (mission.state === 'complete') {
+}): TaskGuidanceContext['phase'] => {
+  if (task.state === 'complete') {
     return 'complete';
   }
 
-  if (mission.state === 'blocked' || openQuestionCount > 0) {
+  if (task.state === 'blocked' || openQuestionCount > 0) {
     return 'blocked';
   }
 
@@ -247,12 +246,12 @@ const deriveMissionPhase = ({
   }
 
   if (
-    pendingItems.some((item) => ['implementation', 'workflow', 'docs'].includes(item.kind))
+    pendingItems.some((item) => ['implementation', 'action', 'docs'].includes(item.kind))
   ) {
     return 'implementation';
   }
 
-  if (pendingItems.some((item) => item.kind === 'validation')) {
+  if (pendingItems.some((item) => item.kind === 'verification')) {
     return 'verification';
   }
 

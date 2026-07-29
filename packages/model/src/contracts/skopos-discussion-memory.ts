@@ -26,7 +26,7 @@ export interface SkoposDiscussionRawJournalTurn {
   excerpt: string;
   estimatedTokens: number;
   transcriptPath?: string;
-  activeMissionId?: string;
+  activeTaskId?: string;
 }
 
 export interface SkoposDiscussionHandoffDecision {
@@ -48,14 +48,14 @@ export type SkoposDiscussionCheckpointQuestion = SkoposDiscussionHandoffQuestion
 
 export type SkoposDiscussionCheckpointPromotionTrigger =
   | 'manual'
-  | 'workflow-start'
-  | 'workflow-decision'
-  | 'workflow-eval'
+  | 'task-start'
+  | 'task-decision'
+  | 'task-verification'
   | 'major-state-change';
 
 export type SkoposDiscussionCheckpointPromotionKind =
   | 'initial-state'
-  | 'active-mission-changed'
+  | 'active-task-changed'
   | 'current-direction-changed'
   | 'accepted-decisions-changed'
   | 'open-questions-changed'
@@ -65,8 +65,8 @@ export interface SkoposDiscussionCheckpointArtifact
   extends SkoposArtifactEnvelope<'discussion-checkpoint'> {
   workspaceRoot: string;
   threadId: string;
-  checkpointKind: 'workflow-state';
-  activeMissionId?: string;
+  checkpointKind: 'task-state';
+  activeTaskId?: string;
   linkedPlanId?: string;
   currentDirection: string;
   acceptedDecisions: SkoposDiscussionCheckpointDecision[];
@@ -86,7 +86,7 @@ export interface SkoposDiscussionCheckpointIndexEntry {
   id: string;
   threadId: string;
   artifactPath: string;
-  activeMissionId?: string;
+  activeTaskId?: string;
   linkedPlanId?: string;
   summary: string;
   currentDirection: string;
@@ -105,8 +105,8 @@ export interface SkoposDiscussionIndexArtifact
 export interface SkoposDiscussionHandoffArtifact
   extends SkoposArtifactEnvelope<'discussion-handoff'> {
   workspaceRoot: string;
-  handoffKind: 'workflow-resume';
-  activeMissionId?: string;
+  handoffKind: 'task-resume';
+  activeTaskId?: string;
   currentDirection: string;
   acceptedDecisions: SkoposDiscussionHandoffDecision[];
   openQuestions: SkoposDiscussionHandoffQuestion[];

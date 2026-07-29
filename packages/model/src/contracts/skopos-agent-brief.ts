@@ -1,24 +1,12 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
-import type { SkoposClosureStatus } from './skopos-done-report.js';
-import type { SkoposEvalStatus, SkoposEvalProofStatus } from './skopos-eval.js';
-import type { SkoposMissionArtifact } from './skopos-plan.js';
 import type {
-  SkoposExecutionLane,
   SkoposResolvedPolicyArtifact,
 } from './skopos-policy-pack.js';
-import type {
-  SkoposProgramRecommendedActionKind,
-  SkoposProgramRoutingDecision,
-} from './skopos-program.js';
-import type { SkoposReadiness, SkoposTrustCheckStatus, SkoposTrustLevel } from './skopos-trust-report.js';
-import type { SkoposWorkflowRecommendationEntry } from './skopos-workflow-recommendation.js';
+import type { SkoposTaskRisk, SkoposTaskState } from './skopos-task.js';
 
 export type SkoposAgentBriefKind =
-  | 'trust'
-  | 'done'
-  | 'program'
-  | 'eval'
-  | 'mission'
+  | 'task'
+  | 'readiness'
   | 'prompt'
   | 'policy'
   | 'communication';
@@ -30,23 +18,11 @@ interface SkoposAgentBriefBase<K extends SkoposAgentBriefKind>
   nextCommand?: string;
 }
 
-export interface SkoposAgentBriefCheckCounts {
-  pass: number;
-  warn: number;
-  fail: number;
-}
-
-export interface SkoposAgentBriefAttentionCheck {
-  id: string;
-  status: SkoposTrustCheckStatus;
-  summary: string;
-}
-
 export type SkoposAgentPromptLayerKind =
   | 'stable-system-tool-prefix'
   | 'stable-workspace-doctrine-prefix'
   | 'stable-project-policy-prefix'
-  | 'dynamic-execution-tail';
+  | 'dynamic-task-tail';
 
 export interface SkoposAgentPromptLayerReference {
   id: string;
@@ -76,68 +52,22 @@ export interface SkoposAgentPromptBudgetMeasurement {
   status: 'within-budget' | 'over-budget' | 'missing';
 }
 
-export interface SkoposAgentTrustBriefArtifact extends SkoposAgentBriefBase<'trust'> {
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
-  checkCounts: SkoposAgentBriefCheckCounts;
-  attentionChecks: SkoposAgentBriefAttentionCheck[];
-  findingCount: number;
-  unresolvedAssumptionCount: number;
-}
-
-export interface SkoposAgentDoneBriefArtifact extends SkoposAgentBriefBase<'done'> {
-  closureStatus: SkoposClosureStatus;
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
-  checkCounts: SkoposAgentBriefCheckCounts;
-  attentionChecks: SkoposAgentBriefAttentionCheck[];
-  requiredActions: string[];
-  changedPathCount: number;
-  missionId?: string;
-  missionState?: SkoposMissionArtifact['state'];
-  missionEvalStatus?: SkoposEvalStatus;
-  blockingQuestionIds: string[];
-}
-
-export interface SkoposAgentProgramBriefArtifact extends SkoposAgentBriefBase<'program'> {
-  currentDisposition: SkoposProgramRoutingDecision;
-  currentMissionId?: string;
-  doNowItemId?: string;
-  doNextItemId?: string;
-  openProgramQuestionIds: string[];
-  openObligationCount: number;
-  recommendedActionKind?: SkoposProgramRecommendedActionKind;
-  recommendedActionSummary?: string;
-  interruptSummary: string;
-}
-
-export interface SkoposAgentEvalBriefArtifact extends SkoposAgentBriefBase<'eval'> {
-  missionId: string;
-  evaluationStatus: SkoposEvalStatus;
-  trustLevel: SkoposTrustLevel;
-  readiness: SkoposReadiness;
-  blockingQuestionIds: string[];
-  pendingItemIds: string[];
-  failingCheckCommands: string[];
-  failingWorkflowIds: string[];
-  proofStatus: SkoposEvalProofStatus;
-}
-
-export interface SkoposAgentMissionBriefArtifact extends SkoposAgentBriefBase<'mission'> {
-  missionId: string;
-  missionState: SkoposMissionArtifact['state'];
+export interface SkoposAgentTaskBriefArtifact extends SkoposAgentBriefBase<'task'> {
+  taskId: string;
+  taskState: SkoposTaskState;
   scopeId: string;
   claimedByActorId?: string;
-  codeAllowed: boolean;
   blockingQuestionIds: string[];
-  pendingItemIds: string[];
-  completedItemCount: number;
-  totalItemCount: number;
-  recommendedActionKind?: SkoposWorkflowRecommendationEntry['actionKind'];
-  recommendedActionSummary?: string;
-  executionSurfaceKind?: 'artifact-only' | 'artifact-plus-workpack-doc';
-  nextItemId?: string;
-  nextItemTitle?: string;
+  nextStepId?: string;
+  nextStepTitle?: string;
+}
+
+export interface SkoposAgentReadinessBriefArtifact
+  extends SkoposAgentBriefBase<'readiness'> {
+  taskId: string;
+  target: 'continue' | 'integrate' | 'close';
+  readiness: 'ready' | 'blocked';
+  blockerCount: number;
 }
 
 export interface SkoposAgentPolicyBriefArtifact extends SkoposAgentBriefBase<'policy'> {
@@ -145,8 +75,8 @@ export interface SkoposAgentPolicyBriefArtifact extends SkoposAgentBriefBase<'po
   acceptedPackIds: string[];
   activeRuleCount: number;
   mustRuleCount: number;
-  defaultExecutionLane: SkoposExecutionLane;
-  workpackTriggers: string[];
+  defaultTaskRisk: SkoposTaskRisk;
+  detailedTaskTriggers: string[];
   sourcePaths: string[];
   roleMappingPath?: string;
   mappedRoleCount?: number;
@@ -154,8 +84,8 @@ export interface SkoposAgentPolicyBriefArtifact extends SkoposAgentBriefBase<'po
 }
 
 export interface SkoposAgentPromptBriefArtifact extends SkoposAgentBriefBase<'prompt'> {
-  activeMissionId?: string;
-  latestHandoffPath?: string;
+  currentTaskId?: string;
+  currentHandoffPath?: string;
   stablePrefixSummary: string;
   dynamicTailSummary: string;
   recommendedLoadSequence: string[];
@@ -187,11 +117,8 @@ export interface SkoposAgentCommunicationBriefArtifact
 }
 
 export type SkoposAgentBriefArtifact =
-  | SkoposAgentTrustBriefArtifact
-  | SkoposAgentDoneBriefArtifact
-  | SkoposAgentProgramBriefArtifact
-  | SkoposAgentEvalBriefArtifact
-  | SkoposAgentMissionBriefArtifact
+  | SkoposAgentTaskBriefArtifact
+  | SkoposAgentReadinessBriefArtifact
   | SkoposAgentPolicyBriefArtifact
   | SkoposAgentPromptBriefArtifact
   | SkoposAgentCommunicationBriefArtifact;
