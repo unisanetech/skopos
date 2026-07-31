@@ -28,6 +28,8 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-07-31`: Added explicit `sourceExcludes` for irrelevant descendants of broad
+  Action inputs and made compact Evidence summaries the default CLI transport.
 - `2026-07-30`: Added reviewed project-authored manifests for candidates that have no
   safe generic suggestion. Approval binds the exact candidate command, Action, Guard,
   actor, reason, and proposal digest before application.
@@ -77,11 +79,13 @@ Each declaration contains:
 1. stable id, title, description, category, owner, and applicable Scopes
 2. exact command and working directory
 3. declared inputs, outputs, and affected paths
-4. read-only, mutating, or destructive safety
-5. approval requirements
-6. applicable Task phases and risk levels
-7. Evidence and closure applicability
-8. ordering hints when one Action consumes another Action's output
+4. optional `sourceExcludes` for unrelated generated or volatile descendants of a
+   necessary directory input
+5. read-only, mutating, or destructive safety
+6. approval requirements
+7. applicable Task phases and risk levels
+8. Evidence and closure applicability
+9. ordering hints when one Action consumes another Action's output
 
 The declaration path is tracked project authority. Generated runs and Evidence remain
 local under `.skopos/**`.
@@ -107,6 +111,11 @@ explicit approval.
 Successful runs settle their final source and output state after Skopos completes its
 own operational logging and knowledge-index bookkeeping. Framework bookkeeping must
 not make newly produced Evidence stale.
+
+Source fingerprints start from `inputs`, the Action manifest, and project config.
+Projects should list exact durable inputs. `sourceExcludes` is an explicit reviewed
+escape hatch for irrelevant descendants when a directory input cannot reasonably be
+split; it must not be used to hide source the Action actually validates.
 
 ## Evidence
 

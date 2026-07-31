@@ -92,7 +92,7 @@ describe('coordination-aware agent lifecycle', () => {
     ]);
     expect(resumedContext.currentTask?.totalStepCount).toBeGreaterThan(0);
     expect(resumedContext.nextCommand).toContain(
-      `skopos task show ${started.task.id} . --compact --json`,
+      `skopos task show ${started.task.id} . --json`,
     );
     expect(resumedContext.nextCommand).not.toContain('adoption/analysis-brief.json');
     expect(resumedContext.additionalContext).toContain(

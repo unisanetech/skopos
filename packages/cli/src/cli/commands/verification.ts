@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 
 import {
   assessSkoposTaskReadinessRuntime,
+  finishSkoposTaskRuntime,
   verifySkoposTaskRuntime,
 } from '@skopos/runtime';
 import type {
@@ -66,9 +67,34 @@ export const runReadinessCommand = async (args: string[]): Promise<void> => {
   ]);
 };
 
+export const runFinishCommand = async (args: string[]): Promise<void> => {
+  const parsed = parseVerificationArgs(args, 'finish');
+  const result = await finishSkoposTaskRuntime({
+    cwd: parsed.cwd,
+    taskId: parsed.taskId,
+    actor: parsed.actor,
+    dryRun: parsed.dryRun,
+  });
+  if (parsed.json) {
+    writeJsonOutput(result);
+    return;
+  }
+  writeLines([
+    'Skopos Finish',
+    `Task: ${result.taskId}`,
+    `Status: ${result.readiness}`,
+    `State: ${result.taskState}`,
+    `Summary: ${result.summary}`,
+    `Evidence: ${result.evidenceSummary.valid}/${result.evidenceSummary.required} valid`,
+    ...(result.blockers.length > 0
+      ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
+      : []),
+  ]);
+};
+
 const parseVerificationArgs = (
   args: string[],
-  command: 'verify' | 'readiness',
+  command: 'verify' | 'readiness' | 'finish',
 ): {
   taskId: string;
   cwd: string;
@@ -87,12 +113,13 @@ const parseVerificationArgs = (
   let dryRun = false;
   let actor: string | undefined;
   let advance = false;
-  let compact = false;
+  let compact = true;
   let json = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') json = true;
     else if (argument === '--compact') compact = true;
+    else if (argument === '--full') compact = false;
     else if (argument === '--dry-run') dryRun = true;
     else if (argument === '--advance') advance = true;
     else if (argument === '--actor') actor = requireValue(args, ++index, '--actor');

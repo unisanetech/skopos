@@ -269,6 +269,12 @@ export const captureSkoposActionSourceState = async ({
   const normalizedIgnoredSourcePaths = ignoredSourcePaths.map((ignoredPath) =>
     normalizeWorkspacePath(workspaceRoot, resolve(workspaceRoot, ignoredPath)),
   );
+  const declaredSourceExcludes = (manifest.sourceExcludes ?? []).map((excludedPath) =>
+    normalizeWorkspacePath(
+      workspaceRoot,
+      resolve(workspaceRoot, manifest.cwd, excludedPath),
+    ),
+  );
 
   return captureDeclaredPathState({
     workspaceRoot,
@@ -277,6 +283,7 @@ export const captureSkoposActionSourceState = async ({
     ignoredWorkspacePaths: [
       ...IGNORED_SOURCE_PREFIXES,
       ...outputPaths,
+      ...declaredSourceExcludes,
       ...normalizedIgnoredSourcePaths,
     ],
   });

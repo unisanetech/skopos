@@ -171,7 +171,7 @@ const buildKnowledgeLines = (output: SkoposKnowledgeCompactOutput): string[] => 
 const parseKnowledgeArgs = (args: string[]): ParsedKnowledgeArgs => {
   let cwd = process.cwd();
   let actor: string | undefined;
-  let compact = false;
+  let compact = true;
   let summary = false;
   let fields: string[] = [];
   let json = false;
@@ -186,6 +186,11 @@ const parseKnowledgeArgs = (args: string[]): ParsedKnowledgeArgs => {
 
     if (argument === '--compact') {
       compact = true;
+      continue;
+    }
+
+    if (argument === '--full') {
+      compact = false;
       continue;
     }
 

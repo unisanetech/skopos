@@ -19,7 +19,11 @@ import { runScanCommand } from './commands/scan.js';
 import { runSessionCommand } from './commands/session.js';
 import { runSetupCommand } from './commands/setup.js';
 import { runSkillsCommand } from './commands/skills.js';
-import { runReadinessCommand, runVerifyCommand } from './commands/verification.js';
+import {
+  runFinishCommand,
+  runReadinessCommand,
+  runVerifyCommand,
+} from './commands/verification.js';
 import { runUnderstandCommand } from './commands/understanding.js';
 import { runUiCommand } from './commands/ui.js';
 import { runActionsCommand } from './commands/actions.js';
@@ -37,6 +41,7 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   decide: runDecideCommand,
   discuss: runDiscussionCommand,
   verify: runVerifyCommand,
+  finish: runFinishCommand,
   readiness: runReadinessCommand,
   resolve: runResolveCommand,
   context: runContextCommand,

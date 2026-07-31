@@ -11,6 +11,7 @@ import { writeJsonOutput, writeLines } from '../shared/output.js';
 interface ParsedTargetArgs {
   cwd: string;
   json: boolean;
+  full: boolean;
 }
 
 interface ParsedActionArgs {
@@ -22,6 +23,7 @@ interface ParsedActionArgs {
   actor?: string;
   taskId?: string;
   json: boolean;
+  full: boolean;
 }
 
 export const runActionsCommand = async (args: string[]): Promise<void> => {
@@ -90,7 +92,7 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
     const run = result.run;
 
     if (parsed.json) {
-      writeJsonOutput({
+      const fullOutput = {
         actionId: run.actionId,
         actionTitle: run.actionTitle,
         actionCategory: run.actionCategory,
@@ -105,7 +107,37 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
         reusedFromRunId: run.reusedFromRunId,
         taskEvidenceLink: result.taskEvidenceLink,
         taskEvidenceLinkPath: result.taskEvidenceLinkPath,
-      });
+      };
+      writeJsonOutput(
+        parsed.full
+          ? fullOutput
+          : {
+              actionId: run.actionId,
+              actionTitle: run.actionTitle,
+              actionCategory: run.actionCategory,
+              actionSafety: run.actionSafety,
+              runId: run.id,
+              status: run.runStatus,
+              actorId: run.runByActorId,
+              reusedFromRunId: run.reusedFromRunId,
+              outputPaths: run.outputPaths,
+              evidence: run.evidence
+                ? {
+                    executionKey: run.evidence.executionKey,
+                    sourceDigest: run.evidence.sourceState.digest,
+                    sourcePathCount: run.evidence.sourceState.paths.length,
+                    capturedAt: run.evidence.freshness.capturedAt,
+                  }
+                : undefined,
+              taskEvidenceLink: result.taskEvidenceLink
+                ? {
+                    taskId: result.taskEvidenceLink.taskId,
+                    actionId: result.taskEvidenceLink.actionId,
+                    runId: result.taskEvidenceLink.runId,
+                  }
+                : undefined,
+            },
+      );
       return;
     }
 
@@ -151,6 +183,7 @@ const toPublicAction = (action: {
   command: string;
   cwd: string;
   inputs: string[];
+  sourceExcludes?: string[];
   outputs: string[];
   affects: string[];
   safety: string;
@@ -172,6 +205,7 @@ const toPublicAction = (action: {
     cwd: action.cwd,
   },
   inputs: action.inputs,
+  sourceExcludes: action.sourceExcludes ?? [],
   outputs: action.outputs,
   affects: action.affects,
   safety: action.safety,
@@ -189,10 +223,15 @@ const toPublicAction = (action: {
 const parseTargetArgs = (args: string[]): ParsedTargetArgs => {
   let cwd = process.cwd();
   let json = false;
+  let full = false;
 
   for (const argument of args) {
     if (argument === '--json') {
       json = true;
+      continue;
+    }
+    if (argument === '--full') {
+      full = true;
       continue;
     }
 
@@ -203,7 +242,7 @@ const parseTargetArgs = (args: string[]): ParsedTargetArgs => {
     cwd = resolve(argument);
   }
 
-  return { cwd, json };
+  return { cwd, json, full };
 };
 
 const parseActionArgs = (args: string[]): ParsedActionArgs => {
@@ -215,6 +254,7 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
   let actor: string | undefined;
   let taskId: string | undefined;
   let json = false;
+  let full = false;
   let targetProvided = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -222,6 +262,10 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
 
     if (argument === '--json') {
       json = true;
+      continue;
+    }
+    if (argument === '--full') {
+      full = true;
       continue;
     }
 
@@ -287,5 +331,5 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
     targetProvided = true;
   }
 
-  return { cwd, action, dryRun, approve, force, actor, taskId, json };
+  return { cwd, action, dryRun, approve, force, actor, taskId, json, full };
 };

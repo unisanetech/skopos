@@ -5,7 +5,10 @@ import {
   isApplicableAcceptanceRequirement,
   selectApplicableAcceptanceActionIds,
 } from '../../../runtime/src/application/verification/verification.service.js';
-import { archiveTrackedTaskDocumentPath } from '../../../runtime/src/application/task/task.service.js';
+import {
+  archiveTrackedTaskDocumentPath,
+  resolveSkoposTrackedTaskProjectionPaths,
+} from '../../../runtime/src/application/task/task.service.js';
 
 describe('Task acceptance Action evidence', () => {
   it('does not turn planning recommendations or retired Actions into closure requirements', () => {
@@ -63,5 +66,22 @@ describe('Task acceptance Action evidence', () => {
     expect(
       archiveTrackedTaskDocumentPath('docs/work/archive/archive/tasks/T-123-task.md'),
     ).toBe('docs/work/archive/tasks/T-123-task.md');
+  });
+
+  it('resolves both active and archived Task projection paths from either state', () => {
+    expect(
+      resolveSkoposTrackedTaskProjectionPaths('docs/work/tasks/T-123-task.md'),
+    ).toEqual([
+      'docs/work/tasks/T-123-task.md',
+      'docs/work/archive/tasks/T-123-task.md',
+    ]);
+    expect(
+      resolveSkoposTrackedTaskProjectionPaths(
+        'docs/work/archive/tasks/T-123-task.md',
+      ),
+    ).toEqual([
+      'docs/work/tasks/T-123-task.md',
+      'docs/work/archive/tasks/T-123-task.md',
+    ]);
   });
 });

@@ -25,6 +25,8 @@ This page records the project capability catalog and the rule for selecting proo
 
 ## Changelog
 
+- `2026-07-31`: Made `finish` the canonical closure transaction and required precise
+  Action inputs with explicit exclusions for unrelated volatile descendants.
 - `2026-07-30`: Added the capability-integration boundary: detected commands are
   candidates only, tracked Action/Guard declarations require digest-bound approval,
   and provider validation is mandatory before activation.
@@ -64,8 +66,8 @@ For every Task:
 1. inspect the Task-selected Guards and Actions
 2. run only the selected Actions with `--task <task-id>`
 3. record the acceptance or Guard observations the Task requests
-4. run `skopos verify <task-id> . --phase closure --actor <actor>`
-5. run `skopos readiness <task-id> . --for close --actor <actor>`
+4. optionally diagnose with `skopos verify <task-id> . --phase closure --json`
+5. run `skopos finish <task-id> . --actor <actor>`
 
 Typecheck, test, build, lint, docs checks, release checks, and project-specific gates
 are not a universal sequence. They run when an applicable project Guard selects their
@@ -79,6 +81,11 @@ must expose the exact Action and Guard fields, approval must bind their digest a
 candidate ids, and application must validate every Guard provider. Missing providers,
 changed proposal content, changed approval content, or declaration collisions fail
 closed.
+
+Action manifests declare the narrowest durable `inputs` that the command proves.
+When an unavoidable directory input contains unrelated generated or volatile
+descendants, list those descendants under `sourceExcludes`. Exclusions must never hide
+source the Action actually validates.
 
 ## Release Readiness Checks
 

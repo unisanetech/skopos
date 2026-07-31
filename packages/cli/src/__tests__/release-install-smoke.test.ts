@@ -35,6 +35,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
 
       const help = run(projectDirectory, ['--help']);
       expect(help).toContain('skopos start <goal>');
+      expect(help).toContain('skopos finish <task-id>');
       expect(help).toContain('skopos readiness <task-id>');
       expect(help).not.toContain('skopos mission');
       expect(help).not.toContain('skopos trust');

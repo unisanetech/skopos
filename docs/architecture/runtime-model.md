@@ -25,6 +25,8 @@ only orchestration layer; CLI, MCP, host adapters, and UI call the same runtime 
 
 ## Changelog
 
+- `2026-07-31`: Added the finish orchestration that verifies before transition,
+  archives the tracked Task projection, and rechecks final Readiness.
 - `2026-07-29`: Promoted the Session, Task, Work Queue, Action, Evidence, Readiness,
   adoption, and coordination use cases.
 
@@ -33,7 +35,7 @@ only orchestration layer; CLI, MCP, host adapters, and UI call the same runtime 
 1. initialize and compile Project Memory
 2. assess, propose, approve, verify, and activate adoption
 3. open Session context
-4. create, show, claim, release, verify, and close Tasks
+4. create, show, claim, release, verify, finish, and close Tasks
 5. compile and query the Work Queue
 6. list and run Actions
 7. resolve Guards

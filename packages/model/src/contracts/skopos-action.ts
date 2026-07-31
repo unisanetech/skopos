@@ -28,6 +28,7 @@ export interface SkoposActionManifest {
   command: string;
   cwd: string;
   inputs: string[];
+  sourceExcludes?: string[];
   outputs: string[];
   affects: string[];
   safety: SkoposActionSafety;

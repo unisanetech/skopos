@@ -23,6 +23,7 @@ import { executeSkoposShellCommand } from '../shared/execute-shell-command.js';
 import { pathExists } from '../shared/path-exists.js';
 import {
   completeSkoposTaskActionRuntime,
+  resolveSkoposTrackedTaskProjectionPaths,
   showSkoposTaskRuntime,
 } from '../task/task.service.js';
 import { resolveSkoposTaskDirectory } from '../task/task-paths.js';
@@ -86,9 +87,9 @@ export const runSkoposActionRuntime = async ({
   const task = taskId
     ? await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId })
     : undefined;
-  const ignoredSourcePaths = task?.trackedDocumentPath
-    ? [task.trackedDocumentPath]
-    : [];
+  const ignoredSourcePaths = resolveSkoposTrackedTaskProjectionPaths(
+    task?.trackedDocumentPath,
+  );
 
   if (!dryRun && (manifest.requiresApproval || manifest.safety === 'destructive') && !approve) {
     throw new Error(

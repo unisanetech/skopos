@@ -25,6 +25,8 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-07-31`: Made hot-path JSON compact by default and collapsed normal Task
+  closure into one `finish` operation while preserving high-impact proof.
 - `2026-07-29`: Replaced prototype routing with Session-aware Task, Work Queue,
   Action, Evidence, and Readiness behavior.
 
@@ -111,6 +113,8 @@ They do not expose internal ceremony or false precision.
 4. load history only when current truth is insufficient
 5. return deltas after initial context
 6. never inject every document, Action, Policy, or Skill by default
+7. return bounded JSON by default on agent hot paths; require `--full` for detailed
+   portable or diagnostic state
 
 ## Host Adapters
 

@@ -30,6 +30,8 @@ import {
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import {
   applySkoposTaskReadinessStateRuntime,
+  moveSkoposTaskToVerificationRuntime,
+  resolveSkoposTrackedTaskProjectionPaths,
   showSkoposTaskRuntime,
 } from '../task/task.service.js';
 import { resolveSkoposTaskDirectory } from '../task/task-paths.js';
@@ -57,9 +59,12 @@ export const verifySkoposTaskRuntime = async ({
     workspaceRoot,
     changeScope: task.changeScope,
   });
-  const evidenceChangedPaths = excludeTrackedTaskDocument(
-    taskChanges.changedPaths,
+  const taskProjectionPaths = resolveSkoposTrackedTaskProjectionPaths(
     task.trackedDocumentPath,
+  );
+  const evidenceChangedPaths = excludeTrackedTaskDocuments(
+    taskChanges.changedPaths,
+    taskProjectionPaths,
   );
   const impact = await buildSkoposImpactReport({
     cwd: workspaceRoot,
@@ -86,9 +91,7 @@ export const verifySkoposTaskRuntime = async ({
         requirement,
         manifests,
         runs: taskRuns,
-        ignoredSourcePaths: task.trackedDocumentPath
-          ? [task.trackedDocumentPath]
-          : [],
+        ignoredSourcePaths: taskProjectionPaths,
       }),
     ),
   );
@@ -104,7 +107,7 @@ export const verifySkoposTaskRuntime = async ({
     (observation) =>
       digestSkoposTaskPathStates(
         observation.sourcePathStates.filter(
-          (entry) => entry.path !== task.trackedDocumentPath,
+          (entry) => !taskProjectionPaths.includes(entry.path),
         ),
       ) === currentSourceStateDigest,
   );
@@ -240,9 +243,16 @@ export const excludeTrackedTaskDocument = (
   changedPaths: string[],
   trackedDocumentPath?: string,
 ): string[] =>
-  trackedDocumentPath
-    ? changedPaths.filter((path) => path !== trackedDocumentPath)
-    : [...changedPaths];
+  excludeTrackedTaskDocuments(
+    changedPaths,
+    resolveSkoposTrackedTaskProjectionPaths(trackedDocumentPath),
+  );
+
+export const excludeTrackedTaskDocuments = (
+  changedPaths: string[],
+  trackedDocumentPaths: string[],
+): string[] =>
+  changedPaths.filter((path) => !trackedDocumentPaths.includes(path));
 
 export const recordSkoposObservationEvidenceRuntime = async ({
   cwd,
@@ -301,9 +311,9 @@ export const recordSkoposObservationEvidenceRuntime = async ({
   });
   const sourcePathStates = await captureSkoposTaskPathStates({
     workspaceRoot,
-    paths: excludeTrackedTaskDocument(
+    paths: excludeTrackedTaskDocuments(
       changed.changedPaths,
-      task.trackedDocumentPath,
+      resolveSkoposTrackedTaskProjectionPaths(task.trackedDocumentPath),
     ),
   });
   const observedAt = new Date().toISOString();
@@ -378,6 +388,20 @@ export const assessSkoposTaskReadinessRuntime = async ({
     target === 'close' && task.risk === 'high-impact'
       ? await verifyLatestTaskSnapshot(workspaceRoot, taskId)
       : undefined;
+  const unfinishedPreVerificationSteps = task.steps.filter(
+    (step) =>
+      step.kind !== 'verification' &&
+      step.status !== 'complete' &&
+      step.status !== 'skipped',
+  );
+  const stepBlocker =
+    target === 'close' &&
+    task.state === 'active' &&
+    unfinishedPreVerificationSteps.length > 0
+      ? `Task ${task.id} has unfinished pre-verification steps: ${unfinishedPreVerificationSteps.map((step) => step.id).join(', ')}.`
+      : undefined;
+  const closeAdvanceFromActive =
+    target === 'close' && advance && task.state === 'active';
   const closeAdvanceFromVerifying =
     target === 'close' && advance && task.state === 'verifying';
   const stateBlocker =
@@ -386,6 +410,7 @@ export const assessSkoposTaskReadinessRuntime = async ({
       : target === 'close' &&
           task.state !== 'ready-to-integrate' &&
           task.state !== 'complete' &&
+          !closeAdvanceFromActive &&
           !closeAdvanceFromVerifying
         ? `Task must be ready-to-integrate before closure Readiness; current state is ${task.state}.`
         : undefined;
@@ -395,6 +420,7 @@ export const assessSkoposTaskReadinessRuntime = async ({
       (entry) => `Coordination contamination at ${entry.path}: ${entry.reason}`,
     ),
     ...(snapshotBlocker ? [snapshotBlocker] : []),
+    ...(stepBlocker ? [stepBlocker] : []),
     ...(stateBlocker ? [stateBlocker] : []),
   ];
   const now = new Date().toISOString();
@@ -437,7 +463,14 @@ export const assessSkoposTaskReadinessRuntime = async ({
     artifact.readiness === 'ready' &&
     (target === 'integrate' || target === 'close')
   ) {
-    if (closeAdvanceFromVerifying) {
+    if (closeAdvanceFromActive) {
+      await moveSkoposTaskToVerificationRuntime({
+        cwd: workspaceRoot,
+        taskId,
+        actor,
+      });
+    }
+    if (closeAdvanceFromActive || closeAdvanceFromVerifying) {
       await applySkoposTaskReadinessStateRuntime({
         cwd: workspaceRoot,
         taskId,
@@ -468,6 +501,37 @@ export const assessSkoposTaskReadinessRuntime = async ({
     });
   }
   return artifact;
+};
+
+export const finishSkoposTaskRuntime = async ({
+  cwd,
+  taskId,
+  actor,
+  dryRun = false,
+}: {
+  cwd: string;
+  taskId: string;
+  actor?: string;
+  dryRun?: boolean;
+}): Promise<SkoposReadinessArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const advanced = await assessSkoposTaskReadinessRuntime({
+    cwd: workspaceRoot,
+    taskId,
+    target: 'close',
+    actor,
+    advance: true,
+    dryRun,
+  });
+  if (dryRun || advanced.readiness !== 'ready') {
+    return advanced;
+  }
+  return assessSkoposTaskReadinessRuntime({
+    cwd: workspaceRoot,
+    taskId,
+    target: 'close',
+    actor,
+  });
 };
 
 const verifyLatestTaskSnapshot = async (

@@ -63,5 +63,8 @@ special stale-result exception.
 
 ## Changelog
 
+- `2026-07-31`: Added canonical active/archive Task-projection exclusion and explicit
+  Action `sourceExcludes` support so the recovery is enforceable without weakening
+  durable-input freshness.
 - `2026-07-29`: Recorded after Skopos closure proof hashed `docs/work/tasks/**` and
   invalidated itself on the next Task transition.

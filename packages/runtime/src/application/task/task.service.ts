@@ -811,6 +811,20 @@ export const archiveTrackedTaskDocumentPath = (trackedDocumentPath: string): str
   return join(memoryWorkRoot, 'archive', 'tasks', basename(trackedDocumentPath));
 };
 
+export const resolveSkoposTrackedTaskProjectionPaths = (
+  trackedDocumentPath?: string,
+): string[] => {
+  if (!trackedDocumentPath) return [];
+  const archivedPath = archiveTrackedTaskDocumentPath(trackedDocumentPath);
+  const taskDirectory = dirname(trackedDocumentPath);
+  const archiveDirectory = dirname(taskDirectory);
+  const activePath =
+    basename(taskDirectory) === 'tasks' && basename(archiveDirectory) === 'archive'
+      ? join(dirname(archiveDirectory), 'tasks', basename(trackedDocumentPath))
+      : trackedDocumentPath;
+  return [...new Set([activePath, archivedPath, trackedDocumentPath])];
+};
+
 const asBulletList = (values: string[], empty: string): string[] =>
   values.length > 0 ? values.map((value) => `- ${value}`) : [`- ${empty}`];
 

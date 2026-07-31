@@ -60,12 +60,13 @@ const parseEvidenceArgs = (args: string[]) => {
   let statement = '';
   let actor: string | undefined;
   let dryRun = false;
-  let compact = false;
+  let compact = true;
   let json = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') json = true;
     else if (argument === '--compact') compact = true;
+    else if (argument === '--full') compact = false;
     else if (argument === '--dry-run') dryRun = true;
     else if (argument === '--requirement') requirementId = requireValue(args, ++index, '--requirement');
     else if (argument.startsWith('--requirement=')) requirementId = argument.slice('--requirement='.length);

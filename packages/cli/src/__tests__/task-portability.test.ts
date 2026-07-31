@@ -10,11 +10,10 @@ import { initSkoposProject } from '../../../runtime/src/application/init/init.se
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
 import {
   completeSkoposTaskStepRuntime,
-  moveSkoposTaskToVerificationRuntime,
   showSkoposTaskRuntime,
 } from '../../../runtime/src/application/task/task.service.js';
 import {
-  assessSkoposTaskReadinessRuntime,
+  finishSkoposTaskRuntime,
   recordSkoposObservationEvidenceRuntime,
 } from '../../../runtime/src/application/verification/verification.service.js';
 
@@ -80,7 +79,7 @@ describe('tracked Task portability', () => {
     ).resolves.toContain(`"${reconstructed.id}"`);
   });
 
-  it('closes a verified Task through the documented two-command transition', async () => {
+  it('finishes an active Task through one verified closure transaction', async () => {
     const workspaceRoot = await createWorkspace();
     const started = await buildSkoposStartRuntime({
       cwd: workspaceRoot,
@@ -109,18 +108,9 @@ describe('tracked Task portability', () => {
       });
     }
 
-    const verifying = await moveSkoposTaskToVerificationRuntime({
+    const readiness = await finishSkoposTaskRuntime({
       cwd: workspaceRoot,
       taskId: task.id,
-      actor: 'agent-a',
-    });
-    expect(verifying.state).toBe('verifying');
-
-    const readiness = await assessSkoposTaskReadinessRuntime({
-      cwd: workspaceRoot,
-      taskId: task.id,
-      target: 'close',
-      advance: true,
       actor: 'agent-a',
     });
     expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
@@ -134,6 +124,78 @@ describe('tracked Task portability', () => {
     });
     expect(completed.state).toBe('complete');
     expect(completed.steps.every((step) => step.status === 'complete')).toBe(true);
+  });
+
+  it('does not advance an active Task while implementation steps remain unfinished', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Keep incomplete Tasks active',
+      actor: 'agent-a',
+      acceptanceCriteria: ['Incomplete work cannot close.'],
+      ownedPaths: ['src'],
+    });
+
+    const readiness = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: started.task.id,
+      actor: 'agent-a',
+    });
+
+    expect(readiness.readiness).toBe('blocked');
+    expect(readiness.blockers.join('\n')).toContain('unfinished pre-verification steps');
+    await expect(
+      showSkoposTaskRuntime({
+        cwd: workspaceRoot,
+        taskId: started.task.id,
+      }),
+    ).resolves.toMatchObject({ state: 'active' });
+  });
+
+  it('keeps high-impact snapshot proof mandatory in the one-command finish path', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Protect a high-impact closure',
+      actor: 'agent-a',
+      risk: 'high-impact',
+      detail: 'detailed',
+      acceptanceCriteria: ['High-impact closure requires an immutable snapshot.'],
+      ownedPaths: ['src'],
+    });
+    let task = started.task;
+    for (const step of task.steps.filter((entry) => entry.kind !== 'verification')) {
+      task = await completeSkoposTaskStepRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        stepId: step.id,
+        actor: 'agent-a',
+      });
+    }
+    for (const requirement of task.evidenceRequirements) {
+      await recordSkoposObservationEvidenceRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        requirementId: requirement.id,
+        statement: 'The behavior is observed; snapshot proof is intentionally absent.',
+        actor: 'agent-a',
+      });
+    }
+
+    const readiness = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+
+    expect(readiness.readiness).toBe('blocked');
+    expect(readiness.blockers.join('\n')).toContain('immutable Task snapshot');
+    await expect(
+      showSkoposTaskRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+      }),
+    ).resolves.toMatchObject({ state: 'active' });
   });
 });
 

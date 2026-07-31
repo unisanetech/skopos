@@ -443,6 +443,66 @@ describe('source-bound Action Evidence', () => {
       }),
     ).resolves.toEqual(expect.objectContaining({ status: 'stale' }));
   });
+
+  it('honors declared source exclusions inside a broad Action input', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-evidence-excludes-'));
+    await mkdir(join(workspaceRoot, 'docs/generated'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'tools/skopos/actions'), { recursive: true });
+    await writeFile(join(workspaceRoot, 'docs/guide.md'), '# Guide\n', 'utf8');
+    await writeFile(join(workspaceRoot, 'docs/generated/state.md'), '# State\n', 'utf8');
+    await writeFile(
+      join(workspaceRoot, 'tools/skopos/actions/docs-check.yaml'),
+      'id: docs.check\n',
+      'utf8',
+    );
+    await writeFile(join(workspaceRoot, 'skopos.config.yaml'), 'schemaVersion: 1\n', 'utf8');
+    const docsManifest: SkoposActionManifest = {
+      ...manifest,
+      id: 'docs.check',
+      title: 'Check docs',
+      inputs: ['docs'],
+      sourceExcludes: ['docs/generated'],
+      outputs: [],
+      sourcePath: 'tools/skopos/actions/docs-check.yaml',
+    };
+    const evidence = await finalizeSkoposEvidence({
+      workspaceRoot,
+      manifest: docsManifest,
+      evidence: await buildSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        runId: 'run-docs-check',
+      }),
+    });
+    const artifact = {
+      ...buildRunArtifact(evidence),
+      actionId: docsManifest.id,
+      actionTitle: docsManifest.title,
+      sourcePath: docsManifest.sourcePath,
+    };
+
+    await writeFile(
+      join(workspaceRoot, 'docs/generated/state.md'),
+      '# Changed state\n',
+      'utf8',
+    );
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        artifact,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'valid' }));
+
+    await writeFile(join(workspaceRoot, 'docs/guide.md'), '# Changed guide\n', 'utf8');
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: docsManifest,
+        artifact,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'stale' }));
+  });
 });
 
 const manifest: SkoposActionManifest = {

@@ -27,6 +27,7 @@ const actionManifestSchema = z
     command: z.string().min(1),
     cwd: z.string().min(1).default('.'),
     inputs: z.array(z.string().min(1)).default([]),
+    sourceExcludes: z.array(z.string().min(1)).default([]),
     outputs: z.array(z.string().min(1)).default([]),
     affects: z.array(z.string().min(1)).default([]),
     safety: z.enum(['read-only', 'mutating', 'destructive']),

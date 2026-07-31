@@ -32,6 +32,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-07-31`: Added one-command Task finish, compact-default proof transport,
+  canonical active/archive Task-projection exclusion, and declared Action source
+  exclusions for noisy directory inputs.
 - `2026-07-30`: Prevented Skopos-managed tracked Task projection rewrites from
   self-invalidating Task-bound Action Evidence while retaining every other declared
   project input as a freshness dependency.
@@ -60,12 +63,14 @@ explicit Task Action Evidence Link stored under that Task's local Evidence direc
 The link records Task id, Action id, run id, actor, and link time. This separates honest
 cross-Task Evidence reuse from accidental global-run leakage.
 
-When an Action is executed or validated for a Task, Skopos excludes only that Task's
-current runtime-managed tracked-document projection from the Action source digest.
-Skopos state transitions may rewrite or archive that projection, and control-plane
-churn must not force the same project Action to run again. Standalone Action Evidence
-does not receive this exclusion, and changes to every other declared input—including
-other Project Memory documents and tracked Tasks—still invalidate Evidence normally.
+When an Action is executed or validated for a Task, Skopos excludes that Task's
+canonical active and archived tracked-document projection paths from the Action source
+digest. Skopos state transitions, archival, or formatting of that projection therefore
+cannot force the same project Action to run again. Standalone Action Evidence does not
+receive this exclusion, and changes to every other declared input still invalidate
+Evidence normally. Action manifests may additionally declare `sourceExcludes` for
+known unrelated generated or volatile descendants of a necessary directory input;
+exact durable inputs remain preferred.
 
 ## Verify
 
@@ -116,6 +121,12 @@ A Task can close only when:
 
 Light Tasks may use a smaller evidence set, but the report must remain honest about
 what was and was not proved.
+
+`skopos finish` is the canonical closure transaction. It evaluates closure Evidence
+before state mutation, refuses to advance Tasks with unfinished implementation steps,
+performs the verification/integration/complete transitions, archives the tracked Task
+projection, and re-evaluates final Readiness. High-impact snapshot requirements are not
+weakened by this convenience surface.
 
 ## Validation Economy
 

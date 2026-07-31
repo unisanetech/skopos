@@ -21,6 +21,9 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-07-31`: Replaced the manual verification-state/Readiness sequence with
+  `skopos finish`, made hot-path JSON compact by default with explicit `--full`
+  inspection, and documented precise Action source exclusions.
 - `2026-07-31`: Corrected the canonical Evidence, compact inspection, coordination,
   verification, and two-command closure examples to match the public CLI.
 - `2026-07-30`: Added `--action-manifest` and `--guard-manifest` review inputs so
@@ -70,12 +73,13 @@ skopos decide <question-id> <option-id> . --actor <id>
 ## Continue Work
 
 ```bash
-skopos task show <task-id> . --compact --json
+skopos task show <task-id> . --json
 skopos work next . --actor <id> --json
 ```
 
 Task state, open questions, and recommendations are Task-owned. Tracked standard and
-high-impact Tasks reconstruct local state after a clean clone.
+high-impact Tasks reconstruct local state after a clean clone. Hot-path JSON is compact
+by default; add `--full` only when complete portable state is required.
 
 ## Run Project Capabilities
 
@@ -88,6 +92,11 @@ Actions are selected from Task-owned paths, Scope, phase, risk, and deterministi
 Guards. A root script catalog is discovery input, not a mandatory checklist.
 Accepted policy packs name stable Guard capabilities, while each project explicitly
 declares the Guard and its Action or observation provider.
+
+Action `inputs` should name the narrowest durable source families the command actually
+proves. When a necessary directory input contains unrelated generated or volatile
+content, declare `sourceExcludes` explicitly rather than hashing the whole noisy tree.
+Skopos always keeps its current Task projection outside Task-bound Action Evidence.
 
 To integrate existing project commands without guessing authority:
 
@@ -139,13 +148,14 @@ skopos evidence record-observation <task-id> . \
 Then inspect coverage and close through the canonical state transition:
 
 ```bash
-skopos verify <task-id> . --phase closure --compact --json
-skopos task verify <task-id> . --actor <id>
-skopos readiness <task-id> . --for close --advance --actor <id>
+skopos verify <task-id> . --phase closure --json
+skopos finish <task-id> . --actor <id> --json
 ```
 
-Verify never runs Actions implicitly. Readiness explains missing Evidence, stale
-inputs, Guard blockers, coordination contamination, and the next safe action.
+Verify never runs Actions implicitly. `finish` verifies the stable current state,
+advances an admitted Task only when it is ready, archives its tracked projection, and
+rechecks final Readiness. If anything blocks closure, the Task does not advance.
+High-impact snapshot and coordination requirements remain mandatory.
 
 ## Parallel Sessions In One Checkout
 

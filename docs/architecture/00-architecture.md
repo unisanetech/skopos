@@ -30,6 +30,8 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-07-31`: Added the atomic `finish` lifecycle, compact-default agent transport,
+  and precise Action source-fingerprint exclusions.
 - `2026-07-30`: Made project capability onboarding a reviewed integration: discovery
   produces local candidates, explicit digest-bound approval precedes tracked
   Action/Guard writes, and activation validates providers.
@@ -63,8 +65,7 @@ adopt Project Memory
   -> claim resources
   -> edit and run Actions
   -> record Evidence
-  -> Verify acceptance
-  -> assess Readiness
+  -> finish (Verify + Readiness + archive)
   -> close or hand off
 ```
 

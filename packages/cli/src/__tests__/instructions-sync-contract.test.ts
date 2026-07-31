@@ -48,7 +48,7 @@ describe('instruction synchronization contract', () => {
     await writeFile(
       instructionPath,
       current.replace(
-        'skopos task show <task-id> . --compact --json',
+        'skopos task show <task-id> . --json',
         'skopos task current . --actor <id> --json',
       ),
       'utf8',
@@ -60,7 +60,8 @@ describe('instruction synchronization contract', () => {
     });
 
     const refreshed = await readFile(instructionPath, 'utf8');
-    expect(refreshed).toContain('skopos task show <task-id> . --compact --json');
+    expect(refreshed).toContain('skopos task show <task-id> . --json');
+    expect(refreshed).toContain('skopos finish <task-id> . --actor <id>');
     expect(refreshed).not.toContain('skopos task current');
   });
 });

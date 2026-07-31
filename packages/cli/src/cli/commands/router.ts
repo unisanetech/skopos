@@ -10,6 +10,7 @@ import {
   buildGuidedDecisionQuestionLines,
   buildProjectKnowledgeGuidanceLines,
 } from '../shared/compact-output.js';
+import { buildCompactTaskOutput } from './task.js';
 import {
   writeJsonOutput,
   writeLines,
@@ -22,6 +23,7 @@ interface ParsedPlanArgs {
   actor?: string;
   dryRun: boolean;
   json: boolean;
+  full: boolean;
 }
 
 interface ParsedStartArgs extends ParsedPlanArgs {
@@ -43,6 +45,7 @@ interface ParsedDecideArgs {
   actor?: string;
   dryRun: boolean;
   json: boolean;
+  full: boolean;
 }
 
 export const runStartCommand = async (args: string[]): Promise<void> => {
@@ -65,7 +68,7 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
   });
 
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(parsed.full ? result : buildCompactStartOutput(result));
     return;
   }
 
@@ -128,7 +131,7 @@ export const runDecideCommand = async (args: string[]): Promise<void> => {
   });
 
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(parsed.full ? result : buildCompactDecideOutput(result));
     return;
   }
 
@@ -185,7 +188,7 @@ export const runPlanCommand = async (args: string[]): Promise<void> => {
   });
 
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(parsed.full ? result : buildCompactPlanOutput(result));
     return;
   }
 
@@ -319,6 +322,7 @@ const parsePlanArgs = (args: string[]): ParsedPlanArgs => {
   let actor: string | undefined;
   let dryRun = false;
   let json = false;
+  let full = false;
   let targetProvided = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -326,6 +330,11 @@ const parsePlanArgs = (args: string[]): ParsedPlanArgs => {
 
     if (argument === '--json') {
       json = true;
+      continue;
+    }
+
+    if (argument === '--full') {
+      full = true;
       continue;
     }
 
@@ -385,7 +394,7 @@ const parsePlanArgs = (args: string[]): ParsedPlanArgs => {
     throw new Error('Missing plan goal.');
   }
 
-  return { cwd, goal, scope, actor, dryRun, json };
+  return { cwd, goal, scope, actor, dryRun, json, full };
 };
 
 const parseDecideArgs = (args: string[]): ParsedDecideArgs => {
@@ -395,6 +404,7 @@ const parseDecideArgs = (args: string[]): ParsedDecideArgs => {
   let actor: string | undefined;
   let dryRun = false;
   let json = false;
+  let full = false;
   let targetProvided = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -402,6 +412,11 @@ const parseDecideArgs = (args: string[]): ParsedDecideArgs => {
 
     if (argument === '--json') {
       json = true;
+      continue;
+    }
+
+    if (argument === '--full') {
+      full = true;
       continue;
     }
 
@@ -455,5 +470,59 @@ const parseDecideArgs = (args: string[]): ParsedDecideArgs => {
     throw new Error('Missing Task decision option id.');
   }
 
-  return { cwd, questionId, optionId, actor, dryRun, json };
+  return { cwd, questionId, optionId, actor, dryRun, json, full };
 };
+
+export const buildCompactStartOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposStartRuntime>>,
+) => ({
+  schemaVersion: 1,
+  workspaceRoot: result.task.workspaceRoot,
+  summary: result.summary,
+  goal: result.goal,
+  actorId: result.actorId,
+  scopeId: result.scope.scope.id,
+  codeAllowed: result.codeAllowed,
+  task: buildCompactTaskOutput(result.task),
+  blockingQuestionCount: result.blockingQuestions.length,
+  recommendedAction: result.recommendedAction,
+  projectKnowledge: result.projectKnowledge
+    ? {
+        summary: result.projectKnowledge.summary,
+        freshness: result.projectKnowledge.freshness,
+        attentionAreaCount: result.projectKnowledge.attentionAreaCount,
+      }
+    : undefined,
+});
+
+export const buildCompactDecideOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposDecideRuntime>>,
+) => ({
+  schemaVersion: 1,
+  workspaceRoot: result.task.workspaceRoot,
+  summary: result.summary,
+  actorId: result.actorId,
+  taskId: result.taskId,
+  questionId: result.questionId,
+  selectedOptionId: result.selectedOptionId,
+  codeAllowed: result.codeAllowed,
+  openQuestionCount: result.questions.entries.filter(
+    (question) => question.status === 'open',
+  ).length,
+  recommendedAction: result.recommendedAction,
+});
+
+export const buildCompactPlanOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposPlanRuntime>>,
+) => ({
+  schemaVersion: 1,
+  workspaceRoot: result.workspaceRoot,
+  summary: result.summary,
+  goal: result.goal,
+  actorId: result.actorId,
+  scopeId: result.scope.scope.id,
+  confidence: result.confidence,
+  decisionQuestionCount: result.decisionQuestions.length,
+  recommendedActionIds: result.recommendedActions.map((action) => action.id),
+  nextStep: result.nextSteps[0],
+});

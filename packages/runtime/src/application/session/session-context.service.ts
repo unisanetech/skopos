@@ -618,7 +618,7 @@ const resolveTaskNextCommand = (
   }
   const actor = actorId ?? '<id>';
   if (task.state === 'verifying' || task.state === 'ready-to-integrate') {
-    return `skopos readiness ${task.id} . --for close --advance --actor ${actor} --json`;
+    return `skopos finish ${task.id} . --actor ${actor} --json`;
   }
   const actionRecommendation = task.recommendations.find(
     (recommendation) =>
@@ -636,9 +636,9 @@ const resolveTaskNextCommand = (
       step.status !== 'skipped',
   );
   if (!unfinishedStep && task.state === 'active') {
-    return `skopos task verify ${task.id} . --actor ${actor} --compact --json`;
+    return `skopos finish ${task.id} . --actor ${actor} --json`;
   }
-  return `skopos task show ${task.id} . --compact --json`;
+  return `skopos task show ${task.id} . --json`;
 };
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>

@@ -44,6 +44,7 @@ export const skoposRuntimeCommands = [
   'task',
   'work',
   'verify',
+  'finish',
   'readiness',
   'actions',
   'impact',

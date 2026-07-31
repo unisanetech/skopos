@@ -29,6 +29,9 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-07-31`: Made `finish` the one public closure transaction, compact JSON the
+  agent hot-path default, and Action fingerprints explicitly narrow through precise
+  inputs plus reviewed source exclusions.
 - `2026-07-30`: Converged validation on one tracked Guard and Action path: removed
   command/action mode switching, raw Plan/Impact check lists, task-goal Action
   guessing, and policy-label package-script guessing. Added stable policy Guard ids,
@@ -784,7 +787,7 @@ Make Skopos automatic and consistent across supported coding agents.
 11. implement `decide`
 12. implement `actions list/run`
 13. implement `verify`
-14. implement `done`
+14. implement `finish`
 15. implement `doctor`
 16. update CLI, MCP, and UI vocabulary together
 17. make UI lead with current Task, Scope, ownership, other Sessions, blockers, next

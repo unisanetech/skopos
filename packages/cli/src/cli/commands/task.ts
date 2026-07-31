@@ -65,7 +65,7 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   const positionals: string[] = [];
   let cwd = process.cwd();
   let actor: string | undefined;
-  let compact = false;
+  let compact = true;
   let json = false;
 
   for (let index = 0; index < args.length; index += 1) {
@@ -74,6 +74,8 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       json = true;
     } else if (argument === '--compact') {
       compact = true;
+    } else if (argument === '--full') {
+      compact = false;
     } else if (argument === '--actor') {
       actor = requireFlagValue(args, ++index, '--actor');
     } else if (argument.startsWith('--actor=')) {

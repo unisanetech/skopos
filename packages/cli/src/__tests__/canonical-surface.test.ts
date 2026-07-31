@@ -18,6 +18,7 @@ describe('canonical CLI surface', () => {
         'guards',
         'evidence',
         'verify',
+        'finish',
         'readiness',
         'coordination',
       ]),
@@ -47,11 +48,8 @@ describe('canonical CLI surface', () => {
       commands: {},
     });
 
-    expect(instructions).toContain('skopos task show <task-id> . --compact --json');
-    expect(instructions).toContain('skopos task verify <task-id> . --actor <id>');
-    expect(instructions).toContain(
-      'skopos readiness <task-id> . --for close --advance --actor <id>',
-    );
+    expect(instructions).toContain('skopos task show <task-id> . --json');
+    expect(instructions).toContain('skopos finish <task-id> . --actor <id>');
     expect(instructions).not.toContain('skopos task current');
     expect(instructions).not.toContain('skopos done');
     expect(instructions).not.toContain('skopos trust');
