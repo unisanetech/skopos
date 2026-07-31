@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-31
 relatedDocs:
   - 00-architecture.md
   - runtime-model.md
@@ -23,6 +23,8 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
 
 ## Changelog
 
+- `2026-07-31`: Aligned the package and authored-root inventory with the canonical
+  Verification package and current policy and skill pack roots.
 - `2026-07-29`: Promoted `docs-engine` into the core SDK family because generic
   adoption runtime depends on its metadata, intake, restructuring, lifecycle, and
   link contract. Kept the bundled CLI free from publish-time private workspace
@@ -46,7 +48,7 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
 5. `planner`
 6. `docs-engine`
 7. `instructions`
-8. `trust`
+8. `verification`
 9. `runtime`
 10. `cli`
 11. `mcp`
@@ -63,7 +65,7 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
 5. `planner`
 6. `docs-engine`
 7. `instructions`
-8. `trust`
+8. `verification`
 9. `runtime`
 
 ### Tool Surfaces
@@ -99,14 +101,12 @@ The release-readiness gate must verify this metadata rather than relying on nami
 ### Non-Package Product And Internal Roots
 
 1. `policy-packs/`
-2. `stack-packs/`
-3. `gate-packs/`
-4. `workflow-packs/`
-5. `internal/`
-6. `fixtures/`
-7. `tests/`
-8. `docs/reference/generated/`
-9. self-hosting root files and Action declarations
+2. `skill-packs/`
+3. `internal/`
+4. `fixtures/`
+5. `tests/`
+6. `docs/reference/generated/`
+7. self-hosting root files and Action and Guard declarations
 
 These support building, proving, and shipping Skopos intelligence, but they are not part of the active SDK package model and must not appear as package scopes in compiled workspace state. Pack roots are authored product sources; they become package scopes only if a future decision explicitly promotes a pack runtime into the package family.
 

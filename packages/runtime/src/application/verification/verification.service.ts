@@ -108,15 +108,19 @@ export const verifySkoposTaskRuntime = async ({
         ),
       ) === currentSourceStateDigest,
   );
+  const matchedGuardIds = new Set(impact.matchedGuards.map((guard) => guard.id));
   const acceptanceCoverage = task.evidenceRequirements
     .filter((requirement) => requirement.phase === phase)
+    .filter((requirement) =>
+      isApplicableAcceptanceRequirement(requirement.guardIds, matchedGuardIds),
+    )
     .map((requirement) => {
       const applicableActionIds = selectApplicableAcceptanceActionIds(
         requirement.actionIds,
         requiredActionIds,
       );
       const actionsCovered = applicableActionIds.every((id) => validActionIds.has(id));
-      const linkedObservation = validObservations.find(
+      const hasLinkedObservation = validObservations.some(
         (observation) =>
           observation.requirementId === requirement.id ||
           requirement.guardIds.some((id) => observation.guardIds.includes(id)),
@@ -126,12 +130,14 @@ export const verifySkoposTaskRuntime = async ({
         return Boolean(
           matched &&
             (matched.evidence === 'source-bound-action' ||
-              linkedObservation?.guardIds.includes(id)),
+              validObservations.some((observation) =>
+                observation.guardIds.includes(id),
+              )),
         );
       });
       const covered =
         requirement.evidence === 'agent-observation'
-          ? Boolean(linkedObservation) && guardsCovered
+          ? hasLinkedObservation && guardsCovered
           : actionsCovered &&
             guardsCovered &&
             applicableActionIds.length + requirement.guardIds.length > 0;
@@ -222,6 +228,13 @@ export const selectApplicableAcceptanceActionIds = (
   [...new Set(declaredActionIds)]
     .filter((actionId) => requiredActionIds.has(actionId))
     .sort((left, right) => left.localeCompare(right));
+
+export const isApplicableAcceptanceRequirement = (
+  guardIds: string[],
+  matchedGuardIds: ReadonlySet<string>,
+): boolean =>
+  guardIds.length === 0 ||
+  guardIds.every((guardId) => matchedGuardIds.has(guardId));
 
 export const excludeTrackedTaskDocument = (
   changedPaths: string[],
@@ -365,12 +378,15 @@ export const assessSkoposTaskReadinessRuntime = async ({
     target === 'close' && task.risk === 'high-impact'
       ? await verifyLatestTaskSnapshot(workspaceRoot, taskId)
       : undefined;
+  const closeAdvanceFromVerifying =
+    target === 'close' && advance && task.state === 'verifying';
   const stateBlocker =
     target === 'integrate' && task.state !== 'verifying'
       ? `Task must be verifying before integration Readiness; current state is ${task.state}.`
       : target === 'close' &&
           task.state !== 'ready-to-integrate' &&
-          task.state !== 'complete'
+          task.state !== 'complete' &&
+          !closeAdvanceFromVerifying
         ? `Task must be ready-to-integrate before closure Readiness; current state is ${task.state}.`
         : undefined;
   const blockers = [
@@ -421,6 +437,14 @@ export const assessSkoposTaskReadinessRuntime = async ({
     artifact.readiness === 'ready' &&
     (target === 'integrate' || target === 'close')
   ) {
+    if (closeAdvanceFromVerifying) {
+      await applySkoposTaskReadinessStateRuntime({
+        cwd: workspaceRoot,
+        taskId,
+        actor,
+        target: 'integrate',
+      });
+    }
     const updatedTask = await applySkoposTaskReadinessStateRuntime({
       cwd: workspaceRoot,
       taskId,

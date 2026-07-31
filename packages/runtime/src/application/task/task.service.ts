@@ -435,6 +435,61 @@ export const completeSkoposTaskStepRuntime = async ({
     },
   });
 
+export const completeSkoposTaskActionRuntime = async ({
+  cwd,
+  taskId,
+  actionId,
+  actor,
+}: {
+  cwd: string;
+  taskId: string;
+  actionId: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const recommendationsPath = resolveSkoposTaskRecommendationsPath(
+    workspaceRoot,
+    existing.taskIdentity,
+  );
+  const recommendations = JSON.parse(
+    await readFile(recommendationsPath, 'utf8'),
+  ) as SkoposTaskRecommendationArtifact;
+  const updated = await mutateTask({
+    cwd: workspaceRoot,
+    taskId,
+    actor,
+    mutate: (task, actorId, now) => ({
+      ...task,
+      steps: task.steps.map((step) =>
+        step.id === `action-${actionId}`
+          ? { ...step, status: 'complete' as const }
+          : step,
+      ),
+      recommendations: task.recommendations.map((recommendation) =>
+        recommendation.actionKind === 'run-action' &&
+        recommendation.actionId === actionId
+          ? { ...recommendation, status: 'complete' as const }
+          : recommendation,
+      ),
+      coordination: {
+        ...task.coordination,
+        lastUpdatedBy: actorId,
+        lastUpdatedAt: now,
+      },
+    }),
+  });
+  await writeJsonArtifact({
+    artifactPath: recommendationsPath,
+    artifact: {
+      ...recommendations,
+      updatedAt: updated.updatedAt,
+      entries: updated.recommendations,
+    },
+  });
+  return updated;
+};
+
 export const moveSkoposTaskToVerificationRuntime = async ({
   cwd,
   taskId,
@@ -501,6 +556,14 @@ export const applySkoposTaskReadinessStateRuntime = async ({
         ...task,
         state: target === 'integrate' ? 'ready-to-integrate' : 'complete',
         status: target === 'close' ? 'durable' : task.status,
+        steps:
+          target === 'integrate'
+            ? task.steps.map((step) =>
+                step.kind === 'verification'
+                  ? { ...step, status: 'complete' as const }
+                  : step,
+              )
+            : task.steps,
         trackedDocumentPath:
           target === 'close' && task.trackedDocumentPath
             ? archiveTrackedTaskDocumentPath(task.trackedDocumentPath)

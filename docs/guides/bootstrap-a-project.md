@@ -11,7 +11,7 @@ provenance: declared
 view: current
 appliesTo:
   - workspace
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-31
 relatedDocs:
   - ../00-start-here.md
   - ../architecture/config-model.md
@@ -29,6 +29,9 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Changelog
 
+- `2026-07-31`: Removed retired setup-review command examples and aligned bootstrap
+  follow-up with Understanding, adoption state, Session context, Work Queue, Findings,
+  Tasks, and Readiness.
 - `2026-07-28`: Added the workspace-containment preflight and zero-mutation rejection
   contract for root and nested initialization.
 - `2026-07-28`: Moved bootstrap guidance into the canonical guide family and declared
@@ -66,12 +69,13 @@ Use this workflow when setting up Skopos on itself or any future project.
 9. write the initial `.skopos/graph/docs.json`
 10. write the initial `.skopos/graph/commands.json`
 11. write the initial `.skopos/graph/scope-relations.json`
-12. run `skopos understand` to create compact repo understanding and setup review
-13. review facts, inferences, assumptions, and confirmation questions:
-   - `skopos setup review .`
-14. confirm or correct setup assumptions before accepting policy packs, broad docs cleanup, or long-running agent work:
-   - `skopos setup answer <question-id> <option-id> .`
-15. run `skopos scan` when the repo is messy or inconsistent and review the remediation missions
+12. run `skopos understand . --json` to create compact repository Understanding
+13. review the returned facts, inferences, assumptions, contradictions, and material
+    adoption questions through `skopos session context . --json`
+14. confirm material adoption decisions through the proposal and approval flow before
+    accepting policy packs, broad docs cleanup, or long-running agent work
+15. run `skopos scan . --json` when the repo is messy or inconsistent and turn
+    actionable gaps into Findings or bounded Tasks
 16. run `skopos adopt assess .` and `skopos session context . --json` to inspect
     remaining adoption or instruction gaps
 17. review recommended next steps before enabling broader agent use
@@ -118,16 +122,15 @@ The current implemented bootstrap slice does this today:
 7. writes or updates the root Skopos onboarding files when not already present
 8. reports findings and recommended next steps
 
-Later phases will extend this flow with:
+Later phases may extend this flow with richer generated guidance and additional
+preventive host integration. Current project Readiness, Findings, and Tasks remain the
+canonical reporting and remediation surfaces.
 
-1. richer docs generation
-2. trust/reporting and remediation missions
-
-## Post-Init Setup Review
+## Post-Init Understanding Review
 
 `skopos understand` must not only explain the project. It must also show which parts of that understanding are confirmed by files and which parts are still assumptions.
 
-The setup review should include:
+The Understanding and adoption review should include:
 
 1. observed facts with evidence
 2. likely inferences with confidence
@@ -137,7 +140,9 @@ The setup review should include:
 
 For existing projects, do not treat generated Skopos docs as automatically stronger than existing project docs. First map what exists, then suggest improvements. For new projects, Skopos can recommend a clearer default structure because there is less existing project truth to protect.
 
-Setup answers are stored in `.skopos/index/understanding/setup-answers.json`. Safe answers, such as project archetype or canonical docs root, may also update `skopos.config.yaml`.
+Durable project choices belong in their tracked owner, such as `skopos.config.yaml`.
+Material document-authority or restructuring choices use the adoption proposal and
+approval artifacts; generated Understanding remains evidence, not a second authority.
 
 ## Current Decision Output
 

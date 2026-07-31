@@ -127,11 +127,30 @@ export const buildSkoposSessionContextRuntime = async ({
     420,
   );
   const workQueueSummary = compactText(workQueue?.summary, 420);
+  const currentTaskId = workQueue?.currentTaskId ?? currentTask?.task.id;
+  const currentTaskContext = currentTask
+    ? buildSessionTaskContext(currentTask.task)
+    : undefined;
+  const recommendedWork =
+    !currentTaskContext && workQueue?.recommendedEntry
+      ? {
+          id: workQueue.recommendedEntry.id,
+          sourceKind: workQueue.recommendedEntry.sourceKind,
+          title: workQueue.recommendedEntry.title,
+          reason: workQueue.recommendedEntry.reason,
+          scopeId: workQueue.recommendedEntry.scopeId,
+        }
+      : undefined;
+  const taskNextCommand = resolveTaskNextCommand(currentTask?.task, actorId);
   const nextCommand = pendingDecision
     ? undefined
-    : adoption?.nextCommand ??
-      undefined;
-  const currentTaskId = workQueue?.currentTaskId ?? currentTask?.task.id;
+    : currentTask
+      ? taskNextCommand
+      : adoption?.state !== 'agent-ready' && adoption?.nextCommand
+        ? adoption.nextCommand
+        : recommendedWork
+          ? `skopos work next . --actor ${actorId ?? '<id>'} --json`
+          : undefined;
   const responseMode = resolveResponseMode({
     pendingDecision,
     currentTaskId,
@@ -155,6 +174,8 @@ export const buildSkoposSessionContextRuntime = async ({
       coreRules: SKOPOS_COMMUNICATION_CONTRACT.coreRules,
     },
     currentTaskId,
+    currentTask: currentTaskContext,
+    recommendedWork,
     workQueueSummary,
     nextCommand,
     resumeSummary,
@@ -461,6 +482,29 @@ export const renderSkoposSessionAdditionalContext = (
   if (context.resumeSummary) {
     lines.push('', `Resume: ${context.resumeSummary}`);
   }
+  if (context.currentTask) {
+    lines.push(
+      '',
+      `Current Task: ${context.currentTask.id} — ${context.currentTask.title}`,
+      `Task state: ${context.currentTask.state}; Scope: ${context.currentTask.scopeId}; risk: ${context.currentTask.risk}; steps: ${context.currentTask.completedStepCount}/${context.currentTask.totalStepCount}.`,
+    );
+    if (context.currentTask.nextStep) {
+      lines.push(
+        `Next Task step: ${context.currentTask.nextStep.title} (${context.currentTask.nextStep.kind}).`,
+      );
+    }
+    if (context.currentTask.ownedPaths.length > 0) {
+      lines.push(
+        `Owned paths: ${context.currentTask.ownedPaths.join(', ')}${context.currentTask.additionalOwnedPathCount > 0 ? ` (+${context.currentTask.additionalOwnedPathCount} more)` : ''}.`,
+      );
+    }
+  } else if (context.recommendedWork) {
+    lines.push(
+      '',
+      `Recommended work: ${context.recommendedWork.id} — ${context.recommendedWork.title}`,
+      `Reason: ${context.recommendedWork.reason}`,
+    );
+  }
   if (context.workQueueSummary) {
     lines.push(`Work Queue: ${context.workQueueSummary}`);
   }
@@ -533,6 +577,68 @@ const compactText = (value: string | undefined, limit: number): string | undefin
     return undefined;
   }
   return compact.length <= limit ? compact : `${compact.slice(0, limit - 1)}…`;
+};
+
+const buildSessionTaskContext = (
+  task: NonNullable<Awaited<ReturnType<typeof resolveCurrentTaskState>>>['task'],
+): NonNullable<SkoposSessionContextRunResult['currentTask']> => {
+  const ownedPaths = task.changeScope.declaredOwnedPaths.slice(0, 12);
+  const nextStep = task.steps.find(
+    (step) => step.status !== 'complete' && step.status !== 'skipped',
+  );
+  return {
+    id: task.id,
+    title: task.title,
+    goal: task.goal,
+    state: task.state,
+    risk: task.risk,
+    scopeId: task.scope.scope.id,
+    ownedPaths,
+    additionalOwnedPathCount:
+      task.changeScope.declaredOwnedPaths.length - ownedPaths.length,
+    completedStepCount: task.steps.filter((step) => step.status === 'complete').length,
+    totalStepCount: task.steps.length,
+    nextStep: nextStep
+      ? {
+          id: nextStep.id,
+          kind: nextStep.kind,
+          title: nextStep.title,
+        }
+      : undefined,
+    selectedActionIds: task.selectedActions.map((action) => action.id).slice(0, 8),
+  };
+};
+
+const resolveTaskNextCommand = (
+  task: NonNullable<Awaited<ReturnType<typeof resolveCurrentTaskState>>>['task'] | undefined,
+  actorId: string | undefined,
+): string | undefined => {
+  if (!task) {
+    return undefined;
+  }
+  const actor = actorId ?? '<id>';
+  if (task.state === 'verifying' || task.state === 'ready-to-integrate') {
+    return `skopos readiness ${task.id} . --for close --advance --actor ${actor} --json`;
+  }
+  const actionRecommendation = task.recommendations.find(
+    (recommendation) =>
+      recommendation.status === 'open' &&
+      recommendation.actionKind === 'run-action' &&
+      recommendation.actionId,
+  );
+  if (actionRecommendation?.actionId) {
+    return `skopos actions run ${actionRecommendation.actionId} . --task ${task.id} --actor ${actor} --json`;
+  }
+  const unfinishedStep = task.steps.find(
+    (step) =>
+      step.kind !== 'verification' &&
+      step.status !== 'complete' &&
+      step.status !== 'skipped',
+  );
+  if (!unfinishedStep && task.state === 'active') {
+    return `skopos task verify ${task.id} . --actor ${actor} --compact --json`;
+  }
+  return `skopos task show ${task.id} . --compact --json`;
 };
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>

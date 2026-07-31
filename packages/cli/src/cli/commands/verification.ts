@@ -20,7 +20,7 @@ export const runVerifyCommand = async (args: string[]): Promise<void> => {
     dryRun: parsed.dryRun,
   });
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(parsed.compact ? buildCompactVerificationOutput(result) : result);
     return;
   }
   writeLines([
@@ -77,6 +77,7 @@ const parseVerificationArgs = (
   actor?: string;
   advance: boolean;
   dryRun: boolean;
+  compact: boolean;
   json: boolean;
 } => {
   let taskId: string | undefined;
@@ -86,10 +87,12 @@ const parseVerificationArgs = (
   let dryRun = false;
   let actor: string | undefined;
   let advance = false;
+  let compact = false;
   let json = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') json = true;
+    else if (argument === '--compact') compact = true;
     else if (argument === '--dry-run') dryRun = true;
     else if (argument === '--advance') advance = true;
     else if (argument === '--actor') actor = requireValue(args, ++index, '--actor');
@@ -108,8 +111,40 @@ const parseVerificationArgs = (
     else cwd = resolve(argument);
   }
   if (!taskId) throw new Error(`Missing Task id for skopos ${command}.`);
-  return { taskId, cwd, phase, target, actor, advance, dryRun, json };
+  return { taskId, cwd, phase, target, actor, advance, dryRun, compact, json };
 };
+
+export const buildCompactVerificationOutput = (
+  result: Awaited<ReturnType<typeof verifySkoposTaskRuntime>>,
+) => ({
+  schemaVersion: 1,
+  id: result.id,
+  type: 'verification-summary',
+  status: result.status,
+  workspaceRoot: result.workspaceRoot,
+  taskId: result.taskId,
+  phase: result.phase,
+  risk: result.risk,
+  verificationStatus: result.verificationStatus,
+  summary: result.summary,
+  changedPathCount: result.changedPaths.length,
+  matchedGuardIds: result.matchedGuards.map((guard) => guard.id),
+  actionEvidence: {
+    valid: result.actionEvidence.filter((entry) => entry.status === 'pass').length,
+    required: result.actionEvidence.length,
+    missingActionIds: result.actionEvidence
+      .filter((entry) => entry.status === 'fail')
+      .map((entry) => entry.id),
+  },
+  acceptance: {
+    covered: result.acceptanceCoverage.filter((entry) => entry.status === 'covered').length,
+    required: result.acceptanceCoverage.length,
+    missingRequirementIds: result.acceptanceCoverage
+      .filter((entry) => entry.status === 'missing')
+      .map((entry) => entry.requirementId),
+  },
+  blockers: result.blockers,
+});
 
 const parsePhase = (value: string): SkoposVerificationPhase => {
   if (['admission', 'iteration', 'stabilization', 'closure'].includes(value)) {

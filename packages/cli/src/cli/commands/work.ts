@@ -15,7 +15,11 @@ export const runWorkCommand = async (args: string[]): Promise<void> => {
     dryRun: parsed.dryRun,
   });
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(
+      parsed.subcommand === 'next'
+        ? buildCompactWorkNextOutput(result)
+        : result,
+    );
     return;
   }
   const entry = result.recommendedEntry;
@@ -35,6 +39,19 @@ export const runWorkCommand = async (args: string[]): Promise<void> => {
       : 'No ready or active Task is available.',
   ]);
 };
+
+export const buildCompactWorkNextOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposWorkQueueRuntime>>,
+) => ({
+  schemaVersion: 1,
+  workspaceRoot: result.workspaceRoot,
+  actorId: result.actorId,
+  summary: result.summary,
+  currentTaskId: result.currentTaskId,
+  recommendedEntry: result.recommendedEntry,
+  counts: result.workQueue.counts,
+  queueItemCount: result.workQueue.entries.length,
+});
 
 const parseWorkArgs = (
   args: string[],

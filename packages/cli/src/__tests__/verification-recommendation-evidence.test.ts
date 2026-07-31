@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   excludeTrackedTaskDocument,
+  isApplicableAcceptanceRequirement,
   selectApplicableAcceptanceActionIds,
 } from '../../../runtime/src/application/verification/verification.service.js';
 import { archiveTrackedTaskDocumentPath } from '../../../runtime/src/application/task/task.service.js';
@@ -23,6 +24,24 @@ describe('Task acceptance Action evidence', () => {
         new Set(['scope.check', 'docs.check']),
       ),
     ).toEqual(['docs.check', 'scope.check']);
+  });
+
+  it('keeps ordinary acceptance required while excluding stale Guard requirements', () => {
+    const matchedGuardIds = new Set(['docs.sync']);
+
+    expect(isApplicableAcceptanceRequirement([], matchedGuardIds)).toBe(true);
+    expect(
+      isApplicableAcceptanceRequirement(['docs.sync'], matchedGuardIds),
+    ).toBe(true);
+    expect(
+      isApplicableAcceptanceRequirement(['knowledge.refresh'], matchedGuardIds),
+    ).toBe(false);
+    expect(
+      isApplicableAcceptanceRequirement(
+        ['docs.sync', 'knowledge.refresh'],
+        matchedGuardIds,
+      ),
+    ).toBe(false);
   });
 
   it('excludes the generated tracked Task document from source-bound proof', () => {

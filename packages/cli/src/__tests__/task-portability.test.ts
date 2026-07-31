@@ -1,16 +1,25 @@
+import { execFile } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
 import {
+  completeSkoposTaskStepRuntime,
+  moveSkoposTaskToVerificationRuntime,
   showSkoposTaskRuntime,
 } from '../../../runtime/src/application/task/task.service.js';
+import {
+  assessSkoposTaskReadinessRuntime,
+  recordSkoposObservationEvidenceRuntime,
+} from '../../../runtime/src/application/verification/verification.service.js';
 
 const temporaryRoots: string[] = [];
+const execFileAsync = promisify(execFile);
 
 afterEach(async () => {
   await Promise.all(
@@ -70,6 +79,62 @@ describe('tracked Task portability', () => {
       ),
     ).resolves.toContain(`"${reconstructed.id}"`);
   });
+
+  it('closes a verified Task through the documented two-command transition', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Prove the canonical Task closure transition',
+      actor: 'agent-a',
+      acceptanceCriteria: ['The Task closes from verifying with valid Evidence.'],
+      ownedPaths: ['src'],
+    });
+
+    let task = started.task;
+    for (const step of task.steps.filter((entry) => entry.kind !== 'verification')) {
+      task = await completeSkoposTaskStepRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        stepId: step.id,
+        actor: 'agent-a',
+      });
+    }
+    for (const requirement of task.evidenceRequirements) {
+      await recordSkoposObservationEvidenceRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        requirementId: requirement.id,
+        statement: 'The focused fixture proves the acceptance criterion.',
+        actor: 'agent-a',
+      });
+    }
+
+    const verifying = await moveSkoposTaskToVerificationRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+    expect(verifying.state).toBe('verifying');
+
+    const readiness = await assessSkoposTaskReadinessRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      target: 'close',
+      advance: true,
+      actor: 'agent-a',
+    });
+    expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
+    expect(readiness).toMatchObject({
+      readiness: 'ready',
+      taskState: 'complete',
+    });
+    const completed = await showSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+    });
+    expect(completed.state).toBe('complete');
+    expect(completed.steps.every((step) => step.status === 'complete')).toBe(true);
+  });
 });
 
 const createWorkspace = async (): Promise<string> => {
@@ -96,5 +161,14 @@ const createWorkspace = async (): Promise<string> => {
     actor: 'fixture-init',
     scaffoldInstructions: false,
   });
+  await execFileAsync('git', ['init'], { cwd: workspaceRoot });
+  await execFileAsync('git', ['config', 'user.email', 'fixture@example.test'], {
+    cwd: workspaceRoot,
+  });
+  await execFileAsync('git', ['config', 'user.name', 'Skopos Fixture'], {
+    cwd: workspaceRoot,
+  });
+  await execFileAsync('git', ['add', '.'], { cwd: workspaceRoot });
+  await execFileAsync('git', ['commit', '-m', 'fixture baseline'], { cwd: workspaceRoot });
   return workspaceRoot;
 };

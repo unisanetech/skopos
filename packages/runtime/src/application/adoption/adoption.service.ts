@@ -77,6 +77,55 @@ export interface BuildSkoposAdoptionActivationRuntimeOptions {
   dryRun?: boolean;
 }
 
+export const hasActiveSkoposAdoptionRuntime = async ({
+  cwd,
+}: {
+  cwd: string;
+}): Promise<boolean> => {
+  const workspaceRoot = resolve(cwd);
+  const [proposal, approval, verification, activation] = await Promise.all([
+    readJsonIfExists<SkoposAdoptionRestructuringProposalArtifact>(
+      join(workspaceRoot, SKOPOS_ADOPTION_PROPOSAL_PATH),
+    ),
+    readJsonIfExists<SkoposAdoptionApprovalArtifact>(
+      join(workspaceRoot, SKOPOS_ADOPTION_APPROVAL_PATH),
+    ),
+    readJsonIfExists<SkoposAdoptionVerificationArtifact>(
+      join(workspaceRoot, SKOPOS_ADOPTION_VERIFICATION_PATH),
+    ),
+    readJsonIfExists<SkoposAdoptionActivationArtifact>(
+      join(workspaceRoot, SKOPOS_ADOPTION_ACTIVATION_PATH),
+    ),
+  ]);
+
+  if (!proposal || !approval || !verification || !activation) return false;
+  if (
+    proposal.proposalDigest !== approval.proposalDigest ||
+    proposal.proposalDigest !== verification.proposalDigest ||
+    proposal.proposalDigest !== activation.proposalDigest
+  ) {
+    return false;
+  }
+  if (
+    activation.status !== 'active' ||
+    activation.adoptionState !== 'agent-ready' ||
+    verification.adoptionState !== 'standard-verified' ||
+    verification.checks.some((check) => check.status !== 'pass')
+  ) {
+    return false;
+  }
+
+  const proposedIds = proposal.operations.map((operation) => operation.id).sort();
+  const approvedIds = [...approval.approvedOperationIds].sort();
+  const verifiedIds = [...verification.verifiedOperationIds].sort();
+  const activatedIds = [...activation.verifiedOperationIds].sort();
+  return (
+    JSON.stringify(proposedIds) === JSON.stringify(approvedIds) &&
+    JSON.stringify(proposedIds) === JSON.stringify(verifiedIds) &&
+    JSON.stringify(proposedIds) === JSON.stringify(activatedIds)
+  );
+};
+
 export const buildSkoposAdoptionAssessmentRuntime = async ({
   cwd,
   actor,

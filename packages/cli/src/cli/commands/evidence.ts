@@ -19,7 +19,25 @@ export const runEvidenceCommand = async (args: string[]): Promise<void> => {
     dryRun: parsed.dryRun,
   });
   if (parsed.json) {
-    writeJsonOutput(artifact);
+    writeJsonOutput(
+      parsed.compact
+        ? {
+            schemaVersion: 1,
+            id: artifact.id,
+            type: 'observation-evidence-summary',
+            status: artifact.status,
+            workspaceRoot: artifact.workspaceRoot,
+            taskId: artifact.taskId,
+            requirementId: artifact.requirementId,
+            guardIds: artifact.guardIds,
+            statement: artifact.statement,
+            observedByActorId: artifact.observedByActorId,
+            observedAt: artifact.observedAt,
+            sourceStateDigest: artifact.sourceStateDigest,
+            sourcePathCount: artifact.sourcePathStates.length,
+          }
+        : artifact,
+    );
     return;
   }
   writeLines([
@@ -42,10 +60,12 @@ const parseEvidenceArgs = (args: string[]) => {
   let statement = '';
   let actor: string | undefined;
   let dryRun = false;
+  let compact = false;
   let json = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') json = true;
+    else if (argument === '--compact') compact = true;
     else if (argument === '--dry-run') dryRun = true;
     else if (argument === '--requirement') requirementId = requireValue(args, ++index, '--requirement');
     else if (argument.startsWith('--requirement=')) requirementId = argument.slice('--requirement='.length);
@@ -70,6 +90,7 @@ const parseEvidenceArgs = (args: string[]) => {
     statement,
     actor,
     dryRun,
+    compact,
     json,
   };
 };

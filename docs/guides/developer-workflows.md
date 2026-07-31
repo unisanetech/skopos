@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-30
+lastUpdated: 2026-07-31
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
@@ -21,6 +21,8 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-07-31`: Corrected the canonical Evidence, compact inspection, coordination,
+  verification, and two-command closure examples to match the public CLI.
 - `2026-07-30`: Added `--action-manifest` and `--guard-manifest` review inputs so
   project-specific candidate commands can enter the same digest-bound approval flow
   without adding project rules to Skopos core.
@@ -41,7 +43,7 @@ skopos session context . --actor <id> --host <host> --session-id <session-id> --
 Use the returned current Task when one is unambiguous. Otherwise inspect:
 
 ```bash
-skopos work next . --actor <id>
+skopos work next . --actor <id> --json
 ```
 
 ## Start Work
@@ -68,8 +70,8 @@ skopos decide <question-id> <option-id> . --actor <id>
 ## Continue Work
 
 ```bash
-skopos task show <task-id> . --actor <id>
-skopos work next . --actor <id>
+skopos task show <task-id> . --compact --json
+skopos work next . --actor <id> --json
 ```
 
 Task state, open questions, and recommendations are Task-owned. Tracked standard and
@@ -126,14 +128,20 @@ Action execution records reusable Evidence and links it to the named Task. Expli
 acceptance or Guard observations can be recorded with:
 
 ```bash
-skopos evidence record <task-id> . --acceptance <id> --actor <id> ...
+skopos evidence record-observation <task-id> . \
+  --requirement <requirement-id> \
+  --statement "<observed fact>" \
+  --actor <id> \
+  --compact \
+  --json
 ```
 
-Then evaluate coverage:
+Then inspect coverage and close through the canonical state transition:
 
 ```bash
-skopos verify <task-id> . --phase closure --actor <id>
-skopos readiness <task-id> . --for close --actor <id>
+skopos verify <task-id> . --phase closure --compact --json
+skopos task verify <task-id> . --actor <id>
+skopos readiness <task-id> . --for close --advance --actor <id>
 ```
 
 Verify never runs Actions implicitly. Readiness explains missing Evidence, stale
@@ -144,9 +152,9 @@ inputs, Guard blockers, coordination contamination, and the next safe action.
 Each host tab uses a stable Session id. Before writing:
 
 ```bash
-skopos coordination session open . --session-id <id> --actor <actor> --host <host>
-skopos coordination task reserve . --session-id <id> --task <task-id>
-skopos coordination claim add . --session-id <id> --task <task-id> --resource <path>
+skopos coordination session open . --session <id> --actor <actor> --host <host>
+skopos coordination task reserve <task-id> . --session <id>
+skopos coordination claim add exact-path <path> . --task <task-id> --session <id>
 ```
 
 Use mutation begin/complete around cooperative edits and audit before integration.

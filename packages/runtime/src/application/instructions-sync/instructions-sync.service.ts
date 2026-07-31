@@ -3,6 +3,7 @@ import { resolve, join } from 'node:path';
 import { loadSkoposConfig } from '@skopos/config';
 import {
   buildSkoposEnforcementProfile,
+  scaffoldProjectInstructions,
   syncClaudeCodeHookAdapter,
   syncCodexWrapperAdapter,
   syncInstructionMirrors,
@@ -38,6 +39,20 @@ export const syncSkoposInstructions = async ({
   const instructionSourcePath =
     existingConfig?.agents.canonicalInstructions ?? 'AGENTS.md';
   const instructionMirrorPaths = existingConfig?.agents.syncMirrors;
+  const contract = existingConfig
+    ? await scaffoldProjectInstructions({
+        cwd: workspaceRoot,
+        instructionSourcePath,
+        mode: existingConfig.project.mode === 'new-project' ? 'greenfield' : 'existing',
+        projectName: existingConfig.project.name,
+        repoMode: existingConfig.project.repoMode,
+        archetype: existingConfig.project.archetype,
+        docsRoot: existingConfig.docs.root,
+        docsStartHerePath: existingConfig.docs.startHerePath,
+        commands: existingConfig.commands,
+        dryRun,
+      })
+    : undefined;
   const [actions, guards] = await Promise.all([
     loadSkoposActionManifests({ cwd: workspaceRoot }),
     loadSkoposGuardManifests({ cwd: workspaceRoot }),
@@ -80,6 +95,14 @@ export const syncSkoposInstructions = async ({
     dryRun,
   });
   const writes = [
+    ...(contract && contract.status !== 'skipped-existing'
+      ? [
+          {
+            path: contract.path,
+            status: dryRun ? 'dry-run' as const : 'written' as const,
+          },
+        ]
+      : []),
     ...result.writes,
     ...claudeAdapter.writes,
     ...codexAdapter.writes,

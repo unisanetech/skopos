@@ -80,6 +80,21 @@ describe('coordination-aware agent lifecycle', () => {
       },
       reservation: { taskId: started.task.id },
     });
+    expect(resumedContext.currentTask).toMatchObject({
+      id: started.task.id,
+      goal: 'Change the coordination fixture',
+      state: 'active',
+    });
+    expect(resumedContext.currentTask?.ownedPaths).toEqual([
+      'src/domain',
+      'src/existing.ts',
+      'src/generated.ts',
+    ]);
+    expect(resumedContext.currentTask?.totalStepCount).toBeGreaterThan(0);
+    expect(resumedContext.nextCommand).toContain(
+      `skopos task show ${started.task.id} . --compact --json`,
+    );
+    expect(resumedContext.nextCommand).not.toContain('adoption/analysis-brief.json');
     expect(resumedContext.additionalContext).toContain(
       `Reserved Task: ${started.task.id}; resource claims: 3.`,
     );

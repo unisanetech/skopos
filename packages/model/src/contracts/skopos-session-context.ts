@@ -4,6 +4,11 @@ import type {
 } from './skopos-decision-question.js';
 import type { SkoposAdoptionState } from './skopos-adoption.js';
 import type { SkoposTaskCoordinationState } from './skopos-coordination.js';
+import type {
+  SkoposTaskRisk,
+  SkoposTaskState,
+  SkoposTaskStepKind,
+} from './skopos-task.js';
 
 export type SkoposAgentResponseMode =
   | 'direct-answer'
@@ -32,6 +37,33 @@ export interface SkoposSessionPendingDecision {
   source?: 'task' | 'adoption-question' | 'adoption-approval';
 }
 
+export interface SkoposSessionTaskContext {
+  id: string;
+  title: string;
+  goal: string;
+  state: SkoposTaskState;
+  risk: SkoposTaskRisk;
+  scopeId: string;
+  ownedPaths: string[];
+  additionalOwnedPathCount: number;
+  completedStepCount: number;
+  totalStepCount: number;
+  nextStep?: {
+    id: string;
+    kind: SkoposTaskStepKind;
+    title: string;
+  };
+  selectedActionIds: string[];
+}
+
+export interface SkoposSessionRecommendedWork {
+  id: string;
+  sourceKind: 'task' | 'plan' | 'finding' | 'question' | 'readiness-blocker';
+  title: string;
+  reason: string;
+  scopeId: string;
+}
+
 export interface SkoposSessionContextRunResult {
   schemaVersion: 1;
   workspaceRoot: string;
@@ -43,6 +75,8 @@ export interface SkoposSessionContextRunResult {
     coreRules: readonly string[];
   };
   currentTaskId?: string;
+  currentTask?: SkoposSessionTaskContext;
+  recommendedWork?: SkoposSessionRecommendedWork;
   workQueueSummary?: string;
   nextCommand?: string;
   resumeSummary?: string;

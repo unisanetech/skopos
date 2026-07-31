@@ -34,23 +34,23 @@ export interface BuildSkoposImpactReportOptions {
 
 export const buildSkoposImpactReport = async ({
   cwd,
-  changedPaths = [],
+  changedPaths,
   changeScope,
   phase,
   risk,
 }: BuildSkoposImpactReportOptions): Promise<SkoposImpactReport> => {
   const workspaceRoot = resolve(cwd);
   const changedPathSource =
-    changedPaths.length > 0 ? 'explicit' : changeScope ? 'task' : 'git-status';
+    changedPaths !== undefined ? 'explicit' : changeScope ? 'task' : 'git-status';
   const missionChangedPaths =
-    changedPaths.length === 0 && changeScope
+    changedPaths === undefined && changeScope
       ? await resolveSkoposTaskChangedPaths({
           workspaceRoot,
           changeScope,
         })
       : undefined;
   const rawChangedPaths =
-    changedPaths.length > 0
+    changedPaths !== undefined
       ? changedPaths
       : missionChangedPaths?.changedPaths ?? await collectGitChangedPaths(workspaceRoot);
   const { bootstrap, scopesLite } = await loadSkoposQueryState({

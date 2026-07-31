@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-31
 relatedDocs:
   - evidence-and-readiness-model.md
   - config-model.md
@@ -23,6 +23,8 @@ Skopos should force agents to ask humans when a choice should not be guessed.
 
 ## Changelog
 
+- `2026-07-31`: Replaced prototype workflow-router terminology with the canonical
+  Task, Session, Verify, and Readiness execution contract.
 - `2026-07-28`: Bound question and recommendation state to the exact Task and
   worktree projection under
   `.skopos/tasks/<worktree-id>/<task-id>/{questions,recommendations}.json`; removed
@@ -125,10 +127,10 @@ The current planning slice also uses this model to emit:
 
 ## Current Execution Application
 
-The current workflow-router baseline extends this model beyond bootstrap and planning:
+The current Task model extends this contract beyond bootstrap and planning:
 
-1. active mission questions
-2. duplicate and contradiction resolution questions
-3. contract-change confirmation during `start`
-4. ongoing blocking-question refresh during `next`
-5. future closure blockers during `eval` and `done`
+1. open material questions are owned by the current Task
+2. duplicate and contradiction questions are resolved with `skopos decide`
+3. contract-changing work is confirmed during `skopos start`
+4. Session context projects the highest-priority blocking decision and current Task
+5. Verify and Readiness prevent closure while required decisions or Evidence remain open

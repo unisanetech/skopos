@@ -52,21 +52,21 @@ This file is the canonical instruction source for the standalone Skopos workspac
 Use `skopos --help` for the full CLI surface and `skopos <command> --help` where supported. In this self-hosted repo, package scripts wrap the local source CLI; in installed projects, use `skopos` directly.
 
 1. Load compact project knowledge: `skopos knowledge . --compact`
-2. Review setup questions: `skopos setup review .`
-3. Build project understanding: `skopos understand . --actor <id>`
-4. See Session context: `skopos session context . --json`
+2. See current work and material decisions: `skopos session context . --actor <id> --json`
+3. Build project Understanding when adoption needs it: `skopos understand . --actor <id> --json`
+4. Assess adoption when Session context reports an adoption gap: `skopos adopt assess . --actor <id> --json`
 5. Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
-6. Continue tracked work: `skopos work next . --actor <id>`
-7. Check Readiness: `skopos readiness <task-id> . --for close --actor <id>`
-8. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
-9. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
-10. Render static UI artifact: `skopos ui render .`
-11. Sync agent instructions: `skopos instructions sync . --actor <id>`
-12. List Actions: `skopos actions list .`
-13. Run an Action: `skopos actions run <action-id> . --actor <id>`
-14. Validate changed scope: `skopos verify <task-id> . --actor <id> --phase iteration`
-15. Review stabilization: `skopos verify <task-id> . --actor <id> --phase stabilization`
-16. Validate closure: `skopos verify <task-id> . --actor <id> --phase closure`
+6. Continue tracked work: `skopos work next . --actor <id> --json`
+7. Inspect the current Task: `skopos task show <task-id> . --compact --json`
+8. List Actions: `skopos actions list .`
+9. Run a Task Action: `skopos actions run <action-id> . --task <task-id> --actor <id> --json`
+10. Record observation Evidence: `skopos evidence record-observation <task-id> . --requirement <id> --statement "<fact>" --actor <id> --compact --json`
+11. Diagnose closure Evidence: `skopos verify <task-id> . --phase closure --compact --json`
+12. Close after Evidence passes: `skopos task verify <task-id> . --actor <id>`, then `skopos readiness <task-id> . --for close --advance --actor <id>`
+13. Sync agent instructions: `skopos instructions sync . --actor <id>`
+14. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
+15. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
+16. Render static UI artifact: `skopos ui render .`
 17. Review project skill packs: `skopos skills recommend .`
 18. Accept a project-bound skill: `skopos skills apply <pack-id> . --binding <binding-id> --actor <id> --reason <text>`
 
@@ -116,18 +116,20 @@ When Skopos is installed, agents should treat it as the default operating memory
 - If project commands already own verification, register them as Actions; do not maintain a second verification authority.
 ### Readiness
 - Before saying work is complete, capture the focused Evidence selected for the Task.
-- Run `skopos verify <task-id> . --phase closure`, then `skopos readiness <task-id> . --for close --actor <id>`.
-- Do not claim completion while Readiness blockers, accepted-policy drift, open Task questions, missing Evidence, or Task state prevent closure.
+- For a compact diagnostic, run `skopos verify <task-id> . --phase closure --compact --json`.
+- To close after required Evidence exists, run `skopos task verify <task-id> . --actor <id>`, then `skopos readiness <task-id> . --for close --advance --actor <id>`.
+- Do not claim completion while Readiness blockers, blocking accepted-policy drift, open Task questions, missing Evidence, or Task state prevent closure.
 - Final responses should state what changed, Evidence, Memory/docs updates, and remaining risk.
 ### Default Commands
 - Session context: `skopos session context . --json`
 - Work Queue: `skopos work queue . --json`
 - Next work: `skopos work next . --json`
 - Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
-- Current Task: `skopos task current . --actor <id> --json`
+- Current Task: `skopos task show <task-id> . --compact --json`
 - Sync instructions: `skopos instructions sync .`
-- Verify: `skopos verify <task-id> . --phase closure`
-- Close Readiness: `skopos readiness <task-id> . --for close --actor <id>`
+- Verify diagnostic: `skopos verify <task-id> . --phase closure --compact --json`
+- Enter verification: `skopos task verify <task-id> . --actor <id>`
+- Close Readiness: `skopos readiness <task-id> . --for close --advance --actor <id>`
 - Validation commands below are discoverable capabilities. Skopos selects a proportional affected-scope set; do not run all of them by default.
 - typecheck: `pnpm typecheck`
 - test: `pnpm test`

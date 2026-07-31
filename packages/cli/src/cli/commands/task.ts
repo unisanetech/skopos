@@ -34,7 +34,7 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
               : failUnknownTaskCommand(parsed);
 
   if (parsed.json) {
-    writeJsonOutput(task);
+    writeJsonOutput(parsed.compact ? buildCompactTaskOutput(task) : task);
     return;
   }
 
@@ -57,6 +57,7 @@ interface ParsedTaskArgs {
   stepId?: string;
   cwd: string;
   actor?: string;
+  compact: boolean;
   json: boolean;
 }
 
@@ -64,12 +65,15 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   const positionals: string[] = [];
   let cwd = process.cwd();
   let actor: string | undefined;
+  let compact = false;
   let json = false;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') {
       json = true;
+    } else if (argument === '--compact') {
+      compact = true;
     } else if (argument === '--actor') {
       actor = requireFlagValue(args, ++index, '--actor');
     } else if (argument.startsWith('--actor=')) {
@@ -100,6 +104,7 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       stepId: third,
       cwd,
       actor,
+      compact,
       json,
     };
   }
@@ -109,7 +114,49 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   if (second) {
     cwd = resolve(second);
   }
-  return { subcommand, taskId: first, cwd, actor, json };
+  return { subcommand, taskId: first, cwd, actor, compact, json };
+};
+
+export const buildCompactTaskOutput = (
+  task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+) => {
+  const nextStep = task.steps.find(
+    (step) => step.status !== 'complete' && step.status !== 'skipped',
+  );
+  const ownedPaths = task.changeScope.declaredOwnedPaths.slice(0, 12);
+  return {
+    schemaVersion: 1,
+    id: task.id,
+    type: 'task-summary',
+    status: task.status,
+    workspaceRoot: task.workspaceRoot,
+    state: task.state,
+    title: task.title,
+    goal: task.goal,
+    risk: task.risk,
+    scopeId: task.scope.scope.id,
+    trackedDocumentPath: task.trackedDocumentPath,
+    progress: {
+      completed: task.steps.filter((step) => step.status === 'complete').length,
+      total: task.steps.length,
+      nextStep: nextStep
+        ? {
+            id: nextStep.id,
+            kind: nextStep.kind,
+            title: nextStep.title,
+          }
+        : undefined,
+    },
+    ownedPaths,
+    additionalOwnedPathCount:
+      task.changeScope.declaredOwnedPaths.length - ownedPaths.length,
+    selectedActionIds: task.selectedActions.map((action) => action.id),
+    selectedGuardIds: task.selectedGuardIds,
+    openQuestionCount: task.questions.filter((question) => question.status === 'open').length,
+    openRecommendationCount: task.recommendations.filter(
+      (recommendation) => recommendation.status === 'open',
+    ).length,
+  };
 };
 
 const requireFlagValue = (args: string[], index: number, flag: string): string => {

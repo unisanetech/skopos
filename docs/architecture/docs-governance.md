@@ -27,6 +27,9 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-07-31`: Kept verified adoption active during routine `skopos init` knowledge
+  refreshes. Normal Project Memory evolution no longer reopens brownfield assessment;
+  `skopos adopt assess` remains the explicit command for restarting adoption review.
 - `2026-07-29`: Made canonical adoption intake part of actual initialization.
   Existing-project init performs assessment without creating a docs router or declared
   Scope registry; greenfield init creates the minimum router and registry directly.
@@ -89,6 +92,8 @@ project to keep its own application code architecture.
 17. `failure-pattern` is a Pattern kind, not a separate `failure-patterns/` family
 18. existing-project init starts with non-mutating assessment; greenfield init creates
     the minimum standard router and declared Scope registry directly
+19. after verified activation, routine init refreshes generated project state without
+    discarding adoption; only explicit adoption assessment reopens the review workflow
 
 ## Workspace Memory Root
 

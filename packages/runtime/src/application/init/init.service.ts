@@ -45,7 +45,10 @@ import { refreshSkoposMemoryState } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import { writeSkoposProjectArtifact } from '../agent-native/project-artifact.js';
-import { buildSkoposAdoptionAssessmentRuntime } from '../adoption/adoption.service.js';
+import {
+  buildSkoposAdoptionAssessmentRuntime,
+  hasActiveSkoposAdoptionRuntime,
+} from '../adoption/adoption.service.js';
 import { resolveSkoposGuardsRuntime } from '../guards/guards.service.js';
 import { resolveSkoposPolicyRuntime } from '../policies/policies.service.js';
 import { resolveSkoposSkillsRuntime } from '../skills/skills.service.js';
@@ -320,12 +323,15 @@ export const initSkoposProject = async ({
     artifact: scopeRelationsGraph,
     dryRun,
   });
-  const adoptionAssessment = dryRun
-    ? undefined
-    : await buildSkoposAdoptionAssessmentRuntime({
-        cwd: workspaceRoot,
-        actor: actorId,
-      });
+  const adoptionIsActive =
+    !dryRun && (await hasActiveSkoposAdoptionRuntime({ cwd: workspaceRoot }));
+  const adoptionAssessment =
+    dryRun || adoptionIsActive
+      ? undefined
+      : await buildSkoposAdoptionAssessmentRuntime({
+          cwd: workspaceRoot,
+          actor: actorId,
+        });
   const logWrite = await appendSkoposOperationalLogEntry({
     workspaceRoot,
     eventKind: 'init',

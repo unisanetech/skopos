@@ -94,6 +94,11 @@ export const buildSkoposDecideRuntime = async ({
       lastUpdatedBy: actorId,
       lastUpdatedAt: now,
     },
+    steps: current.task.steps.map((step) =>
+      step.id === `decision-${questionId}`
+        ? { ...step, status: 'complete' as const }
+        : step,
+    ),
     questions: updatedQuestions.entries,
     recommendations: updatedRecommendations.entries,
   };

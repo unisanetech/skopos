@@ -21,7 +21,10 @@ import {
 } from '../shared/knowledge-state.js';
 import { executeSkoposShellCommand } from '../shared/execute-shell-command.js';
 import { pathExists } from '../shared/path-exists.js';
-import { showSkoposTaskRuntime } from '../task/task.service.js';
+import {
+  completeSkoposTaskActionRuntime,
+  showSkoposTaskRuntime,
+} from '../task/task.service.js';
 import { resolveSkoposTaskDirectory } from '../task/task-paths.js';
 
 export interface ListSkoposActionsRuntimeOptions {
@@ -351,6 +354,12 @@ const attachActionRunToTask = async ({
   );
   await mkdir(dirname(linkPath), { recursive: true });
   await writeFile(linkPath, `${JSON.stringify(link, null, 2)}\n`, 'utf8');
+  await completeSkoposTaskActionRuntime({
+    cwd: workspaceRoot,
+    taskId: task.id,
+    actionId: run.actionId,
+    actor: actorId,
+  });
   return {
     run,
     taskEvidenceLink: link,

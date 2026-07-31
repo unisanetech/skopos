@@ -121,6 +121,98 @@ describe('read-only adoption assessment', () => {
     expect(await readFile(result.intakePath, 'utf8')).toBe(intakeBefore);
     expect(await readFile(result.analysisBriefPath, 'utf8')).toBe(briefBefore);
   });
+
+  it(
+    'preserves verified adoption during routine init refresh',
+    async () => {
+      const workspaceRoot = await createWorkspace();
+      await initSkoposProject({
+        cwd: workspaceRoot,
+        mode: 'existing',
+        actor: 'adoption-test',
+        scaffoldInstructions: false,
+      });
+      const adoptionRoot = join(workspaceRoot, '.skopos/adoption');
+      const proposalDigest = 'verified-proposal';
+      const operationId = 'keep-project-memory';
+      await Promise.all([
+        writeFile(
+          join(adoptionRoot, 'restructuring-proposal.json'),
+          JSON.stringify({
+            proposalDigest,
+            operations: [{ id: operationId }],
+          }),
+          'utf8',
+        ),
+        writeFile(
+          join(adoptionRoot, 'proposal-approval.json'),
+          JSON.stringify({
+            proposalDigest,
+            approvedOperationIds: [operationId],
+          }),
+          'utf8',
+        ),
+        writeFile(
+          join(adoptionRoot, 'standard-verification.json'),
+          JSON.stringify({
+            proposalDigest,
+            adoptionState: 'standard-verified',
+            verifiedOperationIds: [operationId],
+            checks: [{ id: 'document-contract', status: 'pass' }],
+          }),
+          'utf8',
+        ),
+        writeFile(
+          join(adoptionRoot, 'activation.json'),
+          JSON.stringify({
+            status: 'active',
+            adoptionState: 'agent-ready',
+            proposalDigest,
+            verifiedOperationIds: [operationId],
+          }),
+          'utf8',
+        ),
+      ]);
+      const intakeBefore = await readFile(join(adoptionRoot, 'intake.json'), 'utf8');
+      await writeFile(
+        join(workspaceRoot, 'README.md'),
+        '# Existing product\n\nNormal adopted Memory evolution.\n',
+        'utf8',
+      );
+
+      const result = await initSkoposProject({
+        cwd: workspaceRoot,
+        mode: 'existing',
+        actor: 'adoption-test',
+        scaffoldInstructions: false,
+      });
+
+      expect(result.adoptionAssessment).toBeUndefined();
+      expect(await readFile(join(adoptionRoot, 'intake.json'), 'utf8')).toBe(
+        intakeBefore,
+      );
+      expect(
+        JSON.parse(await readFile(join(adoptionRoot, 'activation.json'), 'utf8')),
+      ).toMatchObject({
+        status: 'active',
+        adoptionState: 'agent-ready',
+        proposalDigest,
+      });
+
+      const reassessment = await buildSkoposAdoptionAssessmentRuntime({
+        cwd: workspaceRoot,
+        actor: 'adoption-test',
+      });
+
+      expect(reassessment.intake.inputDigest).not.toBe(
+        JSON.parse(intakeBefore).inputDigest,
+      );
+      await expect(
+        readFile(join(adoptionRoot, 'activation.json'), 'utf8'),
+      ).rejects.toMatchObject({ code: 'ENOENT' });
+    },
+    15_000,
+  );
 });
 
 const createWorkspace = async (): Promise<string> => {

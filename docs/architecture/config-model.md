@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-28
+lastUpdated: 2026-07-31
 relatedDocs:
   - artifact-model.md
   - runtime-model.md
@@ -28,11 +28,13 @@ choice but cannot outrank declared project truth.
 
 ## Changelog
 
+- `2026-07-31`: Replaced retired Trust terminology with the canonical Readiness
+  vocabulary.
 - `2026-07-28`: Made every project-owned config path workspace-relative, required the
   start-here router to live inside the configured Memory root, and required complete
   config preflight before initialization writes.
 - `2026-07-28`: Defined strict docs flags as the adoption boundary: brownfield intake
-  stays readable, while accepted strict projects fail trust on invalid metadata or
+  stays readable, while accepted strict projects fail Readiness on invalid metadata or
   broken local links.
 - `2026-07-28`: Replaced local override and permanent docs-projection authority with
   direct tracked configuration and canonical Skopos source owners.
@@ -45,7 +47,7 @@ choice but cannot outrank declared project truth.
 2. canonical docs root and start-here router
 3. workspace boundaries and ignored roots
 4. canonical agent instruction source and supported host projections
-5. trust, privacy, approval, and decision-escalation defaults
+5. readiness, privacy, approval, and decision-escalation defaults
 6. validation selection policy during Action compilation
 
 The root config does not store runtime indexes, retrieval internals, Session state,

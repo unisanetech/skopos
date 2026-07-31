@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { renderProjectInstructions } from '../../../instructions/src/application/scaffold-project-instructions/scaffold-project-instructions.service.js';
+
 import { skoposCliCommandRegistry } from '../cli/registry.js';
 
 describe('canonical CLI surface', () => {
@@ -32,5 +34,26 @@ describe('canonical CLI surface', () => {
         'next',
       ]),
     );
+  });
+
+  it('renders only executable current Task and closure commands', () => {
+    const instructions = renderProjectInstructions({
+      projectName: 'Fixture',
+      mode: 'existing',
+      repoMode: 'single',
+      archetype: 'custom',
+      docsRoot: 'docs',
+      docsStartHerePath: 'docs/00-start-here.md',
+      commands: {},
+    });
+
+    expect(instructions).toContain('skopos task show <task-id> . --compact --json');
+    expect(instructions).toContain('skopos task verify <task-id> . --actor <id>');
+    expect(instructions).toContain(
+      'skopos readiness <task-id> . --for close --advance --actor <id>',
+    );
+    expect(instructions).not.toContain('skopos task current');
+    expect(instructions).not.toContain('skopos done');
+    expect(instructions).not.toContain('skopos trust');
   });
 });
