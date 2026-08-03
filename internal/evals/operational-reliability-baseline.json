@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "operational-reliability-baseline",
-  "status": "observed",
+  "status": "implemented",
   "scenario": {
     "id": "mixed-worktree-task-proof-scope-amplification",
     "fixture": {
@@ -17,6 +17,13 @@
       "falseActionSelectionCount": 1
     },
     "target": {
+      "taskProofChangedPathCount": 1,
+      "ignoredPreExistingPathCount": 63,
+      "otherWorkExcludedPathCount": 1,
+      "selectedActionCount": 1,
+      "falseActionSelectionCount": 0
+    },
+    "current": {
       "taskProofChangedPathCount": 1,
       "ignoredPreExistingPathCount": 63,
       "otherWorkExcludedPathCount": 1,

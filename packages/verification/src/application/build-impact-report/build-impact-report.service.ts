@@ -15,6 +15,7 @@ import type {
   SkoposImpactEntry,
   SkoposImpactReport,
   SkoposTaskChangeScope,
+  SkoposTaskPathMutationAttribution,
   SkoposScopeLite,
   SkoposSourceDependency,
   SkoposActionPhase,
@@ -28,6 +29,8 @@ export interface BuildSkoposImpactReportOptions {
   cwd: string;
   changedPaths?: string[];
   changeScope?: SkoposTaskChangeScope;
+  taskId?: string;
+  mutationAttributions?: SkoposTaskPathMutationAttribution[];
   phase?: SkoposActionPhase;
   risk?: SkoposTaskRisk;
 }
@@ -36,6 +39,8 @@ export const buildSkoposImpactReport = async ({
   cwd,
   changedPaths,
   changeScope,
+  taskId,
+  mutationAttributions,
   phase,
   risk,
 }: BuildSkoposImpactReportOptions): Promise<SkoposImpactReport> => {
@@ -44,9 +49,11 @@ export const buildSkoposImpactReport = async ({
     changedPaths !== undefined ? 'explicit' : changeScope ? 'task' : 'git-status';
   const missionChangedPaths =
     changedPaths === undefined && changeScope
-      ? await resolveSkoposTaskChangedPaths({
+        ? await resolveSkoposTaskChangedPaths({
           workspaceRoot,
           changeScope,
+          currentTaskId: taskId,
+          mutationAttributions,
         })
       : undefined;
   const rawChangedPaths =
@@ -67,6 +74,14 @@ export const buildSkoposImpactReport = async ({
   const ignoredPreExistingPaths = normalizeChangedPaths(
     workspaceRoot,
     missionChangedPaths?.ignoredPreExistingPaths ?? [],
+  );
+  const excludedOtherTaskPaths = normalizeChangedPaths(
+    workspaceRoot,
+    missionChangedPaths?.excludedOtherTaskPaths ?? [],
+  );
+  const externalUnattributedPaths = normalizeChangedPaths(
+    workspaceRoot,
+    missionChangedPaths?.externalUnattributedPaths ?? [],
   );
   const instructionMirrorIssues = bootstrap.detected.instructionFiles.some(
     (instructionFile) =>
@@ -128,6 +143,9 @@ export const buildSkoposImpactReport = async ({
     changedPathSource,
     changedPaths: normalizedChangedPaths,
     ignoredPreExistingPaths,
+    excludedOtherTaskPaths,
+    externalUnattributedPaths,
+    pathAttributions: missionChangedPaths?.pathAttributions ?? [],
     changed,
     affectedScopes,
     recommendedCommands,

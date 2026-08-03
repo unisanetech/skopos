@@ -30,6 +30,14 @@ does not preserve that contract reliably in a large shared dirty worktree. Impac
 Guard resolution can absorb unrelated live-tree changes, turning a narrow Task closure
 into an implicit workspace integration or release check.
 
+The first mitigation is implemented: verification classifies each live changed path
+against declared Task ownership, the admission digest, and the latest post-admission
+digest-matched coordination mutation. Only declared/current-Task paths drive impact.
+Unchanged pre-existing paths, other-Task paths, and external-unattributed paths remain
+visible in detailed proof artifacts and as counts in compact output. The Finding stays
+open because generated/dependency attribution, immutable snapshot coverage, and the
+explicit Project integration subject have not yet passed the full acceptance matrix.
+
 ## Observed Evidence
 
 During a downstream monorepo pilot:
@@ -46,6 +54,11 @@ During a downstream monorepo pilot:
 The downstream repository is evidence, not part of Skopos core vocabulary. Generic
 fixtures must reproduce the same shape without embedding adopter names, paths, or
 commands.
+
+The generic regression now retains the original observation and records the corrected
+current result: with 64 pre-existing dirty paths, one post-admission other-Task edit,
+and one Task-owned edit, Task proof contains one path, excludes one other-Task path,
+ignores 63 unchanged paths, and selects one Action with zero false selections.
 
 ## Expected Contract
 

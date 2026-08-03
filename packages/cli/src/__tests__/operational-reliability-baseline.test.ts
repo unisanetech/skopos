@@ -13,6 +13,7 @@ import type {
 } from '../../../model/src/index.js';
 import {
   captureSkoposTaskChangeScope,
+  captureSkoposTaskPathStates,
   resolveSkoposTaskChangedPaths,
 } from '../../../verification/src/application/task-change-scope/task-change-scope.service.js';
 
@@ -32,7 +33,7 @@ interface SelectionMetrics {
 interface OperationalReliabilityBaseline {
   schemaVersion: 1;
   id: string;
-  status: 'observed';
+  status: 'implemented';
   scenario: {
     id: string;
     fixture: {
@@ -42,6 +43,7 @@ interface OperationalReliabilityBaseline {
     };
     observed: SelectionMetrics;
     target: SelectionMetrics;
+    current: SelectionMetrics;
     control: SelectionMetrics;
   };
 }
@@ -53,7 +55,7 @@ afterEach(async () => {
 });
 
 describe('operational reliability baseline', () => {
-  it('characterizes proof-scope amplification after unrelated work changes again', async () => {
+  it('prevents proof-scope amplification after unrelated work changes again', async () => {
     const baseline = await loadBaseline();
     const workspaceRoot = await createDirtyWorkspace(
       baseline.scenario.fixture.preExistingDirtyPathCount,
@@ -72,16 +74,32 @@ describe('operational reliability baseline', () => {
       ),
     ]);
 
-    const changes = await resolveSkoposTaskChangedPaths({ workspaceRoot, changeScope });
-    const metrics = measureSelection(changes.changedPaths, changes.ignoredPreExistingPaths);
+    const [otherState] = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: [otherPath(0)],
+    });
+    const changes = await resolveSkoposTaskChangedPaths({
+      workspaceRoot,
+      changeScope,
+      currentTaskId: 'T-current',
+      mutationAttributions: [{
+        path: otherPath(0),
+        taskId: 'T-other',
+        digest: otherState!.digest,
+        attributedAt: new Date(Date.parse(changeScope.capturedAt) + 1).toISOString(),
+      }],
+    });
+    const metrics = measureSelection(
+      changes.changedPaths,
+      changes.ignoredPreExistingPaths,
+      changes.excludedOtherTaskPaths,
+    );
 
     expect(baseline.scenario.id).toBe('mixed-worktree-task-proof-scope-amplification');
-    expect(metrics).toEqual(baseline.scenario.observed);
-    expect(metrics.falseActionSelectionCount).toBeGreaterThan(
-      baseline.scenario.target.falseActionSelectionCount,
-    );
-    expect(metrics.taskProofChangedPathCount).toBeGreaterThan(
-      baseline.scenario.target.taskProofChangedPathCount,
+    expect(metrics).toEqual(baseline.scenario.target);
+    expect(metrics).toEqual(baseline.scenario.current);
+    expect(baseline.scenario.observed.falseActionSelectionCount).toBeGreaterThan(
+      metrics.falseActionSelectionCount,
     );
   });
 
@@ -102,7 +120,11 @@ describe('operational reliability baseline', () => {
     );
 
     const changes = await resolveSkoposTaskChangedPaths({ workspaceRoot, changeScope });
-    const metrics = measureSelection(changes.changedPaths, changes.ignoredPreExistingPaths);
+    const metrics = measureSelection(
+      changes.changedPaths,
+      changes.ignoredPreExistingPaths,
+      changes.excludedOtherTaskPaths,
+    );
 
     expect(metrics).toEqual(baseline.scenario.control);
   });
@@ -119,6 +141,7 @@ const loadBaseline = async (): Promise<OperationalReliabilityBaseline> =>
 const measureSelection = (
   changedPaths: string[],
   ignoredPreExistingPaths: string[],
+  excludedOtherTaskPaths: string[],
 ): SelectionMetrics => {
   const selection = matchSkoposRequiredActionsForImpact({
     actions,
@@ -132,7 +155,7 @@ const measureSelection = (
   return {
     taskProofChangedPathCount: changedPaths.length,
     ignoredPreExistingPathCount: ignoredPreExistingPaths.length,
-    otherWorkExcludedPathCount: 0,
+    otherWorkExcludedPathCount: excludedOtherTaskPaths.length,
     selectedActionCount: selectedActionIds.length,
     falseActionSelectionCount: selectedActionIds.filter(
       (actionId) => actionId !== EXPECTED_TASK_ACTION_ID,

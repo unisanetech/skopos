@@ -9,12 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-31
+lastUpdated: 2026-08-03
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
   - ../standards/validation.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
+  - ../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
 reviewCycle: when verification or closure behavior changes
 ---
 
@@ -32,6 +34,10 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Added canonical Task-local path attribution. Verification now derives
+  impact only from declared ownership or digest-matched current-Task mutations while
+  reporting unchanged pre-existing, other-Task, and external-unattributed paths
+  separately.
 - `2026-07-31`: Added one-command Task finish, compact-default proof transport,
   canonical active/archive Task-projection exclusion, and declared Action source
   exclusions for noisy directory inputs.
@@ -86,6 +92,30 @@ For each acceptance criterion it explains:
 
 Verification may target iteration, stabilization, or closure. Phase selection changes
 the required coverage; it does not create another work object.
+
+### Task-local proof attribution
+
+Before Guard and Action selection, Task verification classifies each live changed
+path into one of five kinds:
+
+1. `task-owned`: the path is inside the Task's declared ownership
+2. `task-attributed`: the latest post-admission coordination mutation is owned by the
+   current Task and its recorded digest equals the live digest
+3. `pre-existing`: the live digest still equals the admission baseline
+4. `other-task`: the latest digest-matched mutation belongs to another Task
+5. `external-unattributed`: the live path changed after admission without a matching
+   Task attribution
+
+Only `task-owned` and `task-attributed` paths seed Task impact. The other classes are
+not discarded: detailed verification retains every classified path and its stable
+reason, while compact agent output exposes counts. A stale mutation cannot claim a
+later edit because attribution is accepted only when its recorded after-digest equals
+the live path digest.
+
+Declared ownership wins for overlapping paths because overlap is governed by
+coordination claims and contamination audit. A Task that intentionally adopts an
+existing dirty path therefore receives that path in its proof subject; conflicting
+ownership remains a coordination failure rather than being hidden as other work.
 
 ## Readiness
 

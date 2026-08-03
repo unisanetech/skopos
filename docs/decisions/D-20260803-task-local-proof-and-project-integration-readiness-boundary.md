@@ -10,7 +10,7 @@ authority: supporting
 provenance: accepted
 view: target
 date: 2026-08-03
-implementationStatus: planned
+implementationStatus: partial
 lastUpdated: 2026-08-03
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
@@ -26,6 +26,11 @@ reviewCycle: when Task impact, snapshot verification, or integration Readiness c
 
 ## Changelog
 
+- `2026-08-03`: Implemented Task-local path attribution and Action-selection
+  isolation. Declared ownership and digest-matched current-Task mutations enter Task
+  proof; unchanged admission dirt, other-Task mutations, and unattributed changes
+  remain reported but excluded. Immutable snapshot and explicit Project integration
+  proof remain open.
 - `2026-08-03`: Accepted an explicit subject boundary between one Task's proportional
   closure proof and Project integration or release proof.
 
@@ -133,3 +138,7 @@ the Task model.
 5. add generic fixtures for clean, large dirty, concurrent, generated, deleted, and
    contaminated worktrees
 6. require explicit Project integration Readiness before publication or release
+
+Current implementation satisfies requirements 2 through 4 for direct path
+classification and selection. Requirements 1, 5, and 6 remain open together with
+generated-output/dependency attribution and immutable snapshot coverage.

@@ -101,6 +101,27 @@ describe('compact command output', () => {
       summary: 'One blocker remains.',
       changedPaths: ['src/index.ts'],
       ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: ['src/other.ts'],
+      externalUnattributedPaths: ['notes.txt'],
+      pathAttributions: [
+        {
+          path: 'src/index.ts',
+          kind: 'task-owned',
+          reason: 'declared-task-ownership',
+          attributedTaskId: 'T-compact',
+        },
+        {
+          path: 'src/other.ts',
+          kind: 'other-task',
+          reason: 'other-task-mutation',
+          attributedTaskId: 'T-other',
+        },
+        {
+          path: 'notes.txt',
+          kind: 'external-unattributed',
+          reason: 'unattributed-post-admission-change',
+        },
+      ],
       matchedGuards: [
         {
           id: 'guard.focused',
@@ -142,6 +163,12 @@ describe('compact command output', () => {
     } satisfies SkoposVerificationArtifact);
     expect(verificationSummary).toMatchObject({
       changedPathCount: 1,
+      pathAttribution: {
+        taskProof: 1,
+        preExisting: 0,
+        otherTask: 1,
+        externalUnattributed: 1,
+      },
       matchedGuardIds: ['guard.focused'],
       actionEvidence: { missingActionIds: ['quality.focused'] },
       acceptance: { missingRequirementIds: ['acceptance-1'] },

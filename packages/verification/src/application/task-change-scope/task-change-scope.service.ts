@@ -5,6 +5,8 @@ import { relative, resolve } from 'node:path';
 import type {
   SkoposImpactEntry,
   SkoposTaskChangeScope,
+  SkoposTaskPathAttribution,
+  SkoposTaskPathMutationAttribution,
   SkoposTaskPathState,
 } from '@skopos/model';
 
@@ -24,11 +26,16 @@ export interface CaptureSkoposTaskChangeScopeOptions {
 export interface ResolveSkoposTaskChangedPathsOptions {
   workspaceRoot: string;
   changeScope: SkoposTaskChangeScope;
+  currentTaskId?: string;
+  mutationAttributions?: SkoposTaskPathMutationAttribution[];
 }
 
 export interface SkoposTaskChangedPaths {
   changedPaths: string[];
   ignoredPreExistingPaths: string[];
+  excludedOtherTaskPaths: string[];
+  externalUnattributedPaths: string[];
+  pathAttributions: SkoposTaskPathAttribution[];
 }
 
 const TASK_TRACKED_IMPACT_CATEGORIES = new Set<SkoposImpactEntry['category']>([
@@ -73,6 +80,8 @@ export const captureSkoposTaskChangeScope = async ({
 export const resolveSkoposTaskChangedPaths = async ({
   workspaceRoot,
   changeScope,
+  currentTaskId,
+  mutationAttributions = [],
 }: ResolveSkoposTaskChangedPathsOptions): Promise<SkoposTaskChangedPaths> => {
   const dirtyPaths =
     changeScope.trackingMode === 'unavailable'
@@ -93,24 +102,98 @@ export const resolveSkoposTaskChangedPaths = async ({
   );
   const changedPaths: string[] = [];
   const ignoredPreExistingPaths: string[] = [];
+  const excludedOtherTaskPaths: string[] = [];
+  const externalUnattributedPaths: string[] = [];
+  const pathAttributions: SkoposTaskPathAttribution[] = [];
+  const latestMutationByPath = selectLatestMutationAttributions({
+    workspaceRoot,
+    capturedAt: changeScope.capturedAt,
+    mutationAttributions,
+  });
 
   for (const current of currentStates) {
     const baselineDigest = baselineByPath.get(current.path);
-    if (
-      pathIsDeclaredOwned(current.path, changeScope.declaredOwnedPaths) ||
-      baselineDigest === undefined ||
-      baselineDigest !== current.digest
-    ) {
+    if (pathIsDeclaredOwned(current.path, changeScope.declaredOwnedPaths)) {
       changedPaths.push(current.path);
-    } else {
-      ignoredPreExistingPaths.push(current.path);
+      pathAttributions.push({
+        path: current.path,
+        kind: 'task-owned',
+        reason: 'declared-task-ownership',
+        ...(currentTaskId ? { attributedTaskId: currentTaskId } : {}),
+      });
+      continue;
     }
+
+    const latestMutation = latestMutationByPath.get(current.path);
+    if (latestMutation?.digest === current.digest) {
+      if (currentTaskId && latestMutation.taskId === currentTaskId) {
+        changedPaths.push(current.path);
+        pathAttributions.push({
+          path: current.path,
+          kind: 'task-attributed',
+          reason: 'current-task-mutation',
+          attributedTaskId: latestMutation.taskId,
+        });
+      } else {
+        excludedOtherTaskPaths.push(current.path);
+        pathAttributions.push({
+          path: current.path,
+          kind: 'other-task',
+          reason: 'other-task-mutation',
+          attributedTaskId: latestMutation.taskId,
+        });
+      }
+      continue;
+    }
+
+    if (baselineDigest === current.digest) {
+      ignoredPreExistingPaths.push(current.path);
+      pathAttributions.push({
+        path: current.path,
+        kind: 'pre-existing',
+        reason: 'unchanged-admission-baseline',
+      });
+      continue;
+    }
+
+    externalUnattributedPaths.push(current.path);
+    pathAttributions.push({
+      path: current.path,
+      kind: 'external-unattributed',
+      reason: 'unattributed-post-admission-change',
+    });
   }
 
   return {
     changedPaths,
     ignoredPreExistingPaths,
+    excludedOtherTaskPaths,
+    externalUnattributedPaths,
+    pathAttributions,
   };
+};
+
+const selectLatestMutationAttributions = ({
+  workspaceRoot,
+  capturedAt,
+  mutationAttributions,
+}: {
+  workspaceRoot: string;
+  capturedAt: string;
+  mutationAttributions: SkoposTaskPathMutationAttribution[];
+}): Map<string, SkoposTaskPathMutationAttribution> => {
+  const latestByPath = new Map<string, SkoposTaskPathMutationAttribution>();
+
+  for (const attribution of mutationAttributions) {
+    if (attribution.attributedAt < capturedAt) continue;
+    const path = normalizeWorkspacePath(workspaceRoot, attribution.path);
+    const current = latestByPath.get(path);
+    if (!current || current.attributedAt < attribution.attributedAt) {
+      latestByPath.set(path, { ...attribution, path });
+    }
+  }
+
+  return latestByPath;
 };
 
 export const captureSkoposTaskPathStates = async ({

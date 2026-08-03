@@ -1,6 +1,7 @@
 import type { SkoposScopeLite } from './skopos-scope-lite.js';
 import type { SkoposActionRequirement } from './skopos-action.js';
 import type { SkoposGuardMatch } from './skopos-guard.js';
+import type { SkoposTaskPathAttribution } from './skopos-task.js';
 
 export type SkoposImpactCategory =
   | 'root-config'
@@ -24,6 +25,9 @@ export interface SkoposImpactReport {
   changedPathSource: 'explicit' | 'git-status' | 'task';
   changedPaths: string[];
   ignoredPreExistingPaths?: string[];
+  excludedOtherTaskPaths?: string[];
+  externalUnattributedPaths?: string[];
+  pathAttributions?: SkoposTaskPathAttribution[];
   changed: SkoposImpactEntry[];
   affectedScopes: SkoposScopeLite[];
   recommendedCommands: string[];

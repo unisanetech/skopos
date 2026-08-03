@@ -15,6 +15,7 @@ import type {
   SkoposReadinessTarget,
   SkoposObservationEvidenceArtifact,
   SkoposTaskActionEvidenceLink,
+  SkoposTaskPathMutationAttribution,
   SkoposVerificationArtifact,
   SkoposVerificationPhase,
   SkoposProjectReadinessArtifact,
@@ -40,7 +41,10 @@ import {
   WORK_QUEUE_ARTIFACT_PATH,
 } from '../work-queue/work-queue.service.js';
 import { loadSkoposQueryState } from '@skopos/query';
-import { auditSkoposCoordinationTask } from '../coordination/coordination.service.js';
+import {
+  auditSkoposCoordinationTask,
+  getSkoposCoordinationStatus,
+} from '../coordination/coordination.service.js';
 
 export const verifySkoposTaskRuntime = async ({
   cwd,
@@ -55,9 +59,12 @@ export const verifySkoposTaskRuntime = async ({
 }): Promise<SkoposVerificationArtifact> => {
   const workspaceRoot = resolve(cwd);
   const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const mutationAttributions = await loadTaskMutationAttributions(workspaceRoot);
   const taskChanges = await resolveSkoposTaskChangedPaths({
     workspaceRoot,
     changeScope: task.changeScope,
+    currentTaskId: task.id,
+    mutationAttributions,
   });
   const taskProjectionPaths = resolveSkoposTrackedTaskProjectionPaths(
     task.trackedDocumentPath,
@@ -73,6 +80,9 @@ export const verifySkoposTaskRuntime = async ({
     risk: task.risk,
   });
   impact.ignoredPreExistingPaths = taskChanges.ignoredPreExistingPaths;
+  impact.excludedOtherTaskPaths = taskChanges.excludedOtherTaskPaths;
+  impact.externalUnattributedPaths = taskChanges.externalUnattributedPaths;
+  impact.pathAttributions = taskChanges.pathAttributions;
   const requiredActions = dedupeActions(impact.requiredActions);
   const requiredActionIds = new Set(requiredActions.map((action) => action.id));
   const [manifests, runs, observations, actionLinks, memoryCatalog] = await Promise.all([
@@ -218,6 +228,9 @@ export const verifySkoposTaskRuntime = async ({
     risk: task.risk,
     changedPaths: impact.changedPaths,
     ignoredPreExistingPaths: impact.ignoredPreExistingPaths ?? [],
+    excludedOtherTaskPaths: impact.excludedOtherTaskPaths ?? [],
+    externalUnattributedPaths: impact.externalUnattributedPaths ?? [],
+    pathAttributions: impact.pathAttributions ?? [],
     matchedGuards: impact.matchedGuards,
     actionEvidence,
     acceptanceCoverage,
@@ -316,6 +329,8 @@ export const recordSkoposObservationEvidenceRuntime = async ({
   const changed = await resolveSkoposTaskChangedPaths({
     workspaceRoot,
     changeScope: task.changeScope,
+    currentTaskId: task.id,
+    mutationAttributions: await loadTaskMutationAttributions(workspaceRoot),
   });
   const sourcePathStates = await captureSkoposTaskPathStates({
     workspaceRoot,
@@ -354,6 +369,22 @@ export const recordSkoposObservationEvidenceRuntime = async ({
     dryRun,
   });
   return artifact;
+};
+
+const loadTaskMutationAttributions = async (
+  workspaceRoot: string,
+): Promise<SkoposTaskPathMutationAttribution[]> => {
+  const status = await getSkoposCoordinationStatus({ cwd: workspaceRoot });
+  return status.mutations.flatMap((mutation) =>
+    mutation.status === 'recorded' && mutation.afterDigest && mutation.completedAt
+      ? [{
+          path: mutation.path,
+          taskId: mutation.taskId,
+          digest: mutation.afterDigest,
+          attributedAt: mutation.completedAt,
+        }]
+      : [],
+  );
 };
 
 export const selectTaskLinkedActionRuns = (

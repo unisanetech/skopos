@@ -31,6 +31,8 @@ export const runVerifyCommand = async (args: string[]): Promise<void> => {
     `Status: ${result.verificationStatus}`,
     `Summary: ${result.summary}`,
     `Changed paths: ${result.changedPaths.length}`,
+    `Excluded other-Task paths: ${result.excludedOtherTaskPaths.length}`,
+    `External unattributed paths: ${result.externalUnattributedPaths.length}`,
     `Guards: ${result.matchedGuards.length}`,
     `Action Evidence: ${result.actionEvidence.filter((entry) => entry.status === 'pass').length}/${result.actionEvidence.length} valid`,
     `Acceptance: ${result.acceptanceCoverage.filter((entry) => entry.status === 'covered').length}/${result.acceptanceCoverage.length} covered`,
@@ -155,6 +157,12 @@ export const buildCompactVerificationOutput = (
   verificationStatus: result.verificationStatus,
   summary: result.summary,
   changedPathCount: result.changedPaths.length,
+  pathAttribution: {
+    taskProof: result.changedPaths.length,
+    preExisting: result.ignoredPreExistingPaths.length,
+    otherTask: result.excludedOtherTaskPaths.length,
+    externalUnattributed: result.externalUnattributedPaths.length,
+  },
   matchedGuardIds: result.matchedGuards.map((guard) => guard.id),
   actionEvidence: {
     valid: result.actionEvidence.filter((entry) => entry.status === 'pass').length,

@@ -3,6 +3,7 @@ import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type { SkoposGuardMatch } from './skopos-guard.js';
 import type { SkoposTaskRisk } from './skopos-task.js';
 import type { SkoposTaskPathState } from './skopos-task.js';
+import type { SkoposTaskPathAttribution } from './skopos-task.js';
 import type { SkoposScanSummary } from './skopos-scan-summary.js';
 
 export type SkoposVerificationPhase =
@@ -40,6 +41,9 @@ export interface SkoposVerificationArtifact extends SkoposArtifactEnvelope<'veri
   risk: SkoposTaskRisk;
   changedPaths: string[];
   ignoredPreExistingPaths: string[];
+  excludedOtherTaskPaths: string[];
+  externalUnattributedPaths: string[];
+  pathAttributions: SkoposTaskPathAttribution[];
   matchedGuards: SkoposGuardMatch[];
   actionEvidence: SkoposActionRequirementEvidence[];
   acceptanceCoverage: SkoposAcceptanceEvidenceCoverage[];

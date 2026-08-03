@@ -35,6 +35,11 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Implemented the direct-path slice of the Task-local proof boundary:
+  five-way admission/mutation attribution, other-Task and external exclusion,
+  causal detailed diagnostics, compact counts, and the 64-path mixed-worktree target.
+  Generated/dependency attribution, immutable snapshot proof, and explicit Project
+  integration Readiness remain in the workstream.
 - `2026-08-03`: Added a cross-cutting operational reliability workstream from the
   downstream pilot: isolate Task proof from Project integration, complete stale
   Session and Task disposition recovery, make exact Evidence reuse interaction-cheap,

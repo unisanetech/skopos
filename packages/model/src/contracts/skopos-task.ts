@@ -68,6 +68,34 @@ export interface SkoposTaskPathState {
   digest: string;
 }
 
+export type SkoposTaskPathAttributionKind =
+  | 'task-owned'
+  | 'task-attributed'
+  | 'pre-existing'
+  | 'other-task'
+  | 'external-unattributed';
+
+export type SkoposTaskPathAttributionReason =
+  | 'declared-task-ownership'
+  | 'current-task-mutation'
+  | 'unchanged-admission-baseline'
+  | 'other-task-mutation'
+  | 'unattributed-post-admission-change';
+
+export interface SkoposTaskPathAttribution {
+  path: string;
+  kind: SkoposTaskPathAttributionKind;
+  reason: SkoposTaskPathAttributionReason;
+  attributedTaskId?: string;
+}
+
+export interface SkoposTaskPathMutationAttribution {
+  path: string;
+  taskId: string;
+  digest: string;
+  attributedAt: string;
+}
+
 export interface SkoposTaskChangeScope {
   capturedAt: string;
   trackingMode?: 'git' | 'unavailable';

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 
 import {
   captureSkoposTaskChangeScope,
+  captureSkoposTaskPathStates,
   resolveSkoposTaskChangedPaths,
 } from '../../../verification/src/application/task-change-scope/task-change-scope.service.js';
 import { describe, expect, it } from 'vitest';
@@ -16,6 +17,7 @@ describe('task-owned change scope', () => {
 
     const changeScope = await captureSkoposTaskChangeScope({
       workspaceRoot,
+      declaredOwnedPaths: ['task.txt'],
     });
     await writeFile(join(workspaceRoot, 'task.txt'), 'task-owned change\n', 'utf8');
 
@@ -27,6 +29,20 @@ describe('task-owned change scope', () => {
     ).resolves.toEqual({
       changedPaths: ['task.txt'],
       ignoredPreExistingPaths: ['unrelated.txt'],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: [],
+      pathAttributions: [
+        {
+          path: 'task.txt',
+          kind: 'task-owned',
+          reason: 'declared-task-ownership',
+        },
+        {
+          path: 'unrelated.txt',
+          kind: 'pre-existing',
+          reason: 'unchanged-admission-baseline',
+        },
+      ],
     });
   });
 
@@ -47,6 +63,15 @@ describe('task-owned change scope', () => {
     ).resolves.toEqual({
       changedPaths: ['unrelated.txt'],
       ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: [],
+      pathAttributions: [
+        {
+          path: 'unrelated.txt',
+          kind: 'task-owned',
+          reason: 'declared-task-ownership',
+        },
+      ],
     });
   });
 
@@ -54,6 +79,7 @@ describe('task-owned change scope', () => {
     const workspaceRoot = await createGitWorkspace();
     const changeScope = await captureSkoposTaskChangeScope({
       workspaceRoot,
+      declaredOwnedPaths: ['task.txt'],
     });
 
     await writeFile(join(workspaceRoot, 'task.txt'), 'committed task change\n', 'utf8');
@@ -68,6 +94,70 @@ describe('task-owned change scope', () => {
     ).resolves.toEqual({
       changedPaths: ['task.txt'],
       ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: [],
+      pathAttributions: [
+        {
+          path: 'task.txt',
+          kind: 'task-owned',
+          reason: 'declared-task-ownership',
+        },
+      ],
+    });
+  });
+
+  it('excludes a digest-matched mutation attributed to another Task', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    const changeScope = await captureSkoposTaskChangeScope({ workspaceRoot });
+    await writeFile(join(workspaceRoot, 'unrelated.txt'), 'other Task change\n', 'utf8');
+    const [state] = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: ['unrelated.txt'],
+    });
+
+    await expect(
+      resolveSkoposTaskChangedPaths({
+        workspaceRoot,
+        changeScope,
+        currentTaskId: 'T-current',
+        mutationAttributions: [{
+          path: 'unrelated.txt',
+          taskId: 'T-other',
+          digest: state!.digest,
+          attributedAt: new Date(Date.parse(changeScope.capturedAt) + 1).toISOString(),
+        }],
+      }),
+    ).resolves.toEqual({
+      changedPaths: [],
+      ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: ['unrelated.txt'],
+      externalUnattributedPaths: [],
+      pathAttributions: [{
+        path: 'unrelated.txt',
+        kind: 'other-task',
+        reason: 'other-task-mutation',
+        attributedTaskId: 'T-other',
+      }],
+    });
+  });
+
+  it('reports an unowned post-admission edit without expanding Task proof', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    const changeScope = await captureSkoposTaskChangeScope({ workspaceRoot });
+    await writeFile(join(workspaceRoot, 'unrelated.txt'), 'external change\n', 'utf8');
+
+    await expect(
+      resolveSkoposTaskChangedPaths({ workspaceRoot, changeScope }),
+    ).resolves.toEqual({
+      changedPaths: [],
+      ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: ['unrelated.txt'],
+      pathAttributions: [{
+        path: 'unrelated.txt',
+        kind: 'external-unattributed',
+        reason: 'unattributed-post-admission-change',
+      }],
     });
   });
 
