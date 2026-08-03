@@ -10,9 +10,10 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: phase-5-in-progress
-lastUpdated: 2026-07-30
+lastUpdated: 2026-08-03
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
   - ../../domains/product/vision.md
   - ../../architecture/00-architecture.md
   - ../../architecture/agent-native-operating-model.md
@@ -22,6 +23,11 @@ relatedDocs:
   - ../archive/P-067e15c4-proof-and-benchmarking.md
   - ../archive/T-62a045f9-project-memory-self-adoption.md
   - ../../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
+  - ../../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../../findings/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../../findings/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
+  - ../../findings/F-20260803-action-hermeticity-and-effect-classification-gap.md
+  - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
 reviewCycle: per phase
 ---
 
@@ -29,6 +35,12 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Added a cross-cutting operational reliability workstream from the
+  downstream pilot: isolate Task proof from Project integration, complete stale
+  Session and Task disposition recovery, make exact Evidence reuse interaction-cheap,
+  bound detailed agent transport, and require hermetic, truthfully classified
+  certification Actions. The work remains in the owning Phases 5 through 10 rather
+  than creating a parallel Plan.
 - `2026-07-31`: Made `finish` the one public closure transaction, compact JSON the
   agent hot-path default, and Action fingerprints explicitly narrow through precise
   inputs plus reviewed source exclusions.
@@ -106,6 +118,8 @@ At completion:
 13. Unisane uses Skopos instead of its prior LLM workflow.
 14. no Unisane-specific rule or path exists in Skopos core.
 15. the first public package contains no legacy prototype API.
+16. one Task can close proportionally in a shared dirty worktree without claiming
+    Project integration or release readiness.
 
 ## Definition Of Done
 
@@ -122,6 +136,12 @@ The Plan is complete only when:
    active legacy authority
 9. release smoke passes from a packed installation
 10. remaining limitations are explicit product limitations, not compatibility debt
+11. stale Session recovery and every supported Task disposition pass crash and
+    concurrency proof
+12. reusable exact Evidence enters a Task without repetitive per-Action execution
+    calls
+13. compact and detailed agent transports meet measured response budgets
+14. release-certification Actions pass hermetic and declared-effect proof
 
 ## Non-Goals
 
@@ -225,6 +245,41 @@ flowchart TD
 ```
 
 Do not implement later compatibility or UI polish ahead of the owning model phase.
+
+## Cross-Cutting Operational Reliability Workstream
+
+The downstream replacement pilot exposed gaps across several owning phases. They do
+not create another active Plan or a new executable lifecycle object. Implement them as
+bounded Tasks under this Plan in the following dependency order:
+
+1. **Generic regression fixtures and measurements**
+   - translate pilot symptoms into project-agnostic fixtures
+   - capture current selected Actions, response bytes, tool calls, Task states,
+     effects, and recovery outcomes before changing semantics
+2. **Task-local proof boundary**
+   - implement Decision
+     `D-20260803-task-local-proof-and-project-integration-readiness-boundary`
+   - preserve admission-baseline classifications and causal impact reasons
+   - separate narrow Task closure from explicit Project integration Readiness
+3. **Session recovery and Task disposition**
+   - complete audited stale takeover and release without requiring the stale Session
+   - define exact resume, ready, defer, supersede, cancel, and verification transitions
+4. **Action effects and hermeticity**
+   - complete effect, capability, output, environment, and concurrency declarations
+   - certify offline release Actions and isolated artifact-producing Actions
+5. **Evidence reuse and bounded transport**
+   - attach valid exact Action Runs to Task requirements in one bounded operation
+   - paginate or reference large detailed collections while keeping blockers inline
+6. **Cross-project proof and promotion**
+   - pass new application, healthy and messy brownfield, non-Node, nested monorepo,
+     shared dirty worktree, and packed-install scenarios
+   - close each Finding only after its acceptance matrix passes and durable architecture
+     truth reflects implemented behavior
+
+Each implementation Task owns one independently closable slice and links its Finding.
+Do not keep an umbrella Task active after children or successors own all remaining
+work. A Project integration Task proves the combined candidate only after affected
+Tasks close.
 
 ## Phase 0 — Canonical Product Reset
 
@@ -567,8 +622,10 @@ Give every project one capability and enforcement model.
 7. define Action effects:
    - read paths
    - write paths
-   - external effects
-   - outputs
+   - isolated run artifacts
+   - network and external-service effects
+   - process, browser, secret, and tool capabilities
+   - outputs and cleanup
 8. define Action safety and approval
 9. define Action concurrency and lock keys
 10. define Evidence schemas and freshness
@@ -585,6 +642,9 @@ Give every project one capability and enforcement model.
 19. ignore high-churn generated state for invalidation unless it is a declared input
 20. implement the bounded extension authority contract only if tracked declarations
     cannot express the proven use case
+21. make release and certification Actions hermetic by default; preflight every
+    declared external capability and include relevant environment identity in Evidence
+22. reject undeclared workspace mutation and isolate artifact-producing Action outputs
 
 ### Deletions
 
@@ -618,6 +678,9 @@ Give every project one capability and enforcement model.
 10. one failed or timed-out check stops the lane and preserves an exact resume point
 11. mutating Action Evidence binds the declared post-state
 12. extensions cannot capture Task, decision, Readiness, or closure authority
+13. certification Actions pass from a clean offline packed installation, while an
+    unavailable declared external capability fails before expensive execution
+14. read-only and artifact-producing Actions have distinct enforced effects
 
 ## Phase 6 — Tasks, Context, And Work Queue
 
@@ -653,6 +716,14 @@ compact.
 16. remove satisfied bootstrap, instruction, Action, and Evidence obligations from
     `next` and `done`
 17. select compact relevant negative knowledge without loading archive documents
+18. compute current impact from the Task admission baseline and attributed delta before
+    selecting affected Scopes and dependents
+19. define explicit Task dispositions and legal transitions for resume, ready, defer,
+    supersede, cancel, verification, and closure
+20. link all valid reusable Action Runs to attributable Task Evidence requirements in
+    one bounded operation
+21. keep compact agent output within enforced budgets and expose deterministic fields,
+    cursors, and artifact references for detailed collections
 
 ### Tracking Policy
 
@@ -680,6 +751,11 @@ decisions, Evidence requirements, and handoff material under one Task authority.
 8. admission recommendations that no longer match current impact stop blocking
 9. iteration and stabilization Evidence cannot masquerade as closure Evidence
 10. risk changes the final proof floor without repeating final gates at every moment
+11. unrelated pre-existing or other-Task dirt cannot expand a Task's proof subject
+12. reusable exact Action Runs satisfy a Task without repetitive per-Action tool calls
+13. every supported Task disposition has one deterministic Work Queue meaning
+14. default output retains blockers and next action while large detail remains
+    progressively retrievable
 
 ## Phase 7 — Same-Workspace Session Coordination
 
@@ -718,6 +794,10 @@ same working directory.
 20. implement overlay-safe live verification only for declared Actions
 21. implement stale Session recovery and audited takeover
 22. report enforcement level honestly
+23. make stale recovery perform safe resume, transfer, or release without requiring the
+    stale Session to execute a command
+24. keep dirty classification and Task proof selection stable unless an attributed
+    mutation, explicit adoption, dependency edge, or contamination changes them
 
 ### Mandatory Failure Cases
 
@@ -735,6 +815,9 @@ same working directory.
 12. expired Session with dirty owned files
 13. unsafe force takeover
 14. blind `.git/index.lock` deletion
+15. stale Session that still owns a Task reservation
+16. two concurrent stale-recovery attempts
+17. unrelated dirty change that expands a narrow Task's selected Actions
 
 ### Host Enforcement
 
@@ -757,6 +840,8 @@ Only `hooked` and `mediated` claim preventive safety.
 8. crash takeover is audited
 9. worktrees remain optional
 10. concurrent exact Actions do not duplicate effects or Evidence
+11. stale recovery has one audited winner and deterministic Task disposition
+12. Task snapshot proof remains unchanged when unrelated worktree paths mutate
 
 ## Phase 8 — Host Lifecycle, Parity, And Human UX
 
@@ -797,6 +882,10 @@ Make Skopos automatic and consistent across supported coding agents.
 20. deliver one compact `session context` contract across hosts, including adaptive
     response mode and complete pending-decision guidance
 21. distinguish generated adapters from installed, injected, and verified host delivery
+22. expose subject, counts, blockers, and next action inline while retrieving large
+    path, Evidence, queue, and impact collections through fields and cursors
+23. report Evidence reuse as linked, stale, rejected, or executed without requiring an
+    agent to infer the outcome from repeated Action calls
 
 ### Exit Criteria
 
@@ -807,6 +896,9 @@ Make Skopos automatic and consistent across supported coding agents.
 4. users do not need to remind agents to follow Skopos
 5. CLI, MCP, and UI agree on status and next action
 6. advisory-only hosts never claim preventive coordination
+7. compact responses meet declared byte and token budgets at representative p50 and
+   p95 fixture sizes
+8. every host can retrieve complete detail progressively without one unbounded payload
 
 ## Phase 9 — Unisane Replacement Pilot
 
@@ -869,6 +961,9 @@ Prove the product contract before the first public launch.
 15. prove an installed CLI serves bundled UI assets without resolving a monorepo-local
     `@skopos/ui` package and refreshes live state through the same state endpoint
 16. publish only after all must-win lanes pass
+17. replay the operational reliability regression matrix for narrow Tasks in large
+    dirty worktrees, stale recovery, exact Evidence reuse, bounded transport, and
+    offline certification Actions
 
 ### Exit Criteria
 
@@ -881,6 +976,10 @@ Prove the product contract before the first public launch.
 7. first release documentation reflects only the clean product
 8. installed-package UI behavior passes from a fresh external project
 9. no P1 proof artifact is counted as proof until its target regression passes
+10. Task closure and Project integration Readiness remain distinct and independently
+    explainable throughout the release proof
+11. no release Action has undeclared network, filesystem, artifact, or external-service
+    effects
 
 ## Cross-Cutting Deletion Inventory
 
@@ -978,6 +1077,10 @@ fixtures, snapshots, help output, and installed-package smoke must agree.
 | generated-doc project | human reference and runtime output stay separated |
 | custom project extensions | namespaced Profiles, Actions, Guards, and Skills |
 | same-directory agents | claims, Git serialization, contamination, snapshot proof |
+| large shared dirty worktree | Task-local impact isolation plus explicit Project integration proof |
+| stale writer recovery | audited takeover or release with deterministic Task disposition |
+| Evidence-heavy Task | exact-run bulk linking and bounded progressive detail |
+| restricted offline runner | hermetic certification and precise unavailable capabilities |
 | Codex/Claude continuation | host-neutral Task handoff |
 | clean clone | full tracked truth reconstruction |
 | high-impact restructuring | approval, tracked Task, stable proof |
@@ -1012,6 +1115,11 @@ completes:
 11. continuation success across Sessions and hosts
 12. clean-clone reconstruction success
 13. supervision minutes per completed Task
+14. compact response bytes and tokens at p50 and p95
+15. tool calls required to attach reusable Evidence
+16. false Action selections caused by unrelated dirty paths
+17. stale-recovery success, rejection accuracy, and time to safe disposition
+18. undeclared Action-effect violations
 
 ## Risks And Controls
 
@@ -1025,6 +1133,11 @@ completes:
 | same-directory safety is overstated | visible enforcement levels and contamination states |
 | Git index corrupts concurrent work | global Git lock and temporary Task index |
 | verification includes unrelated edits | immutable snapshot verification |
+| Task closure is mistaken for Project integration | explicit Readiness subject and integration Task |
+| reusable Evidence still requires repetitive agent calls | bounded bulk or automatic Task Evidence linking |
+| detailed JSON consumes the agent context | hard compact budgets plus fields, cursors, and artifact references |
+| certification depends on hidden network or writes | hermetic default and enforced Action effect declarations |
+| stale Session creates circular ownership recovery | audited recovery independent of the stale writer |
 | local state is mistaken for durable truth | clean-delete/rebuild proof |
 | Work Queue invents priorities | require explicit priority/dependency evidence |
 | small tasks become ceremony | local light Tasks and progressive tracking policy |
