@@ -25,6 +25,8 @@ This page records the project capability catalog and the rule for selecting proo
 
 ## Changelog
 
+- `2026-08-03`: Required provider receipts for successful external effects and added
+  source/packed-host capability parity plus secret non-persistence certification.
 - `2026-08-03`: Enforced portable non-Git mutation boundaries and shared/exclusive
   run scheduling with bounded stale-lease recovery.
 - `2026-08-03`: Required bounded Action timeouts, sparse progress, structured
@@ -104,6 +106,13 @@ other workspace path must declare it under `affects`. Shared Actions may overlap
 Exclusive Actions must acquire the global Action lease and therefore cannot overlap a
 shared or exclusive owner. Do not delete live lease files manually; bounded expiry
 owns crash recovery.
+
+An Action with `effects.external: declared` must name at least one provider service,
+use exclusive scheduling, and write the normalized provider response to
+`SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH`. Missing or invalid receipts fail the Action even
+when its command exits zero. Certification must prove both unavailable and available
+capability outcomes through the source runtime and a clean offline packed install, and
+must prove that fixture secret values do not enter the run artifact.
 
 ## Release Readiness Checks
 

@@ -26,7 +26,7 @@ relatedDocs:
   - ../../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
   - ../../findings/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
-  - ../../findings/F-20260803-action-hermeticity-and-effect-classification-gap.md
+  - ../../findings/archive/F-20260803-action-hermeticity-and-effect-classification-gap.md
   - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
 reviewCycle: per phase
 ---
@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Completed Action hermeticity certification. Portable mutation
+  snapshots, shared/exclusive leases, provider receipts, and identical source/offline
+  packed capability outcomes now have focused proof; secret fixture values do not
+  enter run Evidence.
 - `2026-08-03`: Completed the live Unisane integration pilot after clean-cut migration
   of its Action declarations. Across 1,789 dirty status entries, 69 queue items, and 25
   Actions, all seven measured agent payloads stayed below 32 KiB, queue and Action

@@ -132,6 +132,16 @@ export interface SkoposActionProgressSummary {
   };
 }
 
+export interface SkoposExternalEffectReceipt {
+  schemaVersion: 1;
+  service: string;
+  operation: string;
+  status: 'succeeded';
+  providerRequestId: string;
+  occurredAt: string;
+  receiptPath: string;
+}
+
 export interface SkoposEvidencePathDigest {
   path: string;
   kind: 'file' | 'directory' | 'symlink' | 'missing';
@@ -197,6 +207,7 @@ export interface SkoposActionRunArtifact extends SkoposArtifactEnvelope<'action-
   artifactRoot?: string;
   capabilityIssues?: string[];
   effectViolations?: string[];
+  externalEffectReceipt?: SkoposExternalEffectReceipt;
   progress?: SkoposActionProgressSummary;
   evidence?: SkoposEvidence;
   reusedFromRunId?: string;

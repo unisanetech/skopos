@@ -12,6 +12,7 @@ import type {
   SkoposActionProgressSummary,
   SkoposActionRunArtifact,
   SkoposActionRunResult,
+  SkoposExternalEffectReceipt,
 } from '@skopos/model';
 import {
   buildSkoposEvidence,
@@ -116,6 +117,9 @@ export const runSkoposActionRuntime = async ({
   const runPath = join(workspaceRoot, '.skopos', 'runs', `${runId}.json`);
   const artifactRoot = manifest.effects.artifacts === 'isolated'
     ? join(workspaceRoot, '.skopos', 'runs', runId, 'artifacts')
+    : undefined;
+  const externalReceiptPath = manifest.effects.external === 'declared'
+    ? join(workspaceRoot, '.skopos', 'runs', runId, 'external-effect-receipt.json')
     : undefined;
 
   if (dryRun) {
@@ -277,13 +281,19 @@ export const runSkoposActionRuntime = async ({
 
   const actionCwd = resolve(workspaceRoot, manifest.cwd);
   if (artifactRoot) await mkdir(artifactRoot, { recursive: true });
+  if (externalReceiptPath) await mkdir(dirname(externalReceiptPath), { recursive: true });
   const workspaceBefore = await captureWorkspaceEffectState(workspaceRoot);
   progress.record('execution', 'running', `Executing ${manifest.command}.`);
   const execution = await executeSkoposShellCommand({
     command: manifest.command,
     cwd: actionCwd,
     timeoutMs,
-    environment: artifactRoot ? { SKOPOS_ARTIFACT_ROOT: artifactRoot } : {},
+    environment: {
+      ...(artifactRoot ? { SKOPOS_ARTIFACT_ROOT: artifactRoot } : {}),
+      ...(externalReceiptPath
+        ? { SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH: externalReceiptPath }
+        : {}),
+    },
     onProgress: (event) => {
       if (event.kind === 'heartbeat') {
         progress.record(
@@ -319,11 +329,25 @@ export const runSkoposActionRuntime = async ({
     execution.finishedAt,
   );
   progress.record('finalization', 'running', 'Finalizing effects and Evidence.');
-  const effectViolations = await detectWorkspaceEffectViolations({
+  const workspaceEffectViolations = await detectWorkspaceEffectViolations({
     workspaceRoot,
     manifest,
     before: workspaceBefore,
   });
+  const externalReceiptResult =
+    execution.exitCode === 0 && manifest.effects.external === 'declared'
+      ? await loadExternalEffectReceipt({
+          manifest,
+          receiptPath: externalReceiptPath!,
+          workspaceRoot,
+          startedAt,
+          finishedAt: execution.finishedAt,
+        })
+      : undefined;
+  const effectViolations = [
+    ...workspaceEffectViolations,
+    ...(externalReceiptResult?.violation ? [externalReceiptResult.violation] : []),
+  ];
   const outputBase = artifactRoot ?? actionCwd;
   const outputPaths = (
     await Promise.all(
@@ -375,6 +399,7 @@ export const runSkoposActionRuntime = async ({
     taskId,
     timedOut: execution.timedOut,
     progress: progress.snapshot(resume),
+    externalEffectReceipt: externalReceiptResult?.receipt,
   });
 
   await writeRunArtifact(runPath, artifact);
@@ -387,6 +412,9 @@ export const runSkoposActionRuntime = async ({
       runPath,
       manifest.sourcePath,
       ...outputPaths,
+      ...(externalReceiptResult?.receipt
+        ? [externalReceiptResult.receipt.receiptPath]
+        : []),
     ],
     metadata: {
       actionId: manifest.id,
@@ -397,6 +425,7 @@ export const runSkoposActionRuntime = async ({
       evidenceExecutionKey: finalizedEvidence.executionKey,
       evidenceSourceDigest: finalizedEvidence.sourceState.digest,
       timedOut: execution.timedOut,
+      externalEffectReceiptPath: externalReceiptResult?.receipt?.receiptPath ?? null,
     },
   });
   await refreshSkoposKnowledgeIndex({
@@ -455,6 +484,7 @@ interface BuildActionRunArtifactInput {
   taskId?: string;
   timedOut?: boolean;
   progress?: SkoposActionProgressSummary;
+  externalEffectReceipt?: SkoposExternalEffectReceipt;
 }
 
 const buildActionRunArtifact = ({
@@ -476,6 +506,7 @@ const buildActionRunArtifact = ({
   taskId,
   timedOut,
   progress,
+  externalEffectReceipt,
 }: BuildActionRunArtifactInput): SkoposActionRunArtifact => ({
   schemaVersion: 1,
   id,
@@ -506,10 +537,79 @@ const buildActionRunArtifact = ({
   capabilityIssues,
   effectViolations,
   progress,
+  externalEffectReceipt,
   evidence,
   stdoutExcerpt,
   stderrExcerpt,
 });
+
+const loadExternalEffectReceipt = async ({
+  manifest,
+  receiptPath,
+  workspaceRoot,
+  startedAt,
+  finishedAt,
+}: {
+  manifest: SkoposActionManifest;
+  receiptPath: string;
+  workspaceRoot: string;
+  startedAt: string;
+  finishedAt: string;
+}): Promise<{ receipt?: SkoposExternalEffectReceipt; violation?: string }> => {
+  let value: unknown;
+  try {
+    value = JSON.parse(await readFile(receiptPath, 'utf8'));
+  } catch {
+    return {
+      violation: `declared external mutation did not produce provider receipt at ${relativeToWorkspace(workspaceRoot, receiptPath)}`,
+    };
+  }
+  if (!value || typeof value !== 'object') {
+    return { violation: 'external effect provider receipt must be a JSON object' };
+  }
+  const candidate = value as Record<string, unknown>;
+  if (candidate.schemaVersion !== 1) {
+    return { violation: 'external effect provider receipt requires schemaVersion 1' };
+  }
+  if (
+    typeof candidate.service !== 'string' ||
+    !manifest.capabilities.services.includes(candidate.service)
+  ) {
+    return {
+      violation: 'external effect provider receipt service is not declared by the Action',
+    };
+  }
+  if (typeof candidate.operation !== 'string' || candidate.operation.trim().length === 0) {
+    return { violation: 'external effect provider receipt operation is missing' };
+  }
+  if (candidate.status !== 'succeeded') {
+    return { violation: 'external effect provider receipt status must be succeeded' };
+  }
+  if (
+    typeof candidate.providerRequestId !== 'string' ||
+    candidate.providerRequestId.trim().length === 0
+  ) {
+    return { violation: 'external effect provider receipt request identity is missing' };
+  }
+  if (typeof candidate.occurredAt !== 'string' || !Number.isFinite(Date.parse(candidate.occurredAt))) {
+    return { violation: 'external effect provider receipt timestamp is invalid' };
+  }
+  const occurredAt = Date.parse(candidate.occurredAt);
+  if (occurredAt < Date.parse(startedAt) - 5_000 || occurredAt > Date.parse(finishedAt) + 5_000) {
+    return { violation: 'external effect provider receipt timestamp is outside the Action run' };
+  }
+  return {
+    receipt: {
+      schemaVersion: 1,
+      service: candidate.service,
+      operation: candidate.operation.trim(),
+      status: 'succeeded',
+      providerRequestId: candidate.providerRequestId.trim(),
+      occurredAt: candidate.occurredAt,
+      receiptPath: relativeToWorkspace(workspaceRoot, receiptPath),
+    },
+  };
+};
 
 const ACTION_PROGRESS_PHASES: SkoposActionProgressPhase[] = [
   'admission',

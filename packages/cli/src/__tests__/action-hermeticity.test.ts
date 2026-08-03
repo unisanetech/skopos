@@ -13,6 +13,9 @@ const originalCodexHome = process.env.CODEX_HOME;
 
 afterEach(async () => {
   delete process.env.SKOPOS_NETWORK_AVAILABLE;
+  delete process.env.SKOPOS_BROWSER_AVAILABLE;
+  delete process.env.SKOPOS_SERVICE_FIXTURE_PROVIDER_AVAILABLE;
+  delete process.env.FIXTURE_PROOF_SECRET;
   if (originalCodexHome === undefined) delete process.env.CODEX_HOME;
   else process.env.CODEX_HOME = originalCodexHome;
   await Promise.all(
@@ -21,6 +24,107 @@ afterEach(async () => {
 });
 
 describe('Action effects and hermetic capability contract', () => {
+  it('keeps capability assertions identical across unavailable and available hosts', async () => {
+    const root = await createWorkspace(false);
+    await writeManifest(root, 'host-capability-proof', {
+      command: `node -e "process.exit(0)"`,
+      capabilities: {
+        network: 'required',
+        browser: 'required',
+        secrets: ['FIXTURE_PROOF_SECRET'],
+      },
+    });
+
+    const unavailable = await runSkoposActionRuntime({
+      cwd: root,
+      action: 'host.capability.proof',
+    });
+    expect(unavailable.run).toMatchObject({
+      runStatus: 'unavailable',
+      capabilityIssues: [
+        'Required secret FIXTURE_PROOF_SECRET is unavailable.',
+        'Required network capability is unavailable.',
+        'Required browser capability is unavailable.',
+      ],
+    });
+
+    process.env.SKOPOS_NETWORK_AVAILABLE = '1';
+    process.env.SKOPOS_BROWSER_AVAILABLE = '1';
+    process.env.FIXTURE_PROOF_SECRET = '<SECRET>';
+    await expect(
+      runSkoposActionRuntime({ cwd: root, action: 'host.capability.proof' }),
+    ).resolves.toMatchObject({ run: { runStatus: 'succeeded' } });
+  });
+
+  it('requires a provider receipt for successful external mutation', async () => {
+    const root = await createWorkspace(false);
+    process.env.SKOPOS_SERVICE_FIXTURE_PROVIDER_AVAILABLE = '1';
+    await writeManifest(root, 'external-receipt-proof', {
+      command: `node -e "require('node:fs').writeFileSync(process.env.SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH,JSON.stringify({schemaVersion:1,service:'fixture-provider',operation:'fixture.create',status:'succeeded',providerRequestId:'provider-request-1',occurredAt:new Date().toISOString()}))"`,
+      capabilities: { services: ['fixture-provider'] },
+      externalEffect: 'declared',
+      safety: 'mutating',
+      concurrency: 'exclusive',
+    });
+
+    const result = await runSkoposActionRuntime({
+      cwd: root,
+      action: 'external.receipt.proof',
+      actor: 'fixture-agent',
+    });
+    expect(result.run).toMatchObject({
+      runStatus: 'succeeded',
+      externalEffectReceipt: {
+        schemaVersion: 1,
+        service: 'fixture-provider',
+        operation: 'fixture.create',
+        status: 'succeeded',
+        providerRequestId: 'provider-request-1',
+        receiptPath: expect.stringMatching(/external-effect-receipt\.json$/),
+      },
+    });
+  });
+
+  it('fails external certification when the provider receipt is missing', async () => {
+    const root = await createWorkspace(false);
+    process.env.SKOPOS_SERVICE_FIXTURE_PROVIDER_AVAILABLE = '1';
+    await writeManifest(root, 'external-missing-receipt', {
+      command: `node -e "process.exit(0)"`,
+      capabilities: { services: ['fixture-provider'] },
+      externalEffect: 'declared',
+      safety: 'mutating',
+      concurrency: 'exclusive',
+    });
+
+    await expect(
+      runSkoposActionRuntime({
+        cwd: root,
+        action: 'external.missing.receipt',
+        actor: 'fixture-agent',
+      }),
+    ).rejects.toThrow('did not produce provider receipt');
+  });
+
+  it('rejects a provider receipt for an undeclared service', async () => {
+    const root = await createWorkspace(false);
+    process.env.SKOPOS_SERVICE_FIXTURE_PROVIDER_AVAILABLE = '1';
+    await writeManifest(root, 'external-mismatched-receipt', {
+      command: `node -e "require('node:fs').writeFileSync(process.env.SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH,JSON.stringify({schemaVersion:1,service:'other-provider',operation:'fixture.create',status:'succeeded',providerRequestId:'provider-request-2',occurredAt:new Date().toISOString()}))"`,
+      capabilities: { services: ['fixture-provider'] },
+      externalEffect: 'declared',
+      safety: 'mutating',
+      concurrency: 'exclusive',
+    });
+
+    await expect(
+      runSkoposActionRuntime({
+        cwd: root,
+        action: 'external.mismatched.receipt',
+        actor: 'fixture-agent',
+      }),
+    ).rejects.toThrow('receipt service is not declared');
+  });
+
   it('returns unavailable before execution when a required capability is absent', async () => {
     const root = await createWorkspace(false);
     await writeManifest(root, 'network-proof', {
@@ -158,12 +262,18 @@ describe('Action effects and hermetic capability contract', () => {
 
 interface ManifestOverrides {
   command: string;
-  capabilities?: { network: 'none' | 'required' };
+  capabilities?: {
+    network?: 'none' | 'required';
+    browser?: 'none' | 'required';
+    secrets?: string[];
+    services?: string[];
+  };
   safety?: 'read-only' | 'artifact-producing' | 'mutating';
   affects?: string[];
   outputs?: string[];
   workspaceEffect?: 'none' | 'declared';
   artifactEffect?: 'none' | 'isolated';
+  externalEffect?: 'none' | 'declared';
   concurrency?: 'shared' | 'exclusive';
 }
 
@@ -190,14 +300,14 @@ const writeManifest = async (
     'capabilities:',
     '  process: required',
     `  network: ${overrides.capabilities?.network ?? 'none'}`,
-    '  browser: none',
+    `  browser: ${overrides.capabilities?.browser ?? 'none'}`,
     '  tools: [node]',
-    '  secrets: []',
-    '  services: []',
+    `  secrets: ${JSON.stringify(overrides.capabilities?.secrets ?? [])}`,
+    `  services: ${JSON.stringify(overrides.capabilities?.services ?? [])}`,
     'effects:',
     `  workspace: ${overrides.workspaceEffect ?? 'none'}`,
     `  artifacts: ${overrides.artifactEffect ?? 'none'}`,
-    '  external: none',
+    `  external: ${overrides.externalEffect ?? 'none'}`,
     `concurrency: ${overrides.concurrency ?? 'shared'}`,
     `safety: ${overrides.safety ?? 'read-only'}`,
     'requiresApproval: false',

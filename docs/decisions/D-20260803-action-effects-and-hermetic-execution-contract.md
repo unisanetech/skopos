@@ -10,12 +10,12 @@ authority: supporting
 provenance: accepted
 view: target
 date: 2026-08-03
-implementationStatus: partial
+implementationStatus: complete
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../architecture/action-extension-model.md
   - ../architecture/evidence-and-readiness-model.md
-  - ../findings/F-20260803-action-hermeticity-and-effect-classification-gap.md
+  - ../findings/archive/F-20260803-action-hermeticity-and-effect-classification-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when Action capability, effect, concurrency, or certification semantics change
 ---
@@ -24,6 +24,9 @@ reviewCycle: when Action capability, effect, concurrency, or certification seman
 
 ## Changelog
 
+- `2026-08-03`: Completed the Decision. Successful external mutation now requires a
+  normalized run-owned provider receipt, and clean offline packed proof matches source
+  capability outcomes for unavailable and available hosts without persisting secrets.
 - `2026-08-03`: Enforced non-Git workspace mutation boundaries through portable
   snapshots and implemented run-owned shared/exclusive scheduling leases with atomic
   admission, release, and bounded stale recovery.
@@ -106,8 +109,9 @@ host without provider- or operating-system-specific support.
 2. Agents can distinguish unavailable infrastructure from executed proof failures.
 3. Concurrent artifact-producing runs have stable, non-colliding references.
 4. Evidence reuse becomes sensitive to the full declared execution contract.
-5. Certification remains incomplete until packed offline proof, exclusive scheduling,
-   and external-effect boundaries are proven.
+5. Certification requires clean offline packed proof, exclusive scheduling, portable
+   workspace enforcement, and provider-receipt verification; these requirements now
+   have source and installed-package Evidence.
 
 ## Implementation Requirements
 
@@ -120,8 +124,5 @@ Implemented now:
 5. capability-, effect-, and concurrency-bound execution identity
 6. portable non-Git workspace mutation enforcement
 7. shared/exclusive scheduling leases and bounded stale recovery
-
-Still required before this Decision is fully implemented:
-
-1. provider-specific enforcement or verification of declared external mutation
-2. host-parity proof for capability assertions
+8. provider-specific receipt verification for declared external mutation
+9. source and clean offline packed-host capability parity proof

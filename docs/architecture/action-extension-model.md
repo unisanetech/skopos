@@ -134,7 +134,19 @@ browser, and service capabilities are host assertions supplied through
 `SKOPOS_NETWORK_AVAILABLE`, `SKOPOS_BROWSER_AVAILABLE`, and normalized
 `SKOPOS_SERVICE_<NAME>_AVAILABLE` environment flags. Missing requirements produce an
 `unavailable` Action Run and do not execute the command. Capability unavailability is
-therefore distinct from a failing product proof.
+therefore distinct from a failing product proof. Source and installed CLI hosts use
+the same environment contract; secret names participate in preflight, while values
+never enter the run or Evidence.
+
+A declared external effect requires at least one named service and exclusive
+scheduling. Skopos injects a run-owned `SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH`. A
+successful command must write schema version 1, one declared service, a non-empty
+operation and provider request identity, `succeeded` status, and a timestamp inside the
+run window. Skopos retains only those normalized fields plus the receipt path. A
+missing, malformed, mismatched, or stale receipt is an effect violation and cannot
+produce successful reusable Evidence. The receipt certifies the provider response
+reported by the Action; it is not a claim that Skopos can independently sandbox or
+reverse the provider mutation.
 
 An isolated artifact-producing Action receives a unique
 `.skopos/runs/<run-id>/artifacts` directory through `SKOPOS_ARTIFACT_ROOT`. Declared
@@ -149,8 +161,8 @@ Actions fail when a write falls outside `affects`.
 may overlap; an exclusive run conflicts with every active shared or exclusive lease,
 and a shared run conflicts with an active exclusive lease. Admission is serialized,
 leases expire beyond the Action timeout, and success or failure releases ownership.
-Provider-specific external-effect enforcement remains open certification work rather
-than an inferred guarantee.
+External-effect receipts remain provider-reported verification rather than a universal
+operating-system or provider sandbox guarantee.
 
 Successful runs settle their final source and output state after Skopos completes its
 own operational logging and knowledge-index bookkeeping. Framework bookkeeping must

@@ -107,6 +107,20 @@ const actionManifestSchema = z
         message: 'External services require a declared external effect.',
       });
     }
+    if (manifest.effects.external === 'declared' && manifest.capabilities.services.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['capabilities', 'services'],
+        message: 'Declared external effects require at least one provider service.',
+      });
+    }
+    if (manifest.effects.external === 'declared' && manifest.concurrency !== 'exclusive') {
+      context.addIssue({
+        code: 'custom',
+        path: ['concurrency'],
+        message: 'Declared external effects require exclusive scheduling.',
+      });
+    }
   });
 
 export interface LoadSkoposActionManifestsOptions {

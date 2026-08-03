@@ -168,6 +168,15 @@ export const buildCompactActionRunOutput = (
     additionalOutputPathCount: Math.max(0, run.outputPaths.length - 20),
     capabilityIssues: run.capabilityIssues ?? [],
     effectViolations: run.effectViolations ?? [],
+    externalEffectReceipt: run.externalEffectReceipt
+      ? {
+          service: run.externalEffectReceipt.service,
+          operation: run.externalEffectReceipt.operation,
+          status: run.externalEffectReceipt.status,
+          occurredAt: run.externalEffectReceipt.occurredAt,
+          receiptPath: run.externalEffectReceipt.receiptPath,
+        }
+      : undefined,
     progress: run.progress
       ? {
           eventCount: run.progress.eventCount,

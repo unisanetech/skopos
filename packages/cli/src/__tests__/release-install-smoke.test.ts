@@ -123,11 +123,17 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
           safety: 'artifact-producing',
         }),
         writePackedAction(projectDirectory, 'packed-external', {
-          command: `node -e "require('node:fs').writeFileSync('external-executed.txt','yes')"`,
+          command: `node -e "require('node:fs').writeFileSync(process.env.SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH,JSON.stringify({schemaVersion:1,service:'packed-remote',operation:'packed.create',status:'succeeded',providerRequestId:'packed-request-1',occurredAt:new Date().toISOString()}))"`,
           services: ['packed-remote'],
           externalEffect: 'declared',
           safety: 'mutating',
           concurrency: 'exclusive',
+        }),
+        writePackedAction(projectDirectory, 'packed-host-capabilities', {
+          command: `node -e "process.exit(0)"`,
+          network: 'required',
+          browser: 'required',
+          secrets: ['PACKED_PROOF_SECRET'],
         }),
         writePackedAction(projectDirectory, 'packed-mutation', {
           command: `node -e "require('node:fs').writeFileSync('undeclared.txt','changed')"`,
@@ -183,6 +189,67 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         readFile(join(projectDirectory, 'external-executed.txt'), 'utf8'),
       ).rejects.toThrow();
 
+      const externalReceiptRun = runJson<{
+        status?: string;
+        externalEffectReceipt?: {
+          service?: string;
+          operation?: string;
+          status?: string;
+          receiptPath?: string;
+        };
+      }>(projectDirectory, [
+        'actions',
+        'run',
+        'packed.external',
+        '.',
+        '--actor',
+        'release-smoke',
+        '--json',
+      ], {
+        SKOPOS_SERVICE_PACKED_REMOTE_AVAILABLE: '1',
+      });
+      expect(externalReceiptRun).toMatchObject({
+        status: 'succeeded',
+        externalEffectReceipt: {
+          service: 'packed-remote',
+          operation: 'packed.create',
+          status: 'succeeded',
+          receiptPath: expect.stringMatching(/external-effect-receipt\.json$/),
+        },
+      });
+
+      const unavailableHost = runJson<{
+        status?: string;
+        capabilityIssues?: string[];
+      }>(projectDirectory, [
+        'actions',
+        'run',
+        'packed.host.capabilities',
+        '.',
+        '--json',
+      ]);
+      expect(unavailableHost).toMatchObject({
+        status: 'unavailable',
+        capabilityIssues: [
+          'Required secret PACKED_PROOF_SECRET is unavailable.',
+          'Required network capability is unavailable.',
+          'Required browser capability is unavailable.',
+        ],
+      });
+      const availableHost = runJson<{ status?: string; detailPath?: string }>(
+        projectDirectory,
+        ['actions', 'run', 'packed.host.capabilities', '.', '--json'],
+        {
+          SKOPOS_NETWORK_AVAILABLE: '1',
+          SKOPOS_BROWSER_AVAILABLE: '1',
+          PACKED_PROOF_SECRET: '<SECRET>',
+        },
+      );
+      expect(availableHost.status).toBe('succeeded');
+      await expect(
+        readFile(join(projectDirectory, availableHost.detailPath ?? ''), 'utf8'),
+      ).resolves.not.toContain('<SECRET>');
+
       expect(
         runFailure(projectDirectory, [
           'actions',
@@ -214,15 +281,22 @@ const packCli = (packDirectory: string): string => {
   return isAbsolute(path) ? path : join(workspaceRoot, path);
 };
 
-const run = (cwd: string, args: string[]): string =>
+const run = (
+  cwd: string,
+  args: string[],
+  environment: NodeJS.ProcessEnv = {},
+): string =>
   execFileSync('pnpm', ['exec', 'skopos', ...args], {
     cwd,
     encoding: 'utf8',
+    env: { ...process.env, ...environment },
   });
 
-const runJson = <T>(cwd: string, args: string[]): T =>
-  JSON.parse(run(cwd, args)) as T;
-
+const runJson = <T>(
+  cwd: string,
+  args: string[],
+  environment: NodeJS.ProcessEnv = {},
+): T => JSON.parse(run(cwd, args, environment)) as T;
 const runFailure = (cwd: string, args: string[]): string => {
   try {
     run(cwd, args);
@@ -241,6 +315,9 @@ interface PackedActionOverrides {
   externalEffect?: 'none' | 'declared';
   safety?: 'read-only' | 'artifact-producing' | 'mutating';
   concurrency?: 'shared' | 'exclusive';
+  network?: 'none' | 'required';
+  browser?: 'none' | 'required';
+  secrets?: string[];
 }
 
 const writePackedAction = async (
@@ -262,10 +339,10 @@ const writePackedAction = async (
     'affects: []',
     'capabilities:',
     '  process: required',
-    '  network: none',
-    '  browser: none',
+    `  network: ${overrides.network ?? 'none'}`,
+    `  browser: ${overrides.browser ?? 'none'}`,
     '  tools: [node]',
-    '  secrets: []',
+    `  secrets: ${JSON.stringify(overrides.secrets ?? [])}`,
     `  services: ${JSON.stringify(overrides.services ?? [])}`,
     'effects:',
     '  workspace: none',

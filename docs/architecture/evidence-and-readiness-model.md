@@ -34,6 +34,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Required normalized provider receipts for successful external effects
+  and certified identical capability preflight through source and offline packed CLI
+  hosts without persisting secret values.
 - `2026-08-03`: Added portable non-Git workspace-effect snapshots and run-owned
   shared/exclusive scheduling leases with bounded stale recovery.
 - `2026-08-03`: Bounded Action execution with manifest timeouts, sparse live progress,
@@ -137,6 +140,15 @@ Workspace-effect Evidence is portable across adopted Git and non-Git projects. G
 status supplies the narrow path set when available; otherwise Skopos snapshots every
 workspace file except `.git`, `.skopos`, and `node_modules` trees and applies the same
 `none` or declared `affects` boundary.
+
+Successful external-effect Evidence additionally binds a normalized provider receipt.
+The receipt identifies one declared service, operation, provider request, success
+status, occurrence time, and run-owned receipt path. Receipt absence or mismatch is an
+effect violation. Provider receipt content is allowlisted before it enters the Action
+Run, and secret capability values are never copied into runs or Evidence. Capability
+preflight occurs before Evidence reuse, so a run produced on an available host cannot
+be reused when the current host lacks its declared network, browser, tool, secret, or
+service requirements.
 
 ## Verify
 
