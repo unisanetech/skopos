@@ -97,7 +97,12 @@ The exact-reuse interaction slice is implemented:
    bounded collection index, and exact detail is retrieved through shared cursors
 8. a 1,000-item Task/Verification fixture remains below 32 KiB while Verify preserves
    every current blocker inline
+9. Action Run output paths, Session warnings, and coordination claims are capped with
+   omitted counts; Action capability/effect failures and stable run detail remain
+   inline
+10. representative p95 Session and Readiness payloads remain below 32 KiB while
+    Readiness retains every blocker
 
-This Finding remains active. Closure still requires common budget enforcement and
-bounded Action run outputs, explicit Session context and Readiness budget proof, plus
-the full cross-command and plain-agent benchmark matrix.
+This Finding remains active only for the full cross-command and plain-agent benchmark
+matrix. The runtime and CLI reuse, pagination, artifact-reference, and representative
+p50/p95 budget contracts are implemented.

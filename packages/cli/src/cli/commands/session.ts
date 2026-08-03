@@ -1,6 +1,9 @@
 import { resolve } from 'node:path';
 
-import { buildSkoposSessionContextRuntime } from '@skopos/runtime';
+import {
+  buildSkoposSessionContextRuntime,
+  renderSkoposSessionAdditionalContext,
+} from '@skopos/runtime';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
 
@@ -23,7 +26,7 @@ export const runSessionCommand = async (args: string[]): Promise<void> => {
   const parsed = parseSessionContextArgs(rest);
   const result = await buildSkoposSessionContextRuntime(parsed);
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(buildCompactSessionOutput(result));
     return;
   }
 
@@ -38,6 +41,32 @@ export const runSessionCommand = async (args: string[]): Promise<void> => {
     `- next command: ${result.nextCommand ?? '(none)'}`,
     `- warnings: ${result.warnings.length}`,
   ]);
+};
+
+export const buildCompactSessionOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposSessionContextRuntime>>,
+) => {
+  const warnings = result.warnings.slice(0, 20);
+  const claims = result.coordination ? result.coordination.claims.slice(0, 12) : [];
+  const compact = {
+    ...result,
+    warnings,
+    additionalWarningCount: Math.max(0, result.warnings.length - warnings.length),
+    coordination: result.coordination
+      ? {
+          ...result.coordination,
+          claims,
+          additionalClaimCount: Math.max(
+            0,
+            result.coordination.claims.length - claims.length,
+          ),
+        }
+      : undefined,
+  };
+  return {
+    ...compact,
+    additionalContext: renderSkoposSessionAdditionalContext(compact),
+  };
 };
 
 const parseSessionContextArgs = (args: string[]): ParsedSessionContextArgs => {

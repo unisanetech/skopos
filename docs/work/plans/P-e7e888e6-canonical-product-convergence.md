@@ -35,6 +35,12 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Bounded Action-run output and certified representative Session and
+  Readiness transport. Output paths, warnings, and claims report capped slices plus
+  omitted counts; capability/effect failures remain inline; full Action output points
+  to its stable run artifact. Representative p95 payloads remain below 32 KiB with all
+  Readiness blockers preserved. Only the cross-command/plain-agent benchmark remains
+  in this transport workstream.
 - `2026-08-03`: Replaced unbounded Task and Verify full payloads with bounded detail
   indexes and cursor-retrievable collections. Compact summaries cap diagnostic ids and
   report omitted counts; Verify keeps all blockers inline. A 1,000-item fixture remains

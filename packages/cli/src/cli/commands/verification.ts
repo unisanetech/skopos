@@ -76,7 +76,7 @@ export const runReadinessCommand = async (args: string[]): Promise<void> => {
     dryRun: parsed.dryRun,
   });
   if (parsed.json) {
-    writeJsonOutput(result);
+    writeJsonOutput(buildCompactReadinessOutput(result));
     return;
   }
   writeLines([
@@ -91,6 +91,14 @@ export const runReadinessCommand = async (args: string[]): Promise<void> => {
       : []),
   ]);
 };
+
+export const buildCompactReadinessOutput = (
+  result: Awaited<ReturnType<typeof assessSkoposTaskReadinessRuntime>>,
+) => ({
+  ...result,
+  blockerCount: result.blockers.length,
+  blockers: result.blockers,
+});
 
 export const runFinishCommand = async (args: string[]): Promise<void> => {
   const parsed = parseVerificationArgs(args, 'finish');

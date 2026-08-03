@@ -21,6 +21,10 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Bounded the remaining hot-path payloads. Action Runs cap output paths,
+  retain capability/effect failures, and expose a stable run-artifact detail index;
+  Session context caps warnings and claims; representative p95 Session and Readiness
+  output remains below 32 KiB while Readiness retains all blockers inline.
 - `2026-08-03`: Replaced unbounded Task and Verify full JSON with bounded detail
   indexes. Default summaries cap identifier lists, Verify retains all blockers inline,
   and exact Task/Verification collections use the shared cursor contract.
@@ -78,3 +82,11 @@ its total, and the exact follow-up command. `--collection <name> --cursor <token
 retrieves one page. Compact Task output caps owned paths, selected Action ids, selected
 Guard ids, and open Memory obligations while reporting omitted counts. Compact Verify
 caps diagnostic identifier summaries while retaining every current blocker inline.
+
+Action Run compact output caps inline output paths and reports the omitted count. It
+always retains capability-preflight issues and effect violations. `actions run --full`
+returns a bounded index with the stable `.skopos/runs/<run-id>.json` detail path and
+collection counts instead of embedding Evidence source/output path state. Session
+context caps warnings and coordination claims, reports omitted counts, and regenerates
+the injected context from that compact projection. Readiness keeps every blocker
+inline; its representative p95 blocker fixture remains within the same 32 KiB budget.

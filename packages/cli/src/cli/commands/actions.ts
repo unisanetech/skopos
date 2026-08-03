@@ -106,51 +106,10 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
     const run = result.run;
 
     if (parsed.json) {
-      const fullOutput = {
-        actionId: run.actionId,
-        actionTitle: run.actionTitle,
-        actionCategory: run.actionCategory,
-        actionSafety: run.actionSafety,
-        runId: run.id,
-        status: run.runStatus,
-        actorId: run.runByActorId,
-        sourcePath: run.sourcePath,
-        command: run.command,
-        outputPaths: run.outputPaths,
-        evidence: run.evidence,
-        reusedFromRunId: run.reusedFromRunId,
-        taskEvidenceLink: result.taskEvidenceLink,
-        taskEvidenceLinkPath: result.taskEvidenceLinkPath,
-      };
       writeJsonOutput(
         parsed.full
-          ? fullOutput
-          : {
-              actionId: run.actionId,
-              actionTitle: run.actionTitle,
-              actionCategory: run.actionCategory,
-              actionSafety: run.actionSafety,
-              runId: run.id,
-              status: run.runStatus,
-              actorId: run.runByActorId,
-              reusedFromRunId: run.reusedFromRunId,
-              outputPaths: run.outputPaths,
-              evidence: run.evidence
-                ? {
-                    executionKey: run.evidence.executionKey,
-                    sourceDigest: run.evidence.sourceState.digest,
-                    sourcePathCount: run.evidence.sourceState.paths.length,
-                    capturedAt: run.evidence.freshness.capturedAt,
-                  }
-                : undefined,
-              taskEvidenceLink: result.taskEvidenceLink
-                ? {
-                    taskId: result.taskEvidenceLink.taskId,
-                    actionId: result.taskEvidenceLink.actionId,
-                    runId: result.taskEvidenceLink.runId,
-                  }
-                : undefined,
-            },
+          ? buildActionRunDetailIndex(result)
+          : buildCompactActionRunOutput(result),
       );
       return;
     }
@@ -187,6 +146,61 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
 
   throw new Error(`Unknown Skopos actions subcommand: ${subcommand ?? '(missing)'}`);
 };
+
+export const buildCompactActionRunOutput = (
+  result: Awaited<ReturnType<typeof runSkoposActionRuntime>>,
+) => {
+  const run = result.run;
+  return {
+    actionId: run.actionId,
+    actionTitle: run.actionTitle,
+    actionCategory: run.actionCategory,
+    actionSafety: run.actionSafety,
+    runId: run.id,
+    status: run.runStatus,
+    actorId: run.runByActorId,
+    reusedFromRunId: run.reusedFromRunId,
+    artifactRoot: run.artifactRoot,
+    outputPaths: run.outputPaths.slice(0, 20),
+    additionalOutputPathCount: Math.max(0, run.outputPaths.length - 20),
+    capabilityIssues: run.capabilityIssues ?? [],
+    effectViolations: run.effectViolations ?? [],
+    evidence: run.evidence
+      ? {
+          executionKey: run.evidence.executionKey,
+          sourceDigest: run.evidence.sourceState.digest,
+          sourcePathCount: run.evidence.sourceState.paths.length,
+          outputPathCount: run.evidence.outputState?.paths.length ?? 0,
+          capturedAt: run.evidence.freshness.capturedAt,
+        }
+      : undefined,
+    taskEvidenceLink: result.taskEvidenceLink
+      ? {
+          taskId: result.taskEvidenceLink.taskId,
+          actionId: result.taskEvidenceLink.actionId,
+          runId: result.taskEvidenceLink.runId,
+        }
+      : undefined,
+    detailPath: `.skopos/runs/${run.id}.json`,
+  };
+};
+
+export const buildActionRunDetailIndex = (
+  result: Awaited<ReturnType<typeof runSkoposActionRuntime>>,
+) => ({
+  ...buildCompactActionRunOutput(result),
+  type: 'action-run-detail-index',
+  sourcePath: result.run.sourcePath,
+  command: result.run.command,
+  taskEvidenceLinkPath: result.taskEvidenceLinkPath,
+  detailCollections: {
+    outputPaths: result.run.outputPaths.length,
+    sourcePaths: result.run.evidence?.sourceState.paths.length ?? 0,
+    evidenceOutputPaths: result.run.evidence?.outputState?.paths.length ?? 0,
+    capabilityIssues: result.run.capabilityIssues?.length ?? 0,
+    effectViolations: result.run.effectViolations?.length ?? 0,
+  },
+});
 
 export const buildPagedActionCatalogOutput = (
   workspaceRoot: string,
