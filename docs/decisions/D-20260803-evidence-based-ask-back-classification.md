@@ -13,7 +13,7 @@ date: 2026-08-03
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
-  - ../findings/F-20260803-planner-ask-back-classification-gap.md
+  - ../findings/archive/F-20260803-planner-ask-back-classification-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 ---
 

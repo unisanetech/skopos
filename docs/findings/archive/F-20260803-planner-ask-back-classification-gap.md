@@ -1,20 +1,20 @@
 ---
 title: Planner Ask-Back Classification Gap
-status: active
+status: resolved
 severity: MUST
 owner: skopos-core
 id: F-20260803-planner-ask-back-classification-gap
 scope: skopos
 role: finding
-lifecycle: active
+lifecycle: historical
 authority: supporting
 provenance: observed
-view: current
+view: transition
 lastUpdated: 2026-08-03
 relatedDocs:
-  - ../decisions/D-20260803-evidence-based-ask-back-classification.md
-  - ../architecture/agent-native-operating-model.md
-  - ../work/plans/P-e7e888e6-canonical-product-convergence.md
+  - ../../decisions/D-20260803-evidence-based-ask-back-classification.md
+  - ../../architecture/agent-native-operating-model.md
+  - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: archive after focused positive and negative classifier proof passes
 ---
 
@@ -52,4 +52,5 @@ classified concern did not apply.
 The planner now uses subject-intent predicates and removes known operational compounds
 before classification. Six focused tests cover the negative boundary, three positive
 boundaries, explicit no-change outcomes, and deterministic question construction. The
-Finding is ready to archive after the closing Task validates source-bound proof.
+Finding was archived after the closing Task passed source-bound focused and typecheck
+proof with no Readiness blocker.
