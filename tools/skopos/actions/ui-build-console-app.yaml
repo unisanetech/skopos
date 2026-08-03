@@ -14,6 +14,18 @@ outputs:
   - .skopos/ui/app
 affects:
   - .skopos/ui/app
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: declared
+  artifacts: none
+  external: none
+concurrency: exclusive
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing routed UI state shaping, the console app shell, route structure, or other human-facing app surfaces.

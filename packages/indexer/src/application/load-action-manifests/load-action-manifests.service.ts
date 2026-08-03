@@ -30,7 +30,21 @@ const actionManifestSchema = z
     sourceExcludes: z.array(z.string().min(1)).default([]),
     outputs: z.array(z.string().min(1)).default([]),
     affects: z.array(z.string().min(1)).default([]),
-    safety: z.enum(['read-only', 'mutating', 'destructive']),
+    capabilities: z.object({
+      process: z.literal('required'),
+      network: z.enum(['none', 'required']),
+      browser: z.enum(['none', 'required']),
+      tools: z.array(z.string().min(1)),
+      secrets: z.array(z.string().min(1)),
+      services: z.array(z.string().min(1)),
+    }).strict(),
+    effects: z.object({
+      workspace: z.enum(['none', 'declared']),
+      artifacts: z.enum(['none', 'isolated']),
+      external: z.enum(['none', 'declared']),
+    }).strict(),
+    concurrency: z.enum(['shared', 'exclusive']),
+    safety: z.enum(['read-only', 'artifact-producing', 'mutating', 'destructive']),
     requiresApproval: z.boolean().default(false),
     whenToUse: z.string().min(1).optional(),
     phases: z
@@ -44,7 +58,55 @@ const actionManifestSchema = z
     recommendedAfter: z.array(z.string().min(1)).default([]),
     owner: z.string().min(1),
   })
-  .strict();
+  .strict()
+  .superRefine((manifest, context) => {
+    if (manifest.effects.workspace === 'none' && manifest.affects.length > 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['affects'],
+        message: 'Action with no workspace effect cannot declare affected workspace paths.',
+      });
+    }
+    if (manifest.effects.workspace === 'declared' && manifest.affects.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['affects'],
+        message: 'Declared workspace effects require at least one affected path.',
+      });
+    }
+    if (manifest.effects.artifacts === 'isolated' && manifest.outputs.length === 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['outputs'],
+        message: 'Isolated artifact production requires at least one output.',
+      });
+    }
+    if (manifest.effects.artifacts === 'none' && manifest.safety === 'artifact-producing') {
+      context.addIssue({
+        code: 'custom',
+        path: ['safety'],
+        message: 'Artifact-producing safety requires isolated artifact effects.',
+      });
+    }
+    if (manifest.safety === 'read-only' && (
+      manifest.effects.workspace !== 'none' ||
+      manifest.effects.artifacts !== 'none' ||
+      manifest.effects.external !== 'none'
+    )) {
+      context.addIssue({
+        code: 'custom',
+        path: ['safety'],
+        message: 'Read-only Actions cannot declare workspace, artifact, or external effects.',
+      });
+    }
+    if (manifest.effects.external === 'none' && manifest.capabilities.services.length > 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['capabilities', 'services'],
+        message: 'External services require a declared external effect.',
+      });
+    }
+  });
 
 export interface LoadSkoposActionManifestsOptions {
   cwd: string;

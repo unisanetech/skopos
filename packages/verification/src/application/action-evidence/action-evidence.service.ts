@@ -56,12 +56,15 @@ export const buildSkoposEvidence = async ({
     ignoredSourcePaths,
   });
   const workspace = await resolveSkoposWorkspaceIdentity(workspaceRoot);
-  const commandDigest = digestText(`${manifest.command}\n${manifest.cwd}`);
+  const commandDigest = digestActionExecutionContract(manifest);
   const environment = {
     platform: process.platform,
     architecture: process.arch,
     nodeVersion: process.version,
     workspace,
+    capabilities: manifest.capabilities,
+    effects: manifest.effects,
+    concurrency: manifest.concurrency,
   };
   const executionKey = buildEvidenceExecutionKey({
     actionId: manifest.id,
@@ -111,7 +114,7 @@ export const finalizeSkoposEvidence = async ({
   });
   const outputState = await captureDeclaredPathState({
     workspaceRoot,
-    baseDirectory: resolve(workspaceRoot, manifest.cwd),
+    baseDirectory: resolveActionOutputBaseDirectory(workspaceRoot, manifest, evidence.owner.runId),
     declaredPaths: evidenceOutputPaths(manifest),
     ignoredWorkspacePaths: [],
   });
@@ -154,7 +157,7 @@ export const validateSkoposEvidence = async ({
     };
   }
 
-  const commandDigest = digestText(`${manifest.command}\n${manifest.cwd}`);
+  const commandDigest = digestActionExecutionContract(manifest);
   if (
     evidence.actionId !== manifest.id ||
     evidence.command.digest !== commandDigest ||
@@ -226,7 +229,11 @@ export const validateSkoposEvidence = async ({
 
     const currentOutputState = await captureDeclaredPathState({
       workspaceRoot,
-      baseDirectory: resolve(workspaceRoot, manifest.cwd),
+      baseDirectory: resolveActionOutputBaseDirectory(
+        workspaceRoot,
+        manifest,
+        evidence.owner.runId,
+      ),
       declaredPaths: declaredEvidenceOutputs,
       ignoredWorkspacePaths: [],
     });
@@ -245,6 +252,15 @@ export const validateSkoposEvidence = async ({
     currentSourceDigest: currentSourceState.digest,
   };
 };
+
+const digestActionExecutionContract = (manifest: SkoposActionManifest): string =>
+  digestText(JSON.stringify({
+    command: manifest.command,
+    cwd: manifest.cwd,
+    capabilities: manifest.capabilities,
+    effects: manifest.effects,
+    concurrency: manifest.concurrency,
+  }));
 
 export const captureSkoposActionSourceState = async ({
   workspaceRoot,
@@ -439,6 +455,15 @@ const evidenceOutputPaths = (manifest: SkoposActionManifest): string[] =>
           outputPath === ignoredPath || outputPath.startsWith(`${ignoredPath}/`),
       ),
   );
+
+const resolveActionOutputBaseDirectory = (
+  workspaceRoot: string,
+  manifest: SkoposActionManifest,
+  runId: string,
+): string =>
+  manifest.effects.artifacts === 'isolated'
+    ? resolve(workspaceRoot, '.skopos', 'runs', runId, 'artifacts')
+    : resolve(workspaceRoot, manifest.cwd);
 
 const normalizeWorkspacePath = (workspaceRoot: string, absolutePath: string): string => {
   const workspacePath = relative(workspaceRoot, absolutePath).split(sep).join('/');

@@ -32,7 +32,19 @@ describe('reviewed project capability integrations', () => {
     expect(candidate).toMatchObject({
       source: 'package-script',
       command: 'npm run check-types',
-      suggestedAction: { id: 'quality.typecheck' },
+      suggestedAction: {
+        id: 'quality.typecheck',
+        capabilities: {
+          process: 'required',
+          network: 'none',
+          browser: 'none',
+          tools: [],
+          secrets: [],
+          services: [],
+        },
+        effects: { workspace: 'none', artifacts: 'none', external: 'none' },
+        concurrency: 'shared',
+      },
       suggestedGuard: {
         id: 'quality.typecheck',
         requires: { actionIds: ['quality.typecheck'] },
@@ -182,6 +194,20 @@ describe('reviewed project capability integrations', () => {
             inputs: ['package.json', 'scripts'],
             outputs: [],
             affects: [],
+            capabilities: {
+              process: 'required',
+              network: 'none',
+              browser: 'none',
+              tools: ['npm'],
+              secrets: [],
+              services: [],
+            },
+            effects: {
+              workspace: 'none',
+              artifacts: 'none',
+              external: 'none',
+            },
+            concurrency: 'shared',
             safety: 'read-only',
             requiresApproval: false,
             phases: ['closure'],

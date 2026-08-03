@@ -13,7 +13,9 @@ view: current
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../architecture/evidence-and-readiness-model.md
+  - ../architecture/action-extension-model.md
   - ../standards/validation.md
+  - ../decisions/D-20260803-action-effects-and-hermetic-execution-contract.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: close when Action effects and hermetic certification pass offline packed-install proof
@@ -79,3 +81,21 @@ During a downstream pilot:
    references to Evidence.
 6. Packed-install release proof exercises effect enforcement outside the source
    monorepo.
+
+## Resolution Progress
+
+The first implementation slice is complete:
+
+1. manifests now require explicit capabilities, effects, concurrency, and a distinct
+   `artifact-producing` safety class
+2. missing tools, secrets, network, browser, and service assertions produce a
+   deterministic `unavailable` run before command execution
+3. Git-worktree mutation capture rejects undeclared writes and writes outside
+   `affects`
+4. artifact-producing runs receive unique roots under `.skopos/runs/<run-id>` and
+   Evidence resolves outputs from those roots
+5. declared capabilities, effects, and concurrency participate in execution identity
+
+This Finding remains active. Closure still requires clean offline and packed-install
+certification, non-Git enforcement or an explicit supported-project boundary, general
+exclusive scheduling, and provider-specific proof for declared external mutation.

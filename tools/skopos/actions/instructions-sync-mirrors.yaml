@@ -16,6 +16,18 @@ affects:
   - CLAUDE.md
   - .cursor/rules/project.mdc
   - .github/copilot-instructions.md
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: declared
+  artifacts: none
+  external: none
+concurrency: exclusive
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing AGENTS.md or instruction-routing guidance inside the Skopos subtree.

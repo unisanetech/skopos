@@ -35,6 +35,12 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Implemented the first Action hermeticity slice. Manifests now require
+  capabilities, effects, concurrency, and truthful artifact-producing safety;
+  preflight returns deterministic unavailable runs, Git worktree mutations are checked
+  against declared effects, per-run artifact roots prevent collisions, and Evidence
+  identity binds the contract. Offline packed-install certification, general exclusive
+  scheduling, and external-effect enforcement remain open.
 - `2026-08-03`: Implemented the canonical Task work disposition state machine.
   Ownership release is state-neutral; explicit resume, ready, defer,
   return-from-verification, cancel, and successor-linked supersede transitions now

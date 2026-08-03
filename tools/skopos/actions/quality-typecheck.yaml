@@ -14,6 +14,18 @@ inputs:
   - tsconfig.base.json
 outputs: []
 affects: []
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: none
+  artifacts: none
+  external: none
+concurrency: shared
 safety: read-only
 requiresApproval: false
 whenToUse: Run when changed TypeScript or project configuration can affect compile-time correctness.

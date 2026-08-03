@@ -24,6 +24,18 @@ inputs:
   - docs/work/plans
 outputs: []
 affects: []
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: none
+  artifacts: none
+  external: none
+concurrency: shared
 safety: read-only
 requiresApproval: false
 whenToUse: Run after changing runtime behavior, proof fixtures, scorecard contracts, or other reliability-critical Skopos surfaces.

@@ -19,10 +19,12 @@ export const executeSkoposShellCommand = async ({
   command,
   cwd,
   timeoutMs,
+  environment = {},
 }: {
   command: string;
   cwd: string;
   timeoutMs?: number;
+  environment?: Record<string, string>;
 }): Promise<SkoposShellCommandExecutionResult> => {
   const startedAt = new Date().toISOString();
   const resolvedCwd = resolve(cwd);
@@ -36,6 +38,7 @@ export const executeSkoposShellCommand = async ({
       env: {
         ...process.env,
         PATH: buildAugmentedPath(resolvedCwd, process.env.PATH),
+        ...environment,
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

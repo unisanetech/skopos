@@ -15,6 +15,7 @@ relatedDocs:
   - runtime-model.md
   - artifact-model.md
   - evidence-and-readiness-model.md
+  - ../decisions/D-20260803-action-effects-and-hermetic-execution-contract.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
 reviewCycle: when Action declaration, execution, or Evidence changes
 ---
@@ -28,6 +29,10 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-08-03`: Made Action capabilities, effects, and concurrency explicit required
+  declaration fields. Added deterministic capability preflight, a distinct
+  `unavailable` result, isolated per-run artifact roots, workspace-effect enforcement,
+  and capability/effect-bound execution identity.
 - `2026-07-31`: Added explicit `sourceExcludes` for irrelevant descendants of broad
   Action inputs and made compact Evidence summaries the default CLI transport.
 - `2026-07-30`: Added reviewed project-authored manifests for candidates that have no
@@ -81,11 +86,20 @@ Each declaration contains:
 3. declared inputs, outputs, and affected paths
 4. optional `sourceExcludes` for unrelated generated or volatile descendants of a
    necessary directory input
-5. read-only, mutating, or destructive safety
-6. approval requirements
-7. applicable Task phases and risk levels
-8. Evidence and closure applicability
-9. ordering hints when one Action consumes another Action's output
+5. required process, network, browser, tool, secret, and service capabilities
+6. workspace, isolated-artifact, and external effects
+7. shared or exclusive concurrency
+8. read-only, artifact-producing, mutating, or destructive safety
+9. approval requirements
+10. applicable Task phases and risk levels
+11. Evidence and closure applicability
+12. ordering hints when one Action consumes another Action's output
+
+Capabilities and effects are not inferred from the shell command. Every manifest must
+declare them. `read-only` permits no workspace, artifact, or external effect.
+`artifact-producing` requires at least one output and the isolated artifact effect.
+A declared workspace effect requires at least one `affects` boundary; no workspace
+effect forbids `affects`. Declared external services require an external effect.
 
 The declaration path is tracked project authority. Generated runs and Evidence remain
 local under `.skopos/**`.
@@ -108,6 +122,25 @@ invocation reuses valid Evidence or reports the current owner. Mutating and dest
 Actions require actor attribution; approval-sensitive Actions fail closed without
 explicit approval.
 
+Before command execution, Skopos checks every declared tool and secret. Network,
+browser, and service capabilities are host assertions supplied through
+`SKOPOS_NETWORK_AVAILABLE`, `SKOPOS_BROWSER_AVAILABLE`, and normalized
+`SKOPOS_SERVICE_<NAME>_AVAILABLE` environment flags. Missing requirements produce an
+`unavailable` Action Run and do not execute the command. Capability unavailability is
+therefore distinct from a failing product proof.
+
+An isolated artifact-producing Action receives a unique
+`.skopos/runs/<run-id>/artifacts` directory through `SKOPOS_ARTIFACT_ROOT`. Declared
+outputs resolve from that root, so concurrent runs cannot share output paths. For a
+Git worktree, Skopos compares workspace path state before and after execution:
+no-workspace-effect Actions fail on any non-`.skopos` mutation, and declared mutating
+Actions fail when a write falls outside `affects`.
+
+`shared` and `exclusive` are now public scheduling declarations. Per-run artifact
+isolation is enforced. General exclusive scheduling, non-Git mutation capture, and
+provider-specific external-effect enforcement remain open certification work rather
+than inferred guarantees.
+
 Successful runs settle their final source and output state after Skopos completes its
 own operational logging and knowledge-index bookkeeping. Framework bookkeeping must
 not make newly produced Evidence stale.
@@ -127,6 +160,11 @@ Successful Action Evidence binds:
 4. source, config, input, output, environment, and tool state
 5. actor, execution owner, time, and result
 6. freshness and invalidation rules
+
+The exact command digest includes the Action's declared capabilities, effects, and
+concurrency. A declaration change therefore invalidates reuse even when the shell
+command text is unchanged. Evidence also records those declarations in its environment
+identity; it never records secret values.
 
 Evidence is reusable only while every declared binding remains valid. A failed,
 timed-out, skipped, stale, or mismatched Action is not passing Evidence.

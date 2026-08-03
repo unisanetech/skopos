@@ -17,6 +17,18 @@ outputs:
   - .skopos/ui/graph-portal.html
 affects:
   - .skopos/ui
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: declared
+  artifacts: none
+  external: none
+concurrency: exclusive
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing graph artifacts, portal rendering, Readiness projections, or recent activity views.

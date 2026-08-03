@@ -12,7 +12,31 @@ export type SkoposActionCategory =
   | 'maintenance'
   | 'domain-tool';
 
-export type SkoposActionSafety = 'read-only' | 'mutating' | 'destructive';
+export type SkoposActionSafety =
+  | 'read-only'
+  | 'artifact-producing'
+  | 'mutating'
+  | 'destructive';
+export type SkoposActionRequirementLevel = 'none' | 'required';
+export type SkoposActionWorkspaceEffect = 'none' | 'declared';
+export type SkoposActionArtifactEffect = 'none' | 'isolated';
+export type SkoposActionExternalEffect = 'none' | 'declared';
+export type SkoposActionConcurrency = 'shared' | 'exclusive';
+
+export interface SkoposActionCapabilities {
+  process: 'required';
+  network: SkoposActionRequirementLevel;
+  browser: SkoposActionRequirementLevel;
+  tools: string[];
+  secrets: string[];
+  services: string[];
+}
+
+export interface SkoposActionEffects {
+  workspace: SkoposActionWorkspaceEffect;
+  artifacts: SkoposActionArtifactEffect;
+  external: SkoposActionExternalEffect;
+}
 export type SkoposActionPhase =
   | 'admission'
   | 'iteration'
@@ -31,6 +55,9 @@ export interface SkoposActionManifest {
   sourceExcludes?: string[];
   outputs: string[];
   affects: string[];
+  capabilities: SkoposActionCapabilities;
+  effects: SkoposActionEffects;
+  concurrency: SkoposActionConcurrency;
   safety: SkoposActionSafety;
   requiresApproval: boolean;
   whenToUse?: string;
@@ -64,7 +91,12 @@ export interface SkoposActionRequirementEvidence extends SkoposActionRequirement
   latestSuccessfulRunByActorId?: string;
 }
 
-export type SkoposActionRunStatus = 'running' | 'succeeded' | 'failed' | 'dry-run';
+export type SkoposActionRunStatus =
+  | 'running'
+  | 'succeeded'
+  | 'failed'
+  | 'unavailable'
+  | 'dry-run';
 
 export interface SkoposEvidencePathDigest {
   path: string;
@@ -94,6 +126,9 @@ export interface SkoposEvidence {
     architecture: string;
     nodeVersion: string;
     workspace: SkoposWorkspaceIdentity;
+    capabilities: SkoposActionCapabilities;
+    effects: SkoposActionEffects;
+    concurrency: SkoposActionConcurrency;
   };
   owner: {
     runId: string;
@@ -122,6 +157,9 @@ export interface SkoposActionRunArtifact extends SkoposArtifactEnvelope<'action-
   startedAt?: string;
   finishedAt?: string;
   outputPaths: string[];
+  artifactRoot?: string;
+  capabilityIssues?: string[];
+  effectViolations?: string[];
   evidence?: SkoposEvidence;
   reusedFromRunId?: string;
   stdoutExcerpt?: string;
