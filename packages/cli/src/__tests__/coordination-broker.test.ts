@@ -283,8 +283,44 @@ describe('same-directory coordination broker', () => {
     ).resolves.toMatchObject({ session: { state: 'closed' } });
   });
 
+  it('blocks stale Task recovery until a running Action is reconciled', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-stale', 'agent-stale');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+    });
+    expireSessionLease(opened.databasePath, 'session-stale');
+    await openSession(root, 'session-next', 'agent-next');
+    await mkdir(join(root, '.skopos/runs'), { recursive: true });
+    await writeFile(
+      join(root, '.skopos/runs/run-fixture-active.json'),
+      JSON.stringify({
+        schemaVersion: 1,
+        id: 'run-fixture-active',
+        type: 'action-run',
+        status: 'generated',
+        taskId: 'task-stale',
+        runStatus: 'running',
+      }),
+      'utf8',
+    );
+
+    await expect(
+      recoverSkoposCoordinationTask({
+        cwd: root,
+        taskId: 'task-stale',
+        sessionId: 'session-next',
+        operation: 'resume',
+        reason: 'Attempt recovery before Action reconciliation.',
+      }),
+    ).rejects.toThrow('unreconciled running Action');
+  });
+
   it('fails closed when stale work has an open mutation or contamination', async () => {
     const openRoot = await createWorkspace();
+    initializeGitBaseline(openRoot);
     const openSessionResult = await openSession(openRoot, 'session-open', 'agent-open');
     await reserveSkoposCoordinationTask({
       cwd: openRoot,
@@ -305,6 +341,7 @@ describe('same-directory coordination broker', () => {
       path: 'src/open.ts',
       operation: 'edit',
     });
+    await writeFile(join(openRoot, 'src/open.ts'), 'in-progress Git mutation\n', 'utf8');
     expireSessionLease(openSessionResult.databasePath, 'session-open');
     await openSession(openRoot, 'session-next', 'agent-next');
     await expect(
@@ -494,5 +531,18 @@ const expireSessionLease = (databasePath: string, sessionId: string): void => {
   );
   if (result.status !== 0) {
     throw new Error(result.stderr || 'Failed to expire coordination Session lease.');
+  }
+};
+
+const initializeGitBaseline = (root: string): void => {
+  for (const args of [
+    ['init', '--initial-branch=main'],
+    ['config', 'user.email', 'skopos@example.com'],
+    ['config', 'user.name', 'Skopos Fixture'],
+    ['add', '.'],
+    ['commit', '-m', 'baseline'],
+  ]) {
+    const result = spawnSync('git', args, { cwd: root, encoding: 'utf8' });
+    if (result.status !== 0) throw new Error(result.stderr || `git ${args.join(' ')} failed`);
   }
 };

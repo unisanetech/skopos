@@ -2,6 +2,7 @@ import { resolve } from 'node:path';
 
 import {
   listSkoposActionsRuntime,
+  recoverSkoposActionRunRuntime,
   runSkoposActionRuntime,
   showSkoposActionRuntime,
 } from '@skopos/runtime';
@@ -25,6 +26,7 @@ interface ParsedActionArgs {
   force: boolean;
   actor?: string;
   taskId?: string;
+  reason?: string;
   json: boolean;
   full: boolean;
 }
@@ -142,6 +144,31 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
     }
 
     writeLines(lines);
+    return;
+  }
+
+  if (subcommand === 'recover') {
+    const parsed = parseActionArgs(rest);
+    if (!parsed.action) throw new Error('Missing Action run id.');
+    if (!parsed.actor) throw new Error('Action recovery requires --actor <id>.');
+    if (!parsed.reason) throw new Error('Action recovery requires --reason <text>.');
+    const result = await recoverSkoposActionRunRuntime({
+      cwd: parsed.cwd,
+      runId: parsed.action,
+      actor: parsed.actor,
+      reason: parsed.reason,
+    });
+    if (parsed.json) {
+      writeJsonOutput(buildCompactActionRunOutput(result));
+      return;
+    }
+    writeLines([
+      'Skopos Action recovery',
+      `- run: ${result.run.id}`,
+      `- Action: ${result.run.actionId}`,
+      `- status: ${result.run.runStatus}`,
+      `- resume: ${result.run.progress?.resume?.command ?? '(none)'}`,
+    ]);
     return;
   }
 
@@ -394,6 +421,7 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
   let force = false;
   let actor: string | undefined;
   let taskId: string | undefined;
+  let reason: string | undefined;
   let json = false;
   let full = false;
   let targetProvided = false;
@@ -455,6 +483,21 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
       continue;
     }
 
+    if (argument === '--reason') {
+      const nextValue = args[index + 1];
+      if (!nextValue || nextValue.startsWith('-')) {
+        throw new Error('Missing value for --reason.');
+      }
+      reason = nextValue;
+      index += 1;
+      continue;
+    }
+
+    if (argument.startsWith('--reason=')) {
+      reason = argument.slice('--reason='.length);
+      continue;
+    }
+
     if (argument.startsWith('-')) {
       throw new Error(`Unknown Skopos actions flag: ${argument}`);
     }
@@ -472,5 +515,5 @@ const parseActionArgs = (args: string[]): ParsedActionArgs => {
     targetProvided = true;
   }
 
-  return { cwd, action, dryRun, approve, force, actor, taskId, json, full };
+  return { cwd, action, dryRun, approve, force, actor, taskId, reason, json, full };
 };

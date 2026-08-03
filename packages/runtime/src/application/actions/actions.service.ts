@@ -53,6 +53,13 @@ export interface RunSkoposActionRuntimeOptions extends ShowSkoposActionRuntimeOp
   onProgress?: (event: SkoposActionProgressEvent) => void;
 }
 
+export interface RecoverSkoposActionRunRuntimeOptions {
+  cwd: string;
+  runId: string;
+  actor: string;
+  reason: string;
+}
+
 export const listSkoposActionsRuntime = async ({
   cwd,
 }: ListSkoposActionsRuntimeOptions): Promise<SkoposActionManifest[]> =>
@@ -463,6 +470,108 @@ export const runSkoposActionRuntime = async ({
   } finally {
     await releaseSchedulingLease();
   }
+};
+
+export const recoverSkoposActionRunRuntime = async ({
+  cwd,
+  runId,
+  actor,
+  reason,
+}: RecoverSkoposActionRunRuntimeOptions): Promise<SkoposActionRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const actorId = actor.trim();
+  const recoveryReason = reason.trim();
+  if (!actorId) throw new Error('Action recovery requires --actor <id>.');
+  if (!recoveryReason) throw new Error('Action recovery requires --reason <text>.');
+  if (!/^run-[a-zA-Z0-9-]+$/.test(runId)) {
+    throw new Error(`Invalid Action run id: ${runId}`);
+  }
+  const runPath = join(workspaceRoot, '.skopos', 'runs', `${runId}.json`);
+  let run: SkoposActionRunArtifact;
+  try {
+    run = JSON.parse(await readFile(runPath, 'utf8')) as SkoposActionRunArtifact;
+  } catch {
+    throw new Error(`Unknown Action run: ${runId}`);
+  }
+  if (run.type !== 'action-run' || run.id !== runId) {
+    throw new Error(`Action run identity mismatch at ${runPath}`);
+  }
+  if (run.runStatus !== 'running') {
+    throw new Error(`Action run ${runId} is ${run.runStatus} and cannot be recovered.`);
+  }
+  const leaseExpiresAt = run.evidence?.owner.leaseExpiresAt;
+  if (!leaseExpiresAt || Date.parse(leaseExpiresAt) > Date.now()) {
+    throw new Error(
+      `Action run ${runId} still has an active execution lease until ${leaseExpiresAt ?? 'an unknown time'}.`,
+    );
+  }
+  const recoveredAt = new Date().toISOString();
+  const recoveryEvent: SkoposActionProgressEvent = {
+    phase: 'execution',
+    status: 'interrupted',
+    at: recoveredAt,
+    elapsedMs: Math.max(0, Date.parse(recoveredAt) - Date.parse(run.startedAt ?? recoveredAt)),
+    message: `Expired Action execution was recovered by ${actorId}.`,
+  };
+  const priorProgress = run.progress;
+  const events = [...(priorProgress?.events ?? []), recoveryEvent].slice(-MAX_PROGRESS_EVENTS);
+  const resume = {
+    actionId: run.actionId,
+    command: [
+      'skopos actions run',
+      run.actionId,
+      '.',
+      ...(run.taskId ? ['--task', run.taskId] : []),
+      '--actor',
+      actorId,
+      '--json',
+    ].join(' '),
+    requiresApproval: run.actionSafety === 'destructive',
+  };
+  run = {
+    ...run,
+    summary: `${run.actionId} interrupted after expired execution recovery.`,
+    updatedAt: recoveredAt,
+    finishedAt: recoveredAt,
+    runStatus: 'interrupted',
+    exitCode: null,
+    progress: {
+      eventCount: (priorProgress?.eventCount ?? 0) + 1,
+      events,
+      completedPhases: priorProgress?.completedPhases ?? ['admission', 'preflight'],
+      failedPhases: priorProgress?.failedPhases ?? [],
+      interruptedPhases: ['execution'],
+      remainingPhases: ['execution', 'finalization'],
+      resume,
+    },
+    recovery: {
+      recoveredAt,
+      recoveredByActorId: actorId,
+      reason: recoveryReason,
+      priorLeaseExpiresAt: leaseExpiresAt,
+    },
+  };
+  await writeRunArtifact(runPath, run);
+  await unlink(join(workspaceRoot, '.skopos', 'locks', 'actions', `${runId}.json`)).catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code !== 'ENOENT') throw error;
+    },
+  );
+  await appendSkoposOperationalLogEntry({
+    workspaceRoot,
+    eventKind: 'action-run',
+    status: 'failed',
+    summary: `Recovered expired Action run ${runId} as interrupted.`,
+    relatedArtifactPaths: [runPath, run.sourcePath],
+    metadata: {
+      actionId: run.actionId,
+      actorId,
+      reason: recoveryReason,
+      priorLeaseExpiresAt: leaseExpiresAt,
+    },
+  });
+  await refreshSkoposKnowledgeIndex({ workspaceRoot });
+  return { run };
 };
 
 interface BuildActionRunArtifactInput {

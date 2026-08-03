@@ -17,7 +17,7 @@ relatedDocs:
   - ../standards/terminology.md
   - ../decisions/D-20260803-audited-stale-session-task-recovery.md
   - ../decisions/D-20260803-explicit-task-work-disposition-state-machine.md
-  - ../findings/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
 reviewCycle: when agent lifecycle changes
 ---
 
@@ -28,6 +28,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-03`: Completed recovery and disposition parity. Expired Action runs have an
+  auditable interruption command, Task recovery blocks unreconciled runs, CLI and MCP
+  share recovery/disposition authorities, and the read-only UI reports disposition.
 - `2026-08-03`: Separated Task claim release from work disposition and added explicit
   resume, ready, defer, return-from-verification, cancel, and supersede transitions
   with auditable reasons and queue semantics.
@@ -86,6 +89,7 @@ Session through one audited operation:
 
 ```text
 stale reservation
+  -> reconcile every expired running Action
   -> audit claimed paths and mutation ledger
   -> fail on contamination or open mutation
   -> atomically resume ownership or release ownership
@@ -98,6 +102,13 @@ claims so Task work disposition can be decided separately. Neither outcome requi
 the stale Session to execute a command, and the safe recovery operation has no force
 mode. Concurrent attempts serialize through the coordination database; after one
 wins, the others fail because the reservation is no longer stale-owned.
+
+A Task with any `running` Action cannot recover ownership. A live actor first runs
+`skopos actions recover <run-id> . --actor <id> --reason <text>`. Recovery is allowed
+only after the Action Evidence lease expires; it records an auditable `interrupted`
+run, releases stale scheduling ownership, and supplies the exact retry command. A live
+Action lease remains protected. Open mutation-ledger entries—including a dirty
+in-progress Git mutation—continue to block Task recovery after Action reconciliation.
 
 ## Task Detail And Risk
 
@@ -190,3 +201,8 @@ Claude Code, Codex, and manual adapters project the same lifecycle. They may:
 
 An adapter never invents a host-specific work model or silently claims preventive
 safety.
+
+CLI and MCP expose the same runtime authorities for expired Action recovery, audited
+Session Task recovery, and explicit Task disposition. The bundled UI is a read-only
+projection: it reports disposition kind, prior and next state, actor, timestamp,
+reason, and successor, but does not create an alternative mutation authority.

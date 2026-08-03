@@ -1,6 +1,7 @@
 import {
   assessSkoposTaskReadinessRuntime,
   applySkoposCapabilityIntegrationsRuntime,
+  applySkoposTaskDispositionRuntime,
   approveSkoposCapabilityIntegrationsRuntime,
   buildSkoposContextRuntime,
   buildSkoposSessionContextRuntime,
@@ -9,6 +10,8 @@ import {
   getSkoposCoordinationStatus,
   recordSkoposObservationEvidenceRuntime,
   proposeSkoposCapabilityIntegrationsRuntime,
+  recoverSkoposActionRunRuntime,
+  recoverSkoposCoordinationTask,
   runSkoposActionRuntime,
   showSkoposTaskRuntime,
   verifySkoposTaskRuntime,
@@ -21,10 +24,13 @@ export const skoposMcpToolIds = [
   'skopos_task_start',
   'skopos_task_show',
   'skopos_action_run',
+  'skopos_action_recover',
+  'skopos_task_disposition',
   'skopos_evidence_record',
   'skopos_verify',
   'skopos_readiness',
   'skopos_coordination_status',
+  'skopos_coordination_task_recover',
   'skopos_integrations_propose',
   'skopos_integrations_approve',
   'skopos_integrations_apply',
@@ -81,6 +87,20 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
     actor: { type: 'string' },
     taskId: { type: 'string' },
   }, ['cwd', 'actionId']),
+  tool('skopos_action_recover', 'Recover one expired running Action as interrupted with an auditable resume command.', {
+    cwd: cwdProperty,
+    runId: { type: 'string' },
+    actor: { type: 'string' },
+    reason: { type: 'string' },
+  }, ['cwd', 'runId', 'actor', 'reason']),
+  tool('skopos_task_disposition', 'Apply one explicit reasoned Task work disposition.', {
+    cwd: cwdProperty,
+    taskId: { type: 'string' },
+    disposition: { type: 'string' },
+    actor: { type: 'string' },
+    reason: { type: 'string' },
+    successorTaskId: { type: 'string' },
+  }, ['cwd', 'taskId', 'disposition', 'actor', 'reason']),
   tool('skopos_evidence_record', 'Record agent-observation Evidence for a Task requirement or Guard.', {
     cwd: cwdProperty,
     taskId: { type: 'string' },
@@ -103,6 +123,13 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
   tool('skopos_coordination_status', 'Inspect live Sessions, Task reservations, claims, mutations, and contamination.', {
     cwd: cwdProperty,
   }, ['cwd']),
+  tool('skopos_coordination_task_recover', 'Audit and resume or release a stale Task reservation from a live replacement Session.', {
+    cwd: cwdProperty,
+    taskId: { type: 'string' },
+    sessionId: { type: 'string' },
+    operation: { type: 'string' },
+    reason: { type: 'string' },
+  }, ['cwd', 'taskId', 'sessionId', 'operation', 'reason']),
   tool('skopos_integrations_propose', 'Detect project capability candidates and emit a non-authoritative proposal without writing tracked Action or Guard declarations.', {
     cwd: cwdProperty,
   }, ['cwd']),
@@ -163,6 +190,28 @@ export const callSkoposMcpTool = async (
         actor: optionalString(input, 'actor'),
         taskId: optionalString(input, 'taskId'),
       });
+    case 'skopos_action_recover':
+      return recoverSkoposActionRunRuntime({
+        cwd,
+        runId: requiredString(input, 'runId'),
+        actor: requiredString(input, 'actor'),
+        reason: requiredString(input, 'reason'),
+      });
+    case 'skopos_task_disposition':
+      return applySkoposTaskDispositionRuntime({
+        cwd,
+        taskId: requiredString(input, 'taskId'),
+        disposition: requiredString(input, 'disposition') as
+          | 'resume'
+          | 'ready'
+          | 'defer'
+          | 'return-from-verification'
+          | 'cancel'
+          | 'supersede',
+        actor: requiredString(input, 'actor'),
+        reason: requiredString(input, 'reason'),
+        successorTaskId: optionalString(input, 'successorTaskId'),
+      });
     case 'skopos_evidence_record':
       return recordSkoposObservationEvidenceRuntime({
         cwd,
@@ -192,6 +241,14 @@ export const callSkoposMcpTool = async (
       });
     case 'skopos_coordination_status':
       return getSkoposCoordinationStatus({ cwd });
+    case 'skopos_coordination_task_recover':
+      return recoverSkoposCoordinationTask({
+        cwd,
+        taskId: requiredString(input, 'taskId'),
+        sessionId: requiredString(input, 'sessionId'),
+        operation: requiredString(input, 'operation') as 'resume' | 'release',
+        reason: requiredString(input, 'reason'),
+      });
     case 'skopos_integrations_propose':
       return proposeSkoposCapabilityIntegrationsRuntime({ cwd });
     case 'skopos_integrations_approve':

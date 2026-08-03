@@ -142,6 +142,13 @@ export interface SkoposExternalEffectReceipt {
   receiptPath: string;
 }
 
+export interface SkoposActionRecoveryRecord {
+  recoveredAt: string;
+  recoveredByActorId: string;
+  reason: string;
+  priorLeaseExpiresAt: string;
+}
+
 export interface SkoposEvidencePathDigest {
   path: string;
   kind: 'file' | 'directory' | 'symlink' | 'missing';
@@ -208,6 +215,7 @@ export interface SkoposActionRunArtifact extends SkoposArtifactEnvelope<'action-
   capabilityIssues?: string[];
   effectViolations?: string[];
   externalEffectReceipt?: SkoposExternalEffectReceipt;
+  recovery?: SkoposActionRecoveryRecord;
   progress?: SkoposActionProgressSummary;
   evidence?: SkoposEvidence;
   reusedFromRunId?: string;

@@ -16,7 +16,7 @@ relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - D-20260803-audited-stale-session-task-recovery.md
   - ../architecture/agent-native-operating-model.md
-  - ../findings/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when Task states, claims, or Work Queue dispositions change
 ---
@@ -25,6 +25,8 @@ reviewCycle: when Task states, claims, or Work Queue dispositions change
 
 ## Changelog
 
+- `2026-08-03`: Added MCP mutation parity and explicit read-only UI reporting of the
+  canonical disposition record.
 - `2026-08-03`: Accepted and implemented explicit reasoned Task work dispositions
   separate from claim ownership.
 

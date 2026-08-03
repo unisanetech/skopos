@@ -24,7 +24,7 @@ relatedDocs:
   - ../archive/T-62a045f9-project-memory-self-adoption.md
   - ../../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
   - ../../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
-  - ../../findings/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
   - ../../findings/archive/F-20260803-action-hermeticity-and-effect-classification-gap.md
   - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
@@ -35,6 +35,9 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Completed stale recovery and disposition parity. Expired Actions are
+  explicitly recovered before Task ownership, live Actions and open Git mutations
+  block recovery, CLI/MCP share authorities, and UI reporting stays read-only.
 - `2026-08-03`: Completed Action hermeticity certification. Portable mutation
   snapshots, shared/exclusive leases, provider receipts, and identical source/offline
   packed capability outcomes now have focused proof; secret fixture values do not

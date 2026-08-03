@@ -241,6 +241,26 @@ export function TaskFrameCard({
             {completeSteps.length} of {task.steps.length} steps complete.
           </p>
         </section>
+        {task.disposition ? (
+          <section className="border-t border-[var(--line)] py-3.5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+              Latest disposition
+            </p>
+            <p className="mt-1.5 text-[13px] font-medium tracking-[-0.02em]">
+              {task.disposition.kind}: {task.disposition.priorState} →{' '}
+              {task.disposition.nextState}
+            </p>
+            <p className="mt-1 text-[12.5px] leading-[1.4rem] text-[var(--muted-strong)]">
+              {task.disposition.reason}
+            </p>
+            <p className="mt-1 text-[12px] leading-[1.35rem] text-[var(--muted)]">
+              {task.disposition.actorId} · {task.disposition.recordedAt}
+              {task.disposition.successorTaskId
+                ? ` · successor ${task.disposition.successorTaskId}`
+                : ''}
+            </p>
+          </section>
+        ) : null}
       </div>
     </Card>
   );

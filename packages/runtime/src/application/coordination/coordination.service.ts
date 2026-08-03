@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, isAbsolute, join, normalize, resolve } from 'node:path';
 import { promisify } from 'node:util';
@@ -8,6 +8,7 @@ import { promisify } from 'node:util';
 import {
   SKOPOS_COORDINATION_RESOURCE_KINDS,
   SKOPOS_COORDINATION_SESSION_MODES,
+  type SkoposActionRunArtifact,
   type SkoposClaimResourceResult,
   type SkoposCoordinationAuditResult,
   type SkoposCoordinationContamination,
@@ -801,6 +802,12 @@ export const recoverSkoposCoordinationTask = async ({
     throw new Error(`Unknown Task recovery operation: ${operation}.`);
   }
   const workspaceRoot = resolve(cwd);
+  const runningActions = await loadRunningTaskActions(workspaceRoot, taskId);
+  if (runningActions.length > 0) {
+    throw new Error(
+      `Task ${taskId} has ${runningActions.length} unreconciled running Action(s): ${runningActions.map((run) => run.id).join(', ')}. Recover expired runs before Task ownership recovery.`,
+    );
+  }
   const audit = await auditSkoposCoordinationTask({ cwd: workspaceRoot, taskId });
   if (!audit.clean) {
     throw new Error(
@@ -904,6 +911,37 @@ export const recoverSkoposCoordinationTask = async ({
     });
   } finally {
     db.close();
+  }
+};
+
+const loadRunningTaskActions = async (
+  workspaceRoot: string,
+  taskId: string,
+): Promise<SkoposActionRunArtifact[]> => {
+  const runsRoot = join(workspaceRoot, '.skopos', 'runs');
+  try {
+    const entries = await readdir(runsRoot);
+    const runs = await Promise.all(
+      entries
+        .filter((entry) => entry.endsWith('.json'))
+        .map(async (entry) => {
+          try {
+            return JSON.parse(
+              await readFile(join(runsRoot, entry), 'utf8'),
+            ) as SkoposActionRunArtifact;
+          } catch {
+            return undefined;
+          }
+        }),
+    );
+    return runs.filter(
+      (run): run is SkoposActionRunArtifact =>
+        run?.type === 'action-run' && run.taskId === taskId && run.runStatus === 'running',
+    );
+  } catch (error) {
+    const fileError = error as NodeJS.ErrnoException;
+    if (fileError.code === 'ENOENT') return [];
+    throw error;
   }
 };
 

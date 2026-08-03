@@ -15,7 +15,7 @@ lastUpdated: 2026-08-03
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../architecture/agent-native-operating-model.md
-  - ../findings/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when Session leases, Task reservations, or mutation recovery changes
 ---
@@ -24,6 +24,8 @@ reviewCycle: when Session leases, Task reservations, or mutation recovery change
 
 ## Changelog
 
+- `2026-08-03`: Required explicit recovery of expired Action runs before stale Task
+  ownership recovery and proved CLI/MCP parity plus active-lease protection.
 - `2026-08-03`: Accepted and implemented one fail-closed recovery operation with
   atomic `resume` and `release` outcomes.
 
@@ -44,8 +46,9 @@ Before mutation, Skopos requires:
 
 1. an existing Task reservation owned by a stale Session
 2. a live replacement writer Session
-3. a clean claimed-path contamination audit
-4. zero open or contaminated mutation-ledger entries
+3. zero unreconciled running Action Runs for the Task
+4. a clean claimed-path contamination audit
+5. zero open or contaminated mutation-ledger entries
 
 `resume` atomically transfers the reservation and resource claims. Historical mutation
 entries retain their original Session and actor attribution. `release` atomically
