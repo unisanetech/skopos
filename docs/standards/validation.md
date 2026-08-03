@@ -25,6 +25,8 @@ This page records the project capability catalog and the rule for selecting proo
 
 ## Changelog
 
+- `2026-08-03`: Required bounded Action timeouts, sparse progress, structured
+  interruption Evidence, and exact Session Context resume commands.
 - `2026-07-31`: Made `finish` the canonical closure transaction and required precise
   Action inputs with explicit exclusions for unrelated volatile descendants.
 - `2026-07-30`: Added the capability-integration boundary: detected commands are
@@ -86,6 +88,13 @@ Action manifests declare the narrowest durable `inputs` that the command proves.
 When an unavoidable directory input contains unrelated generated or volatile
 descendants, list those descendants under `sourceExcludes`. Exclusions must never hide
 source the Action actually validates.
+
+Actions inherit a 15-minute timeout unless their manifest declares a narrower or wider
+positive `timeoutMs`. Long commands emit at most one 30-second heartbeat, and persisted
+progress retains no more than 12 recent events. A timeout must produce an
+`interrupted` run with phase disposition and a retry command; it must not be collapsed
+into an unexplained generic failure. For `--json`, progress belongs on stderr and the
+final result remains the only stdout JSON document.
 
 ## Release Readiness Checks
 

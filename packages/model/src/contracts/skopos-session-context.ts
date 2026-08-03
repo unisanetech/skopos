@@ -64,6 +64,15 @@ export interface SkoposSessionRecommendedWork {
   scopeId: string;
 }
 
+export interface SkoposSessionInterruptedAction {
+  runId: string;
+  actionId: string;
+  interruptedAt?: string;
+  elapsedMs: number;
+  resumeCommand: string;
+  requiresApproval: boolean;
+}
+
 export interface SkoposSessionContextRunResult {
   schemaVersion: 1;
   workspaceRoot: string;
@@ -76,6 +85,7 @@ export interface SkoposSessionContextRunResult {
   };
   currentTaskId?: string;
   currentTask?: SkoposSessionTaskContext;
+  interruptedAction?: SkoposSessionInterruptedAction;
   recommendedWork?: SkoposSessionRecommendedWork;
   workQueueSummary?: string;
   nextCommand?: string;

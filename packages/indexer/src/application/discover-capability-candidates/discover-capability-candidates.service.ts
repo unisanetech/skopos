@@ -177,6 +177,7 @@ const actionSuggestion = (
   scope: ['workspace'],
   command,
   cwd: '.',
+  timeoutMs: 900_000,
   inputs: ['.'],
   outputs: [],
   affects: capability.safety === 'read-only' ? [] : ['.'],

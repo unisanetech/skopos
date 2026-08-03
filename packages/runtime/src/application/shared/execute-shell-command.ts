@@ -11,6 +11,12 @@ export interface SkoposShellCommandExecutionResult {
   stderrExcerpt?: string;
 }
 
+export interface SkoposShellCommandProgressEvent {
+  kind: 'started' | 'heartbeat' | 'timing-out' | 'finished';
+  at: string;
+  elapsedMs: number;
+}
+
 const MAX_EXCERPT_CHARS = 1200;
 const HEAD_LINE_COUNT = 3;
 const TAIL_LINE_COUNT = 6;
@@ -20,14 +26,28 @@ export const executeSkoposShellCommand = async ({
   cwd,
   timeoutMs,
   environment = {},
+  progressIntervalMs = 30_000,
+  onProgress,
 }: {
   command: string;
   cwd: string;
   timeoutMs?: number;
   environment?: Record<string, string>;
+  progressIntervalMs?: number;
+  onProgress?: (event: SkoposShellCommandProgressEvent) => void;
 }): Promise<SkoposShellCommandExecutionResult> => {
   const startedAt = new Date().toISOString();
+  const startedAtMs = Date.parse(startedAt);
   const resolvedCwd = resolve(cwd);
+
+  const emitProgress = (kind: SkoposShellCommandProgressEvent['kind']): void => {
+    const at = new Date().toISOString();
+    onProgress?.({
+      kind,
+      at,
+      elapsedMs: Math.max(0, Date.parse(at) - startedAtMs),
+    });
+  };
 
   return new Promise((resolvePromise, rejectPromise) => {
     let settled = false;
@@ -44,6 +64,7 @@ export const executeSkoposShellCommand = async ({
     });
     let stdout = '';
     let stderr = '';
+    emitProgress('started');
 
     child.stdout.on('data', (chunk: Buffer) => {
       stdout += chunk.toString('utf8');
@@ -57,6 +78,7 @@ export const executeSkoposShellCommand = async ({
       timeoutMs && timeoutMs > 0
         ? setTimeout(() => {
             timedOut = true;
+            emitProgress('timing-out');
             killChildProcessGroup(child.pid, 'SIGTERM');
             setTimeout(() => {
               if (!settled) {
@@ -66,12 +88,26 @@ export const executeSkoposShellCommand = async ({
           }, timeoutMs)
         : undefined;
 
-    child.on('error', rejectPromise);
+    const progressInterval =
+      progressIntervalMs > 0
+        ? setInterval(() => emitProgress('heartbeat'), progressIntervalMs)
+        : undefined;
+    progressInterval?.unref();
+
+    child.on('error', (error) => {
+      if (timeout) clearTimeout(timeout);
+      if (progressInterval) clearInterval(progressInterval);
+      rejectPromise(error);
+    });
     child.on('close', (code) => {
       settled = true;
       if (timeout) {
         clearTimeout(timeout);
       }
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      emitProgress('finished');
       resolvePromise({
         exitCode: code ?? 1,
         startedAt,

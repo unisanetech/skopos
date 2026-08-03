@@ -22,6 +22,16 @@ export type SkoposActionWorkspaceEffect = 'none' | 'declared';
 export type SkoposActionArtifactEffect = 'none' | 'isolated';
 export type SkoposActionExternalEffect = 'none' | 'declared';
 export type SkoposActionConcurrency = 'shared' | 'exclusive';
+export type SkoposActionProgressPhase =
+  | 'admission'
+  | 'preflight'
+  | 'execution'
+  | 'finalization';
+export type SkoposActionProgressStatus =
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'interrupted';
 
 export interface SkoposActionCapabilities {
   process: 'required';
@@ -51,6 +61,7 @@ export interface SkoposActionManifest {
   scope: string[];
   command: string;
   cwd: string;
+  timeoutMs?: number;
   inputs: string[];
   sourceExcludes?: string[];
   outputs: string[];
@@ -95,8 +106,31 @@ export type SkoposActionRunStatus =
   | 'running'
   | 'succeeded'
   | 'failed'
+  | 'interrupted'
   | 'unavailable'
   | 'dry-run';
+
+export interface SkoposActionProgressEvent {
+  phase: SkoposActionProgressPhase;
+  status: SkoposActionProgressStatus;
+  at: string;
+  elapsedMs: number;
+  message: string;
+}
+
+export interface SkoposActionProgressSummary {
+  eventCount: number;
+  events: SkoposActionProgressEvent[];
+  completedPhases: SkoposActionProgressPhase[];
+  failedPhases: SkoposActionProgressPhase[];
+  interruptedPhases: SkoposActionProgressPhase[];
+  remainingPhases: SkoposActionProgressPhase[];
+  resume?: {
+    actionId: string;
+    command: string;
+    requiresApproval: boolean;
+  };
+}
 
 export interface SkoposEvidencePathDigest {
   path: string;
@@ -152,14 +186,18 @@ export interface SkoposActionRunArtifact extends SkoposArtifactEnvelope<'action-
   sourcePath: string;
   command: string;
   cwd: string;
+  taskId?: string;
   runStatus: SkoposActionRunStatus;
   exitCode: number | null;
+  timeoutMs: number;
+  timedOut?: boolean;
   startedAt?: string;
   finishedAt?: string;
   outputPaths: string[];
   artifactRoot?: string;
   capabilityIssues?: string[];
   effectViolations?: string[];
+  progress?: SkoposActionProgressSummary;
   evidence?: SkoposEvidence;
   reusedFromRunId?: string;
   stdoutExcerpt?: string;

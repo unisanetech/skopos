@@ -1,5 +1,5 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
+import { readFile, readdir } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
 
 import {
   SKOPOS_COMMUNICATION_CONTRACT,
@@ -25,6 +25,7 @@ import type {
   SkoposAdoptionState,
   SkoposAdoptionVerificationArtifact,
   SkoposAgentResponseMode,
+  SkoposActionRunArtifact,
   SkoposSessionContextRunResult,
   SkoposSessionPendingDecision,
   SkoposTaskQuestionArtifact,
@@ -142,10 +143,17 @@ export const buildSkoposSessionContextRuntime = async ({
         }
       : undefined;
   const taskNextCommand = resolveTaskNextCommand(currentTask?.task, actorId);
+  const interruptedAction = currentTask
+    ? await loadLatestInterruptedAction({
+        workspaceRoot,
+        taskId: currentTask.task.id,
+        selectedActionIds: currentTask.task.selectedActions.map((action) => action.id),
+      })
+    : undefined;
   const nextCommand = pendingDecision
     ? undefined
     : currentTask
-      ? taskNextCommand
+      ? interruptedAction?.resumeCommand ?? taskNextCommand
       : adoption?.state !== 'agent-ready' && adoption?.nextCommand
         ? adoption.nextCommand
         : recommendedWork
@@ -175,6 +183,7 @@ export const buildSkoposSessionContextRuntime = async ({
     },
     currentTaskId,
     currentTask: currentTaskContext,
+    interruptedAction,
     recommendedWork,
     workQueueSummary,
     nextCommand,
@@ -493,6 +502,12 @@ export const renderSkoposSessionAdditionalContext = (
         `Next Task step: ${context.currentTask.nextStep.title} (${context.currentTask.nextStep.kind}).`,
       );
     }
+    if (context.interruptedAction) {
+      lines.push(
+        `Interrupted Action: ${context.interruptedAction.actionId} after ${context.interruptedAction.elapsedMs}ms.`,
+        `Resume Action: ${context.interruptedAction.resumeCommand}`,
+      );
+    }
     if (context.currentTask.ownedPaths.length > 0) {
       lines.push(
         `Owned paths: ${context.currentTask.ownedPaths.join(', ')}${context.currentTask.additionalOwnedPathCount > 0 ? ` (+${context.currentTask.additionalOwnedPathCount} more)` : ''}.`,
@@ -639,6 +654,72 @@ const resolveTaskNextCommand = (
     return `skopos finish ${task.id} . --actor ${actor} --json`;
   }
   return `skopos task show ${task.id} . --json`;
+};
+
+const loadLatestInterruptedAction = async ({
+  workspaceRoot,
+  taskId,
+  selectedActionIds,
+}: {
+  workspaceRoot: string;
+  taskId: string;
+  selectedActionIds: string[];
+}): Promise<SkoposSessionContextRunResult['interruptedAction']> => {
+  const runsRoot = join(workspaceRoot, '.skopos', 'runs');
+  try {
+    const entries = await readdir(runsRoot);
+    const runs = (
+      await Promise.all(
+        entries
+          .filter((entry) => entry.endsWith('.json'))
+          .map(async (entry) => {
+            try {
+              return JSON.parse(
+                await readFile(join(runsRoot, entry), 'utf8'),
+              ) as SkoposActionRunArtifact;
+            } catch {
+              return undefined;
+            }
+          }),
+      )
+    )
+      .filter((run): run is SkoposActionRunArtifact =>
+        Boolean(
+          run?.type === 'action-run' &&
+          run.taskId === taskId &&
+          selectedActionIds.includes(run.actionId),
+        ),
+      )
+      .sort((left, right) =>
+        Date.parse(right.finishedAt ?? right.updatedAt ?? '') -
+        Date.parse(left.finishedAt ?? left.updatedAt ?? ''),
+      );
+    const latestByAction = new Map<string, SkoposActionRunArtifact>();
+    for (const run of runs) {
+      if (!latestByAction.has(run.actionId)) latestByAction.set(run.actionId, run);
+    }
+    const interrupted = [...latestByAction.values()]
+      .filter((run) => run.runStatus === 'interrupted' && run.progress?.resume)
+      .sort((left, right) =>
+        Date.parse(right.finishedAt ?? right.updatedAt ?? '') -
+        Date.parse(left.finishedAt ?? left.updatedAt ?? ''),
+      )[0];
+    if (!interrupted?.progress?.resume) return undefined;
+    const lastEvent = interrupted.progress.events.at(-1);
+    return {
+      runId: interrupted.id,
+      actionId: interrupted.actionId,
+      interruptedAt: interrupted.finishedAt,
+      elapsedMs: lastEvent?.elapsedMs ?? Math.max(
+        0,
+        Date.parse(interrupted.finishedAt ?? '') - Date.parse(interrupted.startedAt ?? ''),
+      ),
+      resumeCommand: interrupted.progress.resume.command,
+      requiresApproval: interrupted.progress.resume.requiresApproval,
+    };
+  } catch {
+    return undefined;
+  }
 };
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>

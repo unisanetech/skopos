@@ -102,6 +102,7 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
       actor: parsed.actor,
       force: parsed.force,
       taskId: parsed.taskId,
+      onProgress: (event) => writeActionProgress(event, parsed.json),
     });
     const run = result.run;
 
@@ -158,6 +159,8 @@ export const buildCompactActionRunOutput = (
     actionSafety: run.actionSafety,
     runId: run.id,
     status: run.runStatus,
+    timeoutMs: run.timeoutMs,
+    timedOut: run.timedOut ?? false,
     actorId: run.runByActorId,
     reusedFromRunId: run.reusedFromRunId,
     artifactRoot: run.artifactRoot,
@@ -165,6 +168,16 @@ export const buildCompactActionRunOutput = (
     additionalOutputPathCount: Math.max(0, run.outputPaths.length - 20),
     capabilityIssues: run.capabilityIssues ?? [],
     effectViolations: run.effectViolations ?? [],
+    progress: run.progress
+      ? {
+          eventCount: run.progress.eventCount,
+          completedPhases: run.progress.completedPhases,
+          failedPhases: run.progress.failedPhases,
+          interruptedPhases: run.progress.interruptedPhases,
+          remainingPhases: run.progress.remainingPhases,
+          resume: run.progress.resume,
+        }
+      : undefined,
     evidence: run.evidence
       ? {
           executionKey: run.evidence.executionKey,
@@ -243,6 +256,7 @@ const toPublicAction = (action: {
   scope: string[];
   command: string;
   cwd: string;
+  timeoutMs?: number;
   inputs: string[];
   sourceExcludes?: string[];
   outputs: string[];
@@ -278,6 +292,7 @@ const toPublicAction = (action: {
   execution: {
     command: action.command,
     cwd: action.cwd,
+    timeoutMs: action.timeoutMs ?? 900_000,
   },
   inputs: action.inputs,
   sourceExcludes: action.sourceExcludes ?? [],
@@ -297,6 +312,22 @@ const toPublicAction = (action: {
   owner: action.owner,
   sourcePath: action.sourcePath,
 });
+
+export const writeActionProgress = (
+  event: {
+    phase: string;
+    status: string;
+    at: string;
+    elapsedMs: number;
+    message: string;
+  },
+  json: boolean,
+): void => {
+  const line = json
+    ? JSON.stringify({ type: 'action-progress', ...event })
+    : `[${event.phase}] ${event.status}: ${event.message}`;
+  process.stderr.write(`${line}\n`);
+};
 
 const parseTargetArgs = (args: string[]): ParsedTargetArgs => {
   let cwd = process.cwd();

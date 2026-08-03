@@ -34,6 +34,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Bounded Action execution with manifest timeouts, sparse live progress,
+  capped durable phase events, explicit interruption Evidence, and exact Task resume
+  commands in Session Context.
 - `2026-08-03`: Added one-call exact Evidence reuse. `skopos evidence reuse` validates
   all prior successful runs required by one Task, links every valid run without Action
   execution, repairs Action-step completion, and returns bounded compact outcomes plus
@@ -101,6 +104,26 @@ receive this exclusion, and changes to every other declared input still invalida
 Evidence normally. Action manifests may additionally declare `sourceExcludes` for
 known unrelated generated or volatile descendants of a necessary directory input;
 exact durable inputs remain preferred.
+
+### Progress and interruption Evidence
+
+Every loaded Action has a positive timeout; manifests may override the default
+`900000ms` boundary. Execution emits phase transitions immediately and at most one
+heartbeat every 30 seconds while the command remains active. The run artifact retains
+only the latest 12 events while preserving the total event count, so live supervision
+does not create an unbounded agent payload.
+
+Progress has four canonical phases: `admission`, `preflight`, `execution`, and
+`finalization`. A timeout terminates the process group, records the run as
+`interrupted`, and preserves completed, failed, interrupted, and remaining phase sets.
+For Task-bound runs it also records the exact `skopos actions run` command required to
+retry the same Action. Session Context prefers that command while the interrupted run
+is the latest run for a still-selected Action; a later successful or failed run
+supersedes the stale interruption.
+
+JSON commands keep their final machine-readable result on stdout. Sparse progress is
+written to stderr as structured `action-progress` lines, preserving JSON parsing while
+still giving hosts observable forward motion.
 
 ## Verify
 

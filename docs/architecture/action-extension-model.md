@@ -82,7 +82,7 @@ tools/skopos/actions/*.yaml
 Each declaration contains:
 
 1. stable id, title, description, category, owner, and applicable Scopes
-2. exact command and working directory
+2. exact command, working directory, and optional positive `timeoutMs`
 3. declared inputs, outputs, and affected paths
 4. optional `sourceExcludes` for unrelated generated or volatile descendants of a
    necessary directory input
@@ -121,6 +121,13 @@ One exact Action invocation for one input state has one execution owner. A dupli
 invocation reuses valid Evidence or reports the current owner. Mutating and destructive
 Actions require actor attribution; approval-sensitive Actions fail closed without
 explicit approval.
+
+Actions default to a 15-minute timeout. Phase transitions are emitted immediately,
+long execution emits no more than one heartbeat every 30 seconds, and the durable run
+keeps at most 12 recent progress events. Timeout terminates the command process group,
+records an `interrupted` run with exact phase disposition, and attaches the Task-bound
+retry command. JSON output keeps the final document on stdout and sends structured
+progress lines to stderr.
 
 Before command execution, Skopos checks every declared tool and secret. Network,
 browser, and service capabilities are host assertions supplied through

@@ -26,6 +26,7 @@ const actionManifestSchema = z
       .transform((value) => (typeof value === 'string' ? [value] : value)),
     command: z.string().min(1),
     cwd: z.string().min(1).default('.'),
+    timeoutMs: z.number().int().positive().default(900_000),
     inputs: z.array(z.string().min(1)).default([]),
     sourceExcludes: z.array(z.string().min(1)).default([]),
     outputs: z.array(z.string().min(1)).default([]),

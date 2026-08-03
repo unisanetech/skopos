@@ -7,6 +7,9 @@ import { promisify } from 'node:util';
 import { loadSkoposActionManifests } from '@skopos/indexer';
 import type {
   SkoposActionManifest,
+  SkoposActionProgressEvent,
+  SkoposActionProgressPhase,
+  SkoposActionProgressSummary,
   SkoposActionRunArtifact,
   SkoposActionRunResult,
 } from '@skopos/model';
@@ -30,6 +33,7 @@ import {
 } from '../task/task.service.js';
 
 const execFileAsync = promisify(execFile);
+const DEFAULT_ACTION_TIMEOUT_MS = 900_000;
 
 export interface ListSkoposActionsRuntimeOptions {
   cwd: string;
@@ -45,6 +49,7 @@ export interface RunSkoposActionRuntimeOptions extends ShowSkoposActionRuntimeOp
   actor?: string;
   force?: boolean;
   taskId?: string;
+  onProgress?: (event: SkoposActionProgressEvent) => void;
 }
 
 export const listSkoposActionsRuntime = async ({
@@ -81,12 +86,14 @@ export const runSkoposActionRuntime = async ({
   actor,
   force = false,
   taskId,
+  onProgress,
 }: RunSkoposActionRuntimeOptions): Promise<SkoposActionRunResult> => {
   const workspaceRoot = resolve(cwd);
   const manifest = await showSkoposActionRuntime({
     cwd: workspaceRoot,
     action,
   });
+  const timeoutMs = manifest.timeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS;
   const task = taskId
     ? await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId })
     : undefined;
@@ -123,6 +130,7 @@ export const runSkoposActionRuntime = async ({
       outputPaths: manifest.outputs,
       artifactRoot: artifactRoot ? relativeToWorkspace(workspaceRoot, artifactRoot) : undefined,
       runByActorId: actorId,
+      taskId,
     });
     await writeRunArtifact(runPath, artifact);
     await appendSkoposOperationalLogEntry({
@@ -159,12 +167,16 @@ export const runSkoposActionRuntime = async ({
       runByActorId: actorId,
       artifactRoot: artifactRoot ? relativeToWorkspace(workspaceRoot, artifactRoot) : undefined,
       capabilityIssues,
+      taskId,
     });
     await writeRunArtifact(runPath, artifact);
     return { run: artifact };
   }
 
   const startedAt = new Date().toISOString();
+  const progress = createActionProgressTracker({ startedAt, onProgress });
+  progress.record('admission', 'completed', `Action ${manifest.id} admitted.`);
+  progress.record('preflight', 'completed', 'Required capabilities are available.');
   const evidence = await buildSkoposEvidence({
     workspaceRoot,
     manifest,
@@ -250,17 +262,55 @@ export const runSkoposActionRuntime = async ({
     runByActorId: actorId,
     evidence,
     artifactRoot: artifactRoot ? relativeToWorkspace(workspaceRoot, artifactRoot) : undefined,
+    taskId,
+    progress: progress.snapshot(),
   });
   await writeRunArtifact(runPath, runningArtifact);
 
   const actionCwd = resolve(workspaceRoot, manifest.cwd);
   if (artifactRoot) await mkdir(artifactRoot, { recursive: true });
   const workspaceBefore = await captureWorkspaceEffectState(workspaceRoot);
+  progress.record('execution', 'running', `Executing ${manifest.command}.`);
   const execution = await executeSkoposShellCommand({
     command: manifest.command,
     cwd: actionCwd,
+    timeoutMs,
     environment: artifactRoot ? { SKOPOS_ARTIFACT_ROOT: artifactRoot } : {},
+    onProgress: (event) => {
+      if (event.kind === 'heartbeat') {
+        progress.record(
+          'execution',
+          'running',
+          `Action is still running after ${formatElapsed(event.elapsedMs)}.`,
+          event.at,
+          event.elapsedMs,
+        );
+      } else if (event.kind === 'timing-out') {
+        progress.record(
+          'execution',
+          'running',
+          `Timeout reached after ${formatElapsed(event.elapsedMs)}; stopping the command.`,
+          event.at,
+          event.elapsedMs,
+        );
+      }
+    },
   });
+  progress.record(
+    'execution',
+    execution.timedOut
+      ? 'interrupted'
+      : execution.exitCode === 0
+        ? 'completed'
+        : 'failed',
+    execution.timedOut
+      ? `Execution was interrupted at the ${formatElapsed(execution.timeoutMs ?? timeoutMs)} timeout.`
+      : execution.exitCode === 0
+        ? 'Command execution completed.'
+        : `Command execution failed with exit code ${execution.exitCode}.`,
+    execution.finishedAt,
+  );
+  progress.record('finalization', 'running', 'Finalizing effects and Evidence.');
   const effectViolations = await detectWorkspaceEffectViolations({
     workspaceRoot,
     manifest,
@@ -286,11 +336,24 @@ export const runSkoposActionRuntime = async ({
           ignoredSourcePaths,
         })
       : evidence;
+  progress.record('finalization', 'completed', 'Action run Evidence was finalized.');
+  const runStatus: SkoposActionRunArtifact['runStatus'] = execution.timedOut
+    ? 'interrupted'
+    : execution.exitCode === 0 && effectViolations.length === 0
+      ? 'succeeded'
+      : 'failed';
+  const resume = execution.timedOut
+    ? {
+        actionId: manifest.id,
+        command: buildActionResumeCommand({ manifest, taskId, actorId }),
+        requiresApproval: manifest.requiresApproval || manifest.safety === 'destructive',
+      }
+    : undefined;
   let artifact = buildActionRunArtifact({
     id: runId,
     workspaceRoot,
     manifest,
-    runStatus: execution.exitCode === 0 && effectViolations.length === 0 ? 'succeeded' : 'failed',
+    runStatus,
     exitCode: effectViolations.length > 0 ? 1 : execution.exitCode,
     startedAt,
     finishedAt: execution.finishedAt,
@@ -301,14 +364,17 @@ export const runSkoposActionRuntime = async ({
     evidence: finalizedEvidence,
     artifactRoot: artifactRoot ? relativeToWorkspace(workspaceRoot, artifactRoot) : undefined,
     effectViolations,
+    taskId,
+    timedOut: execution.timedOut,
+    progress: progress.snapshot(resume),
   });
 
   await writeRunArtifact(runPath, artifact);
   await appendSkoposOperationalLogEntry({
     workspaceRoot,
     eventKind: 'action-run',
-    status: execution.exitCode === 0 && effectViolations.length === 0 ? 'succeeded' : 'failed',
-    summary: `Action ${manifest.id} ${execution.exitCode === 0 && effectViolations.length === 0 ? 'completed' : 'failed'}.`,
+    status: runStatus === 'succeeded' ? 'succeeded' : 'failed',
+    summary: `Action ${manifest.id} ${runStatus === 'succeeded' ? 'completed' : runStatus}.`,
     relatedArtifactPaths: [
       runPath,
       manifest.sourcePath,
@@ -322,6 +388,7 @@ export const runSkoposActionRuntime = async ({
       actorId: actorId ?? null,
       evidenceExecutionKey: finalizedEvidence.executionKey,
       evidenceSourceDigest: finalizedEvidence.sourceState.digest,
+      timedOut: execution.timedOut,
     },
   });
   await refreshSkoposKnowledgeIndex({
@@ -330,7 +397,9 @@ export const runSkoposActionRuntime = async ({
 
   if (execution.exitCode !== 0 || effectViolations.length > 0) {
     throw new Error(
-      effectViolations.length > 0
+      execution.timedOut
+        ? `Action ${manifest.id} timed out after ${timeoutMs}ms. Resume with: ${resume?.command}. Run artifact: ${runPath}`
+        : effectViolations.length > 0
         ? `Action ${manifest.id} violated its declared effects: ${effectViolations.join('; ')}. Run artifact: ${runPath}`
         : `Action ${manifest.id} failed with exit code ${execution.exitCode}. Run artifact: ${runPath}`,
     );
@@ -372,6 +441,9 @@ interface BuildActionRunArtifactInput {
   artifactRoot?: string;
   capabilityIssues?: string[];
   effectViolations?: string[];
+  taskId?: string;
+  timedOut?: boolean;
+  progress?: SkoposActionProgressSummary;
 }
 
 const buildActionRunArtifact = ({
@@ -390,6 +462,9 @@ const buildActionRunArtifact = ({
   artifactRoot,
   capabilityIssues,
   effectViolations,
+  taskId,
+  timedOut,
+  progress,
 }: BuildActionRunArtifactInput): SkoposActionRunArtifact => ({
   schemaVersion: 1,
   id,
@@ -408,18 +483,102 @@ const buildActionRunArtifact = ({
   sourcePath: manifest.sourcePath,
   command: manifest.command,
   cwd: manifest.cwd,
+  taskId,
   runStatus,
   exitCode,
+  timeoutMs: manifest.timeoutMs ?? DEFAULT_ACTION_TIMEOUT_MS,
+  timedOut,
   startedAt,
   finishedAt,
   outputPaths,
   artifactRoot,
   capabilityIssues,
   effectViolations,
+  progress,
   evidence,
   stdoutExcerpt,
   stderrExcerpt,
 });
+
+const ACTION_PROGRESS_PHASES: SkoposActionProgressPhase[] = [
+  'admission',
+  'preflight',
+  'execution',
+  'finalization',
+];
+const MAX_PROGRESS_EVENTS = 12;
+
+export const createActionProgressTracker = ({
+  startedAt,
+  onProgress,
+}: {
+  startedAt: string;
+  onProgress?: (event: SkoposActionProgressEvent) => void;
+}) => {
+  const startedAtMs = Date.parse(startedAt);
+  const events: SkoposActionProgressEvent[] = [];
+  const latest = new Map<SkoposActionProgressPhase, SkoposActionProgressEvent>();
+  let eventCount = 0;
+
+  const record = (
+    phase: SkoposActionProgressPhase,
+    status: SkoposActionProgressEvent['status'],
+    message: string,
+    at = new Date().toISOString(),
+    elapsedMs = Math.max(0, Date.parse(at) - startedAtMs),
+  ): void => {
+    const event = { phase, status, message, at, elapsedMs };
+    eventCount += 1;
+    events.push(event);
+    latest.set(phase, event);
+    if (events.length > MAX_PROGRESS_EVENTS) events.shift();
+    onProgress?.(event);
+  };
+
+  const snapshot = (
+    resume?: SkoposActionProgressSummary['resume'],
+  ): SkoposActionProgressSummary => {
+    const withStatus = (status: SkoposActionProgressEvent['status']) =>
+      ACTION_PROGRESS_PHASES.filter((phase) => latest.get(phase)?.status === status);
+    const completedPhases = withStatus('completed');
+    const failedPhases = withStatus('failed');
+    const interruptedPhases = withStatus('interrupted');
+    const remainingPhases = ACTION_PROGRESS_PHASES.filter(
+      (phase) => !completedPhases.includes(phase) && !failedPhases.includes(phase),
+    );
+    return {
+      eventCount,
+      events: [...events],
+      completedPhases,
+      failedPhases,
+      interruptedPhases,
+      remainingPhases,
+      resume,
+    };
+  };
+
+  return { record, snapshot };
+};
+
+const buildActionResumeCommand = ({
+  manifest,
+  taskId,
+  actorId,
+}: {
+  manifest: SkoposActionManifest;
+  taskId?: string;
+  actorId?: string;
+}): string => [
+  'skopos actions run',
+  manifest.id,
+  '.',
+  ...(taskId ? ['--task', taskId] : []),
+  ...(actorId ? ['--actor', actorId] : []),
+  '--json',
+].join(' ');
+
+const formatElapsed = (elapsedMs: number): string =>
+  elapsedMs < 1000 ? `${elapsedMs}ms` : `${Math.round(elapsedMs / 1000)}s`;
 
 const preflightActionCapabilities = async (
   manifest: SkoposActionManifest,
