@@ -35,9 +35,15 @@ The stale coordination deadlock is now mitigated: a different live writer can au
 and atomically resume or release a stale reservation without the stale Session acting.
 Recovery fails for contamination and open mutations, preserves recorded mutation
 attribution, reports an auditable generation and ledger summary, and has one winner
-under concurrent attempts. The Finding remains open because Task work dispositions
-and their CLI, MCP, UI, Session-context, handoff, and projection parity are not yet
-complete.
+under concurrent attempts.
+
+The canonical Task work state machine is also implemented in the shared model,
+runtime, CLI, projections, and Work Queue: ownership release no longer changes state;
+resume, ready, defer, return-from-verification, cancel, and supersede are explicit
+reasoned operations; deferred work has a distinct queue disposition; and supersession
+records a validated successor id. The Finding remains open for MCP/UI mutation
+surfaces, host-parity proof, active-Action crash recovery, in-progress Git recovery,
+and broader concurrency fixtures.
 
 ## Observed Evidence
 

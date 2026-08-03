@@ -9,9 +9,11 @@ import type {
   SkoposTaskArtifact,
   SkoposTaskContractDeclaration,
   SkoposTaskDetail,
+  SkoposTaskDispositionKind,
   SkoposTaskMemoryObligation,
   SkoposTaskRisk,
   SkoposTaskRunResult,
+  SkoposTaskState,
   SkoposTaskQuestionArtifact,
   SkoposTaskRecommendationArtifact,
   SkoposTaskStep,
@@ -408,6 +410,9 @@ export const claimSkoposTaskRuntime = async ({
       if (task.state === 'complete' || task.state === 'cancelled' || task.state === 'superseded') {
         throw new Error(`Task ${task.id} is ${task.state} and cannot be claimed.`);
       }
+      if (task.state === 'deferred') {
+        throw new Error(`Task ${task.id} is deferred; resume its disposition before claiming it.`);
+      }
       return {
         ...task,
         state: task.state === 'ready' ? 'active' : task.state,
@@ -437,7 +442,6 @@ export const releaseSkoposTaskRuntime = async ({
       assertTaskActor(task, actorId);
       return {
         ...task,
-        state: task.state === 'active' ? 'ready' : task.state,
         coordination: {
           lastUpdatedBy: actorId,
           lastUpdatedAt: now,
@@ -445,6 +449,101 @@ export const releaseSkoposTaskRuntime = async ({
       };
     },
   });
+
+export const applySkoposTaskDispositionRuntime = async ({
+  cwd,
+  taskId,
+  disposition,
+  reason,
+  successorTaskId,
+  actor,
+}: {
+  cwd: string;
+  taskId: string;
+  disposition: SkoposTaskDispositionKind;
+  reason: string;
+  successorTaskId?: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  const normalizedReason = reason.trim();
+  if (!normalizedReason) {
+    throw new Error('Task disposition requires a non-empty reason.');
+  }
+  if (disposition === 'supersede') {
+    if (!successorTaskId?.trim()) {
+      throw new Error('Superseding a Task requires --successor <task-id>.');
+    }
+    if (successorTaskId === taskId) {
+      throw new Error('A Task cannot supersede itself.');
+    }
+    const successor = await showSkoposTaskRuntime({ cwd, taskId: successorTaskId });
+    if (['complete', 'cancelled', 'superseded'].includes(successor.state)) {
+      throw new Error(
+        `Successor Task ${successor.id} is ${successor.state} and cannot own future work.`,
+      );
+    }
+  } else if (successorTaskId) {
+    throw new Error('--successor is valid only for the supersede disposition.');
+  }
+
+  return mutateTask({
+    cwd,
+    taskId,
+    actor,
+    mutate: (task, actorId, now) => {
+      const priorState = task.state;
+      const nextState = resolveTaskDispositionState(task, disposition);
+      const claimsWork = disposition === 'resume' || disposition === 'return-from-verification';
+      return {
+        ...task,
+        state: nextState,
+        disposition: {
+          kind: disposition,
+          reason: normalizedReason,
+          actorId,
+          recordedAt: now,
+          priorState,
+          nextState,
+          ...(successorTaskId ? { successorTaskId } : {}),
+        },
+        ...(disposition === 'supersede'
+          ? { supersededByTaskId: successorTaskId }
+          : {}),
+        coordination: {
+          ...(claimsWork ? { claimedBy: { actorId, claimedAt: now } } : {}),
+          lastUpdatedBy: actorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+  });
+};
+
+const resolveTaskDispositionState = (
+  task: SkoposTaskArtifact,
+  disposition: SkoposTaskDispositionKind,
+): SkoposTaskState => {
+  const allowed: Record<SkoposTaskDispositionKind, SkoposTaskState[]> = {
+    resume: ['ready', 'deferred'],
+    ready: ['active', 'blocked'],
+    defer: ['ready', 'active', 'blocked'],
+    'return-from-verification': ['verifying', 'ready-to-integrate'],
+    cancel: ['ready', 'active', 'blocked', 'deferred', 'verifying', 'ready-to-integrate'],
+    supersede: ['ready', 'active', 'blocked', 'deferred', 'verifying', 'ready-to-integrate'],
+  };
+  if (!allowed[disposition].includes(task.state)) {
+    throw new Error(
+      `Task ${task.id} cannot apply disposition ${disposition} from state ${task.state}.`,
+    );
+  }
+  if (disposition === 'resume' || disposition === 'return-from-verification') {
+    return 'active';
+  }
+  if (disposition === 'ready') return 'ready';
+  if (disposition === 'defer') return 'deferred';
+  if (disposition === 'cancel') return 'cancelled';
+  return 'superseded';
+};
 
 export const completeSkoposTaskStepRuntime = async ({
   cwd,

@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 
 import {
+  applySkoposTaskDispositionRuntime,
   claimSkoposTaskRuntime,
   completeSkoposTaskStepRuntime,
   moveSkoposTaskToVerificationRuntime,
@@ -8,6 +9,7 @@ import {
   resolveSkoposTaskMemoryObligationRuntime,
   showSkoposTaskRuntime,
 } from '@skopos/runtime';
+import type { SkoposTaskDispositionKind } from '@skopos/model';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
 
@@ -27,6 +29,13 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
           ? await releaseSkoposTaskRuntime(common)
           : parsed.subcommand === 'verify'
             ? await moveSkoposTaskToVerificationRuntime(common)
+            : parsed.subcommand === 'disposition'
+              ? await applySkoposTaskDispositionRuntime({
+                  ...common,
+                  disposition: parsed.disposition!,
+                  reason: parsed.reason!,
+                  successorTaskId: parsed.successorTaskId,
+                })
             : parsed.subcommand === 'step' && parsed.action === 'complete'
               ? await completeSkoposTaskStepRuntime({
                   ...common,
@@ -66,9 +75,11 @@ interface ParsedTaskArgs {
   taskId: string;
   stepId?: string;
   obligationId?: string;
+  disposition?: SkoposTaskDispositionKind;
   resolution?: 'memory-updated' | 'reviewed-no-change';
   reason?: string;
   targetPath?: string;
+  successorTaskId?: string;
   cwd: string;
   actor?: string;
   compact: boolean;
@@ -84,6 +95,7 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   let resolution: ParsedTaskArgs['resolution'];
   let reason: string | undefined;
   let targetPath: string | undefined;
+  let successorTaskId: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
@@ -109,6 +121,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       targetPath = requireFlagValue(args, ++index, '--target');
     } else if (argument.startsWith('--target=')) {
       targetPath = argument.slice('--target='.length);
+    } else if (argument === '--successor') {
+      successorTaskId = requireFlagValue(args, ++index, '--successor');
+    } else if (argument.startsWith('--successor=')) {
+      successorTaskId = argument.slice('--successor='.length);
     } else if (argument === '--cwd') {
       cwd = resolve(requireFlagValue(args, ++index, '--cwd'));
     } else if (argument.startsWith('--cwd=')) {
@@ -153,6 +169,35 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       resolution,
       reason,
       targetPath,
+      cwd,
+      actor,
+      compact,
+      json,
+    };
+  }
+  if (subcommand === 'disposition') {
+    if (!first || !second || !reason) {
+      throw new Error(
+        'Usage: skopos task disposition <task-id> <resume|ready|defer|return-from-verification|cancel|supersede> --reason <text> [--successor <task-id>].',
+      );
+    }
+    const dispositions = [
+      'resume',
+      'ready',
+      'defer',
+      'return-from-verification',
+      'cancel',
+      'supersede',
+    ] as const;
+    if (!dispositions.includes(second as typeof dispositions[number])) {
+      throw new Error(`Unknown Task disposition: ${second}.`);
+    }
+    return {
+      subcommand,
+      taskId: first,
+      disposition: second as typeof dispositions[number],
+      reason,
+      successorTaskId,
       cwd,
       actor,
       compact,

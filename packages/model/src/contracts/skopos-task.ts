@@ -13,11 +13,30 @@ export type SkoposTaskState =
   | 'ready'
   | 'active'
   | 'blocked'
+  | 'deferred'
   | 'verifying'
   | 'ready-to-integrate'
   | 'complete'
   | 'cancelled'
   | 'superseded';
+
+export type SkoposTaskDispositionKind =
+  | 'resume'
+  | 'ready'
+  | 'defer'
+  | 'return-from-verification'
+  | 'cancel'
+  | 'supersede';
+
+export interface SkoposTaskDispositionRecord {
+  kind: SkoposTaskDispositionKind;
+  reason: string;
+  actorId: string;
+  recordedAt: string;
+  priorState: SkoposTaskState;
+  nextState: SkoposTaskState;
+  successorTaskId?: string;
+}
 
 export type SkoposTaskStepKind =
   | 'decision'
@@ -139,6 +158,8 @@ export interface SkoposTaskArtifact extends SkoposArtifactEnvelope<'task'> {
   parentTaskId?: string;
   childTasks: SkoposChildTaskReference[];
   state: SkoposTaskState;
+  disposition?: SkoposTaskDispositionRecord;
+  supersededByTaskId?: string;
   detail: SkoposTaskDetail;
   title: string;
   goal: string;

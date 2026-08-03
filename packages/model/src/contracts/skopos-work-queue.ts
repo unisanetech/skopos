@@ -4,6 +4,7 @@ import type { SkoposTaskRisk, SkoposTaskState } from './skopos-task.js';
 export type SkoposWorkQueueDisposition =
   | 'in-progress'
   | 'ready'
+  | 'deferred'
   | 'blocked'
   | 'verifying'
   | 'ready-to-integrate';

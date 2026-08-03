@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Implemented the canonical Task work disposition state machine.
+  Ownership release is state-neutral; explicit resume, ready, defer,
+  return-from-verification, cancel, and successor-linked supersede transitions now
+  produce deterministic Work Queue behavior. Host-specific mutation parity remains.
 - `2026-08-03`: Implemented the stale coordination recovery slice: a live replacement
   writer can atomically resume or release a stale reservation after fail-closed
   contamination/open-mutation checks, with recovery generation, ledger summary, and

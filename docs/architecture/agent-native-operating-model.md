@@ -16,6 +16,7 @@ relatedDocs:
   - evidence-and-readiness-model.md
   - ../standards/terminology.md
   - ../decisions/D-20260803-audited-stale-session-task-recovery.md
+  - ../decisions/D-20260803-explicit-task-work-disposition-state-machine.md
   - ../findings/F-20260803-session-task-recovery-and-disposition-gap.md
 reviewCycle: when agent lifecycle changes
 ---
@@ -27,6 +28,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-03`: Separated Task claim release from work disposition and added explicit
+  resume, ready, defer, return-from-verification, cancel, and supersede transitions
+  with auditable reasons and queue semantics.
 - `2026-08-03`: Added fail-closed stale Session Task recovery with atomic resume or
   release outcomes, recovery generations, ledger summaries, and one-winner database
   arbitration.
@@ -106,6 +110,25 @@ Risk and detail scale one Task rather than creating different work objects:
 
 One Session may own at most one writing Task. One Task may have Child Tasks when work
 must be separately claimable.
+
+Task claim ownership and work disposition are independent. Releasing an actor claim
+does not change Task state. A separate reasoned disposition operation applies one of
+these transitions:
+
+1. `ready`: active or blocked work returns to the ready queue
+2. `resume`: ready or deferred work becomes active and is claimed by the actor
+3. `defer`: ready, active, or blocked work becomes explicitly deferred and unclaimed
+4. `return-from-verification`: verifying or ready-to-integrate work returns to active
+   implementation and is claimed by the actor
+5. `cancel`: nonterminal work becomes terminal cancelled work
+6. `supersede`: nonterminal work becomes terminal superseded work and records one
+   validated successor Task id
+
+Every disposition records the prior and next state, actor, time, and reason. Deferred
+Tasks remain visible as deferred Work Queue entries; cancelled and superseded Tasks do
+not remain in the open queue. A verifying Task may release its actor claim without
+leaving verification, allowing another actor to claim and continue the same proof
+state.
 
 Admission infers Memory work proportionally:
 

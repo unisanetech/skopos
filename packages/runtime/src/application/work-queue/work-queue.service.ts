@@ -278,6 +278,7 @@ const documentToQueueEntry = (
 const taskDisposition = (task: SkoposTaskArtifact): SkoposWorkQueueDisposition => {
   if (task.state === 'verifying') return 'verifying';
   if (task.state === 'ready-to-integrate') return 'ready-to-integrate';
+  if (task.state === 'deferred') return 'deferred';
   if (task.state === 'blocked') return 'blocked';
   if (task.state === 'active') return 'in-progress';
   return 'ready';
@@ -297,6 +298,11 @@ const explainTaskDisposition = (
   }
   if (disposition === 'verifying') return 'Task implementation is waiting for required Evidence and Guards.';
   if (disposition === 'ready-to-integrate') return 'Task Readiness permits integration.';
+  if (disposition === 'deferred') {
+    return task.disposition?.reason
+      ? `Task is deferred: ${task.disposition.reason}`
+      : 'Task is explicitly deferred.';
+  }
   return 'Task authority is ready and not currently claimed.';
 };
 
@@ -310,6 +316,7 @@ const sortQueueEntries = (
     'ready-to-integrate': 2,
     ready: 3,
     blocked: 4,
+    deferred: 5,
   };
   return (
     order[left.disposition] - order[right.disposition] ||
@@ -331,6 +338,7 @@ const readJsonIfExists = async <T>(path: string): Promise<T | undefined> => {
 const createEmptyCounts = (): Record<SkoposWorkQueueDisposition, number> => ({
   'in-progress': 0,
   ready: 0,
+  deferred: 0,
   blocked: 0,
   verifying: 0,
   'ready-to-integrate': 0,
