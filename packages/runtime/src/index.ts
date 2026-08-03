@@ -12,6 +12,7 @@ export * from './application/policies/policies.service.js';
 export * from './application/scan/scan.service.js';
 export * from './application/session/session-context.service.js';
 export * from './application/actions/actions.service.js';
+export * from './application/evidence/evidence-reuse.service.js';
 export * from './application/context/context.service.js';
 export * from './application/coordination/coordination.service.js';
 export * from './application/decide/decide.service.js';
@@ -47,6 +48,7 @@ export const skoposRuntimeCommands = [
   'finish',
   'readiness',
   'actions',
+  'evidence',
   'impact',
   'knowledge',
   'guards',

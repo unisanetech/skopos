@@ -35,6 +35,11 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Implemented one-call exact Task Evidence reuse. The explicit reuse
+  command links all valid selected Action Runs without process execution, distinguishes
+  linked, already-linked, rejected, and missing outcomes, repairs Task Action steps,
+  and returns bounded compact diagnostics with a stable complete report. Cross-command
+  field/cursor budgets and benchmark proof remain open.
 - `2026-08-03`: Implemented the first Action hermeticity slice. Manifests now require
   capabilities, effects, concurrency, and truthful artifact-producing safety;
   preflight returns deterministic unavailable runs, Git worktree mutations are checked

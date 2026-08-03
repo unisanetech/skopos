@@ -53,6 +53,7 @@ Usage:
   skopos actions list [target] [--json]
   skopos actions show <action> [target] [--json]
   skopos actions run <action> [target] [--task <id>] [--dry-run] [--approve] [--force] [--actor <id>] [--full] [--json]
+  skopos evidence reuse <task-id> [target] --actor <id> [--full] [--json]
   skopos evidence record-observation <task-id> [target] [--requirement <id>] [--guard <id>] --statement <text> --actor <id> [--full] [--dry-run] [--json]
   skopos task show <task-id> [target] [--full] [--json]
   skopos task claim <task-id> [target] --actor <id> [--json]

@@ -34,6 +34,10 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Added one-call exact Evidence reuse. `skopos evidence reuse` validates
+  all prior successful runs required by one Task, links every valid run without Action
+  execution, repairs Action-step completion, and returns bounded compact outcomes plus
+  a stable full report artifact.
 - `2026-08-03`: Added canonical Task-local path attribution. Verification now derives
   impact only from declared ownership or digest-matched current-Task mutations while
   reporting unchanged pre-existing, other-Task, and external-unattributed paths
@@ -69,6 +73,26 @@ explicit Task Action Evidence Link stored under that Task's local Evidence direc
 The link records Task id, Action id, run id, actor, and link time. This separates honest
 cross-Task Evidence reuse from accidental global-run leakage.
 
+The public batch operation is:
+
+```text
+skopos evidence reuse <task-id> . --actor <actor> --json
+```
+
+It considers only the Task's selected Actions and never invokes an Action command.
+Each selected Action receives one deterministic outcome:
+
+1. `linked`: a valid prior Run was linked and its Task Action step completed
+2. `already-linked`: the same valid Run was already linked; step completion is
+   reconciled idempotently
+3. `rejected`: successful Runs exist but current source-bound validation rejects them
+4. `missing`: no successful Run or declared Action provider exists
+
+The operation writes the complete outcome report under the Task's local directory.
+Compact output keeps counts and unresolved outcomes inline, caps the inline unresolved
+collection, and returns the report path for complete retrieval. It reports an explicit
+zero Action-process execution count so reuse is not confused with rerunning proof.
+
 When an Action is executed or validated for a Task, Skopos excludes that Task's
 canonical active and archived tracked-document projection paths from the Action source
 digest. Skopos state transitions, archival, or formatting of that projection therefore
@@ -80,7 +104,9 @@ exact durable inputs remain preferred.
 
 ## Verify
 
-`skopos verify` evaluates acceptance coverage. It does not run Actions implicitly.
+`skopos verify` evaluates acceptance coverage. It does not run Actions or mutate
+Evidence Links implicitly. Exact reuse remains an explicit bounded operation so Verify
+retains deterministic read-only authority.
 For each acceptance criterion it explains:
 
 1. required Evidence

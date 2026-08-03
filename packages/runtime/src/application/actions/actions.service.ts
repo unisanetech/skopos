@@ -9,7 +9,6 @@ import type {
   SkoposActionManifest,
   SkoposActionRunArtifact,
   SkoposActionRunResult,
-  SkoposTaskActionEvidenceLink,
 } from '@skopos/model';
 import {
   buildSkoposEvidence,
@@ -24,12 +23,11 @@ import {
 } from '../shared/knowledge-state.js';
 import { executeSkoposShellCommand } from '../shared/execute-shell-command.js';
 import { pathExists } from '../shared/path-exists.js';
+import { linkSkoposActionRunToTask } from '../evidence/evidence-reuse.service.js';
 import {
-  completeSkoposTaskActionRuntime,
   resolveSkoposTrackedTaskProjectionPaths,
   showSkoposTaskRuntime,
 } from '../task/task.service.js';
-import { resolveSkoposTaskDirectory } from '../task/task-paths.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -231,7 +229,7 @@ export const runSkoposActionRuntime = async ({
           summary: `${manifest.id} reused source-bound Evidence ${existingRun.id}.`,
           reusedFromRunId: existingRun.id,
         };
-        return attachActionRunToTask({
+        return linkSkoposActionRunToTask({
           workspaceRoot,
           taskId,
           actor,
@@ -350,65 +348,12 @@ export const runSkoposActionRuntime = async ({
   };
   await writeRunArtifact(runPath, artifact);
 
-  return attachActionRunToTask({
+  return linkSkoposActionRunToTask({
     workspaceRoot,
     taskId,
     actor,
     run: artifact,
   });
-};
-
-const attachActionRunToTask = async ({
-  workspaceRoot,
-  taskId,
-  actor,
-  run,
-}: {
-  workspaceRoot: string;
-  taskId?: string;
-  actor?: string;
-  run: SkoposActionRunArtifact;
-}): Promise<SkoposActionRunResult> => {
-  if (!taskId) {
-    return { run };
-  }
-  const actorId = requireActionActorId(actor, run.actionId);
-  const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
-  const linkedAt = new Date().toISOString();
-  const link: SkoposTaskActionEvidenceLink = {
-    schemaVersion: 1,
-    id: `${task.id}.action-evidence.${slugify(run.actionId)}.${run.id}`,
-    type: 'task-action-evidence-link',
-    status: 'generated',
-    authority: 'generated',
-    summary: `Task ${task.id} links Action Evidence ${run.id} for ${run.actionId}.`,
-    generatedAt: linkedAt,
-    updatedAt: linkedAt,
-    workspaceRoot,
-    taskId: task.id,
-    actionId: run.actionId,
-    runId: run.id,
-    linkedAt,
-    linkedByActorId: actorId,
-  };
-  const linkPath = join(
-    resolveSkoposTaskDirectory(workspaceRoot, task.taskIdentity),
-    'evidence',
-    `${link.id}.json`,
-  );
-  await mkdir(dirname(linkPath), { recursive: true });
-  await writeFile(linkPath, `${JSON.stringify(link, null, 2)}\n`, 'utf8');
-  await completeSkoposTaskActionRuntime({
-    cwd: workspaceRoot,
-    taskId: task.id,
-    actionId: run.actionId,
-    actor: actorId,
-  });
-  return {
-    run,
-    taskEvidenceLink: link,
-    taskEvidenceLinkPath: linkPath,
-  };
 };
 
 interface BuildActionRunArtifactInput {

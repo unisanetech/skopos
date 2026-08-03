@@ -181,3 +181,31 @@ export interface SkoposActionRunResult {
   taskEvidenceLink?: SkoposTaskActionEvidenceLink;
   taskEvidenceLinkPath?: string;
 }
+
+export type SkoposTaskEvidenceReuseStatus =
+  | 'linked'
+  | 'already-linked'
+  | 'rejected'
+  | 'missing';
+
+export interface SkoposTaskEvidenceReuseOutcome {
+  actionId: string;
+  status: SkoposTaskEvidenceReuseStatus;
+  summary: string;
+  runId?: string;
+}
+
+export interface SkoposTaskEvidenceReuseReport
+  extends SkoposArtifactEnvelope<'task-evidence-reuse-report'> {
+  workspaceRoot: string;
+  taskId: string;
+  actorId: string;
+  reportPath: string;
+  selectedActionCount: number;
+  linkedCount: number;
+  alreadyLinkedCount: number;
+  rejectedCount: number;
+  missingCount: number;
+  processExecutionCount: 0;
+  outcomes: SkoposTaskEvidenceReuseOutcome[];
+}

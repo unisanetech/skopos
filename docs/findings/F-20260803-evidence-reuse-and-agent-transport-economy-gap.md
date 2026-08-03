@@ -77,3 +77,20 @@ During a downstream pilot:
    and time-to-next-correct-action against a plain-agent baseline.
 6. Compact output retains every blocker and decision that can change the agent's next
    safe action.
+
+## Resolution Progress
+
+The exact-reuse interaction slice is implemented:
+
+1. `skopos evidence reuse <task-id>` validates and links every reusable prior Run for
+   the Task's selected Actions in one operation
+2. the operation never invokes an Action process and reports this explicitly
+3. linked and already-linked outcomes reconcile the Task Action step; stale runs,
+   missing runs, and missing providers remain separate explained outcomes
+4. compact output returns counts, a fixed unresolved slice, an omitted count, and a
+   stable Task-local complete report path
+
+This Finding remains active. Closure still requires common budget enforcement and
+deterministic field/cursor retrieval across Session context, Task show, Verify,
+Readiness, Impact, Work Queue, and Action output, plus the p50/p95 and plain-agent
+benchmark matrix.
