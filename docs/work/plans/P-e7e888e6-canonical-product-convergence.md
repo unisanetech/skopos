@@ -35,6 +35,11 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Completed the live Unisane integration pilot after clean-cut migration
+  of its Action declarations. Across 1,789 dirty status entries, 69 queue items, and 25
+  Actions, all seven measured agent payloads stayed below 32 KiB, queue and Action
+  cursor pages had zero overlap, and the operational-homonym Plan produced only the
+  expected workspace-scope question. The pilot executed no Action and created no Task.
 - `2026-08-03`: Passed clean offline packed-install Action certification through the
   public CLI. The fixture proves isolated JSON artifact references, deterministic
   unavailable external-service preflight, and undeclared Git-visible write rejection;

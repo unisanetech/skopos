@@ -21,6 +21,10 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Certified the compact transport contract against the live Unisane
+  monorepo. Seven Session, Work Queue, Task, Action-catalog, and Plan payloads remained
+  below 32 KiB across 1,789 dirty status entries and 69 queue items; cursor pages did
+  not overlap and operational homonyms created only the expected scope question.
 - `2026-08-03`: Added a reproducible eight-surface economy benchmark. At the
   representative p50 and p95 fixture sizes, compact output remains below 32 KiB per
   surface, batch Evidence reuse removes per-requirement validation calls and reruns,
@@ -104,3 +108,12 @@ links, repeated executions, and machine-local decode-plus-next-action-selection 
 Timing explicitly excludes model, process, and network latency. Generated results live
 in `docs/reference/generated/agent-transport-economy-benchmark.md` and are regenerated
 with `pnpm benchmark:transport`.
+
+Large-workspace integration is certified separately from synthetic economy fixtures.
+`pnpm benchmark:external-workspace --target <workspace> --write` exercises the current
+built CLI against an existing project without executing Actions or creating Tasks. It
+measures dirty-worktree scale, compact payload bytes, cursor overlap, existing Task
+selection, Action-catalog declarations, and dry-run question classification. The
+generated Unisane observation lives at
+`docs/reference/generated/unisane-external-workspace-pilot.md`; it is evidence about
+Skopos integration behavior, not Unisane product or deployment readiness.
