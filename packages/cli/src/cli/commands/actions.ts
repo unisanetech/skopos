@@ -186,6 +186,20 @@ const toPublicAction = (action: {
   sourceExcludes?: string[];
   outputs: string[];
   affects: string[];
+  capabilities: {
+    process: 'required';
+    network: 'none' | 'required';
+    browser: 'none' | 'required';
+    tools: string[];
+    secrets: string[];
+    services: string[];
+  };
+  effects: {
+    workspace: 'none' | 'declared';
+    artifacts: 'none' | 'isolated';
+    external: 'none' | 'declared';
+  };
+  concurrency: 'shared' | 'exclusive';
   safety: string;
   requiresApproval: boolean;
   whenToUse?: string;
@@ -208,6 +222,9 @@ const toPublicAction = (action: {
   sourceExcludes: action.sourceExcludes ?? [],
   outputs: action.outputs,
   affects: action.affects,
+  capabilities: action.capabilities,
+  effects: action.effects,
+  concurrency: action.concurrency,
   safety: action.safety,
   approval: action.requiresApproval ? 'explicit' : 'none',
   whenToUse: action.whenToUse,
