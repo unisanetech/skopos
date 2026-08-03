@@ -109,6 +109,91 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
           name.startsWith('@skopos/'),
         ),
       ).toEqual([]);
+
+      await mkdir(join(projectDirectory, 'tools', 'skopos', 'actions'), {
+        recursive: true,
+      });
+      await Promise.all([
+        writeFile(join(projectDirectory, '.gitignore'), 'node_modules/\n', 'utf8'),
+        writePackedAction(projectDirectory, 'packed-artifact', {
+          command:
+            `node -e "const fs=require('node:fs');const p=require('node:path');fs.writeFileSync(p.join(process.env.SKOPOS_ARTIFACT_ROOT,'proof.json'),JSON.stringify({root:process.env.SKOPOS_ARTIFACT_ROOT}))"`,
+          outputs: ['proof.json'],
+          artifactEffect: 'isolated',
+          safety: 'artifact-producing',
+        }),
+        writePackedAction(projectDirectory, 'packed-external', {
+          command: `node -e "require('node:fs').writeFileSync('external-executed.txt','yes')"`,
+          services: ['packed-remote'],
+          externalEffect: 'declared',
+          safety: 'mutating',
+          concurrency: 'exclusive',
+        }),
+        writePackedAction(projectDirectory, 'packed-mutation', {
+          command: `node -e "require('node:fs').writeFileSync('undeclared.txt','changed')"`,
+        }),
+      ]);
+      initializeGitBaseline(projectDirectory);
+
+      const artifactRun = runJson<{
+        status?: string;
+        artifactRoot?: string;
+        outputPaths?: string[];
+        additionalOutputPathCount?: number;
+      }>(projectDirectory, [
+        'actions',
+        'run',
+        'packed.artifact',
+        '.',
+        '--actor',
+        'release-smoke',
+        '--json',
+      ]);
+      expect(artifactRun).toMatchObject({
+        status: 'succeeded',
+        artifactRoot: expect.stringMatching(
+          /^\.skopos\/runs\/run-.+\/artifacts$/,
+        ),
+        additionalOutputPathCount: 0,
+      });
+      expect(artifactRun.outputPaths).toEqual([
+        `${artifactRun.artifactRoot}/proof.json`,
+      ]);
+      await expect(
+        readFile(join(projectDirectory, artifactRun.outputPaths?.[0] ?? ''), 'utf8'),
+      ).resolves.toContain(artifactRun.artifactRoot);
+
+      const externalRun = runJson<{ status?: string; capabilityIssues?: string[] }>(
+        projectDirectory,
+        [
+          'actions',
+          'run',
+          'packed.external',
+          '.',
+          '--actor',
+          'release-smoke',
+          '--json',
+        ],
+      );
+      expect(externalRun).toMatchObject({
+        status: 'unavailable',
+        capabilityIssues: ['Required service packed-remote is unavailable.'],
+      });
+      await expect(
+        readFile(join(projectDirectory, 'external-executed.txt'), 'utf8'),
+      ).rejects.toThrow();
+
+      expect(
+        runFailure(projectDirectory, [
+          'actions',
+          'run',
+          'packed.mutation',
+          '.',
+          '--actor',
+          'release-smoke',
+          '--json',
+        ]),
+      ).toContain('undeclared workspace mutation at undeclared.txt');
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }
@@ -137,3 +222,79 @@ const run = (cwd: string, args: string[]): string =>
 
 const runJson = <T>(cwd: string, args: string[]): T =>
   JSON.parse(run(cwd, args)) as T;
+
+const runFailure = (cwd: string, args: string[]): string => {
+  try {
+    run(cwd, args);
+  } catch (error) {
+    const failure = error as { stdout?: Buffer | string; stderr?: Buffer | string };
+    return `${failure.stdout?.toString() ?? ''}\n${failure.stderr?.toString() ?? ''}`;
+  }
+  throw new Error(`Expected installed skopos ${args.join(' ')} to fail.`);
+};
+
+interface PackedActionOverrides {
+  command: string;
+  outputs?: string[];
+  services?: string[];
+  artifactEffect?: 'none' | 'isolated';
+  externalEffect?: 'none' | 'declared';
+  safety?: 'read-only' | 'artifact-producing' | 'mutating';
+  concurrency?: 'shared' | 'exclusive';
+}
+
+const writePackedAction = async (
+  projectDirectory: string,
+  name: string,
+  overrides: PackedActionOverrides,
+): Promise<void> => {
+  const source = [
+    `id: ${name.replaceAll('-', '.')}`,
+    `title: ${name}`,
+    'description: Packed release certification fixture.',
+    'category: quality-check',
+    'scope: [workspace]',
+    'command: >-',
+    `  ${overrides.command}`,
+    'cwd: .',
+    'inputs: [package.json]',
+    `outputs: ${JSON.stringify(overrides.outputs ?? [])}`,
+    'affects: []',
+    'capabilities:',
+    '  process: required',
+    '  network: none',
+    '  browser: none',
+    '  tools: [node]',
+    '  secrets: []',
+    `  services: ${JSON.stringify(overrides.services ?? [])}`,
+    'effects:',
+    '  workspace: none',
+    `  artifacts: ${overrides.artifactEffect ?? 'none'}`,
+    `  external: ${overrides.externalEffect ?? 'none'}`,
+    `concurrency: ${overrides.concurrency ?? 'shared'}`,
+    `safety: ${overrides.safety ?? 'read-only'}`,
+    'requiresApproval: false',
+    'recommendedAfter: []',
+    'owner: release-smoke',
+    '',
+  ].join('\n');
+  await writeFile(
+    join(projectDirectory, 'tools', 'skopos', 'actions', `${name}.yaml`),
+    source,
+    'utf8',
+  );
+};
+
+const initializeGitBaseline = (projectDirectory: string): void => {
+  execFileSync('git', ['init', '--initial-branch=main'], { cwd: projectDirectory });
+  execFileSync('git', ['config', 'user.email', 'skopos@example.com'], {
+    cwd: projectDirectory,
+  });
+  execFileSync('git', ['config', 'user.name', 'Skopos Release Smoke'], {
+    cwd: projectDirectory,
+  });
+  execFileSync('git', ['add', '.'], { cwd: projectDirectory });
+  execFileSync('git', ['commit', '-m', 'packed release baseline'], {
+    cwd: projectDirectory,
+  });
+};

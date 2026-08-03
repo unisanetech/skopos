@@ -150,7 +150,7 @@ const buildKnowledgeIndex = async (
       workspaceRoot,
       (name) => name === 'task.json',
     ),
-    loadRecursiveArtifacts<SkoposActionRunArtifact>(
+    loadDirectArtifacts<SkoposActionRunArtifact>(
       join(workspaceRoot, '.skopos/runs'),
       workspaceRoot,
       (name) => name.endsWith('.json'),
@@ -403,6 +403,27 @@ const loadRecursiveArtifacts = async <T>(
       path: normalizeWorkspacePath(workspaceRoot, path),
     })),
   );
+};
+
+const loadDirectArtifacts = async <T>(
+  root: string,
+  workspaceRoot: string,
+  include: (name: string) => boolean,
+): Promise<Array<{ artifact: T; path: string }>> => {
+  try {
+    const entries = await readdir(root, { withFileTypes: true });
+    const paths = entries
+      .filter((entry) => entry.isFile() && include(entry.name))
+      .map((entry) => join(root, entry.name));
+    return Promise.all(
+      paths.map(async (path) => ({
+        artifact: JSON.parse(await readFile(path, 'utf8')) as T,
+        path: normalizeWorkspacePath(workspaceRoot, path),
+      })),
+    );
+  } catch {
+    return [];
+  }
 };
 
 const collectFiles = async (

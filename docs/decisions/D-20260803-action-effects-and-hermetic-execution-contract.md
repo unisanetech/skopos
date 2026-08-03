@@ -24,6 +24,10 @@ reviewCycle: when Action capability, effect, concurrency, or certification seman
 
 ## Changelog
 
+- `2026-08-03`: Certified the implemented effect boundary through a fresh offline
+  packed installation. The installed CLI now proves isolated JSON artifacts,
+  unavailable external-service preflight, and Git-visible undeclared-write rejection;
+  Action Run indexing ignores nested run-owned artifacts.
 - `2026-08-03`: Accepted the required manifest grammar and implemented capability
   preflight, unavailable runs, workspace-effect boundaries, isolated artifact roots,
   and effect-bound Evidence identity. Packed certification and broader isolation remain
@@ -114,8 +118,7 @@ Implemented now:
 
 Still required before this Decision is fully implemented:
 
-1. packed-install offline certification outside the source workspace
-2. a supported contract for non-Git mutation enforcement
-3. serialization or lock-key enforcement for exclusive Actions
-4. provider-specific enforcement or verification of declared external mutation
-5. host-parity proof for capability assertions
+1. a supported contract for non-Git mutation enforcement
+2. serialization or lock-key enforcement for exclusive Actions
+3. provider-specific enforcement or verification of declared external mutation
+4. host-parity proof for capability assertions

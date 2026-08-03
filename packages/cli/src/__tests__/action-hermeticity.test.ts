@@ -71,18 +71,18 @@ describe('Action effects and hermetic capability contract', () => {
 
   it('isolates concurrent artifact-producing Action outputs by run id', async () => {
     const root = await createWorkspace(false);
-    const command = `node -e "const fs=require('node:fs');const p=require('node:path');fs.writeFileSync(p.join(process.env.SKOPOS_ARTIFACT_ROOT,'result.txt'),process.env.SKOPOS_ARTIFACT_ROOT)"`;
+    const command = `node -e "const fs=require('node:fs');const p=require('node:path');fs.writeFileSync(p.join(process.env.SKOPOS_ARTIFACT_ROOT,'result.json'),JSON.stringify({root:process.env.SKOPOS_ARTIFACT_ROOT}))"`;
     await Promise.all([
       writeManifest(root, 'artifact-a', {
         command,
         safety: 'artifact-producing',
-        outputs: ['result.txt'],
+        outputs: ['result.json'],
         artifactEffect: 'isolated',
       }),
       writeManifest(root, 'artifact-b', {
         command,
         safety: 'artifact-producing',
-        outputs: ['result.txt'],
+        outputs: ['result.json'],
         artifactEffect: 'isolated',
       }),
     ]);
@@ -95,8 +95,8 @@ describe('Action effects and hermetic capability contract', () => {
     expect(left.run.runStatus).toBe('succeeded');
     expect(right.run.runStatus).toBe('succeeded');
     expect(left.run.artifactRoot).not.toBe(right.run.artifactRoot);
-    expect(left.run.outputPaths).toEqual([`${left.run.artifactRoot}/result.txt`]);
-    expect(right.run.outputPaths).toEqual([`${right.run.artifactRoot}/result.txt`]);
+    expect(left.run.outputPaths).toEqual([`${left.run.artifactRoot}/result.json`]);
+    expect(right.run.outputPaths).toEqual([`${right.run.artifactRoot}/result.json`]);
     await expect(readFile(join(root, left.run.outputPaths[0]!), 'utf8')).resolves.toContain(
       left.run.id,
     );

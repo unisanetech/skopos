@@ -95,7 +95,14 @@ The first implementation slice is complete:
 4. artifact-producing runs receive unique roots under `.skopos/runs/<run-id>` and
    Evidence resolves outputs from those roots
 5. declared capabilities, effects, and concurrency participate in execution identity
+6. release smoke packs the bundled CLI, installs it offline into a fresh external
+   project, and uses only the installed public binary to prove isolated JSON artifacts,
+   deterministic unavailable service preflight, and Git-visible undeclared-write
+   rejection
+7. knowledge indexing reads only top-level Action Run records, so nested run-owned JSON
+   artifacts cannot be mistaken for runs
 
-This Finding remains active. Closure still requires clean offline and packed-install
-certification, non-Git enforcement or an explicit supported-project boundary, general
-exclusive scheduling, and provider-specific proof for declared external mutation.
+This Finding remains active. Clean offline packed-install certification is complete.
+Closure still requires non-Git enforcement or an explicit supported-project boundary,
+general exclusive scheduling, provider-specific proof for declared external mutation,
+and host-parity proof for capability assertions.

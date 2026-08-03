@@ -21,6 +21,10 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Extended release smoke to certify the Action effect contract from the
+  packed CLI in a fresh offline-installed project: isolated JSON artifacts remain
+  stable, unavailable external services prevent command execution, and undeclared
+  workspace mutation fails closed.
 - `2026-07-29`: Updated installed smoke proof to use canonical Session context and
   Readiness surfaces.
 - `2026-07-27`: Required installed live UI to resolve the CLI-bundled app without a
@@ -94,3 +98,7 @@ The release smoke test must pack `@skopos/cli`, install it into a fresh project,
 5. `pnpm dlx <packed-cli> init <target>`
 6. installed `skopos ui build <target>`
 7. installed `skopos ui dev <target>` plus live state refresh
+8. installed artifact-producing Action execution with an isolated run-owned reference
+9. installed declared external capability preflight with no command execution when the
+   service is unavailable
+10. installed rejection of undeclared workspace mutation in a Git-backed project

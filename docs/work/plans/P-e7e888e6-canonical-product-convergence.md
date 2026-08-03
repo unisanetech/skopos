@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Passed clean offline packed-install Action certification through the
+  public CLI. The fixture proves isolated JSON artifact references, deterministic
+  unavailable external-service preflight, and undeclared Git-visible write rejection;
+  it also fixed nested JSON artifacts being misindexed as Action Runs.
 - `2026-08-03`: Replaced substring-only destructive, vendor, and security ask-back
   inference with evidence-based subject-intent predicates, added explicit no-change
   outcomes, and covered observed operational homonyms plus concrete positive cases.
