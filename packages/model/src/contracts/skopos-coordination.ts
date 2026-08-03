@@ -177,13 +177,26 @@ export interface SkoposCoordinationAuditResult {
   contamination: SkoposCoordinationContamination[];
 }
 
-export interface SkoposTakeoverTaskResult {
+export type SkoposTaskRecoveryOperation = 'resume' | 'release';
+export type SkoposTaskRecoveryOutcome = 'resumed' | 'released';
+
+export interface SkoposTaskRecoveryLedgerState {
+  open: number;
+  recorded: number;
+  contaminated: number;
+}
+
+export interface SkoposRecoverTaskResult {
   workspaceRoot: string;
   databasePath: string;
   taskId: string;
   priorSessionId: string;
   sessionId: string;
-  forced: boolean;
+  actorId: string;
+  generation: number;
+  outcome: SkoposTaskRecoveryOutcome;
+  releasedClaimCount: number;
+  ledgerState: SkoposTaskRecoveryLedgerState;
   reason: string;
 }
 

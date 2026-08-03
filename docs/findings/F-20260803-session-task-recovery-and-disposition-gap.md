@@ -31,6 +31,14 @@ operations require the stale Session to act, and Task release does not consisten
 communicate whether work becomes ready, deferred, superseded, cancelled, or remains in
 verification.
 
+The stale coordination deadlock is now mitigated: a different live writer can audit
+and atomically resume or release a stale reservation without the stale Session acting.
+Recovery fails for contamination and open mutations, preserves recorded mutation
+attribution, reports an auditable generation and ledger summary, and has one winner
+under concurrent attempts. The Finding remains open because Task work dispositions
+and their CLI, MCP, UI, Session-context, handoff, and projection parity are not yet
+complete.
+
 ## Observed Evidence
 
 A downstream pilot reached a circular recovery state:

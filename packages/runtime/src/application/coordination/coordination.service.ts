@@ -24,9 +24,10 @@ import {
   type SkoposReleaseTaskResult,
   type SkoposReserveTaskResult,
   type SkoposResourceClaim,
+  type SkoposRecoverTaskResult,
   type SkoposTaskReservation,
+  type SkoposTaskRecoveryOperation,
   type SkoposTaskSnapshotResult,
-  type SkoposTakeoverTaskResult,
 } from '@skopos/model';
 import { captureSkoposTaskPathStates } from '@skopos/verification';
 
@@ -105,12 +106,12 @@ export interface AuditSkoposCoordinationTaskOptions {
   taskId: string;
 }
 
-export interface TakeoverSkoposCoordinationTaskOptions {
+export interface RecoverSkoposCoordinationTaskOptions {
   cwd: string;
   taskId: string;
   sessionId: string;
+  operation: SkoposTaskRecoveryOperation;
   reason: string;
-  force?: boolean;
 }
 
 export interface SnapshotSkoposCoordinationTaskOptions {
@@ -788,75 +789,119 @@ export const auditSkoposCoordinationTask = async ({
   }
 };
 
-export const takeoverSkoposCoordinationTask = async ({
+export const recoverSkoposCoordinationTask = async ({
   cwd,
   taskId,
   sessionId,
+  operation,
   reason,
-  force = false,
-}: TakeoverSkoposCoordinationTaskOptions): Promise<SkoposTakeoverTaskResult> => {
-  assertNonEmpty(reason, 'Task takeover requires an explicit reason.');
+}: RecoverSkoposCoordinationTaskOptions): Promise<SkoposRecoverTaskResult> => {
+  assertNonEmpty(reason, 'Task recovery requires an explicit reason.');
+  if (operation !== 'resume' && operation !== 'release') {
+    throw new Error(`Unknown Task recovery operation: ${operation}.`);
+  }
   const workspaceRoot = resolve(cwd);
   const audit = await auditSkoposCoordinationTask({ cwd: workspaceRoot, taskId });
-  if (!audit.clean && !force) {
+  if (!audit.clean) {
     throw new Error(
-      `Task ${taskId} has ${audit.contamination.length} contamination issue(s); reconcile them or use an explicit forced takeover.`,
+      `Task ${taskId} has ${audit.contamination.length} contamination issue(s); reconcile them before recovery.`,
     );
   }
   const databasePath = await ensureCoordinationDatabase(workspaceRoot);
   const now = Date.now();
   const db = openDatabase(databasePath);
   try {
-    const priorSessionId = transaction(db, () => {
+    return transaction(db, () => {
       markExpiredSessionsStale(db, now);
       const next = requireLiveWriterSession(db, sessionId);
       const reservation = readReservation(db, taskId);
       const prior = readSession(db, reservation.sessionId);
       if (prior.state !== 'stale') {
         throw new Error(
-          `Task ${taskId} is held by ${prior.state} Session ${prior.sessionId}; only stale ownership may be taken over.`,
+          `Task ${taskId} is held by ${prior.state} Session ${prior.sessionId}; only stale ownership may be recovered.`,
         );
       }
-      const existingForNext = db
-        .prepare('SELECT task_id FROM task_reservations WHERE session_id = ?')
-        .get(sessionId) as { task_id?: string } | undefined;
-      if (existingForNext?.task_id) {
-        throw new Error(`Session ${sessionId} already reserves Task ${existingForNext.task_id}.`);
+      const mutations = readMutations(db).filter((mutation) => mutation.taskId === taskId);
+      const ledgerState = {
+        open: mutations.filter((mutation) => mutation.status === 'open').length,
+        recorded: mutations.filter((mutation) => mutation.status === 'recorded').length,
+        contaminated: mutations.filter((mutation) => mutation.status === 'contaminated').length,
+      };
+      const openContaminationCount = readContamination(db).filter(
+        (entry) => entry.taskId === taskId && entry.state === 'open',
+      ).length;
+      if (ledgerState.open > 0) {
+        throw new Error(
+          `Task ${taskId} has ${ledgerState.open} open mutation(s); reconcile them before recovery.`,
+        );
       }
-      db.prepare(
-        `UPDATE task_reservations
-         SET session_id = ?, actor_id = ?, reserved_at_ms = ?
-         WHERE task_id = ?`,
-      ).run(sessionId, next.actorId, now, taskId);
-      db.prepare(
-        `UPDATE resource_claims
-         SET session_id = ?, actor_id = ?
-         WHERE task_id = ?`,
-      ).run(sessionId, next.actorId, taskId);
+      if (ledgerState.contaminated > 0 || openContaminationCount > 0) {
+        throw new Error(
+          `Task ${taskId} has contaminated coordination state; reconcile it before recovery.`,
+        );
+      }
+      const releasedClaimCount = readClaims(db).filter(
+        (claim) => claim.taskId === taskId,
+      ).length;
+      if (operation === 'resume') {
+        const existingForNext = db
+          .prepare('SELECT task_id FROM task_reservations WHERE session_id = ?')
+          .get(sessionId) as { task_id?: string } | undefined;
+        if (existingForNext?.task_id) {
+          throw new Error(
+            `Session ${sessionId} already reserves Task ${existingForNext.task_id}.`,
+          );
+        }
+        db.prepare(
+          `UPDATE task_reservations
+           SET session_id = ?, actor_id = ?, reserved_at_ms = ?
+           WHERE task_id = ?`,
+        ).run(sessionId, next.actorId, now, taskId);
+        db.prepare(
+          `UPDATE resource_claims
+           SET session_id = ?, actor_id = ?
+           WHERE task_id = ?`,
+        ).run(sessionId, next.actorId, taskId);
+      } else {
+        db.prepare('DELETE FROM resource_claims WHERE task_id = ?').run(taskId);
+        db.prepare('DELETE FROM task_reservations WHERE task_id = ?').run(taskId);
+      }
+      const generation = (
+        db.prepare(
+          `SELECT COUNT(*) AS count FROM coordination_events
+           WHERE event_kind = 'task-recovered' AND task_id = ?`,
+        ).get(taskId) as { count: number }
+      ).count + 1;
+      const outcome = operation === 'resume' ? 'resumed' as const : 'released' as const;
       recordEvent(db, {
-        kind: 'task-taken-over',
+        kind: 'task-recovered',
         sessionId,
         taskId,
         actorId: next.actorId,
         details: {
           priorSessionId: prior.sessionId,
+          generation,
+          outcome,
           reason: reason.trim(),
-          forced: force,
-          contaminationCount: audit.contamination.length,
+          releasedClaimCount: operation === 'release' ? releasedClaimCount : 0,
+          ledgerState,
         },
         now,
       });
-      return prior.sessionId;
+      return {
+        workspaceRoot,
+        databasePath,
+        taskId,
+        priorSessionId: prior.sessionId,
+        sessionId,
+        actorId: next.actorId,
+        generation,
+        outcome,
+        releasedClaimCount: operation === 'release' ? releasedClaimCount : 0,
+        ledgerState,
+        reason: reason.trim(),
+      };
     });
-    return {
-      workspaceRoot,
-      databasePath,
-      taskId,
-      priorSessionId,
-      sessionId,
-      forced: force,
-      reason: reason.trim(),
-    };
   } finally {
     db.close();
   }

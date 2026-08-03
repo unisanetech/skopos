@@ -14,10 +14,10 @@ import {
   getSkoposCoordinationStatus,
   heartbeatSkoposCoordinationSession,
   openSkoposCoordinationSession,
+  recoverSkoposCoordinationTask,
   releaseSkoposCoordinationTask,
   reserveSkoposCoordinationTask,
   snapshotSkoposCoordinationTask,
-  takeoverSkoposCoordinationTask,
 } from '@skopos/runtime';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
@@ -156,24 +156,31 @@ export const runCoordinationCommand = async (args: string[]): Promise<void> => {
     return;
   }
 
-  if (family === 'task' && operation === 'takeover') {
+  if (family === 'task' && operation === 'recover') {
     const [taskId, ...remaining] = rest;
-    if (!taskId) throw new Error('Missing Task id for coordination takeover.');
-    const parsed = parseFlags(remaining, ['session', 'reason'], ['force']);
-    const result = await takeoverSkoposCoordinationTask({
+    if (!taskId) throw new Error('Missing Task id for coordination recovery.');
+    const parsed = parseFlags(remaining, ['session', 'operation', 'reason']);
+    const recoveryOperation = requireFlag(parsed.flags, 'operation');
+    if (recoveryOperation !== 'resume' && recoveryOperation !== 'release') {
+      throw new Error(`Unknown Task recovery operation: ${recoveryOperation}.`);
+    }
+    const result = await recoverSkoposCoordinationTask({
       cwd: parsed.cwd,
       taskId,
       sessionId: requireFlag(parsed.flags, 'session'),
+      operation: recoveryOperation,
       reason: requireFlag(parsed.flags, 'reason'),
-      force: parsed.booleans.has('force'),
     });
     if (parsed.json) return writeJsonOutput(result);
     writeLines([
-      'Skopos coordination task takeover',
+      'Skopos coordination task recovery',
       `Task: ${result.taskId}`,
       `Prior Session: ${result.priorSessionId}`,
       `Session: ${result.sessionId}`,
-      `Forced: ${result.forced ? 'yes' : 'no'}`,
+      `Actor: ${result.actorId}`,
+      `Generation: ${result.generation}`,
+      `Outcome: ${result.outcome}`,
+      `Ledger: ${result.ledgerState.recorded} recorded, ${result.ledgerState.open} open, ${result.ledgerState.contaminated} contaminated`,
       `Reason: ${result.reason}`,
     ]);
     return;
@@ -277,7 +284,7 @@ export const runCoordinationCommand = async (args: string[]): Promise<void> => {
       '       skopos coordination task reserve <task-id> [target] --session <id> [--json]\n' +
       '       skopos coordination task release <task-id> [target] --session <id> --reason <text> [--json]\n' +
       '       skopos coordination task audit <task-id> [target] [--json]\n' +
-      '       skopos coordination task takeover <task-id> [target] --session <id> --reason <text> [--force] [--json]\n' +
+      '       skopos coordination task recover <task-id> [target] --session <id> --operation <resume|release> --reason <text> [--json]\n' +
       '       skopos coordination task snapshot <task-id> [target] --session <id> [--json]\n' +
       '       skopos coordination claim add <kind> <resource> [target] --task <id> --session <id> [--json]\n' +
       '       skopos coordination mutation begin <operation> <path> [target] --task <id> --session <id> [--json]\n' +

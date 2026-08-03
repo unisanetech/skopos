@@ -1,16 +1,19 @@
 import { spawnSync } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {
+  beginSkoposCoordinationMutation,
   claimSkoposCoordinationResource,
   closeSkoposCoordinationSession,
+  completeSkoposCoordinationMutation,
   getSkoposCoordinationStatus,
   heartbeatSkoposCoordinationSession,
   openSkoposCoordinationSession,
+  recoverSkoposCoordinationTask,
   releaseSkoposCoordinationTask,
   reserveSkoposCoordinationTask,
 } from '../../../runtime/src/application/coordination/coordination.service.js';
@@ -181,6 +184,224 @@ describe('same-directory coordination broker', () => {
     ).rejects.toThrow('is stale');
   });
 
+  it('audits and resumes clean stale ownership from a live replacement Session', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-stale', 'agent-stale');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+    });
+    await claimSkoposCoordinationResource({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+      resourceKind: 'exact-path',
+      resourceKey: 'src/owned.ts',
+    });
+    const mutation = await beginSkoposCoordinationMutation({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+      path: 'src/owned.ts',
+      operation: 'edit',
+    });
+    await writeFile(join(root, 'src/owned.ts'), 'recorded owned work\n', 'utf8');
+    await completeSkoposCoordinationMutation({
+      cwd: root,
+      sessionId: 'session-stale',
+      mutationId: mutation.mutation.mutationId,
+    });
+    expireSessionLease(opened.databasePath, 'session-stale');
+    await openSession(root, 'session-next', 'agent-next');
+
+    const recovered = await recoverSkoposCoordinationTask({
+      cwd: root,
+      taskId: 'task-stale',
+      sessionId: 'session-next',
+      operation: 'resume',
+      reason: 'The prior writer crashed after recording its owned change.',
+    });
+
+    expect(recovered).toMatchObject({
+      priorSessionId: 'session-stale',
+      sessionId: 'session-next',
+      actorId: 'agent-next',
+      generation: 1,
+      outcome: 'resumed',
+      releasedClaimCount: 0,
+      ledgerState: { open: 0, recorded: 1, contaminated: 0 },
+    });
+    const status = await getSkoposCoordinationStatus({ cwd: root });
+    expect(status.reservations).toEqual([
+      expect.objectContaining({ taskId: 'task-stale', sessionId: 'session-next' }),
+    ]);
+    expect(status.claims).toEqual([
+      expect.objectContaining({ taskId: 'task-stale', sessionId: 'session-next' }),
+    ]);
+    expect(status.mutations[0]).toMatchObject({
+      taskId: 'task-stale',
+      sessionId: 'session-stale',
+      status: 'recorded',
+    });
+  });
+
+  it('releases stale ownership without requiring the stale Session to act', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-stale', 'agent-stale');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+    });
+    await claimSkoposCoordinationResource({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+      resourceKind: 'exact-path',
+      resourceKey: 'src/owned.ts',
+    });
+    expireSessionLease(opened.databasePath, 'session-stale');
+    await openSession(root, 'session-maintainer', 'maintainer');
+
+    const recovered = await recoverSkoposCoordinationTask({
+      cwd: root,
+      taskId: 'task-stale',
+      sessionId: 'session-maintainer',
+      operation: 'release',
+      reason: 'The abandoned Task is being dispositioned separately.',
+    });
+
+    expect(recovered).toMatchObject({
+      outcome: 'released',
+      releasedClaimCount: 1,
+      priorSessionId: 'session-stale',
+      sessionId: 'session-maintainer',
+    });
+    await expect(
+      closeSkoposCoordinationSession({ cwd: root, sessionId: 'session-stale' }),
+    ).resolves.toMatchObject({ session: { state: 'closed' } });
+  });
+
+  it('fails closed when stale work has an open mutation or contamination', async () => {
+    const openRoot = await createWorkspace();
+    const openSessionResult = await openSession(openRoot, 'session-open', 'agent-open');
+    await reserveSkoposCoordinationTask({
+      cwd: openRoot,
+      sessionId: 'session-open',
+      taskId: 'task-open',
+    });
+    await claimSkoposCoordinationResource({
+      cwd: openRoot,
+      sessionId: 'session-open',
+      taskId: 'task-open',
+      resourceKind: 'exact-path',
+      resourceKey: 'src/open.ts',
+    });
+    await beginSkoposCoordinationMutation({
+      cwd: openRoot,
+      sessionId: 'session-open',
+      taskId: 'task-open',
+      path: 'src/open.ts',
+      operation: 'edit',
+    });
+    expireSessionLease(openSessionResult.databasePath, 'session-open');
+    await openSession(openRoot, 'session-next', 'agent-next');
+    await expect(
+      recoverSkoposCoordinationTask({
+        cwd: openRoot,
+        taskId: 'task-open',
+        sessionId: 'session-next',
+        operation: 'resume',
+        reason: 'Attempt recovery with an open mutation.',
+      }),
+    ).rejects.toThrow('open mutation');
+
+    const contaminatedRoot = await createWorkspace();
+    const contaminatedSession = await openSession(
+      contaminatedRoot,
+      'session-contaminated',
+      'agent-contaminated',
+    );
+    await reserveSkoposCoordinationTask({
+      cwd: contaminatedRoot,
+      sessionId: 'session-contaminated',
+      taskId: 'task-contaminated',
+    });
+    await claimSkoposCoordinationResource({
+      cwd: contaminatedRoot,
+      sessionId: 'session-contaminated',
+      taskId: 'task-contaminated',
+      resourceKind: 'exact-path',
+      resourceKey: 'src/contaminated.ts',
+    });
+    const mutation = await beginSkoposCoordinationMutation({
+      cwd: contaminatedRoot,
+      sessionId: 'session-contaminated',
+      taskId: 'task-contaminated',
+      path: 'src/contaminated.ts',
+      operation: 'edit',
+    });
+    await writeFile(join(contaminatedRoot, 'src/contaminated.ts'), 'recorded\n', 'utf8');
+    await completeSkoposCoordinationMutation({
+      cwd: contaminatedRoot,
+      sessionId: 'session-contaminated',
+      mutationId: mutation.mutation.mutationId,
+    });
+    await writeFile(join(contaminatedRoot, 'src/contaminated.ts'), 'external edit\n', 'utf8');
+    expireSessionLease(contaminatedSession.databasePath, 'session-contaminated');
+    await openSession(contaminatedRoot, 'session-next', 'agent-next');
+    await expect(
+      recoverSkoposCoordinationTask({
+        cwd: contaminatedRoot,
+        taskId: 'task-contaminated',
+        sessionId: 'session-next',
+        operation: 'resume',
+        reason: 'Attempt recovery with contamination.',
+      }),
+    ).rejects.toThrow('contamination issue');
+  });
+
+  it('allows only one winner across concurrent stale recovery attempts', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-stale', 'agent-stale');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+    });
+    expireSessionLease(opened.databasePath, 'session-stale');
+    await Promise.all([
+      openSession(root, 'session-next-a', 'agent-next-a'),
+      openSession(root, 'session-next-b', 'agent-next-b'),
+    ]);
+
+    const attempts = await Promise.allSettled([
+      recoverSkoposCoordinationTask({
+        cwd: root,
+        taskId: 'task-stale',
+        sessionId: 'session-next-a',
+        operation: 'resume',
+        reason: 'Concurrent recovery attempt A.',
+      }),
+      recoverSkoposCoordinationTask({
+        cwd: root,
+        taskId: 'task-stale',
+        sessionId: 'session-next-b',
+        operation: 'resume',
+        reason: 'Concurrent recovery attempt B.',
+      }),
+    ]);
+
+    expect(attempts.filter((attempt) => attempt.status === 'fulfilled')).toHaveLength(1);
+    expect(attempts.filter((attempt) => attempt.status === 'rejected')).toHaveLength(1);
+    const status = await getSkoposCoordinationStatus({ cwd: root });
+    expect(status.reservations).toHaveLength(1);
+    expect(['session-next-a', 'session-next-b']).toContain(
+      status.reservations[0]!.sessionId,
+    );
+  });
+
   it('releases claims only through explicit Task release before Session close', async () => {
     const root = await createWorkspace();
     await openSession(root, 'session-a', 'agent-a');
@@ -241,6 +462,8 @@ describe('same-directory coordination broker', () => {
 const createWorkspace = async (): Promise<string> => {
   const root = await mkdtemp(join(tmpdir(), 'skopos-coordination-'));
   temporaryRoots.push(root);
+  await mkdir(join(root, 'src'), { recursive: true });
+  await writeFile(join(root, '.keep'), '', 'utf8');
   return root;
 };
 

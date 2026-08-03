@@ -9,12 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-31
+lastUpdated: 2026-08-03
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
   - evidence-and-readiness-model.md
   - ../standards/terminology.md
+  - ../decisions/D-20260803-audited-stale-session-task-recovery.md
+  - ../findings/F-20260803-session-task-recovery-and-disposition-gap.md
 reviewCycle: when agent lifecycle changes
 ---
 
@@ -25,6 +27,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-03`: Added fail-closed stale Session Task recovery with atomic resume or
+  release outcomes, recovery generations, ledger summaries, and one-winner database
+  arbitration.
 - `2026-07-31`: Made durable Memory review visible at Task admission and explicitly
   resolvable before closure without automatic document creation.
 - `2026-07-31`: Made hot-path JSON compact by default and collapsed normal Task
@@ -68,6 +73,27 @@ session context
 brief, actor and Session identity, current Task when unambiguous, open material
 questions, next safe command, selected Scope context, and warnings. It does not replay
 the full Project on every turn.
+
+### Stale Session recovery
+
+Lease expiry marks a writer Session stale but preserves its Task reservation, resource
+claims, and mutation attribution. Recovery is performed by a different live writer
+Session through one audited operation:
+
+```text
+stale reservation
+  -> audit claimed paths and mutation ledger
+  -> fail on contamination or open mutation
+  -> atomically resume ownership or release ownership
+  -> record prior/new Session, actor, generation, ledger state, reason, and outcome
+```
+
+`resume` transfers the reservation and live claims to the replacement Session while
+retaining historical mutation authorship. `release` removes the reservation and
+claims so Task work disposition can be decided separately. Neither outcome requires
+the stale Session to execute a command, and the safe recovery operation has no force
+mode. Concurrent attempts serialize through the coordination database; after one
+wins, the others fail because the reservation is no longer stale-owned.
 
 ## Task Detail And Risk
 

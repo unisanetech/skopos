@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Implemented the stale coordination recovery slice: a live replacement
+  writer can atomically resume or release a stale reservation after fail-closed
+  contamination/open-mutation checks, with recovery generation, ledger summary, and
+  concurrent one-winner proof. Explicit Task work dispositions remain next.
 - `2026-08-03`: Implemented the direct-path slice of the Task-local proof boundary:
   five-way admission/mutation attribution, other-Task and external exclusion,
   causal detailed diagnostics, compact counts, and the 64-path mixed-worktree target.
