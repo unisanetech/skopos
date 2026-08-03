@@ -21,6 +21,11 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Added a reproducible eight-surface economy benchmark. At the
+  representative p50 and p95 fixture sizes, compact output remains below 32 KiB per
+  surface, batch Evidence reuse removes per-requirement validation calls and reruns,
+  and the generated report distinguishes workflow counts from machine-local JSON
+  selection timing.
 - `2026-08-03`: Bounded the remaining hot-path payloads. Action Runs cap output paths,
   retain capability/effect failures, and expose a stable run-artifact detail index;
   Session context caps warnings and claims; representative p95 Session and Readiness
@@ -90,3 +95,12 @@ collection counts instead of embedding Evidence source/output path state. Sessio
 context caps warnings and coordination claims, reports omitted counts, and regenerates
 the injected context from that compact projection. Readiness keeps every blocker
 inline; its representative p95 blocker fixture remains within the same 32 KiB budget.
+
+Transport-economy certification uses a reproducible baseline, not anecdotal token
+claims. The baseline receives the same Session, Task, Verify, Readiness, Impact, Work
+Queue, Action catalog, and Action run state as raw unbounded JSON, and it has no
+reusable-Evidence linker. The benchmark reports JSON bytes, tool calls, reusable-run
+links, repeated executions, and machine-local decode-plus-next-action-selection time.
+Timing explicitly excludes model, process, and network latency. Generated results live
+in `docs/reference/generated/agent-transport-economy-benchmark.md` and are regenerated
+with `pnpm benchmark:transport`.

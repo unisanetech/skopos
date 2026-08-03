@@ -14,6 +14,7 @@
     "release:check": "pnpm --filter @skopos/cli exec -- vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts",
     "release:smoke": "pnpm build && pnpm --filter @skopos/cli release:smoke",
     "proof": "pnpm --filter @skopos/cli proof",
+    "benchmark:transport": "pnpm --filter @skopos/cli benchmark:transport",
     "instructions:sync": "pnpm exec node --import tsx packages/cli/src/cli.ts instructions sync . --json",
     "skopos:init": "pnpm exec node --import tsx packages/cli/src/cli.ts init . --json",
     "skopos:scan": "pnpm exec node --import tsx packages/cli/src/cli.ts scan . --json",

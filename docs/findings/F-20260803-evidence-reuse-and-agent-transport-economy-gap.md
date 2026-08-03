@@ -102,7 +102,14 @@ The exact-reuse interaction slice is implemented:
    inline
 10. representative p95 Session and Readiness payloads remain below 32 KiB while
     Readiness retains every blocker
+11. the generated eight-surface benchmark reports p50 and p95 context bytes, tool
+    calls, reusable-run links, repeated executions, and machine-local
+    time-to-next-correct-action against an explicit plain-agent baseline
+12. the p95 fixture reduces the measured raw JSON payload by more than 98%, uses one
+    batch Evidence-reuse call instead of one validation call per requirement, performs
+    no repeated Action execution, and keeps every compact surface below 32 KiB
 
-This Finding remains active only for the full cross-command and plain-agent benchmark
-matrix. The runtime and CLI reuse, pagination, artifact-reference, and representative
-p50/p95 budget contracts are implemented.
+All acceptance criteria are satisfied. The benchmark is reproducible with
+`pnpm benchmark:transport`; its generated report is
+`docs/reference/generated/agent-transport-economy-benchmark.md`. The Finding remains
+in the active directory only until the closing Task is archived atomically.

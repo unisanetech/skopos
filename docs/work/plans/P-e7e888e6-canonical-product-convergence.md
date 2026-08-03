@@ -35,6 +35,11 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Completed the agent-transport economy workstream with a reproducible
+  eight-surface p50/p95 benchmark. It measures context bytes, tool calls, reusable-run
+  links, repeated executions, and local next-action selection against an explicit raw
+  plain-agent baseline; the p95 compact payload is more than 98% smaller and every
+  compact surface remains below 32 KiB.
 - `2026-08-03`: Bounded Action-run output and certified representative Session and
   Readiness transport. Output paths, warnings, and claims report capped slices plus
   omitted counts; capability/effect failures remain inline; full Action output points

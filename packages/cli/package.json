@@ -37,6 +37,7 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/canonical-surface.test.ts src/__tests__/compact-command-output.test.ts src/__tests__/instructions-sync-contract.test.ts src/__tests__/action-evidence.test.ts src/__tests__/verification-recommendation-evidence.test.ts src/__tests__/task-change-scope.test.ts src/__tests__/task-portability.test.ts src/__tests__/host-projection-model.test.ts src/__tests__/host-actor-binding.test.ts src/__tests__/session-context-contract.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/coordination-lifecycle.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-approval.test.ts src/__tests__/adoption-verification.test.ts src/__tests__/project-artifact.test.ts src/__tests__/source-dependency-digest.test.ts src/__tests__/document-catalog.test.ts src/__tests__/scope-registry.test.ts",
     "test:e2e": "vitest run src/__tests__/canonical-surface.test.ts src/__tests__/task-portability.test.ts",
+    "benchmark:transport": "node --import tsx src/benchmarks/agent-transport-economy.ts --write",
     "proof": "vitest run src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-verification.test.ts",
     "release:smoke": "vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts"
   },
