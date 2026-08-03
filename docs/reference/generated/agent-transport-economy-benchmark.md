@@ -12,7 +12,7 @@ view: current
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
-  - ../../findings/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
+  - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
 ---
 
 # Agent Transport Economy Benchmark
@@ -21,8 +21,8 @@ relatedDocs:
 
 | Fixture | Items | Plain bytes | Skopos bytes | Byte reduction | Plain calls | Skopos calls | Reused links | Plain reruns | Skopos reruns | Plain next action p50/p95 ms | Skopos next action p50/p95 ms | Largest compact surface |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| p50 | 50 | 78,665 | 25,488 | 67.6% | 58 | 9 | 50 | 50 | 0 | 0.156 / 0.175 | 0.044 / 0.051 | 10,101 |
-| p95 | 1,000 | 1,540,321 | 25,528 | 98.3% | 1008 | 9 | 1000 | 1000 | 0 | 2.726 / 2.918 | 0.042 / 0.047 | 10,105 |
+| p50 | 50 | 78,665 | 25,488 | 67.6% | 58 | 9 | 50 | 50 | 0 | 0.160 / 0.170 | 0.046 / 0.051 | 10,101 |
+| p95 | 1,000 | 1,540,321 | 25,528 | 98.3% | 1008 | 9 | 1000 | 1000 | 0 | 2.703 / 2.889 | 0.042 / 0.043 | 10,105 |
 
 Every compact command surface remained below the declared 32,768 byte budget, including the p95 fixture. Every current blocker remains inline.
 

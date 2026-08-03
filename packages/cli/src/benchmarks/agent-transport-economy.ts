@@ -108,7 +108,7 @@ view: current
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
-  - ../../findings/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
+  - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
 ---
 
 # Agent Transport Economy Benchmark

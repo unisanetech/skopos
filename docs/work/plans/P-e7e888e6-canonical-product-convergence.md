@@ -25,7 +25,7 @@ relatedDocs:
   - ../../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
   - ../../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
   - ../../findings/F-20260803-session-task-recovery-and-disposition-gap.md
-  - ../../findings/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
+  - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
   - ../../findings/F-20260803-action-hermeticity-and-effect-classification-gap.md
   - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
 reviewCycle: per phase
@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Replaced substring-only destructive, vendor, and security ask-back
+  inference with evidence-based subject-intent predicates, added explicit no-change
+  outcomes, and covered observed operational homonyms plus concrete positive cases.
+  Archived the completed Evidence reuse and transport economy Finding.
 - `2026-08-03`: Completed the agent-transport economy workstream with a reproducible
   eight-surface p50/p95 benchmark. It measures context bytes, tool calls, reusable-run
   links, repeated executions, and local next-action selection against an explicit raw

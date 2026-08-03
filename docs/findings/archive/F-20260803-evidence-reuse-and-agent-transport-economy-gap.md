@@ -1,22 +1,22 @@
 ---
 title: Evidence Reuse And Agent Transport Economy Gap
-status: active
+status: resolved
 severity: SHOULD
 owner: skopos-core
 id: F-20260803-evidence-reuse-and-agent-transport-economy-gap
 scope: skopos
 role: finding
-lifecycle: active
+lifecycle: historical
 authority: supporting
 provenance: observed
-view: current
+view: transition
 lastUpdated: 2026-08-03
 relatedDocs:
-  - ../architecture/agent-native-operating-model.md
-  - ../architecture/evidence-and-readiness-model.md
-  - ../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
-  - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../work/plans/P-e7e888e6-canonical-product-convergence.md
+  - ../../architecture/agent-native-operating-model.md
+  - ../../architecture/evidence-and-readiness-model.md
+  - ../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
+  - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: close when reusable Evidence linking and bounded progressive transport meet measured budgets
 ---
 
@@ -111,5 +111,6 @@ The exact-reuse interaction slice is implemented:
 
 All acceptance criteria are satisfied. The benchmark is reproducible with
 `pnpm benchmark:transport`; its generated report is
-`docs/reference/generated/agent-transport-economy-benchmark.md`. The Finding remains
-in the active directory only until the closing Task is archived atomically.
+`docs/reference/generated/agent-transport-economy-benchmark.md`. The Finding was
+archived after the benchmark Task closed with valid typecheck, focused behavior, and
+acceptance Evidence.

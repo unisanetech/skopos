@@ -212,7 +212,7 @@ const buildDecisionQuestions = ({
 
   if (
     configuredDecisionTypes.has('destructive-migration') &&
-    matchesAny(normalizedGoal, ['migrat', 'rename', 'remove', 'delete', 'drop', 'replace'])
+    hasDestructiveMigrationIntent(normalizedGoal)
   ) {
     questions.push({
       id: 'plan.destructive-migration',
@@ -234,26 +234,19 @@ const buildDecisionQuestions = ({
           label: 'Hard cutover',
           rationale: 'Use only when an immediate break is intentional and fully understood.',
         },
+        {
+          id: 'no-destructive-change',
+          label: 'No destructive change',
+          rationale:
+            'Use when the classified wording does not actually rename, remove, or migrate persisted or public state.',
+        },
       ],
     });
   }
 
   if (
     configuredDecisionTypes.has('vendor-choice') &&
-    matchesAny(normalizedGoal, [
-      'vendor',
-      'provider',
-      'stripe',
-      'database',
-      'postgres',
-      'mysql',
-      'mongodb',
-      'redis',
-      'storage',
-      'billing',
-      'email',
-      'queue',
-    ])
+    hasVendorChoiceIntent(normalizedGoal)
   ) {
     questions.push({
       id: 'plan.vendor-choice',
@@ -280,17 +273,7 @@ const buildDecisionQuestions = ({
 
   if (
     configuredDecisionTypes.has('security-privacy-change') &&
-    matchesAny(normalizedGoal, [
-      'auth',
-      'security',
-      'privacy',
-      'permission',
-      'rbac',
-      'secret',
-      'token',
-      'session',
-      'scope',
-    ])
+    hasSecurityPrivacyChangeIntent(normalizedGoal)
   ) {
     questions.push({
       id: 'plan.security-privacy-change',
@@ -313,6 +296,12 @@ const buildDecisionQuestions = ({
           label: 'Implement fast path',
           rationale: 'Use only when the required policy is already settled and documented.',
         },
+        {
+          id: 'no-security-change',
+          label: 'No security change',
+          rationale:
+            'Use when the classified wording does not actually change authentication, authorization, privacy, or security behavior.',
+        },
       ],
     });
   }
@@ -322,6 +311,42 @@ const buildDecisionQuestions = ({
 
 const matchesAny = (goal: string, patterns: string[]): boolean =>
   patterns.some((pattern) => goal.includes(pattern));
+
+const removeOperationalHomonyms = (goal: string): string =>
+  goal.replace(
+    /\b(provider protocol|session context|token budget|workspace scope|scope confirmation)\b/g,
+    ' ',
+  );
+
+const hasDestructiveMigrationIntent = (goal: string): boolean => {
+  const classifiedGoal = removeOperationalHomonyms(goal);
+  const destructiveTarget =
+    /\b(api|column|contract|data|database|directory|endpoint|field|file|module|package|provider|queue|record|route|schema|storage|table|vendor)\b/;
+  const directDestructiveVerb = /\b(delete|drop|remove|rename)\b/;
+  const migrationVerb = /\b(migrate|migration|move|replace|switch)\b/;
+  return (
+    destructiveTarget.test(classifiedGoal) &&
+    (directDestructiveVerb.test(classifiedGoal) || migrationVerb.test(classifiedGoal))
+  );
+};
+
+const hasVendorChoiceIntent = (goal: string): boolean => {
+  const classifiedGoal = removeOperationalHomonyms(goal);
+  const providerTarget =
+    /\b(billing|database|email|mongodb|mysql|postgres|provider|queue|redis|storage|stripe|vendor)\b/;
+  const choiceIntent = /\b(adopt|choose|migrate|move|replace|select|switch)\b/;
+  const explicitChoice = /\b(provider|vendor)\s+(choice|selection|replacement|migration)\b/;
+  return explicitChoice.test(classifiedGoal) || (providerTarget.test(classifiedGoal) && choiceIntent.test(classifiedGoal));
+};
+
+const hasSecurityPrivacyChangeIntent = (goal: string): boolean => {
+  const classifiedGoal = removeOperationalHomonyms(goal);
+  const securityTarget =
+    /\b(access control|auth|authentication|authorization|credential|oauth|permission|privacy|rbac|secret|security)\b/;
+  const changeIntent =
+    /\b(add|change|enforce|fix|grant|implement|migrate|redesign|refactor|remove|replace|restrict|revoke|switch)\b/;
+  return securityTarget.test(classifiedGoal) && changeIntent.test(classifiedGoal);
+};
 
 interface BuildRisksInput {
   scanSummary: SkoposScanSummary;
