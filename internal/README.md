@@ -9,7 +9,14 @@ Current active internal surface:
 1. `evals/proof-phase-benchmarks.json` for the brownfield proof harness, including benchmark category and priority metadata
 2. `evals/proof-phase-scorecard.ts` for the shared proof scorecard contract and scoring policy
 3. `evals/proof-phase-baseline.json` for committed scorecard-baseline comparison
-4. `.skopos/evidence/proof/latest-report.json` as an optional runtime-managed output written by the proof harness for the latest scorecard and baseline comparison
+4. `evals/operational-reliability-baseline.json` for observed-versus-target metrics from generic reliability characterization fixtures
+5. `.skopos/evidence/proof/latest-report.json` as an optional runtime-managed output written by the proof harness for the latest scorecard and baseline comparison
+
+The operational reliability baseline is descriptive, not accepted target behavior. A
+characterization test locks the reproducible current measurement while the adjacent
+target records the intended zero-false-selection contract. Implementation Tasks should
+move the observed metrics toward the target and update the baseline in the same proven
+change.
 
 Current proof benchmark shape now includes:
 

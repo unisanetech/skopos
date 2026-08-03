@@ -55,3 +55,11 @@ The proof harness now also compares the latest scorecard against:
 The same proof run now also persists the latest scorecard and baseline comparison to:
 
 1. `.skopos/evidence/proof/latest-report.json`
+
+Operational reliability characterization lives in
+`packages/cli/src/__tests__/operational-reliability-baseline.test.ts`, backed by
+`internal/evals/operational-reliability-baseline.json`. The first scenario creates a
+generic shared dirty worktree with a narrow Task Scope and independent other work. It
+records the current proof-scope amplification separately from the accepted target and
+keeps a clean proportional control case. A passing characterization test means the
+measurement is reproducible; it does not mean the recorded defect is acceptable.

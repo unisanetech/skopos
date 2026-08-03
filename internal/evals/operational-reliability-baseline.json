@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "operational-reliability-baseline",
+  "status": "observed",
+  "scenario": {
+    "id": "mixed-worktree-task-proof-scope-amplification",
+    "fixture": {
+      "preExistingDirtyPathCount": 64,
+      "postAdmissionOtherWorkMutationCount": 1,
+      "taskOwnedMutationCount": 1
+    },
+    "observed": {
+      "taskProofChangedPathCount": 2,
+      "ignoredPreExistingPathCount": 63,
+      "otherWorkExcludedPathCount": 0,
+      "selectedActionCount": 2,
+      "falseActionSelectionCount": 1
+    },
+    "target": {
+      "taskProofChangedPathCount": 1,
+      "ignoredPreExistingPathCount": 63,
+      "otherWorkExcludedPathCount": 1,
+      "selectedActionCount": 1,
+      "falseActionSelectionCount": 0
+    },
+    "control": {
+      "taskProofChangedPathCount": 1,
+      "ignoredPreExistingPathCount": 64,
+      "otherWorkExcludedPathCount": 0,
+      "selectedActionCount": 1,
+      "falseActionSelectionCount": 0
+    }
+  }
+}
