@@ -4,7 +4,11 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { getSkoposCoordinationStatus } from '../../../runtime/src/application/coordination/coordination.service.js';
+import {
+  getSkoposCoordinationStatus,
+  snapshotSkoposCoordinationTask,
+} from '../../../runtime/src/application/coordination/coordination.service.js';
+import { captureSkoposTaskPathStates } from '../../../verification/src/application/task-change-scope/task-change-scope.service.js';
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 import { buildSkoposSessionContextRuntime } from '../../../runtime/src/application/session/session-context.service.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
@@ -131,6 +135,37 @@ describe('coordination-aware agent lifecycle', () => {
     expect(status.sessions).toHaveLength(1);
     expect(status.reservations).toHaveLength(1);
     expect(status.claims).toHaveLength(1);
+  });
+
+  it('snapshots directory claims as recursive immutable path state', async () => {
+    const root = await createWorkspace();
+    await writeFile(join(root, 'src/domain/entity.ts'), 'export const entity = 1;\n', 'utf8');
+    const started = await buildSkoposStartRuntime({
+      cwd: root,
+      goal: 'Prove the integration directory snapshot',
+      actor: 'agent-a',
+      sessionId: 'host-session-snapshot',
+      host: 'codex',
+      proofSubjectKind: 'project-integration',
+      ownedPaths: ['src/domain'],
+    });
+
+    const result = await snapshotSkoposCoordinationTask({
+      cwd: root,
+      taskId: started.task.id,
+      sessionId: 'host-session-snapshot',
+    });
+    const directoryState = result.snapshot.paths.find(
+      (entry) => entry.path === 'src/domain',
+    );
+    expect(directoryState).toBeDefined();
+
+    await writeFile(join(root, 'src/domain/entity.ts'), 'export const entity = 2;\n', 'utf8');
+    const [changedState] = await captureSkoposTaskPathStates({
+      workspaceRoot: root,
+      paths: ['src/domain'],
+    });
+    expect(changedState?.digest).not.toBe(directoryState?.digest);
   });
 });
 

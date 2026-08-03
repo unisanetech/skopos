@@ -128,6 +128,45 @@ describe('operational reliability baseline', () => {
 
     expect(metrics).toEqual(baseline.scenario.control);
   });
+
+  it('includes the explicitly owned cross-Scope surface for project integration proof', async () => {
+    const baseline = await loadBaseline();
+    const workspaceRoot = await createDirtyWorkspace(
+      baseline.scenario.fixture.preExistingDirtyPathCount,
+    );
+    const integrationScope = await captureSkoposTaskChangeScope({
+      workspaceRoot,
+      declaredOwnedPaths: ['scopes'],
+    });
+    await writeFile(
+      join(workspaceRoot, TASK_PATH),
+      'export const owned = "integration candidate";\n',
+      'utf8',
+    );
+
+    const changes = await resolveSkoposTaskChangedPaths({
+      workspaceRoot,
+      changeScope: integrationScope,
+      currentTaskId: 'T-integration',
+    });
+    const selection = matchSkoposRequiredActionsForImpact({
+      actions,
+      guards,
+      changed: changes.changedPaths.map(toImpactEntry),
+      phase: 'closure',
+      risk: 'standard',
+    });
+
+    expect(changes.changedPaths).toHaveLength(
+      baseline.scenario.fixture.preExistingDirtyPathCount + 1,
+    );
+    expect(changes.ignoredPreExistingPaths).toEqual([]);
+    expect(selection.actions.map((action) => action.id).sort()).toEqual([
+      'quality.other-scope',
+      EXPECTED_TASK_ACTION_ID,
+    ]);
+    expect(selection.actions.every((action) => action.reason.length > 0)).toBe(true);
+  });
 });
 
 const loadBaseline = async (): Promise<OperationalReliabilityBaseline> =>

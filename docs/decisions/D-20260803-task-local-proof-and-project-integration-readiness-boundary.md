@@ -10,13 +10,13 @@ authority: supporting
 provenance: accepted
 view: target
 date: 2026-08-03
-implementationStatus: partial
+implementationStatus: complete
 lastUpdated: 2026-08-03
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../architecture/evidence-and-readiness-model.md
   - ../architecture/agent-native-operating-model.md
-  - ../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../findings/archive/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
   - ../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when Task impact, snapshot verification, or integration Readiness changes
@@ -26,6 +26,12 @@ reviewCycle: when Task impact, snapshot verification, or integration Readiness c
 
 ## Changelog
 
+- `2026-08-03`: Completed the Decision. Task, Verification, and Readiness artifacts
+  now carry an explicit proof subject and stable baseline id; project-integration
+  Tasks require an owned surface and are detailed high-impact work. Selected generator
+  outputs retain causal attribution, live Actions require explicit overlay-safe
+  declarations, recursive directory claims enter immutable snapshots, and generic
+  mixed-worktree integration proof passes.
 - `2026-08-03`: Implemented Task-local path attribution and Action-selection
   isolation. Declared ownership and digest-matched current-Task mutations enter Task
   proof; unchanged admission dirt, other-Task mutations, and unattributed changes
@@ -139,6 +145,7 @@ the Task model.
    contaminated worktrees
 6. require explicit Project integration Readiness before publication or release
 
-Current implementation satisfies requirements 2 through 4 for direct path
-classification and selection. Requirements 1, 5, and 6 remain open together with
-generated-output/dependency attribution and immutable snapshot coverage.
+All requirements are implemented. Task and integration subjects share the same
+canonical Task and Readiness lifecycle; high-impact closure requires a current
+immutable Task snapshot, while live Action Evidence is valid only for a declaration
+that explicitly records overlay-safe workspace execution.

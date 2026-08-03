@@ -1,23 +1,23 @@
 ---
 title: Task Proof Boundary And Dirty-Worktree Isolation Gap
-status: active
+status: resolved
 severity: MUST
 owner: skopos-core
 id: F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap
 scope: skopos
 role: finding
-lifecycle: active
+lifecycle: historical
 authority: supporting
 provenance: observed
-view: current
+view: transition
 lastUpdated: 2026-08-03
 relatedDocs:
-  - ../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
-  - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - ../architecture/evidence-and-readiness-model.md
-  - ../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
-  - ../work/plans/P-e7e888e6-canonical-product-convergence.md
-reviewCycle: close when isolated Task proof and explicit Project integration proof pass the adopter matrix
+  - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
+  - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../architecture/evidence-and-readiness-model.md
+  - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
+  - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
+reviewCycle: archived after isolated Task and explicit project-integration proof passed
 ---
 
 # Task Proof Boundary And Dirty-Worktree Isolation Gap
@@ -30,13 +30,14 @@ does not preserve that contract reliably in a large shared dirty worktree. Impac
 Guard resolution can absorb unrelated live-tree changes, turning a narrow Task closure
 into an implicit workspace integration or release check.
 
-The first mitigation is implemented: verification classifies each live changed path
+Verification now classifies each live changed path
 against declared Task ownership, the admission digest, and the latest post-admission
 digest-matched coordination mutation. Only declared/current-Task paths drive impact.
 Unchanged pre-existing paths, other-Task paths, and external-unattributed paths remain
 visible in detailed proof artifacts and as counts in compact output. The Finding stays
 open because generated/dependency attribution, immutable snapshot coverage, and the
-explicit Project integration subject have not yet passed the full acceptance matrix.
+explicit project-integration subjects carry stable baseline identities and pass the
+acceptance matrix.
 
 ## Observed Evidence
 
@@ -94,3 +95,22 @@ ignores 63 unchanged paths, and selects one Action with zero false selections.
    cross-Task surface and cannot reuse narrow Task closure as release proof.
 5. Snapshot and overlay-safe Action tests pass for clean, dirty, generated, deleted,
    and externally modified paths.
+
+## Resolution
+
+Task, Verification, and Readiness artifacts now name either `task-closure` or
+`project-integration` with a stable admission baseline id. Narrow Tasks derive impact
+only from owned, explicitly adopted, digest-attributed, or selected-generator output
+paths. Other-Task, unchanged pre-existing, and external-unattributed paths stay
+visible without expanding proof. An explicit project-integration Task must own its
+integration surface and is always detailed high-impact work, so the same fixture
+intentionally includes the cross-Scope candidate. High-impact closure verifies an
+immutable owned-path snapshot, and every live Action declaration must state
+`workspaceMode: overlay-safe`, which is bound into Evidence identity. Generic 64-path
+mixed-worktree, generated-output, deletion, external-change, snapshot, and live
+Unisane pilot proofs pass. Self-hosted project-integration dogfooding additionally
+proved that recursive directory claims enter the immutable snapshot; changing a
+claimed descendant invalidates its digest, and Readiness selects the newest snapshot
+by creation time rather than arbitrary digest filename order. Current-Task generated
+projections are excluded from its own digest so the closure transition is not
+self-invalidating.

@@ -280,6 +280,7 @@ const toActionCatalogEntry = (action: Parameters<typeof toPublicAction>[0]) => (
   capabilities: action.capabilities,
   effects: action.effects,
   concurrency: action.concurrency,
+  workspaceMode: action.workspaceMode,
   approval: action.requiresApproval ? 'explicit' : 'none',
   sourcePath: action.sourcePath,
 });
@@ -311,6 +312,7 @@ const toPublicAction = (action: {
     external: 'none' | 'declared';
   };
   concurrency: 'shared' | 'exclusive';
+  workspaceMode: 'overlay-safe';
   safety: string;
   requiresApproval: boolean;
   whenToUse?: string;
@@ -337,6 +339,7 @@ const toPublicAction = (action: {
   capabilities: action.capabilities,
   effects: action.effects,
   concurrency: action.concurrency,
+  workspaceMode: action.workspaceMode,
   safety: action.safety,
   approval: action.requiresApproval ? 'explicit' : 'none',
   whenToUse: action.whenToUse,

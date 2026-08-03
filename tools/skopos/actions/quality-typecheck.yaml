@@ -26,6 +26,7 @@ effects:
   artifacts: none
   external: none
 concurrency: shared
+workspaceMode: overlay-safe
 safety: read-only
 requiresApproval: false
 whenToUse: Run when changed TypeScript or project configuration can affect compile-time correctness.

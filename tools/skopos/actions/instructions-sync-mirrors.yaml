@@ -28,6 +28,7 @@ effects:
   artifacts: none
   external: none
 concurrency: exclusive
+workspaceMode: overlay-safe
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing AGENTS.md or instruction-routing guidance inside the Skopos subtree.

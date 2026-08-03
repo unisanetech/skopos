@@ -21,7 +21,7 @@ appliesTo:
   - concurrent-agents
 lastUpdated: 2026-08-03
 relatedDocs:
-  - ../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../findings/archive/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
   - ../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
   - ../architecture/evidence-and-readiness-model.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md

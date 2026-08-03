@@ -138,6 +138,7 @@ const actionFixture = (index: number) => ({
     external: 'none' as const,
   },
   concurrency: 'shared' as const,
+  workspaceMode: 'overlay-safe' as const,
   safety: 'read-only',
   requiresApproval: false,
   recommendedAfter: [],

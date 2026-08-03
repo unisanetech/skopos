@@ -23,7 +23,7 @@ relatedDocs:
   - ../archive/P-067e15c4-proof-and-benchmarking.md
   - ../archive/T-62a045f9-project-memory-self-adoption.md
   - ../../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
-  - ../../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../../findings/archive/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
   - ../../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
   - ../../findings/archive/F-20260803-action-hermeticity-and-effect-classification-gap.md
@@ -98,6 +98,11 @@ reviewCycle: per phase
   causal detailed diagnostics, compact counts, and the 64-path mixed-worktree target.
   Generated/dependency attribution, immutable snapshot proof, and explicit Project
   integration Readiness remain in the workstream.
+- `2026-08-03`: Completed the Task-local proof boundary with explicit
+  `task-closure` and `project-integration` subjects, stable admission baseline ids,
+  generated-output attribution, required overlay-safe Action declarations, immutable
+  high-impact snapshots including recursive directory claims, and generic dirty
+  multi-Scope integration proof.
 - `2026-08-03`: Added a cross-cutting operational reliability workstream from the
   downstream pilot: isolate Task proof from Project integration, complete stale
   Session and Task disposition recovery, make exact Evidence reuse interaction-cheap,

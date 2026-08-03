@@ -23,9 +23,14 @@ import {
   showSkoposTaskRuntime,
 } from '../../../runtime/src/application/task/task.service.js';
 import {
+  assessSkoposTaskReadinessRuntime,
   finishSkoposTaskRuntime,
   recordSkoposObservationEvidenceRuntime,
 } from '../../../runtime/src/application/verification/verification.service.js';
+import {
+  captureSkoposTaskPathStates,
+  digestSkoposTaskPathStates,
+} from '../../../verification/src/application/task-change-scope/task-change-scope.service.js';
 
 const temporaryRoots: string[] = [];
 const execFileAsync = promisify(execFile);
@@ -44,6 +49,50 @@ afterEach(async () => {
 });
 
 describe('tracked Task portability', () => {
+  it('names a stable task-closure proof subject by default', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Prove one narrow Task subject',
+      actor: 'agent-a',
+      ownedPaths: ['src/index.ts'],
+    });
+
+    expect(started.task.proofSubject).toEqual({
+      kind: 'task-closure',
+      baselineId: expect.stringMatching(/^baseline-[a-f0-9]{16}$/u),
+    });
+  });
+
+  it('makes project-integration proof explicit, owned, detailed, and high-impact', async () => {
+    const workspaceRoot = await createWorkspace();
+    await expect(
+      buildSkoposStartRuntime({
+        cwd: workspaceRoot,
+        goal: 'Prove the integration candidate',
+        actor: 'agent-a',
+        proofSubjectKind: 'project-integration',
+      }),
+    ).rejects.toThrow('requires at least one explicitly owned path');
+
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Prove the integration candidate',
+      actor: 'agent-a',
+      proofSubjectKind: 'project-integration',
+      ownedPaths: ['.'],
+    });
+
+    expect(started.task).toMatchObject({
+      risk: 'high-impact',
+      detail: 'detailed',
+      proofSubject: {
+        kind: 'project-integration',
+        baselineId: expect.stringMatching(/^baseline-[a-f0-9]{16}$/u),
+      },
+    });
+  });
+
   it('reconstructs disposable Task projections from tracked portable state', async () => {
     const workspaceRoot = await createWorkspace();
     const started = await buildSkoposStartRuntime({
@@ -474,6 +523,50 @@ describe('tracked Task portability', () => {
         taskId: task.id,
       }),
     ).resolves.toMatchObject({ state: 'active' });
+  });
+
+  it('selects the newest immutable snapshot by creation time instead of digest filename', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Prove newest high-impact snapshot selection',
+      actor: 'agent-a',
+      risk: 'high-impact',
+      ownedPaths: ['src/index.ts'],
+    });
+    const states = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: ['src/index.ts'],
+    });
+    const snapshotsDirectory = join(workspaceRoot, 'docs/work/tasks/snapshots');
+    await mkdir(snapshotsDirectory, { recursive: true });
+    await Promise.all([
+      writeFile(
+        join(snapshotsDirectory, `${started.task.id}-S-ffffffffffff.json`),
+        JSON.stringify({
+          createdAt: '2026-01-01T00:00:00.000Z',
+          digest: 'stale-digest',
+          paths: states,
+        }),
+        'utf8',
+      ),
+      writeFile(
+        join(snapshotsDirectory, `${started.task.id}-S-000000000000.json`),
+        JSON.stringify({
+          createdAt: '2026-02-01T00:00:00.000Z',
+          digest: digestSkoposTaskPathStates(states),
+          paths: states,
+        }),
+        'utf8',
+      ),
+    ]);
+
+    const readiness = await assessSkoposTaskReadinessRuntime({
+      cwd: workspaceRoot,
+      taskId: started.task.id,
+      target: 'close',
+    });
+    expect(readiness.blockers.join('\n')).not.toContain('snapshot');
   });
 });
 

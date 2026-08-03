@@ -44,6 +44,7 @@ describe('reviewed project capability integrations', () => {
         },
         effects: { workspace: 'none', artifacts: 'none', external: 'none' },
         concurrency: 'shared',
+        workspaceMode: 'overlay-safe',
       },
       suggestedGuard: {
         id: 'quality.typecheck',
@@ -208,6 +209,7 @@ describe('reviewed project capability integrations', () => {
               external: 'none',
             },
             concurrency: 'shared',
+            workspaceMode: 'overlay-safe',
             safety: 'read-only',
             requiresApproval: false,
             phases: ['closure'],

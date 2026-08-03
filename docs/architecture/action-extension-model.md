@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-30
+lastUpdated: 2026-08-03
 relatedDocs:
   - config-model.md
   - runtime-model.md
@@ -29,6 +29,9 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-08-03`: Required `workspaceMode: overlay-safe` for live workspace Action
+  execution and bound it into source-bound Evidence identity. Skopos rejects Action
+  declarations that do not explicitly accept mixed-worktree overlay semantics.
 - `2026-08-03`: Made Action capabilities, effects, and concurrency explicit required
   declaration fields. Added deterministic capability preflight, a distinct
   `unavailable` result, isolated per-run artifact roots, workspace-effect enforcement,
@@ -89,17 +92,20 @@ Each declaration contains:
 5. required process, network, browser, tool, secret, and service capabilities
 6. workspace, isolated-artifact, and external effects
 7. shared or exclusive concurrency
-8. read-only, artifact-producing, mutating, or destructive safety
-9. approval requirements
-10. applicable Task phases and risk levels
-11. Evidence and closure applicability
-12. ordering hints when one Action consumes another Action's output
+8. explicit `workspaceMode: overlay-safe` for live mixed-worktree execution
+9. read-only, artifact-producing, mutating, or destructive safety
+10. approval requirements
+11. applicable Task phases and risk levels
+12. Evidence and closure applicability
+13. ordering hints when one Action consumes another Action's output
 
 Capabilities and effects are not inferred from the shell command. Every manifest must
 declare them. `read-only` permits no workspace, artifact, or external effect.
 `artifact-producing` requires at least one output and the isolated artifact effect.
 A declared workspace effect requires at least one `affects` boundary; no workspace
 effect forbids `affects`. Declared external services require an external effect.
+Live Action execution is allowed only when the manifest explicitly declares
+`workspaceMode: overlay-safe`; omission is invalid rather than an inferred default.
 
 The declaration path is tracked project authority. Generated runs and Evidence remain
 local under `.skopos/**`.
@@ -184,10 +190,10 @@ Successful Action Evidence binds:
 5. actor, execution owner, time, and result
 6. freshness and invalidation rules
 
-The exact command digest includes the Action's declared capabilities, effects, and
-concurrency. A declaration change therefore invalidates reuse even when the shell
-command text is unchanged. Evidence also records those declarations in its environment
-identity; it never records secret values.
+The exact command digest includes the Action's declared capabilities, effects,
+concurrency, and workspace mode. A declaration change therefore invalidates reuse even
+when the shell command text is unchanged. Evidence also records those declarations in
+its environment identity; it never records secret values.
 
 Evidence is reusable only while every declared binding remains valid. A failed,
 timed-out, skipped, stale, or mismatched Action is not passing Evidence.

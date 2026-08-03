@@ -65,6 +65,7 @@ export const buildSkoposEvidence = async ({
     capabilities: manifest.capabilities,
     effects: manifest.effects,
     concurrency: manifest.concurrency,
+    workspaceMode: manifest.workspaceMode,
   };
   const executionKey = buildEvidenceExecutionKey({
     actionId: manifest.id,
@@ -260,6 +261,7 @@ const digestActionExecutionContract = (manifest: SkoposActionManifest): string =
     capabilities: manifest.capabilities,
     effects: manifest.effects,
     concurrency: manifest.concurrency,
+    workspaceMode: manifest.workspaceMode,
   }));
 
 export const captureSkoposActionSourceState = async ({

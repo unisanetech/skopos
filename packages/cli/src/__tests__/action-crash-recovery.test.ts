@@ -182,6 +182,7 @@ const writeRunningAction = async (
         },
         effects: { workspace: 'none', artifacts: 'none', external: 'none' },
         concurrency: 'shared',
+        workspaceMode: 'overlay-safe',
       },
       owner: { runId, actorId: 'stale-agent', leaseExpiresAt },
       freshness: { policy: 'source-bound', capturedAt: '2026-01-01T00:00:00.000Z' },

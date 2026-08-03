@@ -298,6 +298,7 @@ export const buildCompactTaskOutput = (
     title: task.title,
     goal: task.goal,
     risk: task.risk,
+    proofSubject: task.proofSubject,
     scopeId: task.scope.scope.id,
     trackedDocumentPath: task.trackedDocumentPath,
     progress: {

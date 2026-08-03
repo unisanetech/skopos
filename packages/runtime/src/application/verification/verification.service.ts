@@ -65,6 +65,7 @@ export const verifySkoposTaskRuntime = async ({
     changeScope: task.changeScope,
     currentTaskId: task.id,
     mutationAttributions,
+    generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
   const taskProjectionPaths = resolveSkoposTrackedTaskProjectionPaths(
     task.trackedDocumentPath,
@@ -226,6 +227,7 @@ export const verifySkoposTaskRuntime = async ({
     taskId: task.id,
     phase,
     risk: task.risk,
+    proofSubject: task.proofSubject,
     changedPaths: impact.changedPaths,
     ignoredPreExistingPaths: impact.ignoredPreExistingPaths ?? [],
     excludedOtherTaskPaths: impact.excludedOtherTaskPaths ?? [],
@@ -477,6 +479,7 @@ export const assessSkoposTaskReadinessRuntime = async ({
         : `Task ${task.id} is blocked from ${target}.`,
     workspaceRoot,
     taskId,
+    proofSubject: task.proofSubject,
     target,
     readiness: blockers.length === 0 ? 'ready' : 'blocked',
     taskState: task.state,
@@ -579,26 +582,40 @@ const verifyLatestTaskSnapshot = async (
 ): Promise<string | undefined> => {
   const directory = join(workspaceRoot, 'docs', 'work', 'tasks', 'snapshots');
   try {
-    const names = (await readdir(directory))
-      .filter((name) => name.startsWith(`${taskId}-S-`) && name.endsWith('.json'))
-      .sort()
-      .reverse();
-    const latestName = names[0];
-    if (!latestName) {
+    const names = (await readdir(directory)).filter(
+      (name) => name.startsWith(`${taskId}-S-`) && name.endsWith('.json'),
+    );
+    const snapshots = await Promise.all(
+      names.map(async (name) => {
+        try {
+          const snapshot = JSON.parse(
+            await readFile(join(directory, name), 'utf8'),
+          ) as {
+            createdAt?: string;
+            digest?: string;
+            paths?: Array<{ path: string; digest: string }>;
+          };
+          return { name, snapshot };
+        } catch {
+          return { name, snapshot: {} };
+        }
+      }),
+    );
+    const latest = snapshots.sort((left, right) =>
+      (right.snapshot.createdAt ?? '').localeCompare(left.snapshot.createdAt ?? '') ||
+      right.name.localeCompare(left.name),
+    )[0];
+    if (!latest) {
       return `High-impact Task ${taskId} requires an immutable Task snapshot before close Readiness.`;
     }
-    const snapshot = JSON.parse(
-      await readFile(join(directory, latestName), 'utf8'),
-    ) as {
-      digest?: string;
-      paths?: Array<{ path: string; digest: string }>;
-    };
+    const { name: latestName, snapshot } = latest;
     if (!snapshot.digest || !Array.isArray(snapshot.paths)) {
       return `Task snapshot ${latestName} is invalid.`;
     }
     const current = await captureSkoposTaskPathStates({
       workspaceRoot,
       paths: snapshot.paths.map((entry) => entry.path),
+      ignoredTaskId: taskId,
     });
     const digest = createHash('sha256')
       .update(current.map((state) => `${state.path}\0${state.digest}`).join('\n'))

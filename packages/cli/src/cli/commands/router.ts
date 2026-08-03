@@ -36,6 +36,7 @@ interface ParsedStartArgs extends ParsedPlanArgs {
   sessionId?: string;
   host?: string;
   leaseSeconds?: number;
+  proofSubjectKind?: 'task-closure' | 'project-integration';
 }
 
 interface ParsedDecideArgs {
@@ -65,6 +66,7 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     sessionId: parsed.sessionId,
     host: parsed.host,
     leaseSeconds: parsed.leaseSeconds,
+    proofSubjectKind: parsed.proofSubjectKind,
   });
 
   if (parsed.json) {
@@ -237,6 +239,7 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
   let host: string | undefined;
   let leaseSeconds: number | undefined;
   let priority: number | undefined;
+  let proofSubjectKind: ParsedStartArgs['proofSubjectKind'];
   const valueFlags = new Map([
     ['--accept', acceptanceCriteria],
     ['--non-goal', nonGoals],
@@ -262,7 +265,8 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
       argument === '--session-id' ||
       argument === '--host' ||
       argument === '--lease-seconds' ||
-      argument === '--priority'
+      argument === '--priority' ||
+      argument === '--proof-subject'
     ) {
       const nextValue = args[index + 1];
       if (!nextValue || nextValue.startsWith('-')) {
@@ -282,6 +286,9 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
           throw new Error('--priority requires an integer from 0 to 100.');
         }
       }
+      if (argument === '--proof-subject') {
+        proofSubjectKind = parseProofSubjectKind(nextValue);
+      }
       index += 1;
       continue;
     }
@@ -295,6 +302,12 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
         throw new Error(`Missing value for ${inlineFlag}.`);
       }
       valueFlags.get(inlineFlag)!.push(value);
+      continue;
+    }
+    if (argument.startsWith('--proof-subject=')) {
+      proofSubjectKind = parseProofSubjectKind(
+        argument.slice('--proof-subject='.length),
+      );
       continue;
     }
 
@@ -312,7 +325,15 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
     sessionId,
     host,
     leaseSeconds,
+    proofSubjectKind,
   };
+};
+
+const parseProofSubjectKind = (
+  value: string,
+): NonNullable<ParsedStartArgs['proofSubjectKind']> => {
+  if (value === 'task-closure' || value === 'project-integration') return value;
+  throw new Error(`Unknown proof subject: ${value}.`);
 };
 
 const parsePlanArgs = (args: string[]): ParsedPlanArgs => {

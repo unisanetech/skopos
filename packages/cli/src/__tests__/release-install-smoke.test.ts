@@ -349,6 +349,7 @@ const writePackedAction = async (
     `  artifacts: ${overrides.artifactEffect ?? 'none'}`,
     `  external: ${overrides.externalEffect ?? 'none'}`,
     `concurrency: ${overrides.concurrency ?? 'shared'}`,
+    'workspaceMode: overlay-safe',
     `safety: ${overrides.safety ?? 'read-only'}`,
     'requiresApproval: false',
     'recommendedAfter: []',

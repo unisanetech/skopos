@@ -22,6 +22,7 @@ export type SkoposActionWorkspaceEffect = 'none' | 'declared';
 export type SkoposActionArtifactEffect = 'none' | 'isolated';
 export type SkoposActionExternalEffect = 'none' | 'declared';
 export type SkoposActionConcurrency = 'shared' | 'exclusive';
+export type SkoposActionWorkspaceMode = 'overlay-safe';
 export type SkoposActionProgressPhase =
   | 'admission'
   | 'preflight'
@@ -69,6 +70,7 @@ export interface SkoposActionManifest {
   capabilities: SkoposActionCapabilities;
   effects: SkoposActionEffects;
   concurrency: SkoposActionConcurrency;
+  workspaceMode: SkoposActionWorkspaceMode;
   safety: SkoposActionSafety;
   requiresApproval: boolean;
   whenToUse?: string;
@@ -180,6 +182,7 @@ export interface SkoposEvidence {
     capabilities: SkoposActionCapabilities;
     effects: SkoposActionEffects;
     concurrency: SkoposActionConcurrency;
+    workspaceMode: SkoposActionWorkspaceMode;
   };
   owner: {
     runId: string;

@@ -2,6 +2,7 @@ import type { SkoposActionRequirementEvidence } from './skopos-action.js';
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type { SkoposGuardMatch } from './skopos-guard.js';
 import type { SkoposTaskRisk } from './skopos-task.js';
+import type { SkoposProofSubject } from './skopos-task.js';
 import type { SkoposTaskPathState } from './skopos-task.js';
 import type { SkoposTaskPathAttribution } from './skopos-task.js';
 import type { SkoposScanSummary } from './skopos-scan-summary.js';
@@ -39,6 +40,7 @@ export interface SkoposVerificationArtifact extends SkoposArtifactEnvelope<'veri
   taskId: string;
   phase: SkoposVerificationPhase;
   risk: SkoposTaskRisk;
+  proofSubject: SkoposProofSubject;
   changedPaths: string[];
   ignoredPreExistingPaths: string[];
   excludedOtherTaskPaths: string[];
@@ -57,6 +59,7 @@ export type SkoposReadinessStatus = 'ready' | 'blocked';
 export interface SkoposReadinessArtifact extends SkoposArtifactEnvelope<'readiness'> {
   workspaceRoot: string;
   taskId: string;
+  proofSubject: SkoposProofSubject;
   target: SkoposReadinessTarget;
   readiness: SkoposReadinessStatus;
   taskState: string;

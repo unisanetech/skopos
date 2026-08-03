@@ -16,7 +16,7 @@ Usage:
   skopos coordination task reserve <task-id> [target] --session <id> [--json]
   skopos coordination task release <task-id> [target] --session <id> --reason <text> [--json]
   skopos coordination claim add <kind> <resource> [target] --task <id> --session <id> [--json]
-  skopos start <goal> [target] [--scope <scope>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
+  skopos start <goal> [target] [--scope <scope>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
   skopos decide <question-id> <option-id> [target] [--actor <id>] [--full] [--dry-run] [--json]
   skopos discuss append-turn [target] [--thread <id>] [--session-id <id>] [--role <user|assistant|system>] [--source-event <event>] [--transcript-path <path>] [--message <text>|--message-stdin] [--dry-run] [--json]
   skopos discuss checkpoint [target] [--dry-run] [--json]

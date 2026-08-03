@@ -36,6 +36,7 @@ effects:
   artifacts: none
   external: none
 concurrency: shared
+workspaceMode: overlay-safe
 safety: read-only
 requiresApproval: false
 whenToUse: Run after changing runtime behavior, proof fixtures, scorecard contracts, or other reliability-critical Skopos surfaces.

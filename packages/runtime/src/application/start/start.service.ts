@@ -5,6 +5,7 @@ import type {
   SkoposStartRunResult,
   SkoposTaskCoordinationState,
   SkoposTaskDetail,
+  SkoposProofSubjectKind,
   SkoposTaskRisk,
 } from '@skopos/model';
 
@@ -45,6 +46,7 @@ export interface BuildSkoposStartRuntimeOptions {
   sessionId?: string;
   host?: string;
   leaseSeconds?: number;
+  proofSubjectKind?: SkoposProofSubjectKind;
 }
 
 export const buildSkoposStartRuntime = async ({
@@ -64,6 +66,7 @@ export const buildSkoposStartRuntime = async ({
   sessionId,
   host = 'manual-cli',
   leaseSeconds,
+  proofSubjectKind,
 }: BuildSkoposStartRuntimeOptions): Promise<SkoposStartRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
@@ -90,6 +93,7 @@ export const buildSkoposStartRuntime = async ({
     detail,
     priority,
     dependencyTaskIds,
+    proofSubjectKind,
     dryRun,
   });
   let coordination: SkoposTaskCoordinationState | undefined;

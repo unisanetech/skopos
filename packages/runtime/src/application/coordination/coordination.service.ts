@@ -966,9 +966,13 @@ export const snapshotSkoposCoordinationTask = async ({
       throw new Error(`Session ${sessionId} does not own Task ${taskId}.`);
     }
     const paths = readClaims(db)
-      .filter((claim) => claim.taskId === taskId && claim.resourceKind === 'exact-path')
-      .map((claim) => claim.resourceKey);
-    const states = await captureSkoposTaskPathStates({ workspaceRoot, paths });
+      .filter((claim) => taskId === claim.taskId)
+      .map((claim) => snapshotPathForClaim(claim.resourceKind, claim.resourceKey));
+    const states = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths,
+      ignoredTaskId: taskId,
+    });
     const digest = createHash('sha256')
       .update(states.map((state) => `${state.path}\0${state.digest}`).join('\n'))
       .digest('hex');
@@ -1026,6 +1030,19 @@ export const snapshotSkoposCoordinationTask = async ({
   } finally {
     db.close();
   }
+};
+
+const snapshotPathForClaim = (
+  resourceKind: SkoposCoordinationResourceKind,
+  resourceKey: string,
+): string => {
+  if (resourceKind === 'exact-path') return resourceKey;
+  if (resourceKind === 'path-pattern' && /\/\*\*?$/u.test(resourceKey)) {
+    return resourceKey.replace(/\/\*\*?$/u, '');
+  }
+  throw new Error(
+    `Task snapshot cannot materialize ${resourceKind} claim ${resourceKey}; use an exact path or trailing /** path pattern.`,
+  );
 };
 
 export const getSkoposCoordinationStatus = async ({

@@ -16,7 +16,7 @@ relatedDocs:
   - ../standards/validation.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
-  - ../findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../findings/archive/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
 reviewCycle: when verification or closure behavior changes
 ---
 
@@ -34,6 +34,10 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Named every Task proof subject as `task-closure` or
+  `project-integration`, bound it to a stable admission baseline id, attributed
+  selected generator outputs, required explicit overlay-safe Action execution, and
+  made immutable snapshots recursively digest directory claims.
 - `2026-08-03`: Required normalized provider receipts for successful external effects
   and certified identical capability preflight through source and offline packed CLI
   hosts without persisting secret values.
@@ -174,7 +178,8 @@ path into one of five kinds:
 
 1. `task-owned`: the path is inside the Task's declared ownership
 2. `task-attributed`: the latest post-admission coordination mutation is owned by the
-   current Task and its recorded digest equals the live digest
+   current Task and its recorded digest equals the live digest, or the path is an
+   output of a generator selected by the Task
 3. `pre-existing`: the live digest still equals the admission baseline
 4. `other-task`: the latest digest-matched mutation belongs to another Task
 5. `external-unattributed`: the live path changed after admission without a matching
@@ -190,6 +195,13 @@ Declared ownership wins for overlapping paths because overlap is governed by
 coordination claims and contamination audit. A Task that intentionally adopts an
 existing dirty path therefore receives that path in its proof subject; conflicting
 ownership remains a coordination failure rather than being hidden as other work.
+
+Every Task and its Verification and Readiness artifacts name one proof subject and a
+stable admission `baselineId`. `task-closure` is the default proportional subject.
+`project-integration` must be requested explicitly, must own at least one integration
+surface, and is always detailed high-impact work. The same path attribution and
+Action-selection machinery applies; declaring the integration surface intentionally
+brings its pre-existing changes and affected Scope dependents into proof.
 
 ## Readiness
 
@@ -209,6 +221,7 @@ A Readiness report is derived, explainable, and non-mutating. It combines:
 5. instruction and Memory integrity when applicable
 6. adoption state when Project readiness is requested
 7. open Task Memory obligations and their recorded resolutions
+8. the named proof subject and immutable admission baseline identity
 
 The result is `ready`, `needs-review`, or `blocked`, with exact reasons and next safe
 actions. Readiness is not a second executor and never repairs the Project silently.
@@ -224,6 +237,14 @@ A Task can close only when:
 5. every required Memory obligation records either `memory-updated` against adopted
    canonical durable Memory or a reasoned `reviewed-no-change` resolution
 6. the Task state transition is recorded
+
+Immutable Task snapshots include exact-path claims and recursive directory claims.
+Directory digests exclude only Skopos/Git runtime state and dependency-install trees;
+any owned source descendant change makes the snapshot stale. When more than one
+snapshot exists, Readiness selects the newest by `createdAt`, never by digest-derived
+filename ordering. The current Task's generated tracked projection and snapshot files
+are excluded from its own directory digests, so verification and the closure state
+transition cannot invalidate proof; project source and other Tasks remain included.
 
 Light Tasks may use a smaller evidence set, but the report must remain honest about
 what was and was not proved.

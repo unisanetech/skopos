@@ -51,6 +51,7 @@ export const runVerifyCommand = async (args: string[]): Promise<void> => {
     'Skopos Verify',
     `Task: ${result.taskId}`,
     `Phase: ${result.phase}`,
+    `Proof subject: ${result.proofSubject.kind} (${result.proofSubject.baselineId})`,
     `Status: ${result.verificationStatus}`,
     `Summary: ${result.summary}`,
     `Changed paths: ${result.changedPaths.length}`,
@@ -82,6 +83,7 @@ export const runReadinessCommand = async (args: string[]): Promise<void> => {
   writeLines([
     'Skopos Readiness',
     `Task: ${result.taskId}`,
+    `Proof subject: ${result.proofSubject.kind} (${result.proofSubject.baselineId})`,
     `Target: ${result.target}`,
     `Readiness: ${result.readiness}`,
     `Summary: ${result.summary}`,
@@ -222,6 +224,7 @@ export const buildCompactVerificationOutput = (
   taskId: result.taskId,
   phase: result.phase,
   risk: result.risk,
+  proofSubject: result.proofSubject,
   verificationStatus: result.verificationStatus,
   summary: result.summary,
   changedPathCount: result.changedPaths.length,

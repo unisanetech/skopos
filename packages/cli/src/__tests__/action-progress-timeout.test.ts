@@ -215,6 +215,7 @@ const actionSource = [
   '  artifacts: none',
   '  external: none',
   'concurrency: shared',
+  'workspaceMode: overlay-safe',
   'safety: read-only',
   'requiresApproval: false',
   'phases: [closure]',

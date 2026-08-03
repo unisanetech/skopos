@@ -124,6 +124,7 @@ const writeManifest = async (
     '  artifacts: none',
     '  external: none',
     `concurrency: ${concurrency}`,
+    'workspaceMode: overlay-safe',
     'safety: read-only',
     'requiresApproval: false',
     'recommendedAfter: []',

@@ -9,6 +9,12 @@ import type {
 
 export type SkoposTaskRisk = 'light' | 'standard' | 'high-impact';
 export type SkoposTaskDetail = 'light' | 'standard' | 'detailed';
+export type SkoposProofSubjectKind = 'task-closure' | 'project-integration';
+
+export interface SkoposProofSubject {
+  kind: SkoposProofSubjectKind;
+  baselineId: string;
+}
 export type SkoposTaskState =
   | 'ready'
   | 'active'
@@ -97,6 +103,7 @@ export type SkoposTaskPathAttributionKind =
 export type SkoposTaskPathAttributionReason =
   | 'declared-task-ownership'
   | 'current-task-mutation'
+  | 'generated-output'
   | 'unchanged-admission-baseline'
   | 'other-task-mutation'
   | 'unattributed-post-admission-change';
@@ -166,6 +173,7 @@ export interface SkoposTaskArtifact extends SkoposArtifactEnvelope<'task'> {
   scope: SkoposResolvedScope;
   contract: SkoposTaskContractDeclaration;
   risk: SkoposTaskRisk;
+  proofSubject: SkoposProofSubject;
   priority: number;
   dependencyTaskIds: string[];
   changeScope: SkoposTaskChangeScope;

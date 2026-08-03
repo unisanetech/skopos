@@ -26,6 +26,7 @@ effects:
   artifacts: none
   external: none
 concurrency: exclusive
+workspaceMode: overlay-safe
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing routed UI state shaping, the console app shell, route structure, or other human-facing app surfaces.

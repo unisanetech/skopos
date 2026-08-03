@@ -195,6 +195,7 @@ const actionSuggestion = (
     external: 'none',
   },
   concurrency: capability.safety === 'read-only' ? 'shared' : 'exclusive',
+  workspaceMode: 'overlay-safe',
   safety: capability.safety,
   requiresApproval: capability.safety !== 'read-only',
   whenToUse: `Use when a matching Guard selects ${capability.id} for Task impact.`,

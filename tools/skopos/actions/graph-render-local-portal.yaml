@@ -29,6 +29,7 @@ effects:
   artifacts: none
   external: none
 concurrency: exclusive
+workspaceMode: overlay-safe
 safety: mutating
 requiresApproval: false
 whenToUse: Run after changing graph artifacts, portal rendering, Readiness projections, or recent activity views.

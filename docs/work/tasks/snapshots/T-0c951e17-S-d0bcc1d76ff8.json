@@ -1,0 +1,76 @@
+{
+  "snapshotId": "S-d0bcc1d76ff8",
+  "taskId": "T-0c951e17",
+  "sessionId": "proof-boundary-20260803-r2",
+  "actorId": "codex",
+  "baseRevision": "4925d45c18ae55640b20cf682fb6b65fcaefb125",
+  "paths": [
+    {
+      "path": "docs/architecture/action-extension-model.md",
+      "digest": "7499b007e9f91388b41257fb7aa2eca31f9eea91ccd3b16d318f44d519ce5ac6"
+    },
+    {
+      "path": "docs/architecture/evidence-and-readiness-model.md",
+      "digest": "e97208c9b0e07e1e694bbd2207547320ef45b6b0f34e58d50c15c9b209242753"
+    },
+    {
+      "path": "docs/decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md",
+      "digest": "4967a14a5348b7993501d787fbede35b4fc0300a87652ee655c727e6a602c684"
+    },
+    {
+      "path": "docs/findings/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/findings/archive",
+      "digest": "9384c907277c034f14ee2daa962cb903e727da6fd62b9203a57685aa5eb2d5a4"
+    },
+    {
+      "path": "docs/patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md",
+      "digest": "0948206fd48fe3f9c0d73f3c5a4f163962bc8fa772581e72a0505b31f1c24227"
+    },
+    {
+      "path": "docs/work/archive/tasks",
+      "digest": "235dd3bbb654f16a8a4b9eba0c97677b9fd6cc392c9d4675175f55492d0f7c35"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "83f74931e1c14bc499e9817417399b8337369b74e4338425410ace5883b5c974"
+    },
+    {
+      "path": "packages/cli/src/__tests__",
+      "digest": "a1d2ebd21d3536da41576ddcca725e69f865f517cf3dd590c1c8516a4691c115"
+    },
+    {
+      "path": "packages/cli/src/benchmarks",
+      "digest": "978f8dbe4514a403e10ac9fbaf5e73c867da7eb625681931e41931ef9da9ec0d"
+    },
+    {
+      "path": "packages/cli/src/cli",
+      "digest": "2ca87601190713f54dc003c256705cf00491a4426e49e556ac3b77aeba7ae71a"
+    },
+    {
+      "path": "packages/indexer/src/application",
+      "digest": "5d65eb338d57f54aada43f74c6779cd6dcd2a9f7a6ce26ba696a0d20a5d74761"
+    },
+    {
+      "path": "packages/model/src/contracts",
+      "digest": "e7f269584b2d092ed5998a09957129a1003c416e0a622718b469d2c93abab343"
+    },
+    {
+      "path": "packages/runtime/src/application",
+      "digest": "f806f06a4e871eb95f50b7244d437adf5d5bf422ee77ba936873b26eb55cf8c6"
+    },
+    {
+      "path": "packages/verification/src/application",
+      "digest": "126fe68a63354786157a96def8f0bf0207de9ade60b25c22947dc77eeb50d807"
+    },
+    {
+      "path": "tools/skopos/actions",
+      "digest": "23934d31f98021d6cc41717a2a97e58d2c233003eacb5594e992b224338430e0"
+    }
+  ],
+  "digest": "d0bcc1d76ff8af341717b218fe8e19dd2ad1e2ed82c9c7022de7c220163baf6a",
+  "createdAt": "2026-08-03T17:34:02.280Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-0c951e17-S-d0bcc1d76ff8.json"
+}

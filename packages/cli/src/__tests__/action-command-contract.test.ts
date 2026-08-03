@@ -45,6 +45,7 @@ describe('public Action command contract', () => {
         '  artifacts: isolated',
         '  external: none',
         'concurrency: shared',
+        'workspaceMode: overlay-safe',
         'safety: artifact-producing',
         'requiresApproval: false',
         'recommendedAfter: []',
@@ -77,6 +78,7 @@ describe('public Action command contract', () => {
         external: 'none',
       },
       concurrency: 'shared',
+      workspaceMode: 'overlay-safe',
       safety: 'artifact-producing',
     });
   });

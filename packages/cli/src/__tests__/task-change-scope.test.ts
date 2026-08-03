@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -159,6 +159,97 @@ describe('task-owned change scope', () => {
         reason: 'unattributed-post-admission-change',
       }],
     });
+  });
+
+  it('attributes a changed generated output to the Task that selected its generator', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    const changeScope = await captureSkoposTaskChangeScope({
+      workspaceRoot,
+      declaredOwnedPaths: ['task.txt'],
+    });
+    await writeFile(join(workspaceRoot, 'generated.txt'), 'compiled output\n', 'utf8');
+
+    await expect(
+      resolveSkoposTaskChangedPaths({
+        workspaceRoot,
+        changeScope,
+        currentTaskId: 'T-current',
+        generatedOutputPaths: ['generated.txt'],
+      }),
+    ).resolves.toEqual({
+      changedPaths: ['generated.txt'],
+      ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: [],
+      pathAttributions: [{
+        path: 'generated.txt',
+        kind: 'task-attributed',
+        reason: 'generated-output',
+        attributedTaskId: 'T-current',
+      }],
+    });
+  });
+
+  it('retains deletion of an owned path in the Task proof subject', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    const changeScope = await captureSkoposTaskChangeScope({
+      workspaceRoot,
+      declaredOwnedPaths: ['task.txt'],
+    });
+    execFileSync('git', ['rm', 'task.txt'], { cwd: workspaceRoot });
+
+    const result = await resolveSkoposTaskChangedPaths({
+      workspaceRoot,
+      changeScope,
+      currentTaskId: 'T-current',
+    });
+
+    expect(result.changedPaths).toEqual(['task.txt']);
+    expect(result.pathAttributions).toEqual([{
+      path: 'task.txt',
+      kind: 'task-owned',
+      reason: 'declared-task-ownership',
+      attributedTaskId: 'T-current',
+    }]);
+  });
+
+  it('keeps directory snapshots stable across the same Task generated projections', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    await mkdir(join(workspaceRoot, 'docs/work/archive/tasks'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'docs/work/tasks/snapshots'), { recursive: true });
+    await writeFile(
+      join(workspaceRoot, 'docs/work/archive/tasks/T-current-generated.md'),
+      'generated state one\n',
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, 'docs/work/tasks/snapshots/T-current-S-old.json'),
+      '{"state":1}\n',
+      'utf8',
+    );
+    const [before] = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: ['.'],
+      ignoredTaskId: 'T-current',
+    });
+
+    await writeFile(
+      join(workspaceRoot, 'docs/work/archive/tasks/T-current-generated.md'),
+      'generated state two\n',
+      'utf8',
+    );
+    await writeFile(
+      join(workspaceRoot, 'docs/work/tasks/snapshots/T-current-S-new.json'),
+      '{"state":2}\n',
+      'utf8',
+    );
+    const [after] = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: ['.'],
+      ignoredTaskId: 'T-current',
+    });
+
+    expect(after?.digest).toBe(before?.digest);
   });
 
   it('rejects declared ownership outside the project workspace', async () => {

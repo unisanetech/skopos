@@ -530,6 +530,7 @@ const manifest: SkoposActionManifest = {
     external: 'none',
   },
   concurrency: 'exclusive',
+  workspaceMode: 'overlay-safe',
   safety: 'mutating',
   requiresApproval: false,
   requiredForDone: true,

@@ -6,6 +6,7 @@ import { buildSkoposDocumentCatalog } from '@skopos/indexer';
 import type {
   SkoposDocumentKnowledgeEntry,
   SkoposPlanResult,
+  SkoposProofSubjectKind,
   SkoposTaskArtifact,
   SkoposTaskContractDeclaration,
   SkoposTaskDetail,
@@ -47,6 +48,7 @@ export interface CreateSkoposTaskRuntimeOptions {
   detail?: SkoposTaskDetail;
   priority?: number;
   dependencyTaskIds?: string[];
+  proofSubjectKind?: SkoposProofSubjectKind;
   dryRun?: boolean;
 }
 
@@ -63,6 +65,7 @@ export const prepareSkoposTaskRuntime = async ({
   detail,
   priority = 0,
   dependencyTaskIds = [],
+  proofSubjectKind = 'task-closure',
   dryRun = false,
 }: CreateSkoposTaskRuntimeOptions): Promise<SkoposTaskRunResult> => {
   const workspaceRoot = resolve(cwd);
@@ -79,7 +82,12 @@ export const prepareSkoposTaskRuntime = async ({
     nonGoals,
     constraints,
   });
-  const resolvedRisk = risk ?? inferTaskRisk(plan);
+  const resolvedRisk = proofSubjectKind === 'project-integration'
+    ? 'high-impact'
+    : risk ?? inferTaskRisk(plan);
+  if (proofSubjectKind === 'project-integration' && ownedPaths.length === 0) {
+    throw new Error('Project-integration proof requires at least one explicitly owned path.');
+  }
   const declaredImpact =
     ownedPaths.length > 0
       ? await buildSkoposImpactReport({
@@ -110,7 +118,9 @@ export const prepareSkoposTaskRuntime = async ({
   const hasBlockingQuestions = questions.entries.some(
     (question) => question.blocking && question.status === 'open',
   );
-  const resolvedDetail = detail ?? inferTaskDetail(resolvedRisk);
+  const resolvedDetail = proofSubjectKind === 'project-integration'
+    ? 'detailed'
+    : detail ?? inferTaskDetail(resolvedRisk);
   const memoryObligations = await inferSkoposTaskMemoryObligationsRuntime({
     cwd: workspaceRoot,
     plan,
@@ -126,6 +136,11 @@ export const prepareSkoposTaskRuntime = async ({
     scopeMatchedBy: plan.scope.matchedBy,
     taskId,
     title: plan.title,
+  });
+  const changeScope = await captureSkoposTaskChangeScope({
+    workspaceRoot,
+    declaredOwnedPaths: ownedPaths,
+    capturedAt: now,
   });
   const task: SkoposTaskArtifact = {
     schemaVersion: 1,
@@ -147,13 +162,13 @@ export const prepareSkoposTaskRuntime = async ({
     scope: plan.scope,
     contract,
     risk: resolvedRisk,
+    proofSubject: {
+      kind: proofSubjectKind,
+      baselineId: buildProofSubjectBaselineId(changeScope),
+    },
     priority: normalizeTaskPriority(priority),
     dependencyTaskIds: [...new Set(dependencyTaskIds.map((id) => id.trim()).filter(Boolean))],
-    changeScope: await captureSkoposTaskChangeScope({
-      workspaceRoot,
-      declaredOwnedPaths: ownedPaths,
-      capturedAt: now,
-    }),
+    changeScope,
     steps: buildTaskSteps(plan, selectedActions),
     selectedActions,
     selectedGuardIds: selectedGuards.map((guard) => guard.id),
@@ -213,6 +228,19 @@ export const prepareSkoposTaskRuntime = async ({
     recommendations,
   };
 };
+
+const buildProofSubjectBaselineId = (
+  changeScope: SkoposTaskArtifact['changeScope'],
+): string => `baseline-${createHash('sha256')
+  .update(JSON.stringify({
+    trackingMode: changeScope.trackingMode ?? 'unavailable',
+    baselineRevision: changeScope.baselineRevision ?? null,
+    baselineDirtyPaths: changeScope.baselineDirtyPaths,
+    declaredOwnedPaths: changeScope.declaredOwnedPaths,
+    capturedAt: changeScope.capturedAt,
+  }))
+  .digest('hex')
+  .slice(0, 16)}`;
 
 const normalizeTaskPriority = (priority: number): number => {
   if (!Number.isInteger(priority) || priority < 0 || priority > 100) {
@@ -1140,6 +1168,8 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
     'provenance: accepted',
     `view: ${terminal ? 'exception' : 'current'}`,
     `risk: ${task.risk}`,
+    `proofSubject: ${task.proofSubject.kind}`,
+    `proofBaseline: ${task.proofSubject.baselineId}`,
     `lastUpdated: ${date}`,
     ...(task.parentTaskId ? [`parentTaskId: ${task.parentTaskId}`] : []),
     ...(task.planIds.length > 0 ? ['relatedPlans:', ...task.planIds.map((id) => `  - ${id}`)] : []),

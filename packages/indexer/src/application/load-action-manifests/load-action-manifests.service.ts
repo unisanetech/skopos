@@ -45,6 +45,7 @@ const actionManifestSchema = z
       external: z.enum(['none', 'declared']),
     }).strict(),
     concurrency: z.enum(['shared', 'exclusive']),
+    workspaceMode: z.literal('overlay-safe'),
     safety: z.enum(['read-only', 'artifact-producing', 'mutating', 'destructive']),
     requiresApproval: z.boolean().default(false),
     whenToUse: z.string().min(1).optional(),

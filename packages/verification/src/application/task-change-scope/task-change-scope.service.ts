@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import { relative, resolve } from 'node:path';
+import { lstat, readFile, readdir, readlink } from 'node:fs/promises';
+import { join, relative, resolve } from 'node:path';
 
 import type {
   SkoposImpactEntry,
@@ -28,6 +28,7 @@ export interface ResolveSkoposTaskChangedPathsOptions {
   changeScope: SkoposTaskChangeScope;
   currentTaskId?: string;
   mutationAttributions?: SkoposTaskPathMutationAttribution[];
+  generatedOutputPaths?: string[];
 }
 
 export interface SkoposTaskChangedPaths {
@@ -82,6 +83,7 @@ export const resolveSkoposTaskChangedPaths = async ({
   changeScope,
   currentTaskId,
   mutationAttributions = [],
+  generatedOutputPaths = [],
 }: ResolveSkoposTaskChangedPathsOptions): Promise<SkoposTaskChangedPaths> => {
   const dirtyPaths =
     changeScope.trackingMode === 'unavailable'
@@ -119,6 +121,17 @@ export const resolveSkoposTaskChangedPaths = async ({
         path: current.path,
         kind: 'task-owned',
         reason: 'declared-task-ownership',
+        ...(currentTaskId ? { attributedTaskId: currentTaskId } : {}),
+      });
+      continue;
+    }
+
+    if (pathIsDeclaredOwned(current.path, generatedOutputPaths)) {
+      changedPaths.push(current.path);
+      pathAttributions.push({
+        path: current.path,
+        kind: 'task-attributed',
+        reason: 'generated-output',
         ...(currentTaskId ? { attributedTaskId: currentTaskId } : {}),
       });
       continue;
@@ -199,16 +212,18 @@ const selectLatestMutationAttributions = ({
 export const captureSkoposTaskPathStates = async ({
   workspaceRoot,
   paths,
+  ignoredTaskId,
 }: {
   workspaceRoot: string;
   paths: string[];
+  ignoredTaskId?: string;
 }): Promise<SkoposTaskPathState[]> =>
   Promise.all(
     [...new Set(paths.map((path) => normalizeWorkspacePath(workspaceRoot, path)))]
       .sort()
       .map(async (path) => ({
         path,
-        digest: await digestWorkspacePath(workspaceRoot, path),
+        digest: await digestWorkspacePath(workspaceRoot, path, ignoredTaskId),
       })),
   );
 
@@ -222,9 +237,21 @@ export const digestSkoposTaskPathStates = (
 const digestWorkspacePath = async (
   workspaceRoot: string,
   workspacePath: string,
+  ignoredTaskId?: string,
 ): Promise<string> => {
   try {
-    const contents = await readFile(resolve(workspaceRoot, workspacePath));
+    const absolutePath = resolve(workspaceRoot, workspacePath);
+    const info = await lstat(absolutePath);
+    if (info.isDirectory()) {
+      return digestWorkspaceDirectory(absolutePath, workspacePath, ignoredTaskId);
+    }
+    if (info.isSymbolicLink()) {
+      return createHash('sha256')
+        .update('symlink\0')
+        .update(await readlink(absolutePath))
+        .digest('hex');
+    }
+    const contents = await readFile(absolutePath);
     return createHash('sha256')
       .update('file\0')
       .update(contents.toString('base64'))
@@ -233,6 +260,79 @@ const digestWorkspacePath = async (
     return createHash('sha256').update('missing').digest('hex');
   }
 };
+
+const TASK_PATH_DIGEST_EXCLUDES = new Set(['.git', '.skopos', 'node_modules']);
+
+const digestWorkspaceDirectory = async (
+  directory: string,
+  workspacePath: string,
+  ignoredTaskId?: string,
+): Promise<string> => {
+  const entries = await listDirectoryDigestEntries(
+    directory,
+    workspacePath === '.' ? '' : workspacePath,
+    '',
+    ignoredTaskId,
+  );
+  return createHash('sha256')
+    .update('directory\0')
+    .update(entries.map((entry) => `${entry.path}\0${entry.digest}`).join('\n'))
+    .digest('hex');
+};
+
+const listDirectoryDigestEntries = async (
+  directory: string,
+  workspacePrefix: string,
+  current = '',
+  ignoredTaskId?: string,
+): Promise<Array<{ path: string; digest: string }>> => {
+  const entries = await readdir(current ? join(directory, current) : directory, {
+    withFileTypes: true,
+  });
+  const result: Array<{ path: string; digest: string }> = [];
+  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+    if (TASK_PATH_DIGEST_EXCLUDES.has(entry.name)) continue;
+    const path = current ? `${current}/${entry.name}` : entry.name;
+    const projectPath = workspacePrefix ? `${workspacePrefix}/${path}` : path;
+    if (ignoredTaskId && isTaskOwnedProjection(projectPath, ignoredTaskId)) continue;
+    const absolutePath = join(directory, path);
+    if (entry.isDirectory()) {
+      result.push(...await listDirectoryDigestEntries(
+        directory,
+        workspacePrefix,
+        path,
+        ignoredTaskId,
+      ));
+    } else if (entry.isSymbolicLink()) {
+      result.push({
+        path,
+        digest: createHash('sha256')
+          .update('symlink\0')
+          .update(await readlink(absolutePath))
+          .digest('hex'),
+      });
+    } else {
+      result.push({
+        path,
+        digest: createHash('sha256')
+          .update('file\0')
+          .update((await readFile(absolutePath)).toString('base64'))
+          .digest('hex'),
+      });
+    }
+  }
+  return result;
+};
+
+const isTaskOwnedProjection = (path: string, taskId: string): boolean =>
+  new RegExp(
+    `(?:^|/)work/(?:archive/)?tasks/${escapeRegExp(taskId)}-[^/]+\\.md$|` +
+    `(?:^|/)work/tasks/snapshots/${escapeRegExp(taskId)}-S-[^/]+\\.json$`,
+    'u',
+  ).test(path);
+
+const escapeRegExp = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
 
 const normalizeDeclaredPaths = (
   workspaceRoot: string,
