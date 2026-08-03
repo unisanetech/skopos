@@ -122,7 +122,7 @@ baseline is cooperative and therefore reports `preventiveSafety: false`.
 5. no broad command guessing; executable capabilities are declared Actions
 6. no Action self-selects global closure requirements; Guards and Task acceptance do
 7. no completion claim without fresh acceptance-linked Evidence
-8. no Unisane-specific architecture in Skopos core
+8. no adopter-specific architecture in Skopos core
 9. generated artifacts never masquerade as hand-authored truth
 10. retrieval is Scope- and Task-selective, not a broad documentation dump
 11. detected commands remain proposals until reviewed approval creates tracked
