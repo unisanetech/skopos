@@ -12,6 +12,20 @@ import {
 import type { SkoposTaskDispositionKind } from '@skopos/model';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
+import { paginateCollection, parseCollectionLimit } from '../shared/pagination.js';
+
+type TaskDetailCollection =
+  | 'owned-paths'
+  | 'steps'
+  | 'actions'
+  | 'guards'
+  | 'evidence-requirements'
+  | 'questions'
+  | 'recommendations'
+  | 'memory-obligations'
+  | 'children'
+  | 'dependencies'
+  | 'plans';
 
 export const runTaskCommand = async (args: string[]): Promise<void> => {
   const parsed = parseTaskArgs(args);
@@ -52,7 +66,13 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
               : failUnknownTaskCommand(parsed);
 
   if (parsed.json) {
-    writeJsonOutput(parsed.compact ? buildCompactTaskOutput(task) : task);
+    writeJsonOutput(
+      parsed.collection
+        ? buildPagedTaskDetailOutput(task, parsed.collection, parsed.cursor, parsed.limit)
+        : parsed.full
+          ? buildTaskDetailIndex(task)
+          : buildCompactTaskOutput(task),
+    );
     return;
   }
 
@@ -83,6 +103,10 @@ interface ParsedTaskArgs {
   cwd: string;
   actor?: string;
   compact: boolean;
+  full: boolean;
+  collection?: TaskDetailCollection;
+  cursor?: string;
+  limit?: number;
   json: boolean;
 }
 
@@ -91,6 +115,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   let cwd = process.cwd();
   let actor: string | undefined;
   let compact = true;
+  let full = false;
+  let collection: TaskDetailCollection | undefined;
+  let cursor: string | undefined;
+  let limit: number | undefined;
   let json = false;
   let resolution: ParsedTaskArgs['resolution'];
   let reason: string | undefined;
@@ -103,8 +131,22 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       json = true;
     } else if (argument === '--compact') {
       compact = true;
+      full = false;
     } else if (argument === '--full') {
       compact = false;
+      full = true;
+    } else if (argument === '--collection') {
+      collection = parseTaskDetailCollection(requireFlagValue(args, ++index, '--collection'));
+    } else if (argument.startsWith('--collection=')) {
+      collection = parseTaskDetailCollection(argument.slice('--collection='.length));
+    } else if (argument === '--cursor') {
+      cursor = requireFlagValue(args, ++index, '--cursor');
+    } else if (argument.startsWith('--cursor=')) {
+      cursor = argument.slice('--cursor='.length);
+    } else if (argument === '--limit') {
+      limit = parseCollectionLimit(requireFlagValue(args, ++index, '--limit'));
+    } else if (argument.startsWith('--limit=')) {
+      limit = parseCollectionLimit(argument.slice('--limit='.length));
     } else if (argument === '--actor') {
       actor = requireFlagValue(args, ++index, '--actor');
     } else if (argument.startsWith('--actor=')) {
@@ -152,6 +194,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       cwd,
       actor,
       compact,
+      full,
+      collection,
+      cursor,
+      limit,
       json,
     };
   }
@@ -172,6 +218,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       cwd,
       actor,
       compact,
+      full,
+      collection,
+      cursor,
+      limit,
       json,
     };
   }
@@ -201,6 +251,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       cwd,
       actor,
       compact,
+      full,
+      collection,
+      cursor,
+      limit,
       json,
     };
   }
@@ -210,7 +264,21 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   if (second) {
     cwd = resolve(second);
   }
-  return { subcommand, taskId: first, cwd, actor, compact, json };
+  if ((collection || full || cursor || limit) && subcommand !== 'show') {
+    throw new Error('Task detail collection flags are supported only by task show.');
+  }
+  return {
+    subcommand,
+    taskId: first,
+    cwd,
+    actor,
+    compact,
+    full,
+    collection,
+    cursor,
+    limit,
+    json,
+  };
 };
 
 export const buildCompactTaskOutput = (
@@ -246,8 +314,10 @@ export const buildCompactTaskOutput = (
     ownedPaths,
     additionalOwnedPathCount:
       task.changeScope.declaredOwnedPaths.length - ownedPaths.length,
-    selectedActionIds: task.selectedActions.map((action) => action.id),
-    selectedGuardIds: task.selectedGuardIds,
+    selectedActionIds: task.selectedActions.slice(0, 12).map((action) => action.id),
+    additionalSelectedActionCount: Math.max(0, task.selectedActions.length - 12),
+    selectedGuardIds: task.selectedGuardIds.slice(0, 12),
+    additionalSelectedGuardCount: Math.max(0, task.selectedGuardIds.length - 12),
     openQuestionCount: task.questions.filter((question) => question.status === 'open').length,
     openRecommendationCount: task.recommendations.filter(
       (recommendation) => recommendation.status === 'open',
@@ -266,8 +336,86 @@ export const buildCompactTaskOutput = (
           targetPath: obligation.targetPath,
           reason: obligation.reason,
         })),
+      additionalOpenObligationCount: Math.max(
+        0,
+        task.memoryObligations.filter((obligation) => obligation.status === 'open').length - 6,
+      ),
     },
   };
+};
+
+export const buildPagedTaskDetailOutput = (
+  task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+  collection: TaskDetailCollection,
+  cursor?: string,
+  limit?: number,
+) => {
+  const source: unknown[] = taskDetailSource(task, collection);
+  const page = paginateCollection(source, {
+    collection: `task.${collection}`,
+    cursor,
+    limit,
+  });
+  return {
+    schemaVersion: 1,
+    type: 'task-detail-page',
+    workspaceRoot: task.workspaceRoot,
+    taskId: task.id,
+    state: task.state,
+    collection,
+    items: page.items,
+    page: page.page,
+  };
+};
+
+export const buildTaskDetailIndex = (
+  task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+) => ({
+  ...buildCompactTaskOutput(task),
+  type: 'task-detail-index',
+  detailCollections: taskDetailCollections.map((collection) => ({
+    collection,
+    total: taskDetailSource(task, collection).length,
+    command: `skopos task show ${task.id} . --collection ${collection} --json`,
+  })),
+});
+
+const taskDetailCollections: TaskDetailCollection[] = [
+  'owned-paths',
+  'steps',
+  'actions',
+  'guards',
+  'evidence-requirements',
+  'questions',
+  'recommendations',
+  'memory-obligations',
+  'children',
+  'dependencies',
+  'plans',
+];
+
+const taskDetailSource = (
+  task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+  collection: TaskDetailCollection,
+): unknown[] => {
+  if (collection === 'owned-paths') return task.changeScope.declaredOwnedPaths;
+  if (collection === 'steps') return task.steps;
+  if (collection === 'actions') return task.selectedActions;
+  if (collection === 'guards') return task.selectedGuardIds;
+  if (collection === 'evidence-requirements') return task.evidenceRequirements;
+  if (collection === 'questions') return task.questions;
+  if (collection === 'recommendations') return task.recommendations;
+  if (collection === 'memory-obligations') return task.memoryObligations;
+  if (collection === 'children') return task.childTasks;
+  if (collection === 'dependencies') return task.dependencyTaskIds;
+  return task.planIds;
+};
+
+const parseTaskDetailCollection = (value: string): TaskDetailCollection => {
+  if (taskDetailCollections.includes(value as TaskDetailCollection)) {
+    return value as TaskDetailCollection;
+  }
+  throw new Error(`Unknown Task detail collection: ${value}.`);
 };
 
 const parseMemoryResolution = (

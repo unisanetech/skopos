@@ -21,6 +21,9 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Replaced unbounded Task and Verify full JSON with bounded detail
+  indexes. Default summaries cap identifier lists, Verify retains all blockers inline,
+  and exact Task/Verification collections use the shared cursor contract.
 - `2026-08-03`: Added the shared bounded collection contract. Work Queue, Impact, and
   Action catalog JSON now default to 25 entries, cap requests at 100, use
   collection-bound opaque cursors, expose totals and next cursors, and remain below a
@@ -68,3 +71,10 @@ Action catalog pages contain execution-decision fields but omit full commands an
 lists; `actions show` remains the exact one-Action retrieval surface. Impact selects
 one explicit collection per page. This avoids nesting several independently unbounded
 arrays in one response.
+
+`task show --full` and `verify --full` return bounded detail indexes, not raw complete
+objects. Each index contains compact next-action truth plus every available collection,
+its total, and the exact follow-up command. `--collection <name> --cursor <token>` then
+retrieves one page. Compact Task output caps owned paths, selected Action ids, selected
+Guard ids, and open Memory obligations while reporting omitted counts. Compact Verify
+caps diagnostic identifier summaries while retaining every current blocker inline.

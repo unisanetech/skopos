@@ -93,8 +93,11 @@ The exact-reuse interaction slice is implemented:
    cursors, a 25-entry default, a 100-entry maximum, totals, and next-cursor metadata
 6. representative 50-entry and 1,000-entry fixtures keep their default pages below the
    declared 32 KiB JSON budget
+7. Task and Verify compact summaries cap diagnostic identifiers, full output returns a
+   bounded collection index, and exact detail is retrieved through shared cursors
+8. a 1,000-item Task/Verification fixture remains below 32 KiB while Verify preserves
+   every current blocker inline
 
 This Finding remains active. Closure still requires common budget enforcement and
-deterministic field/cursor retrieval across Task show and Verify detail, bounded Action
-run outputs, explicit Session context and Readiness budget proof, plus the full
-cross-command and plain-agent benchmark matrix.
+bounded Action run outputs, explicit Session context and Readiness budget proof, plus
+the full cross-command and plain-agent benchmark matrix.

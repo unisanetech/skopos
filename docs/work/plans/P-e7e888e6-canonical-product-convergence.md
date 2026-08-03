@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Replaced unbounded Task and Verify full payloads with bounded detail
+  indexes and cursor-retrievable collections. Compact summaries cap diagnostic ids and
+  report omitted counts; Verify keeps all blockers inline. A 1,000-item fixture remains
+  below 32 KiB. Action-run, Session, Readiness, and full benchmark proof remain.
 - `2026-08-03`: Added shared cursor-bounded transport for Work Queue, Impact, and the
   Action catalog. Default pages contain 25 entries, requests cap at 100, cursors are
   opaque and collection-bound, and representative p50/p95 pages remain below 32 KiB.
