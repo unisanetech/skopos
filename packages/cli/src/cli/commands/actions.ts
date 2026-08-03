@@ -7,11 +7,14 @@ import {
 } from '@skopos/runtime';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
+import { paginateCollection, parseCollectionLimit } from '../shared/pagination.js';
 
 interface ParsedTargetArgs {
   cwd: string;
   json: boolean;
   full: boolean;
+  cursor?: string;
+  limit?: number;
 }
 
 interface ParsedActionArgs {
@@ -34,15 +37,26 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
     const result = await listSkoposActionsRuntime({
       cwd: parsed.cwd,
     });
+    const page = buildPagedActionCatalogOutput(
+      parsed.cwd,
+      result,
+      parsed.cursor,
+      parsed.limit,
+    );
 
     if (parsed.json) {
-      writeJsonOutput(result.map(toPublicAction));
+      writeJsonOutput(page);
       return;
     }
 
     writeLines([
       'Skopos Actions',
-      ...result.map((action) => `- ${action.id} [${action.category}/${action.safety}]`),
+      ...page.actions.map(
+        (action) => `- ${action.actionId} [${action.category}/${action.safety}]`,
+      ),
+      page.page.nextCursor
+        ? `Next cursor: ${page.page.nextCursor}`
+        : 'End of Action catalog.',
     ]);
     return;
   }
@@ -174,6 +188,39 @@ export const runActionsCommand = async (args: string[]): Promise<void> => {
   throw new Error(`Unknown Skopos actions subcommand: ${subcommand ?? '(missing)'}`);
 };
 
+export const buildPagedActionCatalogOutput = (
+  workspaceRoot: string,
+  actions: Parameters<typeof toPublicAction>[0][],
+  cursor?: string,
+  limit?: number,
+) => {
+  const page = paginateCollection(actions.map(toActionCatalogEntry), {
+    collection: 'actions.catalog',
+    cursor,
+    limit,
+  });
+  return {
+    schemaVersion: 1,
+    type: 'action-catalog-page',
+    workspaceRoot,
+    totalActionCount: actions.length,
+    actions: page.items,
+    page: page.page,
+  };
+};
+
+const toActionCatalogEntry = (action: Parameters<typeof toPublicAction>[0]) => ({
+  actionId: action.id,
+  title: action.title,
+  category: action.category,
+  safety: action.safety,
+  capabilities: action.capabilities,
+  effects: action.effects,
+  concurrency: action.concurrency,
+  approval: action.requiresApproval ? 'explicit' : 'none',
+  sourcePath: action.sourcePath,
+});
+
 const toPublicAction = (action: {
   id: string;
   title: string;
@@ -241,14 +288,37 @@ const parseTargetArgs = (args: string[]): ParsedTargetArgs => {
   let cwd = process.cwd();
   let json = false;
   let full = false;
+  let cursor: string | undefined;
+  let limit: number | undefined;
 
-  for (const argument of args) {
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index]!;
     if (argument === '--json') {
       json = true;
       continue;
     }
     if (argument === '--full') {
       full = true;
+      continue;
+    }
+    if (argument === '--cursor') {
+      const value = args[++index];
+      if (!value || value.startsWith('-')) throw new Error('Missing value for --cursor.');
+      cursor = value;
+      continue;
+    }
+    if (argument.startsWith('--cursor=')) {
+      cursor = argument.slice('--cursor='.length);
+      continue;
+    }
+    if (argument === '--limit') {
+      const value = args[++index];
+      if (!value || value.startsWith('-')) throw new Error('Missing value for --limit.');
+      limit = parseCollectionLimit(value);
+      continue;
+    }
+    if (argument.startsWith('--limit=')) {
+      limit = parseCollectionLimit(argument.slice('--limit='.length));
       continue;
     }
 
@@ -259,7 +329,7 @@ const parseTargetArgs = (args: string[]): ParsedTargetArgs => {
     cwd = resolve(argument);
   }
 
-  return { cwd, json, full };
+  return { cwd, json, full, cursor, limit };
 };
 
 const parseActionArgs = (args: string[]): ParsedActionArgs => {

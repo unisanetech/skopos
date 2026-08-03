@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { buildSkoposWorkQueueRuntime } from '@skopos/runtime';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
+import { paginateCollection, parseCollectionLimit } from '../shared/pagination.js';
 
 export const runWorkCommand = async (args: string[]): Promise<void> => {
   const parsed = parseWorkArgs(args);
@@ -18,7 +19,7 @@ export const runWorkCommand = async (args: string[]): Promise<void> => {
     writeJsonOutput(
       parsed.subcommand === 'next'
         ? buildCompactWorkNextOutput(result)
-        : result,
+        : buildPagedWorkQueueOutput(result, parsed.cursor, parsed.limit),
     );
     return;
   }
@@ -53,6 +54,31 @@ export const buildCompactWorkNextOutput = (
   queueItemCount: result.workQueue.entries.length,
 });
 
+export const buildPagedWorkQueueOutput = (
+  result: Awaited<ReturnType<typeof buildSkoposWorkQueueRuntime>>,
+  cursor?: string,
+  limit?: number,
+) => {
+  const entries = paginateCollection(result.workQueue.entries, {
+    collection: 'work-queue.entries',
+    cursor,
+    limit,
+  });
+  return {
+    schemaVersion: 1,
+    type: 'work-queue-page',
+    workspaceRoot: result.workspaceRoot,
+    actorId: result.actorId,
+    summary: result.summary,
+    currentTaskId: result.currentTaskId,
+    recommendedEntry: result.recommendedEntry,
+    counts: result.workQueue.counts,
+    entries: entries.items,
+    page: entries.page,
+    artifactPath: result.artifactPath,
+  };
+};
+
 const parseWorkArgs = (
   args: string[],
 ): {
@@ -60,24 +86,32 @@ const parseWorkArgs = (
   cwd: string;
   actor?: string;
   dryRun: boolean;
+  cursor?: string;
+  limit?: number;
   json: boolean;
 } => {
   let subcommand: string | undefined;
   let cwd = process.cwd();
   let actor: string | undefined;
   let dryRun = false;
+  let cursor: string | undefined;
+  let limit: number | undefined;
   let json = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
     if (argument === '--json') json = true;
     else if (argument === '--dry-run') dryRun = true;
+    else if (argument === '--cursor') cursor = requireValue(args, ++index, '--cursor');
+    else if (argument.startsWith('--cursor=')) cursor = argument.slice('--cursor='.length);
+    else if (argument === '--limit') limit = parseCollectionLimit(requireValue(args, ++index, '--limit'));
+    else if (argument.startsWith('--limit=')) limit = parseCollectionLimit(argument.slice('--limit='.length));
     else if (argument === '--actor') actor = requireValue(args, ++index, '--actor');
     else if (argument.startsWith('--actor=')) actor = argument.slice('--actor='.length);
     else if (argument.startsWith('-')) throw new Error(`Unknown Skopos work flag: ${argument}`);
     else if (!subcommand) subcommand = argument;
     else cwd = resolve(argument);
   }
-  return { subcommand, cwd, actor, dryRun, json };
+  return { subcommand, cwd, actor, dryRun, cursor, limit, json };
 };
 
 const requireValue = (args: string[], index: number, flag: string): string => {

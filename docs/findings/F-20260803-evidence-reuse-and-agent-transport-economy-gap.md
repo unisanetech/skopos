@@ -89,8 +89,12 @@ The exact-reuse interaction slice is implemented:
    missing runs, and missing providers remain separate explained outcomes
 4. compact output returns counts, a fixed unresolved slice, an omitted count, and a
    stable Task-local complete report path
+5. Work Queue, Impact, and Action catalog collections now share versioned opaque
+   cursors, a 25-entry default, a 100-entry maximum, totals, and next-cursor metadata
+6. representative 50-entry and 1,000-entry fixtures keep their default pages below the
+   declared 32 KiB JSON budget
 
 This Finding remains active. Closure still requires common budget enforcement and
-deterministic field/cursor retrieval across Session context, Task show, Verify,
-Readiness, Impact, Work Queue, and Action output, plus the p50/p95 and plain-agent
-benchmark matrix.
+deterministic field/cursor retrieval across Task show and Verify detail, bounded Action
+run outputs, explicit Session context and Readiness budget proof, plus the full
+cross-command and plain-agent benchmark matrix.

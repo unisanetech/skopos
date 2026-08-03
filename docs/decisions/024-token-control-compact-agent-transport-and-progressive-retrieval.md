@@ -21,6 +21,10 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-03`: Added the shared bounded collection contract. Work Queue, Impact, and
+  Action catalog JSON now default to 25 entries, cap requests at 100, use
+  collection-bound opaque cursors, expose totals and next cursors, and remain below a
+  32 KiB representative p50/p95 compact budget.
 - `2026-08-03`: Added one-call Task Evidence reuse with a bounded compact summary,
   inline unresolved outcomes, and a stable complete report reference. Verification
   remains non-mutating.
@@ -48,3 +52,19 @@ contains counts, every inline unresolved outcome that fits the fixed collection 
 the number omitted from the inline slice, and a stable Task-local report path. A full
 detail request means the complete data remains retrievable; it does not authorize the
 default agent response to grow without a budget.
+
+Agent-facing collection transport uses one cursor grammar:
+
+1. default page size is 25 and the hard per-page maximum is 100
+2. cursors are opaque, versioned, and bound to one named collection
+3. every page reports total, offset, limit, returned count, and next cursor
+4. a cursor is valid only while the underlying command input remains unchanged
+5. Work Queue entries, Impact changed/Guard/Action collections, and the Action catalog
+   use this contract
+6. the declared default compact JSON budget for representative p50 and p95 fixtures is
+   32 KiB
+
+Action catalog pages contain execution-decision fields but omit full commands and path
+lists; `actions show` remains the exact one-Action retrieval surface. Impact selects
+one explicit collection per page. This avoids nesting several independently unbounded
+arrays in one response.

@@ -35,6 +35,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-03`: Added shared cursor-bounded transport for Work Queue, Impact, and the
+  Action catalog. Default pages contain 25 entries, requests cap at 100, cursors are
+  opaque and collection-bound, and representative p50/p95 pages remain below 32 KiB.
+  Task/Verify detail pagination and the full cross-command benchmark remain open.
 - `2026-08-03`: Implemented one-call exact Task Evidence reuse. The explicit reuse
   command links all valid selected Action Runs without process execution, distinguishes
   linked, already-linked, rejected, and missing outcomes, repairs Task Action steps,
