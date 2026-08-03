@@ -34,6 +34,8 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-03`: Added portable non-Git workspace-effect snapshots and run-owned
+  shared/exclusive scheduling leases with bounded stale recovery.
 - `2026-08-03`: Bounded Action execution with manifest timeouts, sparse live progress,
   capped durable phase events, explicit interruption Evidence, and exact Task resume
   commands in Session Context.
@@ -124,6 +126,17 @@ supersedes the stale interruption.
 JSON commands keep their final machine-readable result on stdout. Sparse progress is
 written to stderr as structured `action-progress` lines, preserving JSON parsing while
 still giving hosts observable forward motion.
+
+Action admission also acquires a scheduling lease. Shared leases may coexist, while an
+exclusive lease conflicts with every other active Action lease. The lease binds Action,
+run, actor, concurrency mode, and an expiry beyond the Action timeout. The short
+admission mutex prevents check-then-create races; stale run leases are removed before
+admission and live leases are released after both successful and failed execution.
+
+Workspace-effect Evidence is portable across adopted Git and non-Git projects. Git
+status supplies the narrow path set when available; otherwise Skopos snapshots every
+workspace file except `.git`, `.skopos`, and `node_modules` trees and applies the same
+`none` or declared `affects` boundary.
 
 ## Verify
 

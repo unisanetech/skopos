@@ -101,8 +101,12 @@ The first implementation slice is complete:
    rejection
 7. knowledge indexing reads only top-level Action Run records, so nested run-owned JSON
    artifacts cannot be mistaken for runs
+8. non-Git projects use a portable recursive snapshot and enforce the same undeclared
+   and out-of-bound mutation rules as Git worktrees
+9. run-owned scheduling leases allow shared overlap, serialize exclusive Actions
+   against every active owner, release after success or failure, and recover expired
+   crash residue
 
 This Finding remains active. Clean offline packed-install certification is complete.
-Closure still requires non-Git enforcement or an explicit supported-project boundary,
-general exclusive scheduling, provider-specific proof for declared external mutation,
-and host-parity proof for capability assertions.
+Closure still requires provider-specific proof for declared external mutation and
+host-parity proof for capability assertions.

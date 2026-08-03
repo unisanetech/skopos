@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import { dirname, join, relative, resolve } from 'node:path';
 import { promisify } from 'node:util';
 
@@ -251,6 +251,14 @@ export const runSkoposActionRuntime = async ({
     }
   }
 
+  const releaseSchedulingLease = await acquireActionSchedulingLease({
+    workspaceRoot,
+    manifest,
+    runId,
+    actorId,
+    timeoutMs,
+  });
+  try {
   const runningArtifact = buildActionRunArtifact({
     id: runId,
     workspaceRoot,
@@ -423,6 +431,9 @@ export const runSkoposActionRuntime = async ({
     actor,
     run: artifact,
   });
+  } finally {
+    await releaseSchedulingLease();
+  }
 };
 
 interface BuildActionRunArtifactInput {
@@ -636,11 +647,152 @@ const captureWorkspaceEffectState = async (
       .map((path) => path.includes(' -> ') ? path.split(' -> ')[1]! : path)
       .filter((path) => !path.startsWith('.skopos/'));
   } catch {
-    return new Map();
+    return capturePortableWorkspaceEffectState(workspaceRoot);
   }
   const states = await captureSkoposTaskPathStates({ workspaceRoot, paths });
   return new Map(states.map((state) => [state.path, state.digest]));
 };
+
+const PORTABLE_SNAPSHOT_EXCLUDES = new Set(['.git', '.skopos', 'node_modules']);
+
+const capturePortableWorkspaceEffectState = async (
+  workspaceRoot: string,
+): Promise<WorkspaceEffectState> => {
+  const paths = await listPortableWorkspacePaths(workspaceRoot);
+  const states = await captureSkoposTaskPathStates({ workspaceRoot, paths });
+  return new Map(states.map((state) => [state.path, state.digest]));
+};
+
+const listPortableWorkspacePaths = async (
+  workspaceRoot: string,
+  current = '',
+): Promise<string[]> => {
+  const directory = current ? join(workspaceRoot, current) : workspaceRoot;
+  const entries = await readdir(directory, { withFileTypes: true });
+  const paths: string[] = [];
+  for (const entry of entries.sort((left, right) => left.name.localeCompare(right.name))) {
+    if (PORTABLE_SNAPSHOT_EXCLUDES.has(entry.name)) continue;
+    const path = current ? `${current}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      paths.push(...await listPortableWorkspacePaths(workspaceRoot, path));
+    } else {
+      paths.push(path);
+    }
+  }
+  return paths;
+};
+
+interface ActionSchedulingLease {
+  schemaVersion: 1;
+  runId: string;
+  actionId: string;
+  actorId?: string;
+  concurrency: SkoposActionManifest['concurrency'];
+  acquiredAt: string;
+  expiresAt: string;
+}
+
+const acquireActionSchedulingLease = async ({
+  workspaceRoot,
+  manifest,
+  runId,
+  actorId,
+  timeoutMs,
+}: {
+  workspaceRoot: string;
+  manifest: SkoposActionManifest;
+  runId: string;
+  actorId?: string;
+  timeoutMs: number;
+}): Promise<() => Promise<void>> => {
+  const leasesRoot = join(workspaceRoot, '.skopos', 'locks', 'actions');
+  const mutexPath = join(leasesRoot, '.admission.lock');
+  const leasePath = join(leasesRoot, `${runId}.json`);
+  await mkdir(leasesRoot, { recursive: true });
+  const releaseMutex = await acquireSchedulingMutex(mutexPath);
+  try {
+    const active = await loadActiveSchedulingLeases(leasesRoot);
+    const conflicts = active.filter((lease) =>
+      manifest.concurrency === 'exclusive' || lease.concurrency === 'exclusive',
+    );
+    if (conflicts.length > 0) {
+      throw new Error(
+        `Action ${manifest.id} cannot acquire ${manifest.concurrency} scheduling while ${conflicts.map((lease) => `${lease.actionId} (${lease.runId})`).join(', ')} is active.`,
+      );
+    }
+    const now = new Date();
+    const lease: ActionSchedulingLease = {
+      schemaVersion: 1,
+      runId,
+      actionId: manifest.id,
+      actorId,
+      concurrency: manifest.concurrency,
+      acquiredAt: now.toISOString(),
+      expiresAt: new Date(now.getTime() + timeoutMs + 10_000).toISOString(),
+    };
+    await writeFile(leasePath, JSON.stringify(lease, null, 2), { encoding: 'utf8', flag: 'wx' });
+  } finally {
+    await releaseMutex();
+  }
+  return async () => {
+    await unlink(leasePath).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== 'ENOENT') throw error;
+    });
+  };
+};
+
+const acquireSchedulingMutex = async (
+  mutexPath: string,
+): Promise<() => Promise<void>> => {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      const handle = await open(mutexPath, 'wx');
+      await handle.writeFile(JSON.stringify({ expiresAt: Date.now() + 1_000 }));
+      return async () => {
+        await handle.close();
+        await unlink(mutexPath).catch((error: NodeJS.ErrnoException) => {
+          if (error.code !== 'ENOENT') throw error;
+        });
+      };
+    } catch (error) {
+      const fileError = error as NodeJS.ErrnoException;
+      if (fileError.code !== 'EEXIST') throw error;
+      const stale = await readFile(mutexPath, 'utf8')
+        .then((value) => Number((JSON.parse(value) as { expiresAt?: number }).expiresAt) <= Date.now())
+        .catch(() => false);
+      if (stale) {
+        await unlink(mutexPath).catch(() => undefined);
+        continue;
+      }
+      await delay(25);
+    }
+  }
+  throw new Error('Action scheduling admission is busy; retry the Action.');
+};
+
+const loadActiveSchedulingLeases = async (
+  leasesRoot: string,
+): Promise<ActionSchedulingLease[]> => {
+  const entries = (await readdir(leasesRoot)).filter((entry) => entry.endsWith('.json'));
+  const active: ActionSchedulingLease[] = [];
+  for (const entry of entries) {
+    const path = join(leasesRoot, entry);
+    try {
+      const lease = JSON.parse(await readFile(path, 'utf8')) as ActionSchedulingLease;
+      if (Date.parse(lease.expiresAt) <= Date.now()) {
+        await unlink(path).catch(() => undefined);
+      } else {
+        active.push(lease);
+      }
+    } catch {
+      throw new Error(`Action scheduling lease is unreadable: ${path}`);
+    }
+  }
+  return active;
+};
+
+const delay = (milliseconds: number): Promise<void> =>
+  new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 
 const detectWorkspaceEffectViolations = async ({
   workspaceRoot,

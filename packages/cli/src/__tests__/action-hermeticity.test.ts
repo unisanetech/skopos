@@ -49,6 +49,17 @@ describe('Action effects and hermetic capability contract', () => {
     ).rejects.toThrow('undeclared workspace mutation at changed.txt');
   });
 
+  it('rejects undeclared mutation without a Git worktree', async () => {
+    const root = await createWorkspace(false);
+    await writeManifest(root, 'portable-read-only-proof', {
+      command: `node -e "require('node:fs').writeFileSync('portable.txt','changed')"`,
+    });
+
+    await expect(
+      runSkoposActionRuntime({ cwd: root, action: 'portable.read.only.proof' }),
+    ).rejects.toThrow('undeclared workspace mutation at portable.txt');
+  });
+
   it('rejects declared mutation outside the affected path boundary', async () => {
     const root = await createWorkspace(true);
     await writeManifest(root, 'mutating-proof', {
@@ -67,6 +78,45 @@ describe('Action effects and hermetic capability contract', () => {
         actor: 'fixture-agent',
       }),
     ).rejects.toThrow('workspace mutation outside affects at outside.txt');
+  });
+
+  it('rejects out-of-bound declared mutation without a Git worktree', async () => {
+    const root = await createWorkspace(false);
+    await writeManifest(root, 'portable-mutating-proof', {
+      command: `node -e "require('node:fs').writeFileSync('outside.txt','changed')"`,
+      safety: 'mutating',
+      affects: ['allowed'],
+      workspaceEffect: 'declared',
+      concurrency: 'exclusive',
+    });
+
+    await expect(
+      runSkoposActionRuntime({
+        cwd: root,
+        action: 'portable.mutating.proof',
+        actor: 'fixture-agent',
+      }),
+    ).rejects.toThrow('workspace mutation outside affects at outside.txt');
+  });
+
+  it('permits declared in-bound mutation without a Git worktree', async () => {
+    const root = await createWorkspace(false);
+    await mkdir(join(root, 'allowed'), { recursive: true });
+    await writeManifest(root, 'portable-allowed-proof', {
+      command: `node -e "require('node:fs').writeFileSync('allowed/result.txt','changed')"`,
+      safety: 'mutating',
+      affects: ['allowed'],
+      workspaceEffect: 'declared',
+      concurrency: 'exclusive',
+    });
+
+    await expect(
+      runSkoposActionRuntime({
+        cwd: root,
+        action: 'portable.allowed.proof',
+        actor: 'fixture-agent',
+      }),
+    ).resolves.toMatchObject({ run: { runStatus: 'succeeded' } });
   });
 
   it('isolates concurrent artifact-producing Action outputs by run id', async () => {

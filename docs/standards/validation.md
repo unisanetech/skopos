@@ -25,6 +25,8 @@ This page records the project capability catalog and the rule for selecting proo
 
 ## Changelog
 
+- `2026-08-03`: Enforced portable non-Git mutation boundaries and shared/exclusive
+  run scheduling with bounded stale-lease recovery.
 - `2026-08-03`: Required bounded Action timeouts, sparse progress, structured
   interruption Evidence, and exact Session Context resume commands.
 - `2026-07-31`: Made `finish` the canonical closure transaction and required precise
@@ -95,6 +97,13 @@ progress retains no more than 12 recent events. A timeout must produce an
 `interrupted` run with phase disposition and a retry command; it must not be collapsed
 into an unexplained generic failure. For `--json`, progress belongs on stderr and the
 final result remains the only stdout JSON document.
+
+Workspace-effect enforcement applies with or without Git. Portable snapshots exclude
+only `.git`, `.skopos`, and `node_modules` trees; Actions that intentionally write any
+other workspace path must declare it under `affects`. Shared Actions may overlap.
+Exclusive Actions must acquire the global Action lease and therefore cannot overlap a
+shared or exclusive owner. Do not delete live lease files manually; bounded expiry
+owns crash recovery.
 
 ## Release Readiness Checks
 

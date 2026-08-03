@@ -24,6 +24,9 @@ reviewCycle: when Action capability, effect, concurrency, or certification seman
 
 ## Changelog
 
+- `2026-08-03`: Enforced non-Git workspace mutation boundaries through portable
+  snapshots and implemented run-owned shared/exclusive scheduling leases with atomic
+  admission, release, and bounded stale recovery.
 - `2026-08-03`: Certified the implemented effect boundary through a fresh offline
   packed installation. The installed CLI now proves isolated JSON artifacts,
   unavailable external-service preflight, and Git-visible undeclared-write rejection;
@@ -115,10 +118,10 @@ Implemented now:
 3. Git-worktree mutation enforcement against `affects`
 4. per-run artifact roots and output-state Evidence
 5. capability-, effect-, and concurrency-bound execution identity
+6. portable non-Git workspace mutation enforcement
+7. shared/exclusive scheduling leases and bounded stale recovery
 
 Still required before this Decision is fully implemented:
 
-1. a supported contract for non-Git mutation enforcement
-2. serialization or lock-key enforcement for exclusive Actions
-3. provider-specific enforcement or verification of declared external mutation
-4. host-parity proof for capability assertions
+1. provider-specific enforcement or verification of declared external mutation
+2. host-parity proof for capability assertions

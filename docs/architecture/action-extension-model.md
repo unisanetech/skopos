@@ -138,15 +138,19 @@ therefore distinct from a failing product proof.
 
 An isolated artifact-producing Action receives a unique
 `.skopos/runs/<run-id>/artifacts` directory through `SKOPOS_ARTIFACT_ROOT`. Declared
-outputs resolve from that root, so concurrent runs cannot share output paths. For a
-Git worktree, Skopos compares workspace path state before and after execution:
+outputs resolve from that root, so concurrent runs cannot share output paths. Skopos
+compares workspace path state before and after execution using Git status when
+available and a portable recursive snapshot otherwise. The portable snapshot excludes
+only Skopos state, Git internals, and dependency-install trees:
 no-workspace-effect Actions fail on any non-`.skopos` mutation, and declared mutating
 Actions fail when a write falls outside `affects`.
 
-`shared` and `exclusive` are now public scheduling declarations. Per-run artifact
-isolation is enforced. General exclusive scheduling, non-Git mutation capture, and
-provider-specific external-effect enforcement remain open certification work rather
-than inferred guarantees.
+`shared` and `exclusive` are enforced through run-owned scheduling leases. Shared runs
+may overlap; an exclusive run conflicts with every active shared or exclusive lease,
+and a shared run conflicts with an active exclusive lease. Admission is serialized,
+leases expire beyond the Action timeout, and success or failure releases ownership.
+Provider-specific external-effect enforcement remains open certification work rather
+than an inferred guarantee.
 
 Successful runs settle their final source and output state after Skopos completes its
 own operational logging and knowledge-index bookkeeping. Framework bookkeeping must
