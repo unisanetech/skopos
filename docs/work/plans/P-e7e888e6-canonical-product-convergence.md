@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phase-5-in-progress
+implementationStatus: phase-5-and-6-in-progress
 lastUpdated: 2026-08-03
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
@@ -41,6 +41,10 @@ reviewCycle: per phase
   bound detailed agent transport, and require hermetic, truthfully classified
   certification Actions. The work remains in the owning Phases 5 through 10 rather
   than creating a parallel Plan.
+- `2026-07-31`: Implemented admission-time durable Memory obligations with explicit
+  closure resolution and serialized complete Task read-modify-persist transactions
+  through the local coordination broker; remote coordination and broader Phase 7
+  mutation-ledger work remain open.
 - `2026-07-31`: Made `finish` the one public closure transaction, compact JSON the
   agent hot-path default, and Action fingerprints explicitly narrow through precise
   inputs plus reviewed source exclusions.
@@ -698,7 +702,8 @@ compact.
 5. compile Work Queue from tracked sources and local active state
 6. make `next` Session-aware
 7. implement blocking decisions
-8. implement memory obligations
+8. implement memory obligations — completed for admission inference, compact/tracked
+   visibility, explicit resolution, and closure blocking
 9. implement acceptance-to-Evidence coverage
 10. implement progressive context:
     - L0 root instructions
@@ -766,7 +771,9 @@ same working directory.
 
 ### Work
 
-1. implement `.skopos/coordination.sqlite` with WAL and atomic transactions
+1. implement `.skopos/coordination.sqlite` with WAL and atomic transactions — Task
+   authority mutations now hold one transaction across read, transition, and durable
+   projection writes; other mutation classes remain in phase scope
 2. implement Session registration and heartbeat
 3. implement durable Task reservations
 4. implement short writer leases

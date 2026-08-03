@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-30
+lastUpdated: 2026-07-31
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
@@ -104,6 +104,7 @@ A Readiness report is derived, explainable, and non-mutating. It combines:
 4. coordination contamination and mutation audit
 5. instruction and Memory integrity when applicable
 6. adoption state when Project readiness is requested
+7. open Task Memory obligations and their recorded resolutions
 
 The result is `ready`, `needs-review`, or `blocked`, with exact reasons and next safe
 actions. Readiness is not a second executor and never repairs the Project silently.
@@ -116,7 +117,8 @@ A Task can close only when:
 2. no blocking Guard or decision remains
 3. claimed mutations pass coordination audit
 4. high-impact work has a current immutable Task snapshot
-5. required Memory obligations are satisfied
+5. every required Memory obligation records either `memory-updated` against adopted
+   canonical durable Memory or a reasoned `reviewed-no-change` resolution
 6. the Task state transition is recorded
 
 Light Tasks may use a smaller evidence set, but the report must remain honest about

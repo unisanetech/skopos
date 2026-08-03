@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-30
+lastUpdated: 2026-08-02
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -30,6 +30,11 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-02`: Made tracked Task projection Scope-relative and made reconstruction
+  discover Tasks through the catalog of declared Memory roots.
+- `2026-07-31`: Made Task persistence concurrency-safe through coordination-backed
+  mutation transactions and added admission-time durable Memory obligations with
+  explicit reviewed resolution before closure.
 - `2026-07-31`: Added the atomic `finish` lifecycle, compact-default agent transport,
   and precise Action source-fingerprint exclusions.
 - `2026-07-30`: Made project capability onboarding a reviewed integration: discovery
@@ -87,6 +92,23 @@ Tracked sources own durable truth:
 Evidence envelopes, and UI assets. A clean clone can reconstruct Project Memory and
 tracked Task projections without old local state.
 
+Each non-light Task projects to `work/tasks/**` inside its declared Scope Memory root.
+Workspace Tasks use the workspace root; child Scopes use their own registered roots.
+Reconstruction discovers those portable projections through the Project Memory
+catalog across all declared roots, so no project layout or domain convention is built
+into Task persistence.
+
+During pre-adoption intake, only the inferred default workspace Scope may use the
+standard `docs/` Memory root before a registry exists. Once a Scope is declared, a
+missing or unsafe `memoryRoot` is an invalid authority declaration and fails closed.
+
+Task admission creates an open Memory obligation when declared ownership overlaps
+existing canonical durable Memory. High-impact Tasks receive a Scope-level durable
+Memory review obligation even when no Memory document is explicitly owned. Skopos
+points at existing truth and blocks closure until the agent records either
+`memory-updated` or `reviewed-no-change`; it never creates a duplicate Architecture,
+Standard, Guide, Decision, Finding, or Pattern automatically.
+
 ## Extension Boundary
 
 Projects contribute:
@@ -103,7 +125,14 @@ system workflows remain valid domain concepts; they are not Skopos primitives.
 ## Coordination
 
 The local SQLite broker serializes cooperating Session, Task, claim, mutation,
-contamination, takeover, and snapshot operations. Enforcement is reported honestly:
+contamination, takeover, and snapshot operations. A Task mutation holds one broker
+write transaction across the complete authoritative read, state transition, local
+projection write, and tracked portable-document replacement. Same-process callers
+queue by Task before entering SQLite, while separate processes serialize through WAL
+transactions. Collision-resistant temporary files make replacement cleanup safe, but
+the broker transaction—not temporary naming—is what prevents lost updates.
+
+Enforcement is reported honestly:
 
 1. `observed`
 2. `cooperative`

@@ -58,6 +58,7 @@ Usage:
   skopos task claim <task-id> [target] --actor <id> [--json]
   skopos task release <task-id> [target] --actor <id> [--json]
   skopos task step complete <task-id> <step-id> [--cwd <target>] --actor <id> [--json]
+  skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
   skopos task verify <task-id> [target] --actor <id> [--full] [--json]
   skopos knowledge [target] [--actor <id>] [--full] [--summary] [--fields <names>] [--json]
   skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--json]

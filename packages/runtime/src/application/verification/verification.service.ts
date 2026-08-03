@@ -1,5 +1,5 @@
 import { readFile, readdir } from 'node:fs/promises';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
 
 import {
@@ -156,6 +156,14 @@ export const verifySkoposTaskRuntime = async ({
       };
     });
   const blockers = [
+    ...(phase === 'closure'
+      ? task.memoryObligations
+          .filter((obligation) => obligation.status === 'open')
+          .map(
+            (obligation) =>
+              `Memory obligation ${obligation.id} is open: ${obligation.reason}`,
+          )
+      : []),
     ...memoryCatalog.issues.map(
       (issue) => `Project Memory ${issue.path}: ${issue.summary}`,
     ),
@@ -319,7 +327,7 @@ export const recordSkoposObservationEvidenceRuntime = async ({
   const observedAt = new Date().toISOString();
   const artifact: SkoposObservationEvidenceArtifact = {
     schemaVersion: 1,
-    id: `${task.id}.observation.${cryptoSafeId(observedAt, requirementId ?? guardIds.join('-'))}`,
+    id: `${task.id}.observation.${cryptoSafeId(observedAt, requirementId ?? guardIds.join('-'))}.${randomUUID().replaceAll('-', '').slice(0, 8)}`,
     type: 'observation-evidence',
     status: 'generated',
     authority: 'generated',

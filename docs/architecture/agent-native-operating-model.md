@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-07-31
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
@@ -25,6 +25,8 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-07-31`: Made durable Memory review visible at Task admission and explicitly
+  resolvable before closure without automatic document creation.
 - `2026-07-31`: Made hot-path JSON compact by default and collapsed normal Task
   closure into one `finish` operation while preserving high-impact proof.
 - `2026-07-29`: Replaced prototype routing with Session-aware Task, Work Queue,
@@ -78,6 +80,18 @@ Risk and detail scale one Task rather than creating different work objects:
 
 One Session may own at most one writing Task. One Task may have Child Tasks when work
 must be separately claimable.
+
+Admission infers Memory work proportionally:
+
+1. ownership overlapping adopted canonical durable Memory creates a targeted open
+   obligation
+2. high-impact work creates a Scope-level durable Memory review obligation even for a
+   source-only owned surface
+3. narrow standard or light source-only work creates no obligation merely because a
+   project has documentation
+4. the compact Task and start response expose open obligations before implementation
+5. the agent resolves each obligation after judgment with `memory-updated` or
+   `reviewed-no-change`; Skopos never authors the document or the judgment itself
 
 ## Material Questions
 

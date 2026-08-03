@@ -10,7 +10,7 @@ authority: canonical
 provenance: declared
 view: target
 implementationStatus: partial
-lastUpdated: 2026-07-29
+lastUpdated: 2026-08-02
 relatedDocs:
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -27,6 +27,8 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-08-02`: Bound tracked Task projections to their declared Scope Memory roots
+  and made cross-root catalog discovery the reconstruction authority.
 - `2026-07-31`: Kept verified adoption active during routine `skopos init` knowledge
   refreshes. Normal Project Memory evolution no longer reopens brownfield assessment;
   `skopos adopt assess` remains the explicit command for restarting adoption review.
@@ -94,6 +96,10 @@ project to keep its own application code architecture.
     the minimum standard router and declared Scope registry directly
 19. after verified activation, routine init refreshes generated project state without
     discarding adoption; only explicit adoption assessment reopens the review workflow
+20. a tracked Task is stored at `work/tasks/**` relative to its declared Scope Memory
+    root, and portable reconstruction catalogs every declared Memory root
+21. before adoption, only the inferred default workspace Scope may use the standard
+    `docs/` root; a declared Scope with missing or unsafe Memory authority fails closed
 
 ## Workspace Memory Root
 
@@ -167,6 +173,8 @@ Rules:
     a document claiming another Scope is quarantined
 12. every declared Memory root is a source dependency, so changed or newly added
     colocated Memory invalidates compiled query state
+13. Task projection follows the Task's declared Scope; workspace Tasks use the
+    workspace root without imposing that root on child Scopes
 
 ## Canonical Relative Grammar
 

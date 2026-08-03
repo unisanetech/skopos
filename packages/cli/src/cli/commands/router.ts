@@ -80,7 +80,7 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `Scope: ${result.scope.scope.id}`,
     `Task: ${result.task.id} [${result.task.state}]`,
     `Risk/detail: ${result.task.risk} / ${result.task.detail}`,
-    `Contract: ${result.task.contract.acceptanceCriteria.length} acceptance criteria, ${result.blockingQuestions.length} blocking decisions, ${result.task.evidenceRequirements.length} Evidence requirements`,
+    `Contract: ${result.task.contract.acceptanceCriteria.length} acceptance criteria, ${result.blockingQuestions.length} blocking decisions, ${result.task.evidenceRequirements.length} Evidence requirements, ${result.task.memoryObligations.length} Memory obligations`,
     `Selected capabilities: ${result.task.selectedActions.length} Actions, ${result.task.selectedGuardIds.length} Guards`,
     'Next step:',
     result.recommendedAction?.title ?? 'Inspect the Task steps and begin the admitted work.',

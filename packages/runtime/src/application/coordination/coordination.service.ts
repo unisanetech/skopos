@@ -39,6 +39,7 @@ const DEFAULT_LEASE_SECONDS = 30;
 const MIN_LEASE_SECONDS = 5;
 const MAX_LEASE_SECONDS = 3600;
 const COORDINATION_DATABASE_PATH = '.skopos/coordination.sqlite';
+const taskMutationQueues = new Map<string, Promise<void>>();
 
 export interface OpenSkoposCoordinationSessionOptions {
   cwd: string;
@@ -117,6 +118,41 @@ export interface SnapshotSkoposCoordinationTaskOptions {
   taskId: string;
   sessionId: string;
 }
+
+export interface WithSkoposTaskMutationTransactionOptions {
+  cwd: string;
+  taskId: string;
+}
+
+export const withSkoposTaskMutationTransaction = async <T>(
+  { cwd, taskId }: WithSkoposTaskMutationTransactionOptions,
+  operation: () => Promise<T>,
+): Promise<T> => {
+  const workspaceRoot = resolve(cwd);
+  assertNonEmpty(taskId, 'Task mutation transaction requires a Task id.');
+  const queueKey = `${workspaceRoot}\0${taskId}`;
+
+  return withInProcessTaskMutationTurn(queueKey, async () => {
+    const databasePath = await ensureCoordinationDatabase(workspaceRoot);
+    const db = openDatabase(databasePath);
+    let transactionOpen = false;
+    try {
+      db.exec('BEGIN IMMEDIATE');
+      transactionOpen = true;
+      const result = await operation();
+      db.exec('COMMIT');
+      transactionOpen = false;
+      return result;
+    } catch (error) {
+      if (transactionOpen) {
+        db.exec('ROLLBACK');
+      }
+      throw error;
+    } finally {
+      db.close();
+    }
+  });
+};
 
 export const openSkoposCoordinationSession = async ({
   cwd,
@@ -1074,6 +1110,29 @@ const transaction = <T>(db: SqliteDatabase, operation: () => T): T => {
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
+  }
+};
+
+const withInProcessTaskMutationTurn = async <T>(
+  queueKey: string,
+  operation: () => Promise<T>,
+): Promise<T> => {
+  const previous = taskMutationQueues.get(queueKey) ?? Promise.resolve();
+  let releaseTurn!: () => void;
+  const currentTurn = new Promise<void>((resolveTurn) => {
+    releaseTurn = resolveTurn;
+  });
+  const queueTail = previous.then(() => currentTurn);
+  taskMutationQueues.set(queueKey, queueTail);
+
+  await previous;
+  try {
+    return await operation();
+  } finally {
+    releaseTurn();
+    if (taskMutationQueues.get(queueKey) === queueTail) {
+      taskMutationQueues.delete(queueKey);
+    }
   }
 };
 

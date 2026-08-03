@@ -47,6 +47,7 @@ describe('compact command output', () => {
       selectedGuardIds: ['guard.focused'],
       questions: [],
       recommendations: [],
+      memoryObligations: [],
     } as unknown as SkoposTaskArtifact;
     const taskSummary = buildCompactTaskOutput(task);
     expect(taskSummary).toMatchObject({

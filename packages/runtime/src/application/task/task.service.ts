@@ -1,12 +1,15 @@
-import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 
+import { buildSkoposDocumentCatalog } from '@skopos/indexer';
 import type {
+  SkoposDocumentKnowledgeEntry,
   SkoposPlanResult,
   SkoposTaskArtifact,
   SkoposTaskContractDeclaration,
   SkoposTaskDetail,
+  SkoposTaskMemoryObligation,
   SkoposTaskRisk,
   SkoposTaskRunResult,
   SkoposTaskQuestionArtifact,
@@ -20,6 +23,7 @@ import {
   resolveSkoposWorkspaceIdentity,
 } from '@skopos/verification';
 
+import { withSkoposTaskMutationTransaction } from '../coordination/coordination.service.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
@@ -105,10 +109,22 @@ export const prepareSkoposTaskRuntime = async ({
     (question) => question.blocking && question.status === 'open',
   );
   const resolvedDetail = detail ?? inferTaskDetail(resolvedRisk);
-  const trackedDocumentPath =
-    resolvedRisk === 'light'
-      ? undefined
-      : join('docs', 'work', 'tasks', `${taskId}-${slugify(plan.title)}.md`);
+  const memoryObligations = await inferSkoposTaskMemoryObligationsRuntime({
+    cwd: workspaceRoot,
+    plan,
+    risk: resolvedRisk,
+    ownedPaths,
+  });
+  const taskState = hasBlockingQuestions ? 'blocked' : 'active';
+  const trackedDocumentPath = resolveTrackedTaskDocumentPath({
+    risk: resolvedRisk,
+    state: taskState,
+    scopeMemoryRoot: plan.scope.scope.memoryRoot,
+    scopeKind: plan.scope.scope.kind,
+    scopeMatchedBy: plan.scope.matchedBy,
+    taskId,
+    title: plan.title,
+  });
   const task: SkoposTaskArtifact = {
     schemaVersion: 1,
     id: taskId,
@@ -122,7 +138,7 @@ export const prepareSkoposTaskRuntime = async ({
     trackedDocumentPath,
     planIds,
     childTasks: [],
-    state: hasBlockingQuestions ? 'blocked' : 'active',
+    state: taskState,
     detail: resolvedDetail,
     title: plan.title,
     goal: plan.goal,
@@ -159,7 +175,7 @@ export const prepareSkoposTaskRuntime = async ({
           evidence: guard.evidence,
         })),
     ],
-    memoryObligations: [],
+    memoryObligations,
     questions: questions.entries,
     recommendations: recommendations.entries,
     coordination: actorId
@@ -273,15 +289,44 @@ export const reconstructTrackedSkoposTasksRuntime = async ({
   cwd: string;
 }): Promise<SkoposTaskArtifact[]> => {
   const workspaceRoot = resolve(cwd);
-  const documentPaths = await findTrackedTaskDocuments(
-    join(workspaceRoot, 'docs', 'work', 'tasks'),
-  );
+  const catalog = await buildSkoposDocumentCatalog({ cwd: workspaceRoot });
+  const documentPaths = catalog.documents
+    .filter(
+      (document) =>
+        document.role === 'task' &&
+        document.lifecycle === 'active' &&
+        /(?:^|\/)work\/tasks\/T-[a-z0-9]+.*\.md$/iu.test(document.path),
+    )
+    .map((document) => resolve(workspaceRoot, document.path))
+    .sort((left, right) => left.localeCompare(right));
   const workspace = await resolveSkoposWorkspaceIdentity(workspaceRoot);
   const reconstructed: SkoposTaskArtifact[] = [];
+  const portableDocuments = (
+    await Promise.all(
+      documentPaths.map(async (documentPath) => ({
+        documentPath,
+        portable: parsePortableTaskState(await readFile(documentPath, 'utf8')),
+      })),
+    )
+  ).filter(
+    (
+      entry,
+    ): entry is { documentPath: string; portable: PortableTaskState } =>
+      entry.portable !== undefined,
+  );
+  const portableOwners = new Map<string, string>();
 
-  for (const documentPath of documentPaths) {
-    const portable = parsePortableTaskState(await readFile(documentPath, 'utf8'));
-    if (!portable) continue;
+  for (const { documentPath, portable } of portableDocuments) {
+    const existingOwner = portableOwners.get(portable.id);
+    if (existingOwner) {
+      throw new Error(
+        `Tracked Task ${portable.id} is declared by both ${relative(workspaceRoot, existingOwner)} and ${relative(workspaceRoot, documentPath)}.`,
+      );
+    }
+    portableOwners.set(portable.id, documentPath);
+  }
+
+  for (const { documentPath, portable } of portableDocuments) {
     const taskIdentity = buildSkoposTaskIdentity({
       workspace,
       taskId: portable.id,
@@ -435,6 +480,95 @@ export const completeSkoposTaskStepRuntime = async ({
     },
   });
 
+export const resolveSkoposTaskMemoryObligationRuntime = async ({
+  cwd,
+  taskId,
+  obligationId,
+  resolution,
+  reason,
+  targetPath,
+  actor,
+}: {
+  cwd: string;
+  taskId: string;
+  obligationId: string;
+  resolution: 'memory-updated' | 'reviewed-no-change';
+  reason: string;
+  targetPath?: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  const normalizedReason = reason.trim();
+  if (!normalizedReason) {
+    throw new Error('Memory obligation resolution requires a non-empty reason.');
+  }
+  const normalizedTargetPath = targetPath?.trim();
+  if (resolution === 'memory-updated' && !normalizedTargetPath) {
+    throw new Error('A memory-updated resolution requires --target <path>.');
+  }
+  if (resolution === 'reviewed-no-change' && normalizedTargetPath) {
+    throw new Error(
+      'A reviewed-no-change resolution uses the inferred target and does not accept --target.',
+    );
+  }
+  if (normalizedTargetPath && !isWorkspaceRelativePath(normalizedTargetPath)) {
+    throw new Error('Memory obligation target must be a workspace-relative path.');
+  }
+  let resolvedTargetRole: SkoposTaskMemoryObligation['role'] | undefined;
+  if (resolution === 'memory-updated') {
+    const catalog = await buildSkoposDocumentCatalog({ cwd: resolve(cwd) });
+    const targetDocument = catalog.documents.find(
+      (document) => document.path === normalizeProjectPath(normalizedTargetPath!),
+    );
+    if (!targetDocument || !isDurableMemoryDocument(targetDocument)) {
+      throw new Error(
+        `Memory obligation target ${normalizedTargetPath} is not adopted canonical durable Memory.`,
+      );
+    }
+    resolvedTargetRole = targetDocument.role;
+  }
+
+  return mutateTask({
+    cwd,
+    taskId,
+    actor,
+    mutate: (task, actorId, now) => {
+      assertTaskActor(task, actorId);
+      const obligation = task.memoryObligations.find(
+        (entry) => entry.id === obligationId,
+      );
+      if (!obligation) {
+        throw new Error(`Task ${task.id} has no Memory obligation ${obligationId}.`);
+      }
+      if (resolvedTargetRole && resolvedTargetRole !== obligation.role) {
+        throw new Error(
+          `Memory target role ${resolvedTargetRole} does not satisfy ${obligation.role} obligation ${obligation.id}.`,
+        );
+      }
+      return {
+        ...task,
+        memoryObligations: task.memoryObligations.map((entry) =>
+          entry.id === obligationId
+            ? {
+                ...entry,
+                status: 'complete' as const,
+                resolution,
+                resolutionReason: normalizedReason,
+                targetPath: normalizedTargetPath ?? entry.targetPath,
+                resolvedAt: now,
+                resolvedByActorId: actorId,
+              }
+            : entry,
+        ),
+        coordination: {
+          ...task.coordination,
+          lastUpdatedBy: actorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+  });
+};
+
 export const completeSkoposTaskActionRuntime = async ({
   cwd,
   taskId,
@@ -447,15 +581,7 @@ export const completeSkoposTaskActionRuntime = async ({
   actor?: string;
 }): Promise<SkoposTaskArtifact> => {
   const workspaceRoot = resolve(cwd);
-  const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
-  const recommendationsPath = resolveSkoposTaskRecommendationsPath(
-    workspaceRoot,
-    existing.taskIdentity,
-  );
-  const recommendations = JSON.parse(
-    await readFile(recommendationsPath, 'utf8'),
-  ) as SkoposTaskRecommendationArtifact;
-  const updated = await mutateTask({
+  return mutateTask({
     cwd: workspaceRoot,
     taskId,
     actor,
@@ -478,16 +604,16 @@ export const completeSkoposTaskActionRuntime = async ({
         lastUpdatedAt: now,
       },
     }),
-  });
-  await writeJsonArtifact({
-    artifactPath: recommendationsPath,
-    artifact: {
-      ...recommendations,
-      updatedAt: updated.updatedAt,
-      entries: updated.recommendations,
+    afterPersist: async (updated) => {
+      await writeJsonArtifact({
+        artifactPath: resolveSkoposTaskRecommendationsPath(
+          workspaceRoot,
+          updated.taskIdentity,
+        ),
+        artifact: buildTaskRecommendationProjection(updated),
+      });
     },
   });
-  return updated;
 };
 
 export const moveSkoposTaskToVerificationRuntime = async ({
@@ -605,6 +731,163 @@ const inferTaskRisk = (plan: SkoposPlanResult): SkoposTaskRisk => {
 const inferTaskDetail = (risk: SkoposTaskRisk): SkoposTaskDetail =>
   risk === 'high-impact' ? 'detailed' : risk;
 
+const MEMORY_ROLES = new Set<SkoposTaskMemoryObligation['role']>([
+  'architecture',
+  'standard',
+  'guide',
+  'decision',
+  'finding',
+  'pattern',
+]);
+
+export const inferSkoposTaskMemoryObligationsRuntime = async ({
+  cwd,
+  plan,
+  risk,
+  ownedPaths,
+}: {
+  cwd: string;
+  plan: SkoposPlanResult;
+  risk: SkoposTaskRisk;
+  ownedPaths: string[];
+}): Promise<SkoposTaskMemoryObligation[]> => {
+  const workspaceRoot = resolve(cwd);
+  const catalog = await buildSkoposDocumentCatalog({ cwd: workspaceRoot });
+  const normalizedOwnedPaths = ownedPaths.map(normalizeProjectPath).filter(Boolean);
+  const eligibleDocuments = catalog.documents.filter(isDurableMemoryDocument);
+  const ownedDocuments = eligibleDocuments.filter((document) =>
+    normalizedOwnedPaths.some((ownedPath) => pathsOverlap(ownedPath, document.path)),
+  );
+  const obligations = ownedDocuments.map((document) =>
+    buildDocumentMemoryObligation(document),
+  );
+
+  if (risk === 'high-impact' && obligations.length === 0) {
+    const scopeMemoryRoot = normalizeProjectPath(plan.scope.scope.memoryRoot ?? 'docs');
+    const scopeDocument = eligibleDocuments
+      .filter(
+        (document) =>
+          document.metadata?.scope === plan.scope.scope.id ||
+          isPathInside(document.path, scopeMemoryRoot),
+      )
+      .sort(compareMemoryCandidates)[0];
+    obligations.push({
+      id: scopeDocument
+        ? buildMemoryObligationId(scopeDocument.role, scopeDocument.path)
+        : `memory-architecture-${shortDigest(plan.scope.scope.id)}`,
+      role: scopeDocument && MEMORY_ROLES.has(scopeDocument.role)
+        ? scopeDocument.role
+        : 'architecture',
+      reason: scopeDocument
+        ? `High-impact work must review and synchronize the existing ${scopeDocument.role} Memory for Scope ${plan.scope.scope.id}.`
+        : `High-impact work must review and synchronize durable Memory for Scope ${plan.scope.scope.id}.`,
+      status: 'open',
+      targetPath: scopeDocument?.path,
+    });
+  }
+
+  return obligations.sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const isDurableMemoryDocument = (
+  document: SkoposDocumentKnowledgeEntry,
+): document is SkoposDocumentKnowledgeEntry & {
+  role: SkoposTaskMemoryObligation['role'];
+} =>
+  MEMORY_ROLES.has(document.role as SkoposTaskMemoryObligation['role']) &&
+  document.authority === 'canonical' &&
+  ['active', 'durable'].includes(document.lifecycle);
+
+const buildDocumentMemoryObligation = (
+  document: SkoposDocumentKnowledgeEntry & {
+    role: SkoposTaskMemoryObligation['role'];
+  },
+): SkoposTaskMemoryObligation => ({
+  id: buildMemoryObligationId(document.role, document.path),
+  role: document.role,
+  reason: `The declared Task scope owns canonical ${document.role} Memory at ${document.path}; review and synchronize it if project truth changes.`,
+  status: 'open',
+  targetPath: document.path,
+});
+
+const buildMemoryObligationId = (
+  role: SkoposTaskMemoryObligation['role'],
+  path: string,
+): string => `memory-${role}-${shortDigest(path)}`;
+
+const shortDigest = (value: string): string =>
+  createHash('sha256').update(value).digest('hex').slice(0, 10);
+
+const compareMemoryCandidates = (
+  left: SkoposDocumentKnowledgeEntry,
+  right: SkoposDocumentKnowledgeEntry,
+): number =>
+  memoryRolePriority(left.role) - memoryRolePriority(right.role) ||
+  left.path.localeCompare(right.path);
+
+const memoryRolePriority = (role: SkoposDocumentKnowledgeEntry['role']): number => {
+  const order = ['architecture', 'standard', 'guide', 'decision', 'finding', 'pattern'];
+  const index = order.indexOf(role);
+  return index === -1 ? order.length : index;
+};
+
+const normalizeProjectPath = (path: string): string =>
+  path.replaceAll('\\', '/').replace(/^\.\//, '').replace(/\/$/, '');
+
+const pathsOverlap = (left: string, right: string): boolean =>
+  left === right || isPathInside(left, right) || isPathInside(right, left);
+
+const isPathInside = (path: string, parent: string): boolean =>
+  parent === '.' || path.startsWith(`${parent}/`);
+
+const isWorkspaceRelativePath = (path: string): boolean => {
+  const normalized = normalizeProjectPath(path);
+  const segments = normalized.split('/');
+  return (
+    normalized.length > 0 &&
+    !normalized.startsWith('/') &&
+    !/^[a-z]:\//iu.test(normalized) &&
+    !segments.includes('..')
+  );
+};
+
+const resolveTrackedTaskDocumentPath = ({
+  risk,
+  state,
+  scopeMemoryRoot,
+  scopeKind,
+  scopeMatchedBy,
+  taskId,
+  title,
+}: {
+  risk: SkoposTaskRisk;
+  state: SkoposTaskArtifact['state'];
+  scopeMemoryRoot?: string;
+  scopeKind: SkoposTaskArtifact['scope']['scope']['kind'];
+  scopeMatchedBy: SkoposTaskArtifact['scope']['matchedBy'];
+  taskId: string;
+  title: string;
+}): string | undefined => {
+  if (risk === 'light') return undefined;
+  const resolvedMemoryRoot =
+    scopeMemoryRoot ??
+    (scopeKind === 'workspace' && scopeMatchedBy === 'default-root' ? 'docs' : undefined);
+  if (!resolvedMemoryRoot || !isWorkspaceRelativePath(resolvedMemoryRoot)) {
+    throw new Error(
+      `Tracked Task ${taskId} requires a safe workspace-relative Memory root for its declared Scope.`,
+    );
+  }
+  const activePath = join(
+    normalizeProjectPath(resolvedMemoryRoot),
+    'work',
+    'tasks',
+    `${taskId}-${slugify(title)}.md`,
+  );
+  return ['complete', 'cancelled', 'superseded'].includes(state)
+    ? archiveTrackedTaskDocumentPath(activePath)
+    : activePath;
+};
+
 const buildTaskSteps = (
   plan: SkoposPlanResult,
   selectedActions: SkoposTaskArtifact['selectedActions'],
@@ -650,6 +933,7 @@ const mutateTask = async ({
   taskId,
   actor,
   mutate,
+  afterPersist,
 }: {
   cwd: string;
   taskId: string;
@@ -659,43 +943,60 @@ const mutateTask = async ({
     actorId: string,
     now: string,
   ) => SkoposTaskArtifact;
+  afterPersist?: (task: SkoposTaskArtifact) => Promise<void>;
 }): Promise<SkoposTaskArtifact> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   if (!actorId) {
     throw new Error('Task mutation requires --actor <id> or SKOPOS_ACTOR.');
   }
-  const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
-  const now = new Date().toISOString();
-  const updated = {
-    ...mutate(existing, actorId, now),
-    updatedAt: now,
-  };
-  await writeJsonArtifact({
-    artifactPath: resolveSkoposTaskArtifactPath(workspaceRoot, existing.taskIdentity),
-    artifact: updated,
-  });
-  if (
-    existing.trackedDocumentPath &&
-    updated.trackedDocumentPath &&
-    existing.trackedDocumentPath !== updated.trackedDocumentPath
-  ) {
-    const sourcePath = resolve(workspaceRoot, existing.trackedDocumentPath);
-    const targetPath = resolve(workspaceRoot, updated.trackedDocumentPath);
-    await mkdir(dirname(targetPath), { recursive: true });
-    try {
-      await rename(sourcePath, targetPath);
-    } catch (error) {
-      if (!isMissingFileError(error)) throw error;
-    }
-  }
-  if (updated.trackedDocumentPath) {
-    await writeSkoposTrackedTaskDocumentRuntime({
-      workspaceRoot,
-      task: updated,
-    });
-  }
-  return updated;
+  return withSkoposTaskMutationTransaction(
+    { cwd: workspaceRoot, taskId },
+    async () => {
+      const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+      const now = new Date().toISOString();
+      const mutated = mutate(existing, actorId, now);
+      const updated = {
+        ...mutated,
+        trackedDocumentPath: resolveTrackedTaskDocumentPath({
+          risk: mutated.risk,
+          state: mutated.state,
+          scopeMemoryRoot: mutated.scope.scope.memoryRoot,
+          scopeKind: mutated.scope.scope.kind,
+          scopeMatchedBy: mutated.scope.matchedBy,
+          taskId: mutated.id,
+          title: mutated.title,
+        }),
+        updatedAt: now,
+      };
+      await writeJsonArtifact({
+        artifactPath: resolveSkoposTaskArtifactPath(workspaceRoot, existing.taskIdentity),
+        artifact: updated,
+      });
+      if (
+        existing.trackedDocumentPath &&
+        updated.trackedDocumentPath &&
+        existing.trackedDocumentPath !== updated.trackedDocumentPath
+      ) {
+        const sourcePath = resolve(workspaceRoot, existing.trackedDocumentPath);
+        const targetPath = resolve(workspaceRoot, updated.trackedDocumentPath);
+        await mkdir(dirname(targetPath), { recursive: true });
+        try {
+          await rename(sourcePath, targetPath);
+        } catch (error) {
+          if (!isMissingFileError(error)) throw error;
+        }
+      }
+      if (updated.trackedDocumentPath) {
+        await writeSkoposTrackedTaskDocumentRuntime({
+          workspaceRoot,
+          task: updated,
+        });
+      }
+      await afterPersist?.(updated);
+      return updated;
+    },
+  );
 };
 
 export const writeSkoposTrackedTaskDocumentRuntime = async ({
@@ -710,9 +1011,17 @@ export const writeSkoposTrackedTaskDocumentRuntime = async ({
   if (!task.trackedDocumentPath || dryRun) return;
   const path = resolve(workspaceRoot, task.trackedDocumentPath);
   await mkdir(dirname(path), { recursive: true });
-  const temporaryPath = `${path}.tmp`;
-  await writeFile(temporaryPath, renderTrackedTaskDocument(task), 'utf8');
-  await rename(temporaryPath, path);
+  const temporaryPath = join(
+    dirname(path),
+    `.${basename(path)}.${process.pid}.${Date.now()}.${Math.random().toString(36).slice(2)}.tmp`,
+  );
+  try {
+    await writeFile(temporaryPath, renderTrackedTaskDocument(task), 'utf8');
+    await rename(temporaryPath, path);
+  } catch (error) {
+    await rm(temporaryPath, { force: true });
+    throw error;
+  }
 };
 
 const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
@@ -787,6 +1096,16 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
           `${requirement.acceptanceCriterion} (${requirement.phase}, ${requirement.evidence})`,
       ),
       'No Evidence requirement is declared.',
+    ),
+    '',
+    '## Memory Obligations',
+    '',
+    ...asBulletList(
+      task.memoryObligations.map(
+        (obligation) =>
+          `[${obligation.status}] ${obligation.role}: ${obligation.reason}${obligation.targetPath ? ` (target: \`${obligation.targetPath}\`)` : ''}${obligation.resolution ? `; resolution: ${obligation.resolution}` : ''}`,
+      ),
+      'No durable Memory obligation is inferred.',
     ),
     '',
     '## Portable Task State',
@@ -897,29 +1216,6 @@ const buildTaskRecommendationProjection = (
   taskId: task.id,
   entries: task.recommendations,
 });
-
-const findTrackedTaskDocuments = async (directory: string): Promise<string[]> => {
-  let entries: Awaited<ReturnType<typeof readdir>>;
-  try {
-    entries = await readdir(directory, { withFileTypes: true });
-  } catch (error) {
-    if (isMissingFileError(error)) return [];
-    throw error;
-  }
-  return (
-    await Promise.all(
-      entries.map(async (entry) => {
-        const path = join(directory, entry.name);
-        if (entry.isDirectory()) {
-          return entry.name === 'archive' || entry.name === 'snapshots'
-            ? []
-            : findTrackedTaskDocuments(path);
-        }
-        return entry.isFile() && /^T-[a-z0-9]+.*\.md$/i.test(entry.name) ? [path] : [];
-      }),
-    )
-  ).flat();
-};
 
 const isMissingFileError = (error: unknown): error is NodeJS.ErrnoException =>
   typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT';

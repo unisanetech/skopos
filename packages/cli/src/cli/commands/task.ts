@@ -5,6 +5,7 @@ import {
   completeSkoposTaskStepRuntime,
   moveSkoposTaskToVerificationRuntime,
   releaseSkoposTaskRuntime,
+  resolveSkoposTaskMemoryObligationRuntime,
   showSkoposTaskRuntime,
 } from '@skopos/runtime';
 
@@ -31,6 +32,14 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
                   ...common,
                   stepId: parsed.stepId!,
                 })
+              : parsed.subcommand === 'memory' && parsed.action === 'resolve'
+                ? await resolveSkoposTaskMemoryObligationRuntime({
+                    ...common,
+                    obligationId: parsed.obligationId!,
+                    resolution: parsed.resolution!,
+                    reason: parsed.reason!,
+                    targetPath: parsed.targetPath,
+                  })
               : failUnknownTaskCommand(parsed);
 
   if (parsed.json) {
@@ -47,6 +56,7 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
     `Risk/detail: ${task.risk} / ${task.detail}`,
     `Claimed by: ${task.coordination.claimedBy?.actorId ?? '(none)'}`,
     `Steps: ${task.steps.filter((step) => step.status === 'complete').length}/${task.steps.length} complete`,
+    `Memory obligations: ${task.memoryObligations.filter((entry) => entry.status === 'open').length}/${task.memoryObligations.length} open`,
   ]);
 };
 
@@ -55,6 +65,10 @@ interface ParsedTaskArgs {
   action?: string;
   taskId: string;
   stepId?: string;
+  obligationId?: string;
+  resolution?: 'memory-updated' | 'reviewed-no-change';
+  reason?: string;
+  targetPath?: string;
   cwd: string;
   actor?: string;
   compact: boolean;
@@ -67,6 +81,9 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   let actor: string | undefined;
   let compact = true;
   let json = false;
+  let resolution: ParsedTaskArgs['resolution'];
+  let reason: string | undefined;
+  let targetPath: string | undefined;
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
@@ -80,6 +97,18 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       actor = requireFlagValue(args, ++index, '--actor');
     } else if (argument.startsWith('--actor=')) {
       actor = argument.slice('--actor='.length);
+    } else if (argument === '--resolution') {
+      resolution = parseMemoryResolution(requireFlagValue(args, ++index, '--resolution'));
+    } else if (argument.startsWith('--resolution=')) {
+      resolution = parseMemoryResolution(argument.slice('--resolution='.length));
+    } else if (argument === '--reason') {
+      reason = requireFlagValue(args, ++index, '--reason');
+    } else if (argument.startsWith('--reason=')) {
+      reason = argument.slice('--reason='.length);
+    } else if (argument === '--target') {
+      targetPath = requireFlagValue(args, ++index, '--target');
+    } else if (argument.startsWith('--target=')) {
+      targetPath = argument.slice('--target='.length);
     } else if (argument === '--cwd') {
       cwd = resolve(requireFlagValue(args, ++index, '--cwd'));
     } else if (argument.startsWith('--cwd=')) {
@@ -104,6 +133,26 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       action: first,
       taskId: second,
       stepId: third,
+      cwd,
+      actor,
+      compact,
+      json,
+    };
+  }
+  if (subcommand === 'memory') {
+    if (first !== 'resolve' || !second || !third || !resolution || !reason) {
+      throw new Error(
+        'Usage: skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>].',
+      );
+    }
+    return {
+      subcommand,
+      action: first,
+      taskId: second,
+      obligationId: third,
+      resolution,
+      reason,
+      targetPath,
       cwd,
       actor,
       compact,
@@ -158,7 +207,33 @@ export const buildCompactTaskOutput = (
     openRecommendationCount: task.recommendations.filter(
       (recommendation) => recommendation.status === 'open',
     ).length,
+    memory: {
+      open: task.memoryObligations.filter(
+        (obligation) => obligation.status === 'open',
+      ).length,
+      total: task.memoryObligations.length,
+      openObligations: task.memoryObligations
+        .filter((obligation) => obligation.status === 'open')
+        .slice(0, 6)
+        .map((obligation) => ({
+          id: obligation.id,
+          role: obligation.role,
+          targetPath: obligation.targetPath,
+          reason: obligation.reason,
+        })),
+    },
   };
+};
+
+const parseMemoryResolution = (
+  value: string,
+): ParsedTaskArgs['resolution'] => {
+  if (value === 'memory-updated' || value === 'reviewed-no-change') {
+    return value;
+  }
+  throw new Error(
+    'Memory resolution must be memory-updated or reviewed-no-change.',
+  );
 };
 
 const requireFlagValue = (args: string[], index: number, flag: string): string => {

@@ -91,6 +91,10 @@ export interface SkoposTaskMemoryObligation {
   reason: string;
   status: 'open' | 'complete';
   targetPath?: string;
+  resolution?: 'memory-updated' | 'reviewed-no-change';
+  resolutionReason?: string;
+  resolvedAt?: string;
+  resolvedByActorId?: string;
 }
 
 export interface SkoposTaskContractDeclaration {
