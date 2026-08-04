@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
-  "updatedAt": "2026-08-04T16:51:31.075Z",
+  "updatedAt": "2026-08-04T17:39:59.371Z",
   "bindingId": "skopos.ui.product-craft",
   "packId": "ui.product-craft",
   "packVersion": "0.1.0",
@@ -50,8 +50,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-04T16:51:31.075Z",
-    "acceptedBy": "codex-skill-model",
-    "reason": "Apply the user-approved first-version clean hard cut with module-local selection signals, project roles, rubric dimensions, failure references, and loader-measured context cost."
+    "acceptedAt": "2026-08-04T17:39:59.371Z",
+    "acceptedBy": "codex-skill-identity",
+    "reason": "Re-accept the exact first-version Skill sources after synchronizing Decision, Finding, Plan, cache, and invalidation proof.",
+    "identity": {
+      "packSourceDigest": "sha256:1d60370348e54e60b9263233fc567351bebc1fe55ad5f0ce0dfae46084e3a972",
+      "bindingSourceDigest": "sha256:aec6baa2ef1d52e4741c036fe019b58266f18fe853a9e5e7df9f7e8e5037213b",
+      "projectSourceDigest": "sha256:45d469dca168e41a020ccd8a901c7dbc4ff22a8a20cd90fdd7fe861b054cb6c0",
+      "capabilityCatalogDigest": "sha256:ecbf2eb307efd92306c1dd8994096e227d707fcc28132c3f36961b91c49e865f",
+      "evaluationSourceDigest": "sha256:50a0209773b2404d42623ccf1999d0e44419965992251dea1a55c23e1516d691",
+      "combinedDigest": "sha256:0ebaa113d5c603ee60d1f9ed7a35daf469ceb7de34de0e149540ddb2dc053809"
+    }
   }
 }

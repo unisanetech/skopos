@@ -109,6 +109,7 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
   });
   const skillSelection = await selectSkoposSkillsForTaskRuntime({
     cwd: workspaceRoot,
+    taskId: task.id,
     task: baseBrief.task,
     taskRisk:
       resolvedRisk === 'high-impact'
@@ -136,6 +137,7 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
       )
       .map((entry) => ({ id: entry.id.replace(/^knowledge:/, ''), summary: entry.summary })),
     operatingModel,
+    resolvedPolicy: policy,
   });
 
   const brief = buildSkoposCompactTaskBrief({

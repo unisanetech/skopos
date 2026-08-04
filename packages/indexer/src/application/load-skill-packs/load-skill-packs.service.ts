@@ -208,6 +208,16 @@ const projectSkillBindingSchema = z
         ),
         acceptedBy: nonEmptyString,
         reason: nonEmptyString,
+        identity: z
+          .object({
+            packSourceDigest: nonEmptyString,
+            bindingSourceDigest: nonEmptyString,
+            projectSourceDigest: nonEmptyString,
+            capabilityCatalogDigest: nonEmptyString,
+            evaluationSourceDigest: nonEmptyString,
+            combinedDigest: nonEmptyString,
+          })
+          .strict(),
       })
       .strict()
       .optional(),

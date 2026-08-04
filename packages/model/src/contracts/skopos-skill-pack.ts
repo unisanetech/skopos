@@ -164,6 +164,16 @@ export interface SkoposSkillAcceptance {
   acceptedAt: string;
   acceptedBy: string;
   reason: string;
+  identity: SkoposSkillAcceptanceIdentity;
+}
+
+export interface SkoposSkillAcceptanceIdentity {
+  packSourceDigest: string;
+  bindingSourceDigest: string;
+  projectSourceDigest: string;
+  capabilityCatalogDigest: string;
+  evaluationSourceDigest: string;
+  combinedDigest: string;
 }
 
 export interface SkoposSkillRecommendationEntry {
@@ -196,6 +206,7 @@ export interface SkoposAcceptedSkillPack {
   acceptedAt: string;
   acceptedBy: string;
   reason: string;
+  identity: SkoposSkillAcceptanceIdentity;
   sourcePath: string;
   bindingPath: string;
 }
@@ -308,12 +319,37 @@ export interface SkoposSkillSelectionResult {
   selectedSkills: SkoposSelectedSkill[];
   explanations: SkoposSkillSelectionExplanation[];
   diagnostics: string[];
+  cache: SkoposSkillSelectionCacheResult;
+}
+
+export interface SkoposSkillSelectionIdentityEntry {
+  packId: string;
+  version: string;
+  bindingId: string;
+  acceptanceDigest: string;
+}
+
+export interface SkoposSkillSelectionIdentity {
+  algorithmId: string;
+  taskSignalDigest: string;
+  acceptedSkills: SkoposSkillSelectionIdentityEntry[];
+  acceptedSkillsDigest: string;
+  capabilityCatalogDigest: string;
+  resolvedPolicyDigest: string;
+  combinedDigest: string;
+}
+
+export interface SkoposSkillSelectionCacheResult {
+  status: 'hit' | 'miss' | 'bypassed';
+  artifactPath?: string;
+  identityDigest: string;
 }
 
 export interface SkoposSkillSelectionArtifact
   extends SkoposArtifactEnvelope<'skill-selection'> {
   workspaceRoot: string;
   taskId: string;
+  identity: SkoposSkillSelectionIdentity;
   envelope: SkoposSkillTaskSignalEnvelope;
   budget: SkoposSkillTaskBudget;
   selectedSkills: SkoposSelectedSkill[];

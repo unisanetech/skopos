@@ -21,6 +21,7 @@ import type {
   SkoposSkillHostProjectionEntry,
   SkoposProjectSkillBinding,
   SkoposProjectLifecycle,
+  SkoposResolvedPolicyArtifact,
   SkoposResolvedSkillArtifact,
   SkoposSelectedSkill,
   SkoposSkillRecommendationArtifact,
@@ -28,6 +29,7 @@ import type {
   SkoposSkillAcceptedFailureEvidence,
   SkoposSkillModuleSelectionEvidence,
   SkoposSkillSelectionExplanation,
+  SkoposSkillSelectionArtifact,
   SkoposSkillSelectionResult,
   SkoposSkillTaskPathKind,
   SkoposSkillTaskSignalEnvelope,
@@ -40,10 +42,16 @@ import {
 
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
+import {
+  assertSkoposSkillAcceptanceIdentityRuntime,
+  buildSkoposSkillAcceptanceIdentityRuntime,
+  buildSkoposSkillSelectionIdentity,
+} from './skill-identity.service.js';
 
 export const SKILL_RECOMMENDATIONS_ARTIFACT_PATH = '.skopos/index/skills/recommendations.json';
 export const RESOLVED_SKILLS_ARTIFACT_PATH = '.skopos/index/skills/resolved.json';
 export const SKILL_PROJECTIONS_ARTIFACT_DIRECTORY = '.skopos/index/skills/projections';
+export const SKILL_SELECTIONS_ARTIFACT_DIRECTORY = '.skopos/index/skills/selections';
 
 
 export const listSkoposSkillPacksRuntime = async ({
@@ -301,14 +309,25 @@ export const applySkoposSkillPackRuntime = async ({
   }
 
   const acceptedAt = new Date().toISOString();
-  const acceptedBinding: SkoposLoadedProjectSkillBinding = {
-    ...binding,
+  const { acceptance: _previousAcceptance, ...bindingWithoutAcceptance } = binding;
+  const pendingAcceptedBinding: SkoposLoadedProjectSkillBinding = {
+    ...bindingWithoutAcceptance,
     lifecycle: 'accepted',
     updatedAt: acceptedAt,
+  };
+  const acceptanceIdentity = await buildSkoposSkillAcceptanceIdentityRuntime({
+    workspaceRoot,
+    pack,
+    binding: pendingAcceptedBinding,
+    operatingModel,
+  });
+  const acceptedBinding: SkoposLoadedProjectSkillBinding = {
+    ...pendingAcceptedBinding,
     acceptance: {
       acceptedAt,
       acceptedBy: actorId,
       reason: reason.trim(),
+      identity: acceptanceIdentity,
     },
   };
   const nextBindings = bindings.map((candidate) =>
@@ -517,6 +536,7 @@ export const buildSkoposSkillHostProjectionsRuntime = async ({
 
 export const selectSkoposSkillsForTaskRuntime = async ({
   cwd,
+  taskId,
   task,
   taskRisk,
   phase = 'iteration',
@@ -527,8 +547,12 @@ export const selectSkoposSkillsForTaskRuntime = async ({
   applicableGuardIds = [],
   acceptedFailureEvidence = [],
   operatingModel,
+  resolvedPolicy,
+  cacheMode = 'read-write',
+  selectionArtifactDirectory,
 }: {
   cwd: string;
+  taskId: string;
   task: SkoposTaskContract;
   taskRisk: SkoposTaskRisk;
   phase?: SkoposExecutionPhase;
@@ -539,6 +563,9 @@ export const selectSkoposSkillsForTaskRuntime = async ({
   applicableGuardIds?: string[];
   acceptedFailureEvidence?: SkoposSkillAcceptedFailureEvidence[];
   operatingModel: SkoposAgentNativeOperatingModel;
+  resolvedPolicy?: SkoposResolvedPolicyArtifact;
+  cacheMode?: 'read-write' | 'bypass';
+  selectionArtifactDirectory?: string;
 }): Promise<SkoposSkillSelectionResult> => {
   const workspaceRoot = resolve(cwd);
   const [packs, bindings, projectLifecycle] = await Promise.all([
@@ -559,15 +586,62 @@ export const selectSkoposSkillsForTaskRuntime = async ({
     projectLifecycle,
   });
   const budget = SKOPOS_SKILL_TASK_BUDGETS[taskRisk];
+  const selectedSkills: SkoposSelectedSkill[] = [];
+  const explanations: SkoposSkillSelectionExplanation[] = [];
+  const diagnostics: string[] = [];
   const resolvedSkills = await buildResolvedSkillArtifactFromTrackedBindings({
     workspaceRoot,
     packs,
     bindings,
     operatingModel,
+    staleBindingMode: 'exclude',
+    diagnostics,
   });
-  const selectedSkills: SkoposSelectedSkill[] = [];
-  const explanations: SkoposSkillSelectionExplanation[] = [];
-  const diagnostics: string[] = [];
+  const identity = buildSkoposSkillSelectionIdentity({
+    envelope,
+    acceptedSkills: resolvedSkills.acceptedSkills,
+    operatingModel,
+    resolvedPolicy,
+  });
+  const selectionArtifactPath = buildSkillSelectionArtifactPath(
+    selectionArtifactDirectory ?? join(workspaceRoot, SKILL_SELECTIONS_ARTIFACT_DIRECTORY),
+    taskId,
+  );
+  const canUseCache = cacheMode === 'read-write' && diagnostics.length === 0;
+  if (canUseCache) {
+    const cached = await readSkillSelectionArtifact(selectionArtifactPath);
+    if (
+      cached?.taskId === taskId &&
+      cached.identity.combinedDigest === identity.combinedDigest
+    ) {
+      return {
+        envelope: cached.envelope,
+        budget: cached.budget,
+        selectedSkills: cached.selectedSkills,
+        explanations: cached.explanations,
+        diagnostics: cached.diagnostics,
+        cache: {
+          status: 'hit',
+          artifactPath: selectionArtifactPath,
+          identityDigest: identity.combinedDigest,
+        },
+      };
+    }
+  }
+  for (const binding of bindings.filter(
+    (candidate) =>
+      Boolean(candidate.acceptance) &&
+      (candidate.lifecycle === 'accepted' || candidate.lifecycle === 'validated') &&
+      !resolvedSkills.acceptedSkills.some(
+        (accepted) => accepted.bindingId === candidate.bindingId,
+      ),
+  )) {
+    const pack = packs.find(
+      (candidate) =>
+        candidate.packId === binding.packId && candidate.version === binding.packVersion,
+    );
+    if (pack) explanations.push(suppressedPackExplanation(pack, 'binding-invalid'));
+  }
   const candidatePacks: Array<{
     pack: SkoposLoadedSkillPack;
     binding: SkoposLoadedProjectSkillBinding;
@@ -762,7 +836,34 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       ],
     });
   }
-  return { envelope, budget, selectedSkills, explanations, diagnostics };
+  const cache = {
+    status: canUseCache ? 'miss' as const : 'bypassed' as const,
+    ...(canUseCache ? { artifactPath: selectionArtifactPath } : {}),
+    identityDigest: identity.combinedDigest,
+  };
+  if (canUseCache) {
+    const generatedAt = new Date().toISOString();
+    const artifact: SkoposSkillSelectionArtifact = {
+      schemaVersion: 1,
+      id: `skill-selection.${taskId}`,
+      type: 'skill-selection',
+      status: 'generated',
+      authority: 'generated',
+      summary: `${selectedSkills.length} Skill pack${selectedSkills.length === 1 ? '' : 's'} selected for ${taskId}.`,
+      updatedAt: generatedAt,
+      generatedAt,
+      workspaceRoot,
+      taskId,
+      identity,
+      envelope,
+      budget,
+      selectedSkills,
+      explanations,
+      diagnostics,
+    };
+    await writeJsonArtifact({ artifactPath: selectionArtifactPath, artifact, dryRun: false });
+  }
+  return { envelope, budget, selectedSkills, explanations, diagnostics, cache };
 };
 
 interface SkillModuleEligibility {
@@ -1175,16 +1276,50 @@ const writeProjectSkillBinding = async ({
   return 'written';
 };
 
+const buildSkillSelectionArtifactPath = (
+  artifactDirectory: string,
+  taskId: string,
+): string => {
+  if (!/^[A-Za-z0-9._-]+$/.test(taskId)) {
+    throw new Error(`Invalid Task id for Skill selection artifact: ${taskId}`);
+  }
+  return join(artifactDirectory, `${taskId}.json`);
+};
+
+const readSkillSelectionArtifact = async (
+  artifactPath: string,
+): Promise<SkoposSkillSelectionArtifact | undefined> => {
+  try {
+    const artifact = await readJsonIfExists<SkoposSkillSelectionArtifact>(artifactPath);
+    if (
+      artifact?.schemaVersion !== 1 ||
+      artifact.type !== 'skill-selection' ||
+      artifact.authority !== 'generated' ||
+      !artifact.identity?.combinedDigest
+    ) {
+      return undefined;
+    }
+    return artifact;
+  } catch (error) {
+    if (error instanceof SyntaxError) return undefined;
+    throw error;
+  }
+};
+
 const buildResolvedSkillArtifactFromTrackedBindings = async ({
   workspaceRoot,
   packs,
   bindings,
   operatingModel,
+  staleBindingMode = 'reject',
+  diagnostics = [],
 }: {
   workspaceRoot: string;
   packs: SkoposLoadedSkillPack[];
   bindings: SkoposLoadedProjectSkillBinding[];
   operatingModel: SkoposAgentNativeOperatingModel;
+  staleBindingMode?: 'reject' | 'exclude';
+  diagnostics?: string[];
 }): Promise<SkoposResolvedSkillArtifact> => {
   const acceptedBindings = bindings
     .filter(
@@ -1207,9 +1342,12 @@ const buildResolvedSkillArtifactFromTrackedBindings = async ({
         candidate.version === binding.packVersion,
     );
     if (!pack) {
-      throw new Error(
-        `Accepted skill binding ${binding.bindingId} has no matching ${binding.packId}@${binding.packVersion} pack source.`,
-      );
+      const message = `Accepted skill binding ${binding.bindingId} has no matching ${binding.packId}@${binding.packVersion} pack source.`;
+      if (staleBindingMode === 'exclude') {
+        diagnostics.push(message);
+        continue;
+      }
+      throw new Error(message);
     }
     const validation = await validateSkoposProjectSkillBindingRuntime({
       cwd: workspaceRoot,
@@ -1218,15 +1356,31 @@ const buildResolvedSkillArtifactFromTrackedBindings = async ({
       operatingModel,
     });
     if (validation.status === 'fail') {
-      throw new Error(
-        `Cannot resolve accepted skill ${binding.packId}: ${validation.diagnostics.join(' ')}`,
-      );
+      const message = `Cannot resolve accepted skill ${binding.packId}: ${validation.diagnostics.join(' ')}`;
+      if (staleBindingMode === 'exclude') {
+        diagnostics.push(message);
+        continue;
+      }
+      throw new Error(message);
     }
     const acceptance = binding.acceptance;
     if (!acceptance) {
       throw new Error(
         `Accepted skill binding ${binding.bindingId} is missing acceptance metadata.`,
       );
+    }
+    let identity;
+    try {
+      identity = await assertSkoposSkillAcceptanceIdentityRuntime({
+        workspaceRoot,
+        pack,
+        binding,
+        operatingModel,
+      });
+    } catch (error) {
+      if (staleBindingMode !== 'exclude') throw error;
+      diagnostics.push(error instanceof Error ? error.message : String(error));
+      continue;
     }
     acceptedSkills.push({
       packId: pack.packId,
@@ -1235,6 +1389,7 @@ const buildResolvedSkillArtifactFromTrackedBindings = async ({
       acceptedAt: acceptance.acceptedAt,
       acceptedBy: acceptance.acceptedBy,
       reason: acceptance.reason,
+      identity,
       sourcePath: pack.sourcePath,
       bindingPath: binding.sourcePath,
     });

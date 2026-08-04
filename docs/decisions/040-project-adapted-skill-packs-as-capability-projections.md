@@ -26,6 +26,12 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-04`: Implemented exact content-bound acceptance and selection reuse.
+  Human approval now pins pack, binding declaration, bound project source, capability
+  catalog, rubric, fixture, and combined digests. Stale approval suppresses the Skill
+  without blocking unrelated Task work. One generated per-Task selection artifact is
+  the cache and explanation view; reuse requires the same algorithm, Task envelope,
+  accepted Skill identities, capability catalog, and resolved policy identity.
 - `2026-08-04`: Implemented Task-aware selection and task-wide budgets. Runtime now
   builds one deterministic envelope from the available Task contract, Scope ancestry,
   owned and changed paths, inferred path capabilities, selected Actions, applicable
@@ -152,10 +158,17 @@ The first canonical schema and loader now enforce the following in place:
 10. every selected or suppressed module records a structured reason, evidence IDs, and
     measured cost; selected modules expose only their rubric, failure, context, Action,
     and Guard references
+11. accepted bindings pin exact pack, binding declaration, bound project source,
+    capability catalog, rubric, fixture, and combined identities; explicit resolution
+    rejects stale approval
+12. normal Task selection suppresses a stale Skill with a diagnostic and bypasses
+    reuse, so fail-closed Skill behavior does not prevent unrelated project work
+13. one generated per-Task selection artifact owns both cache reuse and explanations;
+    its identity includes the selection algorithm, normalized Task signals, accepted
+    Skill identities, Action/Guard catalog, and resolved policy
 
-Exact digest caching, content-bound acceptance, full deterministic fixture coverage,
-behavioral evaluation, and portable adoption proof remain later phases of the active
-Plan and Finding.
+Complete deterministic fixture coverage, behavioral evaluation, and portable adoption
+proof remain later phases of the active Plan and Finding.
 
 ## Consequences
 

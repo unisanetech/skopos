@@ -1,17 +1,24 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  loadSkoposActionManifests,
+  loadSkoposGuardManifests,
   loadSkoposProjectSkillBindings,
   loadSkoposSkillPacks,
 } from '../../../indexer/src/index.js';
 import type {
   SkoposAgentNativeOperatingModel,
+  SkoposResolvedPolicyArtifact,
   SkoposTaskContract,
 } from '../../../model/src/index.js';
 import { selectSkoposSkillsForTaskRuntime } from '../../../runtime/src/index.js';
+import {
+  assertSkoposSkillAcceptanceIdentityRuntime,
+  buildSkoposSkillAcceptanceIdentityRuntime,
+} from '../../../runtime/src/application/skills/skill-identity.service.js';
 import { describe, expect, it } from 'vitest';
 
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
@@ -104,10 +111,12 @@ describe('product UI craft skill pack', () => {
       question: 'Which component owns hydration?',
       blocking: false,
     });
-    const operatingModel = buildSkillTestOperatingModel();
+    const operatingModel = await buildSkillTestOperatingModel();
 
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-react-boundary',
+      cacheMode: 'bypass',
       task,
       taskRisk: 'standard',
       ownedPaths: ['packages/ui/src/app'],
@@ -166,6 +175,8 @@ describe('product UI craft skill pack', () => {
   it('suppresses keyword overlap without relevant UI applicability', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-backend-suppression',
+      cacheMode: 'bypass',
       task: buildSkillTestTask('Refactor the backend rendering adapter.', {
         id: 'skopos-runtime',
         title: 'Skopos Runtime',
@@ -174,7 +185,7 @@ describe('product UI craft skill pack', () => {
       }),
       taskRisk: 'standard',
       changedPaths: ['packages/runtime/src/adapters/database.ts'],
-      operatingModel: buildSkillTestOperatingModel(),
+      operatingModel: await buildSkillTestOperatingModel(),
     });
 
     expect(result.selectedSkills).toEqual([]);
@@ -189,10 +200,12 @@ describe('product UI craft skill pack', () => {
   it('suppresses Skills when all changed paths are generated output', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-generated-suppression',
+      cacheMode: 'bypass',
       task: buildSkillTestTask('Refresh the product interface rendering output.'),
       taskRisk: 'standard',
       changedPaths: ['.cache/generated/product-page.tsx'],
-      operatingModel: buildSkillTestOperatingModel(),
+      operatingModel: await buildSkillTestOperatingModel(),
     });
 
     expect(result.selectedSkills).toEqual([]);
@@ -206,10 +219,12 @@ describe('product UI craft skill pack', () => {
     );
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-anti-signal',
+      cacheMode: 'bypass',
       task,
       taskRisk: 'standard',
       changedPaths: ['packages/ui/src/app/page.tsx'],
-      operatingModel: buildSkillTestOperatingModel(),
+      operatingModel: await buildSkillTestOperatingModel(),
     });
 
     expect(
@@ -226,12 +241,14 @@ describe('product UI craft skill pack', () => {
   it('enforces one measured Skill budget across the Task', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-standard-budget',
+      cacheMode: 'bypass',
       task: buildSkillTestTask(
         'Rewrite interface labels, errors, empty states, typography, spacing, and responsive recovery.',
       ),
       taskRisk: 'standard',
       changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
-      operatingModel: buildSkillTestOperatingModel(),
+      operatingModel: await buildSkillTestOperatingModel(),
     });
 
     const measuredTokens = result.selectedSkills.reduce(
@@ -259,10 +276,12 @@ describe('product UI craft skill pack', () => {
   it('suppresses an oversized module instead of truncating its guidance', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
+      taskId: 'T-skill-light-budget',
+      cacheMode: 'bypass',
       task: buildSkillTestTask('Rewrite the interface labels and action wording.'),
       taskRisk: 'light',
       changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
-      operatingModel: buildSkillTestOperatingModel(),
+      operatingModel: await buildSkillTestOperatingModel(),
     });
 
     expect(
@@ -279,6 +298,182 @@ describe('product UI craft skill pack', () => {
         moduleId: 'ui-craft.human-interface-writing',
         reasonCode: 'token-budget-exhausted',
       }),
+    );
+  });
+
+  it('reuses only the one exact generated selection artifact', async () => {
+    const taskId = 'T-skill-selection-cache-fixture';
+    const selectionArtifactDirectory = await mkdtemp(
+      join(tmpdir(), 'skopos-skill-selection-cache-'),
+    );
+    const artifactPath = join(selectionArtifactDirectory, `${taskId}.json`);
+    const task = buildSkillTestTask('Polish the product interface hierarchy and spacing.');
+    const operatingModel = await buildSkillTestOperatingModel();
+    const policy = JSON.parse(
+      await readFile(join(skoposRoot, '.skopos/index/policies/resolved.json'), 'utf8'),
+    ) as SkoposResolvedPolicyArtifact;
+    const select = (resolvedPolicy = policy) =>
+      selectSkoposSkillsForTaskRuntime({
+        cwd: skoposRoot,
+        taskId,
+        task,
+        taskRisk: 'standard',
+        changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
+        operatingModel,
+        resolvedPolicy,
+        selectionArtifactDirectory,
+      });
+
+    try {
+      const first = await select();
+      const second = await select();
+      expect(first.cache).toMatchObject({ status: 'miss', artifactPath });
+      expect(second.cache).toMatchObject({
+        status: 'hit',
+        artifactPath,
+        identityDigest: first.cache.identityDigest,
+      });
+
+      task.acceptanceCriteria.push('Keep the responsive reading order stable.');
+      const taskChanged = await select();
+      expect(taskChanged.cache.status).toBe('miss');
+      expect(taskChanged.cache.identityDigest).not.toBe(first.cache.identityDigest);
+      expect((await select()).cache.status).toBe('hit');
+
+      const policyChanged = await select({
+        ...policy,
+        summary: `${policy.summary ?? ''} exact-cache-fixture`,
+      });
+      expect(policyChanged.cache.status).toBe('miss');
+      expect(policyChanged.cache.identityDigest).not.toBe(taskChanged.cache.identityDigest);
+      const artifact = JSON.parse(await readFile(artifactPath, 'utf8')) as {
+        authority: string;
+        type: string;
+        identity: { combinedDigest: string };
+      };
+      expect(artifact).toMatchObject({
+        authority: 'generated',
+        type: 'skill-selection',
+        identity: { combinedDigest: policyChanged.cache.identityDigest },
+      });
+    } finally {
+      await rm(selectionArtifactDirectory, { recursive: true, force: true });
+    }
+  });
+
+  it('invalidates human acceptance when pack, project, or evaluation content changes', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'skopos-skill-identity-'));
+    const temporaryPackDirectory = join(temporaryRoot, 'product-craft');
+    const temporaryProjectSource = join(temporaryRoot, 'project-source.md');
+    await cp(
+      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      temporaryPackDirectory,
+      { recursive: true },
+    );
+    await writeFile(temporaryProjectSource, 'Project source v1\n', 'utf8');
+    const [sourcePack] = await loadSkoposSkillPacks({ cwd: skoposRoot });
+    const [sourceBinding] = await loadSkoposProjectSkillBindings({ cwd: skoposRoot });
+    if (!sourcePack || !sourceBinding) throw new Error('Expected Skill sources.');
+    const operatingModel = await buildSkillTestOperatingModel();
+    const pack = {
+      ...sourcePack,
+      sourcePath: join(temporaryPackDirectory, 'pack.json'),
+    };
+    const binding = {
+      ...sourceBinding,
+      sourceBindings: {
+        ...sourceBinding.sourceBindings,
+        'brand-doctrine': [temporaryProjectSource],
+      },
+      acceptance: undefined,
+    };
+    const identity = await buildSkoposSkillAcceptanceIdentityRuntime({
+      workspaceRoot: skoposRoot,
+      pack,
+      binding,
+      operatingModel,
+    });
+    const acceptedBinding = {
+      ...binding,
+      lifecycle: 'accepted' as const,
+      acceptance: {
+        acceptedAt: '2026-08-04T00:00:00.000Z',
+        acceptedBy: 'fixture-reviewer',
+        reason: 'Pin the exact fixture sources.',
+        identity,
+      },
+    };
+
+    try {
+      await expect(
+        assertSkoposSkillAcceptanceIdentityRuntime({
+          workspaceRoot: skoposRoot,
+          pack,
+          binding: acceptedBinding,
+          operatingModel,
+        }),
+      ).resolves.toEqual(identity);
+
+      await writeFile(temporaryProjectSource, 'Project source v2\n', 'utf8');
+      await expect(
+        assertSkoposSkillAcceptanceIdentityRuntime({
+          workspaceRoot: skoposRoot,
+          pack,
+          binding: acceptedBinding,
+          operatingModel,
+        }),
+      ).rejects.toThrow(/projectSourceDigest.*changed/);
+      await writeFile(temporaryProjectSource, 'Project source v1\n', 'utf8');
+
+      const guidancePath = join(temporaryPackDirectory, 'guidance/hierarchy-and-brand.md');
+      const guidance = await readFile(guidancePath, 'utf8');
+      await writeFile(guidancePath, `${guidance}\nMaterial pack change.\n`, 'utf8');
+      await expect(
+        assertSkoposSkillAcceptanceIdentityRuntime({
+          workspaceRoot: skoposRoot,
+          pack,
+          binding: acceptedBinding,
+          operatingModel,
+        }),
+      ).rejects.toThrow(/packSourceDigest.*changed/);
+      await writeFile(guidancePath, guidance, 'utf8');
+
+      const fixturePath = join(temporaryPackDirectory, 'fixtures/good/README.md');
+      const fixture = await readFile(fixturePath, 'utf8');
+      await writeFile(fixturePath, `${fixture}\nMaterial evaluation change.\n`, 'utf8');
+      await expect(
+        assertSkoposSkillAcceptanceIdentityRuntime({
+          workspaceRoot: skoposRoot,
+          pack,
+          binding: acceptedBinding,
+          operatingModel,
+        }),
+      ).rejects.toThrow(/evaluationSourceDigest.*changed/);
+    } finally {
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('suppresses a stale accepted Skill without blocking unrelated Task selection', async () => {
+    const currentOperatingModel = await buildSkillTestOperatingModel();
+    const operatingModel = {
+      ...currentOperatingModel,
+      actions: [...currentOperatingModel.actions, { id: 'fixture.new-capability' }],
+    } as SkoposAgentNativeOperatingModel;
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      taskId: 'T-stale-skill-acceptance',
+      task: buildSkillTestTask('Polish the product interface hierarchy.'),
+      taskRisk: 'standard',
+      changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
+      operatingModel,
+    });
+
+    expect(result.selectedSkills).toEqual([]);
+    expect(result.cache.status).toBe('bypassed');
+    expect(result.diagnostics.join(' ')).toMatch(/capabilityCatalogDigest.*changed/);
+    expect(result.explanations).toContainEqual(
+      expect.objectContaining({ reasonCode: 'binding-invalid', outcome: 'suppressed' }),
     );
   });
 
@@ -352,16 +547,18 @@ const buildSkillTestTask = (
   provenance: [],
 });
 
-const buildSkillTestOperatingModel = (): SkoposAgentNativeOperatingModel => ({
-  schemaVersion: 1,
-  context: [],
-  actions: [
-    { id: 'ui.build-console-app' },
-    { id: 'quality.run-proof-phase' },
-  ],
-  guards: [
-    { id: 'quality.typecheck' },
-    { id: 'quality.focused-behavior-proof' },
-  ],
-  diagnostics: [],
-} as SkoposAgentNativeOperatingModel);
+const buildSkillTestOperatingModel = async (
+  cwd = skoposRoot,
+): Promise<SkoposAgentNativeOperatingModel> => {
+  const [actions, guards] = await Promise.all([
+    loadSkoposActionManifests({ cwd }),
+    loadSkoposGuardManifests({ cwd }),
+  ]);
+  return {
+    schemaVersion: 1,
+    context: [],
+    actions: actions.map((action) => ({ id: action.id })),
+    guards: guards.map((guard) => ({ id: guard.id })),
+    diagnostics: [],
+  } as SkoposAgentNativeOperatingModel;
+};

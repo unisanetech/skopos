@@ -103,20 +103,18 @@ system intended for launch.
 
 ## Current Gaps
 
-The active Findings own detailed evidence. The Plan treats these as release-blocking
-for Skill catalog expansion:
+The completed foundation now has stable derived-output Evidence, complete current Task
+signals, module-local selection and capabilities, loader-measured Task-wide budgets,
+exact content-bound acceptance, and one exact generated selection cache. The active
+Findings retain these release blockers for Skill catalog expansion:
 
-1. knowledge refresh can invalidate its own source-bound Evidence
-2. Task eligibility is based on shallow text overlap rather than complete Task signals
-3. declared positive signals and failure evidence do not drive Task selection
-4. one matched module selects every pack-bound Action and Guard
-5. project adaptation is mostly a flat provenance-path list
-6. token budgets are author estimates, per pack, and outside one Task-wide ceiling
-7. no hot-path selection cache exists
-8. acceptance does not bind exact content and evaluation identity
-9. fixtures and focused tests prove shape and phrases, not selection or outcome quality
-10. visual and accessibility roles are not bound to truthful specialized proof
-11. packed non-Skopos adoption and source-checkout independence are unproved
+1. project adaptation is still mostly bounded source projection rather than
+   module-specific applied judgment
+2. current focused tests prove selection, suppression, budgets, and invalidation, but
+   fixture artifacts do not yet prove rendered or behavioral outcome quality
+3. visual and accessibility roles are not bound to truthful specialized proof
+4. paired no-Skill evaluation and blinded review are not implemented
+5. packed non-Skopos adoption and source-checkout independence are unproved
 
 ## Target Selection Contract
 
@@ -219,8 +217,11 @@ Selection cache identity includes:
 6. Action and Guard catalog digest
 7. resolved policy digest
 
-The existing Skill-selection artifact becomes the one cache and explanation view. No
-parallel cache or authority is introduced.
+The implemented per-Task Skill-selection artifact is the one cache and explanation
+view. No parallel cache or authority is introduced. Human acceptance independently
+pins exact pack, binding declaration, project source, capability, rubric, fixture, and
+combined identities; stale approval suppresses that Skill and bypasses reuse until
+explicit re-acceptance.
 
 Runtime targets:
 
@@ -662,7 +663,7 @@ into pack modules.
 2. implement structured eligibility and anti-signal suppression — complete
 3. add module-local role and rubric ownership — complete
 4. enforce Task-wide measured budgets — complete
-5. add structured explanations and exact caching — explanations complete; exact caching pending
+5. add structured explanations and exact caching — complete
 
 ### Phase 3: build economical evaluation
 
@@ -670,7 +671,8 @@ into pack modules.
 2. add deterministic selection fixtures
 3. add paired isolated forward-test support
 4. add blinded module-specific review
-5. bind evaluation Evidence and human acceptance to exact source digests
+5. bind evaluation Evidence and human acceptance to exact source digests — human
+   acceptance complete; evaluation Evidence binding pending
 
 ### Phase 4: certify Product UI Craft
 
@@ -712,8 +714,8 @@ paired evaluation, project binding, and external canary before the next pack beg
 5. hard-cut Task signal collection and selection
 6. add module-local context and capability ownership
 7. add Task-wide measured budgets
-8. add exact selection caching and explanation
-9. bind acceptance to source and evaluation digests
+8. add exact selection caching and explanation — complete
+9. bind acceptance to source and evaluation digests — complete
 10. add deterministic fixture discovery and execution
 11. add paired forward-test and blind review support
 12. refocus and reset Product UI Craft to `0.1.0`
