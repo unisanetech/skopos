@@ -5,11 +5,11 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Task-selective product UI craft guidance backed by project sources, actions, guards, research, and visual proof.",
-  "updatedAt": "2026-07-25",
+  "updatedAt": "2026-08-04",
   "packId": "ui.product-craft",
   "family": "ui-craft",
   "variant": "product-ui",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "displayName": "Product UI Craft",
   "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, Actions, Guards, Evidence, or Readiness.",
   "plainLanguageSummary": "Use this for customer-facing pages and product screens that need real design judgment, complete states, human copy, responsive behavior, and visual evidence.",
@@ -75,7 +75,7 @@
     }
   ],
   "selection": {
-    "maximumContextTokens": 1350,
+    "maximumContextTokens": 2200,
     "maximumModules": 3,
     "requirePositiveSignal": true,
     "blockOnMatchingAntiSignal": true
@@ -108,6 +108,25 @@
       "estimatedTokens": 450
     },
     {
+      "id": "ui-craft.visual-composition-and-polish",
+      "title": "Visual composition and polish",
+      "summary": "Apply disciplined type scale, spacing rhythm, alignment, surface hierarchy, density, component defaults, scroll ownership, and rendered visual review.",
+      "path": "guidance/visual-composition-and-polish.md",
+      "triggers": [
+        "component",
+        "polish",
+        "typography",
+        "spacing",
+        "alignment",
+        "border",
+        "surface",
+        "layout"
+      ],
+      "appliesTo": ["frontend", "ui", "design", "components"],
+      "importance": "recommended",
+      "estimatedTokens": 650
+    },
+    {
       "id": "ui-craft.responsive-and-states",
       "title": "Responsive behavior and complete states",
       "summary": "Adapt interaction and information hierarchy by content constraints while proving loading, empty, error, permission, success, and recovery states.",
@@ -118,14 +137,53 @@
       "estimatedTokens": 450
     },
     {
-      "id": "ui-craft.react-and-copy",
-      "title": "React boundaries and human interface copy",
-      "summary": "Keep client rendering narrow, preserve project component boundaries, and replace technical or repetitive interface language with task-centered copy.",
-      "path": "guidance/react-and-copy.md",
-      "triggers": ["react", "next", "client", "server", "copy", "label", "error"],
-      "appliesTo": ["frontend", "react", "next", "copy"],
+      "id": "ui-craft.react-boundaries",
+      "title": "React boundaries",
+      "summary": "Keep client rendering narrow when the bound project uses React or a compatible server-rendering model.",
+      "path": "guidance/react-boundaries.md",
+      "triggers": ["react", "next", "client", "server", "hydration"],
+      "appliesTo": ["frontend", "react", "next"],
       "importance": "recommended",
-      "estimatedTokens": 450
+      "estimatedTokens": 180
+    },
+    {
+      "id": "ui-craft.human-interface-writing",
+      "title": "Human interface writing",
+      "summary": "Write focused, plain, useful product language that supports decisions, actions, understanding, recovery, inclusion, and user agency.",
+      "path": "guidance/human-interface-writing.md",
+      "triggers": [
+        "copy",
+        "content",
+        "label",
+        "error",
+        "empty state",
+        "dialog",
+        "confirmation",
+        "onboarding",
+        "settings"
+      ],
+      "appliesTo": ["frontend", "ui", "copy", "content-design"],
+      "importance": "recommended",
+      "estimatedTokens": 800
+    },
+    {
+      "id": "ui-craft.component-architecture-and-naming",
+      "title": "Component architecture and naming",
+      "summary": "Prevent duplicate components and prompt-shaped APIs by making reuse decisions and naming durable semantic responsibilities.",
+      "path": "guidance/component-architecture-and-naming.md",
+      "triggers": [
+        "component",
+        "refactor",
+        "reuse",
+        "variant",
+        "naming",
+        "sidebar",
+        "panel",
+        "header"
+      ],
+      "appliesTo": ["frontend", "ui", "components", "architecture"],
+      "importance": "recommended",
+      "estimatedTokens": 700
     },
     {
       "id": "ui-craft.anti-slop-review",
@@ -153,7 +211,7 @@
     },
     {
       "id": "failure.generic-ui-copy",
-      "summary": "Interfaces repeatedly expose technical terms, duplicate headings, or unnecessary explanatory text.",
+      "summary": "Interfaces repeatedly expose technical terms, duplicate headings, vague actions, robotic language, dead ends, or unnecessary explanatory text.",
       "evidenceKinds": ["finding", "review-finding", "user-correction"],
       "minimumOccurrences": 2
     },
@@ -162,13 +220,54 @@
       "summary": "Desktop layouts repeatedly compress or overflow instead of adapting to content and interaction constraints.",
       "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
       "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.visual-hierarchy-drift",
+      "summary": "Type roles, spacing rhythm, alignment, or density repeatedly obscure the page's primary reading order.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.container-overuse",
+      "summary": "Nested cards, borders, shadows, pills, or competing surfaces repeatedly replace whitespace and hierarchy.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.interaction-layout-break",
+      "summary": "Bounded content, scrolling, navigation state, focus, or persistent controls repeatedly fail in the rendered interface.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.component-proliferation",
+      "summary": "Agents repeatedly create components, wrappers, or variants that duplicate an existing semantic role or extension point.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.prompt-shaped-naming",
+      "summary": "Component, prop, or variant names repeatedly mirror temporary request wording, visual treatment, motion, or feature-local adjectives instead of durable roles.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.interface-copy-repetition",
+      "summary": "Shell, breadcrumb, eyebrow, title, description, navigation, and panel copy repeatedly compete for the same language role.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
     }
   ],
   "adaptationQuestions": [
     "Which project sources own brand doctrine, tokens, and component behavior?",
+    "Which catalog, exports, symbol search, and naming rules define reusable component ownership?",
     "Which rendered screens are explicitly approved precedents, and why?",
     "Which actions produce responsive and accessibility evidence?",
-    "Which terms are preferred or prohibited in customer-facing interfaces?"
+    "Which terms are preferred or prohibited in customer-facing interfaces?",
+    "Who is the audience, what knowledge can be assumed, and which voice and tone rules are accepted?",
+    "Which actions are destructive, regulated, privacy-sensitive, or required to remain reversible?",
+    "Which semantic type, spacing, surface, border, radius, and elevation roles are canonical?",
+    "Which shell regions own scrolling, persistent controls, route state, and responsive adaptation?"
   ],
   "rubricPath": "rubrics/product-ui-review.json",
   "researchSources": [
@@ -216,6 +315,51 @@
       "reviewedAt": "2026-07-25",
       "reviewAfter": "2027-01-25",
       "supports": ["content-led responsive layout and device capability"]
+    },
+    {
+      "id": "samsung.one-ui-writing.focused",
+      "title": "Samsung One UI: Focused and purposeful",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/focused-and-purposeful.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["purposeful copy, focused choices, useful actions, human language, and user agency"]
+    },
+    {
+      "id": "samsung.one-ui-writing.simple",
+      "title": "Samsung One UI: Simple and human",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/simple-and-human.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["defensive text, interruption discipline, user benefits, and inclusive language"]
+    },
+    {
+      "id": "samsung.one-ui-writing.empowering",
+      "title": "Samsung One UI: Empowering and engaging",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/empowering.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["user agency, supportive tone, and empowering product language"]
+    },
+    {
+      "id": "apple.hig-writing",
+      "title": "Apple Human Interface Guidelines: Writing",
+      "kind": "official-documentation",
+      "url": "https://developer.apple.com/design/human-interface-guidelines/writing",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["voice, action-oriented labels, language patterns, contextual errors, and inclusive interface copy"]
+    },
+    {
+      "id": "google.material-communication",
+      "title": "Material communication principles",
+      "kind": "official-documentation",
+      "url": "https://codelabs.developers.google.com/codelabs/material-communication-guidance",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["concise but human language, essential detail, voice and tone, and component writing"]
     }
   ],
   "proofFixtureIds": [

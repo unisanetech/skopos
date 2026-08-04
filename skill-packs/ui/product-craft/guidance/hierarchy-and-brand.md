@@ -8,6 +8,10 @@
 4. Reuse an existing component only when its behavior and information role match.
 5. Treat existing screens as precedents only when the project binding identifies them
    as approved and explains why.
+6. Establish one clear page purpose, primary reading path, and content edge before
+   composing secondary metadata or actions.
+7. Use progressive disclosure when complete system detail would compete with the
+   user's current task.
 
 Reject an interface that puts every region in a card, uses decoration to compensate for
 weak hierarchy, invents local tokens, or copies a visually attractive screen whose

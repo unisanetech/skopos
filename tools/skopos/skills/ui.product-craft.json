@@ -5,10 +5,10 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
-  "updatedAt": "2026-07-28T08:26:36.000Z",
+  "updatedAt": "2026-08-04T14:05:00.000Z",
   "bindingId": "skopos.ui.product-craft",
   "packId": "ui.product-craft",
-  "packVersion": "0.1.0",
+  "packVersion": "0.4.0",
   "lifecycle": "accepted",
   "sourceBindings": {
     "brand-doctrine": ["docs/domains/product/vision.md", "docs/work/archive/P-11229565-system-ui.md"],
@@ -32,11 +32,14 @@
   "adaptationNotes": [
     "Existing Skopos UI code is supporting precedent, not automatic canonical design truth.",
     "The routed console remains the product surface; generated portal output is derived evidence.",
-    "Visual rubric evidence cannot replace Skopos Verify and Readiness."
+    "Visual rubric evidence cannot replace Skopos Verify and Readiness.",
+    "Treat local visual overrides as exceptional: preserve the bound component library's defaults and use project semantic tokens for application composition.",
+    "Use Skopos product terminology and audience knowledge from the bound sources; reusable examples guide judgment but do not define the product voice.",
+    "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
     "acceptedAt": "2026-07-27T09:55:52.792Z",
     "acceptedBy": "codex",
-    "reason": "Refresh accepted product-craft projections after bundled live UI implementation and proof."
+    "reason": "Accept the strengthened product-craft projection after repeated live UI polish, interaction, responsive, component-architecture, human-interface-writing, and visual-review evidence."
   }
 }
