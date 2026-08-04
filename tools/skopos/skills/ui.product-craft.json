@@ -5,21 +5,33 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
-  "updatedAt": "2026-08-04T14:05:00.000Z",
+  "updatedAt": "2026-08-04T16:51:31.075Z",
   "bindingId": "skopos.ui.product-craft",
   "packId": "ui.product-craft",
-  "packVersion": "0.4.0",
+  "packVersion": "0.1.0",
   "lifecycle": "accepted",
   "sourceBindings": {
-    "brand-doctrine": ["docs/domains/product/vision.md", "docs/work/archive/P-11229565-system-ui.md"],
+    "brand-doctrine": [
+      "docs/domains/product/vision.md",
+      "docs/work/archive/P-11229565-system-ui.md"
+    ],
     "design-tokens": [
       "packages/ui/src/app/styles.css",
       "packages/ui/src/app/layout-tokens.ts"
     ],
-    "component-catalog": ["packages/ui/src"],
-    "approved-screen-precedents": ["packages/ui/src/screens"],
-    "domain-language": ["docs/standards/terminology.md"],
-    "ui-failure-patterns": ["docs/findings", "docs/patterns"]
+    "component-catalog": [
+      "packages/ui/src"
+    ],
+    "approved-screen-precedents": [
+      "packages/ui/src/screens"
+    ],
+    "domain-language": [
+      "docs/standards/terminology.md"
+    ],
+    "ui-failure-patterns": [
+      "docs/findings",
+      "docs/patterns"
+    ]
   },
   "actionBindings": {
     "responsive-visual-capture": "ui.build-console-app",
@@ -38,8 +50,8 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-07-27T09:55:52.792Z",
-    "acceptedBy": "codex",
-    "reason": "Accept the strengthened product-craft projection after repeated live UI polish, interaction, responsive, component-architecture, human-interface-writing, and visual-review evidence."
+    "acceptedAt": "2026-08-04T16:51:31.075Z",
+    "acceptedBy": "codex-skill-model",
+    "reason": "Apply the user-approved first-version clean hard cut with module-local selection signals, project roles, rubric dimensions, failure references, and loader-measured context cost."
   }
 }

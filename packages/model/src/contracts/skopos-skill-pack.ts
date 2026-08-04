@@ -49,10 +49,8 @@ export interface SkoposSkillAuthorityBoundary {
 }
 
 export interface SkoposSkillSelectionPolicy {
-  maximumContextTokens: number;
+  maximumMeasuredTokens: number;
   maximumModules: number;
-  requirePositiveSignal: boolean;
-  blockOnMatchingAntiSignal: boolean;
 }
 
 export interface SkoposSkillRoleRequirements {
@@ -64,15 +62,31 @@ export interface SkoposSkillRoleRequirements {
   recommendedGuards: string[];
 }
 
-export interface SkoposSkillContextModule {
+export interface SkoposSkillPackOwnership {
+  purpose: string;
+  owns: string[];
+  excludes: string[];
+  overlapRules: string[];
+}
+
+export interface SkoposSkillModuleApplicability {
+  scopeKinds: string[];
+  pathKinds: string[];
+  capabilities: string[];
+}
+
+export interface SkoposSkillModuleManifest {
   id: string;
   title: string;
   summary: string;
   path: string;
-  triggers: string[];
-  appliesTo: string[];
   importance: 'required' | 'recommended' | 'on-demand';
-  estimatedTokens: number;
+  positiveSignals: SkoposPolicySignal[];
+  negativeSignals: SkoposPolicySignal[];
+  applicability: SkoposSkillModuleApplicability;
+  projectRoles: SkoposSkillRoleRequirements;
+  rubricDimensions: string[];
+  failureSignalIds: string[];
 }
 
 export interface SkoposSkillFailureSignal {
@@ -109,17 +123,12 @@ export interface SkoposSkillPackManifest extends SkoposArtifactEnvelope<'skill-p
   description: string;
   plainLanguageSummary: string;
   authorityBoundary: SkoposSkillAuthorityBoundary;
-  bestFor: string[];
-  notFor: string[];
+  ownership: SkoposSkillPackOwnership;
   projectLifecycles: SkoposProjectLifecycle[];
   taskRisks: SkoposTaskRisk[];
-  appliesWhen: SkoposPolicySignal[];
-  avoidWhen: SkoposPolicySignal[];
   selection: SkoposSkillSelectionPolicy;
-  requiredProjectRoles: SkoposSkillRoleRequirements;
-  contextModules: SkoposSkillContextModule[];
+  modules: SkoposSkillModuleManifest[];
   failureSignals: SkoposSkillFailureSignal[];
-  adaptationQuestions: string[];
   rubricPath: string;
   researchSources: SkoposSkillResearchSource[];
   proofFixtureIds: string[];

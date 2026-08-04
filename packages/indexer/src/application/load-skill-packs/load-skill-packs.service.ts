@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 
 import type {
   SkoposProjectSkillBinding,
+  SkoposSkillModuleManifest,
   SkoposSkillPackManifest,
 } from '@skopos/model';
 import { z } from 'zod';
@@ -35,16 +36,26 @@ const roleRequirementsSchema = z
     recommendedGuards: z.array(nonEmptyString),
   })
   .strict();
-const contextModuleSchema = z
+const moduleApplicabilitySchema = z
+  .object({
+    scopeKinds: z.array(nonEmptyString),
+    pathKinds: z.array(nonEmptyString),
+    capabilities: z.array(nonEmptyString),
+  })
+  .strict();
+const skillModuleSchema = z
   .object({
     id: nonEmptyString,
     title: nonEmptyString,
     summary: nonEmptyString,
     path: nonEmptyString,
-    triggers: z.array(nonEmptyString),
-    appliesTo: z.array(nonEmptyString),
     importance: z.enum(['required', 'recommended', 'on-demand']),
-    estimatedTokens: z.number().int().positive(),
+    positiveSignals: z.array(signalSchema).min(1),
+    negativeSignals: z.array(signalSchema),
+    applicability: moduleApplicabilitySchema,
+    projectRoles: roleRequirementsSchema,
+    rubricDimensions: z.array(nonEmptyString).min(1),
+    failureSignalIds: z.array(nonEmptyString),
   })
   .strict();
 const failureSignalSchema = z
@@ -113,8 +124,14 @@ const skillPackManifestSchema = z
     description: nonEmptyString,
     plainLanguageSummary: nonEmptyString,
     authorityBoundary: authorityBoundarySchema,
-    bestFor: z.array(nonEmptyString),
-    notFor: z.array(nonEmptyString),
+    ownership: z
+      .object({
+        purpose: nonEmptyString,
+        owns: z.array(nonEmptyString).min(1),
+        excludes: z.array(nonEmptyString).min(1),
+        overlapRules: z.array(nonEmptyString),
+      })
+      .strict(),
     projectLifecycles: z
       .array(
         z.enum([
@@ -126,38 +143,36 @@ const skillPackManifestSchema = z
       )
       .min(1),
     taskRisks: z.array(z.enum(['light', 'standard', 'high-impact'])).min(1),
-    appliesWhen: z.array(signalSchema).min(1),
-    avoidWhen: z.array(signalSchema),
     selection: z
       .object({
-        maximumContextTokens: z.number().int().positive(),
+        maximumMeasuredTokens: z.number().int().positive(),
         maximumModules: z.number().int().positive(),
-        requirePositiveSignal: z.boolean(),
-        blockOnMatchingAntiSignal: z.boolean(),
       })
       .strict(),
-    requiredProjectRoles: roleRequirementsSchema,
-    contextModules: z.array(contextModuleSchema).min(1),
+    modules: z.array(skillModuleSchema).min(1),
     failureSignals: z.array(failureSignalSchema),
-    adaptationQuestions: z.array(nonEmptyString),
     rubricPath: nonEmptyString,
     researchSources: z.array(researchSourceSchema).min(1),
     proofFixtureIds: z.array(nonEmptyString).min(1),
   })
   .strict()
   .superRefine((pack, context) => {
-    collectDuplicateValues(pack.contextModules.map((entry) => entry.id), 'context module', context);
+    collectDuplicateValues(pack.modules.map((entry) => entry.id), 'skill module', context);
     collectDuplicateValues(pack.researchSources.map((entry) => entry.id), 'research source', context);
     collectDuplicateValues(pack.failureSignals.map((entry) => entry.id), 'failure signal', context);
-    const estimatedTokens = pack.contextModules.reduce(
-      (total, entry) => total + entry.estimatedTokens,
-      0,
-    );
-    if (pack.selection.maximumContextTokens > estimatedTokens) {
-      context.addIssue({
-        code: 'custom',
-        message: 'Skill context budget exceeds the total declared module estimate.',
-      });
+    for (const module of pack.modules) {
+      collectDuplicateValues(module.positiveSignals.map((entry) => entry.id), `${module.id} positive signal`, context);
+      collectDuplicateValues(module.negativeSignals.map((entry) => entry.id), `${module.id} negative signal`, context);
+      collectDuplicateValues(module.failureSignalIds, `${module.id} failure signal reference`, context);
+      const knownFailureSignalIds = new Set(pack.failureSignals.map((entry) => entry.id));
+      for (const failureSignalId of module.failureSignalIds) {
+        if (!knownFailureSignalIds.has(failureSignalId)) {
+          context.addIssue({
+            code: 'custom',
+            message: `Skill module ${module.id} references unknown failure signal ${failureSignalId}.`,
+          });
+        }
+      }
     }
   });
 const projectSkillBindingSchema = z
@@ -220,7 +235,13 @@ const projectSkillBindingSchema = z
     }
   });
 
-export interface SkoposLoadedSkillPack extends SkoposSkillPackManifest {
+export interface SkoposLoadedSkillModule extends SkoposSkillModuleManifest {
+  measuredTokens: number;
+}
+
+export interface SkoposLoadedSkillPack
+  extends Omit<SkoposSkillPackManifest, 'modules'> {
+  modules: SkoposLoadedSkillModule[];
   sourcePath: string;
 }
 
@@ -261,7 +282,25 @@ export const loadSkoposSkillPacks = async ({
       rootPackIds.add(pack.packId);
       if (seenPackIds.has(pack.packId)) continue;
       seenPackIds.add(pack.packId);
-      packs.push({ ...pack, sourcePath: relative(cwd, manifestPath) || manifestPath });
+      const packDirectory = dirname(manifestPath);
+      const modules = await Promise.all(
+        pack.modules.map(async (module): Promise<SkoposLoadedSkillModule> => {
+          const moduleContents = await readTextFile(join(packDirectory, module.path));
+          if (!moduleContents?.trim()) {
+            throw new Error(`Skill module ${module.id} is missing ${module.path}.`);
+          }
+          return {
+            ...module,
+            measuredTokens: measureSkillModuleTokens(moduleContents),
+          };
+        }),
+      );
+      await validateSkillRubricDimensions({ pack, packDirectory });
+      packs.push({
+        ...pack,
+        modules,
+        sourcePath: relative(cwd, manifestPath) || manifestPath,
+      });
     }
   }
   return packs.sort((left, right) => left.packId.localeCompare(right.packId));
@@ -333,5 +372,35 @@ const collectDuplicateValues = (
       context.addIssue({ code: 'custom', message: `Duplicate ${label} id: ${value}` });
     }
     seen.add(value);
+  }
+};
+
+const measureSkillModuleTokens = (contents: string): number =>
+  Math.ceil(contents.trim().length / 4);
+
+const validateSkillRubricDimensions = async ({
+  pack,
+  packDirectory,
+}: {
+  pack: SkoposSkillPackManifest;
+  packDirectory: string;
+}): Promise<void> => {
+  const rubricContents = await readTextFile(join(packDirectory, pack.rubricPath));
+  if (!rubricContents) {
+    throw new Error(`Skill pack ${pack.packId} is missing rubric ${pack.rubricPath}.`);
+  }
+  const rubric = z
+    .object({ dimensions: z.array(nonEmptyString).min(1) })
+    .passthrough()
+    .parse(JSON.parse(rubricContents));
+  const dimensionIds = new Set(rubric.dimensions);
+  for (const module of pack.modules) {
+    for (const dimension of module.rubricDimensions) {
+      if (!dimensionIds.has(dimension)) {
+        throw new Error(
+          `Skill module ${module.id} references unknown rubric dimension ${dimension}.`,
+        );
+      }
+    }
   }
 };

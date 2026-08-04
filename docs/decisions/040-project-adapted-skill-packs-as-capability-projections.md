@@ -26,6 +26,11 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-04`: Implemented the first model/loader hard cut: the strict v1 manifest
+  now owns narrow pack boundaries and module-local signals, applicability, project
+  roles, rubric dimensions, and failure references. Guidance cost is measured by the
+  loader, obsolete pack-global fields are rejected, and `ui.product-craft` plus its
+  accepted binding now begin at `0.1.0`.
 - `2026-08-04`: Accepted the first-version clean hard cut. Skopos remains on one
   `schemaVersion: 1`; every built-in Skill begins at `0.1.0`; the current internal UI
   pack numbering is not a compatibility promise. Added the "teach the delta, not the
@@ -115,6 +120,25 @@ old-pack compatibility path.
 19. Pack promotion requires deterministic selection fixtures, paired no-Skill or
     prior-version forward tests, bounded local telemetry, a real project canary, and
     portable proof in Skopos plus one non-Skopos project for reusable built-in packs.
+
+## Implemented Baseline
+
+The first canonical schema and loader now enforce the following in place:
+
+1. pack ownership states one purpose, owned judgments, exclusions, and overlap rules
+2. every module owns its positive and negative signals, applicability, project roles,
+   rubric dimensions, and failure-signal references
+3. module guidance size is measured from the loaded source; authored token estimates
+   are not accepted
+4. obsolete pack-global selection, role, adaptation-question, and context-module
+   fields fail strict validation
+5. the current runtime resolves only the context, Actions, and Guards named by selected
+   modules
+6. the initial Product UI Craft pack and its accepted project binding use `0.1.0`
+
+Complete Task-envelope eligibility, task-wide budgeting, exact digest-bound acceptance,
+behavioral fixtures, and portable adoption proof remain later phases of the active
+Plan and Finding.
 
 ## Consequences
 

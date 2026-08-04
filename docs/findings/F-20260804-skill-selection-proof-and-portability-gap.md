@@ -37,16 +37,17 @@ canonical Skill system, not a versioned migration.
    constraints, non-goals, open decisions, owned paths, affected capabilities, or
    accepted failure history.
 2. The normal agent-native caller does not pass changed paths into selection.
-3. Declared pack `appliesWhen` signals and repeated `failureSignals` do not establish
-   Task eligibility. Token overlap currently performs both positive ranking and strong
-   negative matching.
-4. Matching one module selects every Action and Guard in the project binding. Required
-   versus recommended roles and module-local capability needs are lost.
-5. Token limits are authored estimates and apply per pack. Skill context is appended to
-   the compact brief without one task-wide pack, module, or measured-token ceiling.
-6. Every selected module receives the same flat list of bound project paths. Source-role
-   identity and project adaptation notes do not become bounded module-specific
-   judgment.
+3. Module-local positive and negative signals now drive deterministic ranking and
+   suppression, but the selector still lacks the complete structured eligibility
+   envelope and accepted failure-history input required by the Decision.
+4. Module-local context, Action, and Guard resolution is now implemented. Its selection
+   behavior still needs deterministic positive, negative, ambiguous, and overlap
+   fixtures before this correction is certified.
+5. Guidance cost is now loader-measured rather than author-estimated, but limits still
+   apply per pack. Skill context is appended to the compact brief without one task-wide
+   pack, module, or measured-token ceiling.
+6. Selected modules now receive only paths bound to their declared context roles.
+   Project adaptation notes still do not become bounded module-specific judgment.
 7. Catalog resolution deduplicates by `packId`, while acceptance pins a version label
    without pinning the complete pack, binding, rubric, fixture, project-source, and
    evaluation identity.
@@ -98,5 +99,10 @@ canonical Skill system, not a versioned migration.
 
 ## Changelog
 
+- `2026-08-04`: Recorded the first model/loader hard cut. Strict v1 manifests,
+  loader-measured module cost, module-local signals and capability roles, obsolete
+  field rejection, and the initial `0.1.0` Product UI Craft identity are implemented.
+  Complete Task signals, task-wide budgets, exact identity, fixtures, behavioral
+  evaluation, and external proof remain open.
 - `2026-08-04`: Opened from the first full audit of the Product UI Craft pack, Task
   selection runtime, project binding, host projection, and current proof fixtures.

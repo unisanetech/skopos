@@ -650,11 +650,11 @@ into pack modules.
 
 ### Phase 1: record and hard-cut the first canonical model
 
-1. update Decision 040, the active Findings, and this Plan
-2. hard-cut model and validation contracts in place under `schemaVersion: 1`
-3. remove obsolete selection and compatibility behavior
-4. update every current pack and project binding to `0.1.0`
-5. regenerate canonical projections once
+1. update Decision 040, the active Findings, and this Plan — complete
+2. hard-cut model and validation contracts in place under `schemaVersion: 1` — complete
+3. remove obsolete selection and compatibility behavior — complete
+4. update every current pack and project binding to `0.1.0` — complete
+5. regenerate canonical projections once — complete
 
 ### Phase 2: complete Task-aware selection
 

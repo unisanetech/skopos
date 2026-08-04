@@ -9,7 +9,7 @@
   "packId": "ui.product-craft",
   "family": "ui-craft",
   "variant": "product-ui",
-  "version": "0.4.0",
+  "version": "0.1.0",
   "displayName": "Product UI Craft",
   "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, Actions, Guards, Evidence, or Readiness.",
   "plainLanguageSummary": "Use this for customer-facing pages and product screens that need real design judgment, complete states, human copy, responsive behavior, and visual evidence.",
@@ -18,16 +18,24 @@
     "taskStateAuthority": "skopos",
     "readinessAuthority": "skopos"
   },
-  "bestFor": [
-    "Customer-facing web pages",
-    "Authenticated product screens",
-    "New or substantially redesigned frontend flows"
-  ],
-  "notFor": [
-    "Backend-only changes",
-    "Generated frontend artifacts",
-    "Mechanical token renames with no visual behavior change"
-  ],
+  "ownership": {
+    "purpose": "Improve the hierarchy, composition, language, responsive behavior, and rendered polish of product interfaces using project-owned design truth.",
+    "owns": [
+      "Product-interface hierarchy and visual composition",
+      "Human interface writing and content-role economy",
+      "Responsive presentation, complete states, and rendered polish review"
+    ],
+    "excludes": [
+      "Backend-only behavior and infrastructure",
+      "Generated, vendored, build, and distribution output",
+      "Public marketing narrative and conversion strategy",
+      "Business workflow design, deep security review, and data-visualization semantics"
+    ],
+    "overlapRules": [
+      "Load another pack only when it contributes a distinct flow, component, accessibility, performance, security, or data-interface judgment.",
+      "Project tokens, components, terminology, Actions, and Guards remain authoritative over reusable guidance."
+    ]
+  },
   "projectLifecycles": [
     "greenfield",
     "early-product",
@@ -35,165 +43,326 @@
     "legacy-stabilization"
   ],
   "taskRisks": ["light", "standard", "high-impact"],
-  "appliesWhen": [
-    {
-      "id": "signal.frontend-surface",
-      "summary": "The task changes a browser-rendered route, page, screen, form, navigation surface, or interactive component.",
-      "confidence": "high",
-      "evidence": [
-        "Task goal contains page, screen, form, interface, dashboard, responsive, accessibility, copy, or design",
-        "Changed paths match a project-bound frontend scope"
-      ]
-    },
-    {
-      "id": "signal.ui-quality-risk",
-      "summary": "The project has accepted UI findings or repeated visual, responsive, copy, accessibility, or rendering-boundary corrections.",
-      "confidence": "medium",
-      "evidence": [
-        "Accepted finding or failure-pattern evidence matches a declared skill failure signal",
-        "The same relevant guard or review finding occurred in more than one task"
-      ]
-    }
-  ],
-  "avoidWhen": [
-    {
-      "id": "anti.generated-output",
-      "summary": "Generated or vendored UI output must be changed through its owner rather than manually polished.",
-      "confidence": "high",
-      "evidence": [
-        "The target path is generated, vendored, built, or distribution output",
-        "An owning generator action exists"
-      ]
-    },
-    {
-      "id": "anti.no-renderable-surface",
-      "summary": "The task has no browser-rendered or user-interface surface.",
-      "confidence": "high",
-      "evidence": [
-        "The task is limited to backend, infrastructure, data, or documentation internals"
-      ]
-    }
-  ],
   "selection": {
-    "maximumContextTokens": 2200,
-    "maximumModules": 3,
-    "requirePositiveSignal": true,
-    "blockOnMatchingAntiSignal": true
+    "maximumMeasuredTokens": 2200,
+    "maximumModules": 3
   },
-  "requiredProjectRoles": {
-    "context": ["brand-doctrine", "design-tokens", "component-catalog"],
-    "recommendedContext": [
-      "approved-screen-precedents",
-      "domain-language",
-      "ui-failure-patterns"
-    ],
-    "actions": ["responsive-visual-capture"],
-    "recommendedActions": ["accessibility-audit", "focused-frontend-tests"],
-    "guards": ["frontend-type-safety"],
-    "recommendedGuards": [
-      "design-token-drift",
-      "accessibility-proof",
-      "client-boundary-review"
-    ]
-  },
-  "contextModules": [
+  "modules": [
     {
       "id": "ui-craft.hierarchy-and-brand",
       "title": "Hierarchy and brand",
       "summary": "Establish user priority, information hierarchy, brand expression, and token-driven composition before decoration.",
       "path": "guidance/hierarchy-and-brand.md",
-      "triggers": ["page", "screen", "layout", "visual", "brand", "dashboard"],
-      "appliesTo": ["frontend", "ui", "design"],
       "importance": "recommended",
-      "estimatedTokens": 450
+      "positiveSignals": [
+        {
+          "id": "signal.product-surface-hierarchy",
+          "summary": "The task creates or materially changes hierarchy, layout, brand expression, or reading order on a rendered product surface.",
+          "confidence": "high",
+          "evidence": ["A product page, screen, dashboard, navigation surface, or layout is Task-owned"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.no-rendered-product-surface",
+          "summary": "The task has no rendered product-interface surface.",
+          "confidence": "high",
+          "evidence": ["Owned paths and acceptance remain backend, infrastructure, generated output, or internal documentation"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "product-ui"],
+        "pathKinds": ["authored-source", "test"],
+        "capabilities": ["browser-rendering", "design-tokens"]
+      },
+      "projectRoles": {
+        "context": ["brand-doctrine", "design-tokens"],
+        "recommendedContext": ["approved-screen-precedents"],
+        "actions": [],
+        "recommendedActions": ["responsive-visual-capture"],
+        "guards": [],
+        "recommendedGuards": ["design-token-drift"]
+      },
+      "rubricDimensions": [
+        "user-task clarity",
+        "information hierarchy and brand fit",
+        "cognitive load and progressive disclosure"
+      ],
+      "failureSignalIds": ["failure.visual-hierarchy-drift", "failure.container-overuse"]
     },
     {
       "id": "ui-craft.visual-composition-and-polish",
       "title": "Visual composition and polish",
       "summary": "Apply disciplined type scale, spacing rhythm, alignment, surface hierarchy, density, component defaults, scroll ownership, and rendered visual review.",
       "path": "guidance/visual-composition-and-polish.md",
-      "triggers": [
-        "component",
-        "polish",
-        "typography",
-        "spacing",
-        "alignment",
-        "border",
-        "surface",
-        "layout"
-      ],
-      "appliesTo": ["frontend", "ui", "design", "components"],
       "importance": "recommended",
-      "estimatedTokens": 650
+      "positiveSignals": [
+        {
+          "id": "signal.visual-composition",
+          "summary": "The task materially changes typography, spacing, alignment, surfaces, density, containment, or scroll ownership.",
+          "confidence": "high",
+          "evidence": ["Owned frontend source changes a rendered page, shell, panel, component composition, or layout token usage"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.mechanical-ui-change",
+          "summary": "The task is a mechanical rename or generated-output refresh with no rendered composition change.",
+          "confidence": "high",
+          "evidence": ["Acceptance requires no visual, responsive, hierarchy, or interaction behavior change"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "product-ui", "design-system"],
+        "pathKinds": ["authored-source", "style", "test"],
+        "capabilities": ["browser-rendering", "design-tokens", "component-library"]
+      },
+      "projectRoles": {
+        "context": ["design-tokens", "component-catalog"],
+        "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
+        "actions": ["responsive-visual-capture"],
+        "recommendedActions": [],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": ["design-token-drift"]
+      },
+      "rubricDimensions": [
+        "type scale and readable hierarchy",
+        "spacing rhythm and alignment",
+        "surface, border, elevation, and density discipline",
+        "token and component consistency",
+        "scroll ownership and content reachability"
+      ],
+      "failureSignalIds": [
+        "failure.raw-visual-values",
+        "failure.visual-hierarchy-drift",
+        "failure.container-overuse",
+        "failure.interaction-layout-break"
+      ]
     },
     {
       "id": "ui-craft.responsive-and-states",
       "title": "Responsive behavior and complete states",
       "summary": "Adapt interaction and information hierarchy by content constraints while proving loading, empty, error, permission, success, and recovery states.",
       "path": "guidance/responsive-and-states.md",
-      "triggers": ["responsive", "mobile", "table", "form", "navigation", "state"],
-      "appliesTo": ["frontend", "ui", "responsive", "forms"],
       "importance": "recommended",
-      "estimatedTokens": 450
+      "positiveSignals": [
+        {
+          "id": "signal.responsive-or-stateful-surface",
+          "summary": "The task changes a responsive layout or a surface with loading, empty, error, permission, success, or recovery states.",
+          "confidence": "high",
+          "evidence": ["Acceptance or owned source names viewport adaptation, navigation, forms, tables, asynchronous state, or recovery"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.static-noninteractive-artifact",
+          "summary": "The task changes no responsive or stateful product behavior.",
+          "confidence": "high",
+          "evidence": ["The rendered output is fixed, generated, or outside a user workflow"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "product-ui"],
+        "pathKinds": ["authored-source", "test"],
+        "capabilities": ["responsive-layout", "interactive-state", "browser-rendering"]
+      },
+      "projectRoles": {
+        "context": ["component-catalog"],
+        "recommendedContext": ["approved-screen-precedents", "domain-language"],
+        "actions": ["responsive-visual-capture"],
+        "recommendedActions": ["accessibility-audit", "focused-frontend-tests"],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": ["accessibility-proof"]
+      },
+      "rubricDimensions": [
+        "responsive adaptation",
+        "navigation and interaction state clarity",
+        "state and recovery completeness",
+        "accessibility and keyboard behavior"
+      ],
+      "failureSignalIds": [
+        "failure.mobile-compression",
+        "failure.interaction-layout-break"
+      ]
     },
     {
       "id": "ui-craft.react-boundaries",
       "title": "React boundaries",
       "summary": "Keep client rendering narrow when the bound project uses React or a compatible server-rendering model.",
       "path": "guidance/react-boundaries.md",
-      "triggers": ["react", "next", "client", "server", "hydration"],
-      "appliesTo": ["frontend", "react", "next"],
       "importance": "recommended",
-      "estimatedTokens": 180
+      "positiveSignals": [
+        {
+          "id": "signal.client-rendering-boundary",
+          "summary": "The task changes a client/server rendering boundary, hydration behavior, or interactive island.",
+          "confidence": "high",
+          "evidence": ["Owned source uses the bound project's client rendering directive, hydration API, or server-rendered component model"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.non-reactive-surface",
+          "summary": "The task does not use a compatible component rendering boundary.",
+          "confidence": "high",
+          "evidence": ["Project and Task capabilities contain no client/server component model"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend"],
+        "pathKinds": ["authored-source", "test"],
+        "capabilities": ["client-rendering", "server-rendering", "hydration"]
+      },
+      "projectRoles": {
+        "context": ["component-catalog"],
+        "recommendedContext": [],
+        "actions": [],
+        "recommendedActions": ["focused-frontend-tests"],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": ["client-boundary-review"]
+      },
+      "rubricDimensions": ["frontend rendering boundaries"],
+      "failureSignalIds": ["failure.client-boundary-expansion"]
     },
     {
       "id": "ui-craft.human-interface-writing",
       "title": "Human interface writing",
       "summary": "Write focused, plain, useful product language that supports decisions, actions, understanding, recovery, inclusion, and user agency.",
       "path": "guidance/human-interface-writing.md",
-      "triggers": [
-        "copy",
-        "content",
-        "label",
-        "error",
-        "empty state",
-        "dialog",
-        "confirmation",
-        "onboarding",
-        "settings"
-      ],
-      "appliesTo": ["frontend", "ui", "copy", "content-design"],
       "importance": "recommended",
-      "estimatedTokens": 800
+      "positiveSignals": [
+        {
+          "id": "signal.interface-language",
+          "summary": "The task creates or materially revises labels, actions, guidance, empty states, errors, confirmations, onboarding, or settings language.",
+          "confidence": "high",
+          "evidence": ["Owned rendered source or acceptance changes user-facing product language"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.non-user-facing-text",
+          "summary": "The changed text is internal code, logs, developer documentation, or generated content rather than interface language.",
+          "confidence": "high",
+          "evidence": ["No user-facing string or content role is in Task scope"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "product-ui", "content-design"],
+        "pathKinds": ["authored-source", "localization", "test"],
+        "capabilities": ["interface-copy", "user-feedback", "recovery"]
+      },
+      "projectRoles": {
+        "context": ["domain-language"],
+        "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
+        "actions": [],
+        "recommendedActions": ["responsive-visual-capture"],
+        "guards": [],
+        "recommendedGuards": ["accessibility-proof"]
+      },
+      "rubricDimensions": [
+        "plain language, terminology, voice, and contextual tone",
+        "page-wide content-role uniqueness and repetition control",
+        "action labels, feedback, errors, empty states, and recovery",
+        "inclusion, user agency, and interruption discipline"
+      ],
+      "failureSignalIds": [
+        "failure.generic-ui-copy",
+        "failure.interface-copy-repetition"
+      ]
     },
     {
       "id": "ui-craft.component-architecture-and-naming",
       "title": "Component architecture and naming",
       "summary": "Prevent duplicate components and prompt-shaped APIs by making reuse decisions and naming durable semantic responsibilities.",
       "path": "guidance/component-architecture-and-naming.md",
-      "triggers": [
-        "component",
-        "refactor",
-        "reuse",
-        "variant",
-        "naming",
-        "sidebar",
-        "panel",
-        "header"
-      ],
-      "appliesTo": ["frontend", "ui", "components", "architecture"],
       "importance": "recommended",
-      "estimatedTokens": 700
+      "positiveSignals": [
+        {
+          "id": "signal.component-evolution",
+          "summary": "The task creates, duplicates, renames, extracts, extends, or changes the public API of a reusable UI component.",
+          "confidence": "high",
+          "evidence": ["Owned paths touch a component catalog, reusable primitive, component export, variant, or shared shell"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.no-component-ownership-change",
+          "summary": "The task composes existing components without changing component ownership, naming, or API shape.",
+          "confidence": "high",
+          "evidence": ["No reusable component or extension point is created or modified"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "design-system"],
+        "pathKinds": ["authored-source", "public-export", "test"],
+        "capabilities": ["component-library", "public-api", "symbol-search"]
+      },
+      "projectRoles": {
+        "context": ["component-catalog"],
+        "recommendedContext": ["design-tokens", "ui-failure-patterns"],
+        "actions": [],
+        "recommendedActions": ["focused-frontend-tests"],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": []
+      },
+      "rubricDimensions": [
+        "token and component consistency",
+        "component reuse, ownership, API shape, and durable naming"
+      ],
+      "failureSignalIds": [
+        "failure.component-proliferation",
+        "failure.prompt-shaped-naming"
+      ]
     },
     {
       "id": "ui-craft.anti-slop-review",
       "title": "Anti-slop visual review",
       "summary": "Review rendered evidence for generic visual treatment, repeated copy, token drift, missing states, overflow, and weak interaction hierarchy.",
       "path": "guidance/anti-slop-review.md",
-      "triggers": ["review", "polish", "visual proof", "closure", "screenshot"],
-      "appliesTo": ["frontend", "ui", "review"],
       "importance": "on-demand",
-      "estimatedTokens": 450
+      "positiveSignals": [
+        {
+          "id": "signal.rendered-polish-review",
+          "summary": "The task needs closure or review against rendered product-interface evidence.",
+          "confidence": "high",
+          "evidence": ["Acceptance names polish, review, screenshot, visual proof, responsive proof, or UI closure"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.no-rendered-evidence",
+          "summary": "The task has no rendered interface evidence to inspect.",
+          "confidence": "high",
+          "evidence": ["Owned paths and acceptance contain no browser-rendered product surface"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["frontend", "product-ui"],
+        "pathKinds": ["authored-source", "test", "evidence"],
+        "capabilities": ["browser-rendering", "visual-review", "accessibility"]
+      },
+      "projectRoles": {
+        "context": ["design-tokens"],
+        "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
+        "actions": ["responsive-visual-capture"],
+        "recommendedActions": ["accessibility-audit"],
+        "guards": [],
+        "recommendedGuards": ["design-token-drift", "accessibility-proof", "client-boundary-review"]
+      },
+      "rubricDimensions": [
+        "rendered proof quality",
+        "type scale and readable hierarchy",
+        "surface, border, elevation, and density discipline",
+        "responsive adaptation",
+        "accessibility and keyboard behavior"
+      ],
+      "failureSignalIds": [
+        "failure.raw-visual-values",
+        "failure.mobile-compression",
+        "failure.visual-hierarchy-drift",
+        "failure.container-overuse",
+        "failure.interaction-layout-break",
+        "failure.interface-copy-repetition"
+      ]
     }
   ],
   "failureSignals": [
@@ -257,17 +426,6 @@
       "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
       "minimumOccurrences": 1
     }
-  ],
-  "adaptationQuestions": [
-    "Which project sources own brand doctrine, tokens, and component behavior?",
-    "Which catalog, exports, symbol search, and naming rules define reusable component ownership?",
-    "Which rendered screens are explicitly approved precedents, and why?",
-    "Which actions produce responsive and accessibility evidence?",
-    "Which terms are preferred or prohibited in customer-facing interfaces?",
-    "Who is the audience, what knowledge can be assumed, and which voice and tone rules are accepted?",
-    "Which actions are destructive, regulated, privacy-sensitive, or required to remain reversible?",
-    "Which semantic type, spacing, surface, border, radius, and elevation roles are canonical?",
-    "Which shell regions own scrolling, persistent controls, route state, and responsive adaptation?"
   ],
   "rubricPath": "rubrics/product-ui-review.json",
   "researchSources": [

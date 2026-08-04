@@ -61,6 +61,11 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
       writeJsonOutput(result);
       return;
     }
+    const requiredRoles = {
+      context: uniqueRoles(result.modules.flatMap((module) => module.projectRoles.context)),
+      actions: uniqueRoles(result.modules.flatMap((module) => module.projectRoles.actions)),
+      guards: uniqueRoles(result.modules.flatMap((module) => module.projectRoles.guards)),
+    };
     writeLines([
       'Skopos skill pack',
       `- id: ${result.packId}`,
@@ -68,10 +73,12 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
       `- family: ${result.family}`,
       `- variant: ${result.variant}`,
       `- source: ${result.sourcePath}`,
-      `- context modules: ${result.contextModules.length}`,
-      `- required context roles: ${result.requiredProjectRoles.context.join(', ') || 'none'}`,
-      `- required action roles: ${result.requiredProjectRoles.actions.join(', ') || 'none'}`,
-      `- required guard roles: ${result.requiredProjectRoles.guards.join(', ') || 'none'}`,
+      `- purpose: ${result.ownership.purpose}`,
+      `- modules: ${result.modules.length}`,
+      `- selection budget: ${result.selection.maximumMeasuredTokens} measured tokens across ${result.selection.maximumModules} modules`,
+      `- required context roles: ${requiredRoles.context.join(', ') || 'none'}`,
+      `- required action roles: ${requiredRoles.actions.join(', ') || 'none'}`,
+      `- required guard roles: ${requiredRoles.guards.join(', ') || 'none'}`,
       `- summary: ${result.plainLanguageSummary}`,
       '- authority: Skopos remains Task, Action, Evidence, and Readiness authority.',
     ]);
@@ -190,3 +197,5 @@ const requireValue = (args: string[], index: number, flag: string): string => {
   if (!value || value.startsWith('-')) throw new Error(`Missing value for ${flag}.`);
   return value;
 };
+
+const uniqueRoles = (roles: string[]): string[] => [...new Set(roles)].sort();

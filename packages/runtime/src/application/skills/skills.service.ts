@@ -101,23 +101,17 @@ export const validateSkoposProjectSkillBindingRuntime = async ({
 
   const availableActionIds = new Set(operatingModel?.actions.map((entry) => entry.id) ?? []);
   const availableGuardIds = new Set(operatingModel?.guards.map((entry) => entry.id) ?? []);
+  const requiredRoles = collectSkillPackRoles(pack, false);
+  const recommendedRoles = collectSkillPackRoles(pack, true);
   const missingRequiredRoles = [
-    ...pack.requiredProjectRoles.context.filter(
-      (role) => !binding.sourceBindings[role]?.length,
-    ),
-    ...pack.requiredProjectRoles.actions.filter((role) => !binding.actionBindings[role]),
-    ...pack.requiredProjectRoles.guards.filter((role) => !binding.guardBindings[role]),
+    ...requiredRoles.context.filter((role) => !binding.sourceBindings[role]?.length),
+    ...requiredRoles.actions.filter((role) => !binding.actionBindings[role]),
+    ...requiredRoles.guards.filter((role) => !binding.guardBindings[role]),
   ];
   const missingRecommendedRoles = [
-    ...pack.requiredProjectRoles.recommendedContext.filter(
-      (role) => !binding.sourceBindings[role]?.length,
-    ),
-    ...pack.requiredProjectRoles.recommendedActions.filter(
-      (role) => !binding.actionBindings[role],
-    ),
-    ...pack.requiredProjectRoles.recommendedGuards.filter(
-      (role) => !binding.guardBindings[role],
-    ),
+    ...recommendedRoles.context.filter((role) => !binding.sourceBindings[role]?.length),
+    ...recommendedRoles.actions.filter((role) => !binding.actionBindings[role]),
+    ...recommendedRoles.guards.filter((role) => !binding.guardBindings[role]),
   ];
 
   for (const [role, paths] of Object.entries(binding.sourceBindings)) {
@@ -216,8 +210,10 @@ export const recommendSkoposSkillPacksRuntime = async ({
               ? `${pack.displayName} has a complete project binding and can be adopted with explicit approval.`
               : `${pack.displayName} needs binding corrections before adoption: ${validation?.diagnostics.join(' ')}`,
       accepted,
-      signals: pack.appliesWhen,
-      antiSignals: lifecycleMatch ? [] : pack.avoidWhen,
+      signals: pack.modules.flatMap((module) => module.positiveSignals),
+      antiSignals: lifecycleMatch
+        ? []
+        : pack.modules.flatMap((module) => module.negativeSignals),
       missingRequiredRoles,
       sourcePath: pack.sourcePath,
       bindingPath: binding?.sourcePath,
@@ -456,10 +452,16 @@ export const buildSkoposSkillHostProjectionsRuntime = async ({
       version: pack.version,
       bindingId: binding.bindingId,
       selectedBy: 'skopos-task-admission',
-      moduleIds: pack.contextModules.map((module) => module.id),
+      moduleIds: pack.modules.map((module) => module.id),
       capabilities: {
-        actionIds: [...new Set(Object.values(binding.actionBindings))].sort(),
-        guardIds: [...new Set(Object.values(binding.guardBindings))].sort(),
+        actionIds: resolveBoundRoles(
+          collectSkillPackRoles(pack, true, true).actions,
+          binding.actionBindings,
+        ),
+        guardIds: resolveBoundRoles(
+          collectSkillPackRoles(pack, true, true).guards,
+          binding.guardBindings,
+        ),
       },
       sourcePaths: digest.sourcePaths,
       sourceDigest: digest.digest,
@@ -558,43 +560,56 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       diagnostics.push(...validation.diagnostics);
       continue;
     }
-    const negativeMatch =
-      pack.selection.blockOnMatchingAntiSignal &&
-      (pack.notFor.some((entry) => hasStrongRelevantTerms(taskText, entry)) ||
-        pack.avoidWhen.some((entry) =>
-          hasStrongRelevantTerms(taskText, `${entry.summary} ${entry.evidence.join(' ')}`),
-        ));
-    if (negativeMatch) continue;
-
-    const rankedModules = pack.contextModules
+    const rankedModules = pack.modules
+      .filter(
+        (module) =>
+          !module.negativeSignals.some((signal) =>
+            hasStrongRelevantTerms(
+              taskText,
+              `${signal.summary} ${signal.evidence.join(' ')}`,
+            ),
+          ),
+      )
       .map((module) => ({
         module,
         score: relevanceScore(
           taskText,
-          `${module.title} ${module.summary} ${module.triggers.join(' ')} ${module.appliesTo.join(' ')}`,
+          [
+            module.title,
+            module.summary,
+            ...module.positiveSignals.flatMap((signal) => [
+              signal.summary,
+              ...signal.evidence,
+            ]),
+            ...module.applicability.scopeKinds,
+            ...module.applicability.pathKinds,
+            ...module.applicability.capabilities,
+          ].join(' '),
         ),
       }))
       .filter(({ module, score }) => score > 0 || module.importance === 'required')
       .sort((left, right) => right.score - left.score || left.module.id.localeCompare(right.module.id));
-    if (pack.selection.requirePositiveSignal && rankedModules.every((entry) => entry.score === 0)) {
-      continue;
-    }
     const selectedModules: typeof rankedModules = [];
     let estimatedContextTokens = 0;
     for (const entry of rankedModules) {
       if (selectedModules.length >= pack.selection.maximumModules) break;
       if (
-        estimatedContextTokens + entry.module.estimatedTokens >
-        pack.selection.maximumContextTokens
+        estimatedContextTokens + entry.module.measuredTokens >
+        pack.selection.maximumMeasuredTokens
       ) {
         continue;
       }
       selectedModules.push(entry);
-      estimatedContextTokens += entry.module.estimatedTokens;
+      estimatedContextTokens += entry.module.measuredTokens;
     }
     if (selectedModules.length === 0) continue;
 
     const packDirectory = dirname(resolve(workspaceRoot, pack.sourcePath));
+    const selectedModuleManifests = selectedModules.map((entry) => entry.module);
+    const selectedRoles = collectSkillModuleRoles(selectedModuleManifests, true, true);
+    const selectedSourcePaths = selectedRoles.context.flatMap(
+      (role) => binding.sourceBindings[role] ?? [],
+    );
     const selectedContext = await Promise.all(
       selectedModules.map(async ({ module }) => ({
         id: `skill:${pack.packId}:${module.id}`,
@@ -602,7 +617,12 @@ export const selectSkoposSkillsForTaskRuntime = async ({
         title: module.title,
         summary: (await readFile(join(packDirectory, module.path), 'utf8')).trim(),
         importance: module.importance,
-        appliesTo: module.appliesTo,
+        appliesTo: [
+          ...new Set([
+            ...module.applicability.scopeKinds,
+            ...module.applicability.capabilities,
+          ]),
+        ],
         provenance: [
           {
             authority: 'accepted' as const,
@@ -610,8 +630,11 @@ export const selectSkoposSkillsForTaskRuntime = async ({
             sourceId: `${pack.packId}@${pack.version}`,
             path: join(dirname(pack.sourcePath), module.path),
           },
-          ...Object.values(binding.sourceBindings)
-            .flat()
+          ...[
+            ...module.projectRoles.context,
+            ...module.projectRoles.recommendedContext,
+          ]
+            .flatMap((role) => binding.sourceBindings[role] ?? [])
             .map((path) => ({
               authority: 'declared' as const,
               sourceKind: 'source' as const,
@@ -621,8 +644,8 @@ export const selectSkoposSkillsForTaskRuntime = async ({
         ],
       })),
     );
-    const selectedActionIds = Object.values(binding.actionBindings);
-    const selectedGuardIds = Object.values(binding.guardBindings);
+    const selectedActionIds = resolveBoundRoles(selectedRoles.actions, binding.actionBindings);
+    const selectedGuardIds = resolveBoundRoles(selectedRoles.guards, binding.guardBindings);
     selectedSkills.push({
       packId: pack.packId,
       version: pack.version,
@@ -636,7 +659,8 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       sourcePaths: [
         pack.sourcePath,
         binding.sourcePath,
-        ...Object.values(binding.sourceBindings).flat(),
+        ...selectedModules.map(({ module }) => join(dirname(pack.sourcePath), module.path)),
+        ...selectedSourcePaths,
       ],
     });
   }
@@ -663,11 +687,54 @@ const loadOperatingModelCapabilities = async (
   };
 };
 
-const flattenRequiredRoles = (pack: SkoposLoadedSkillPack): string[] => [
-  ...pack.requiredProjectRoles.context,
-  ...pack.requiredProjectRoles.actions,
-  ...pack.requiredProjectRoles.guards,
-];
+const flattenRequiredRoles = (pack: SkoposLoadedSkillPack): string[] => {
+  const roles = collectSkillPackRoles(pack, false);
+  return [...roles.context, ...roles.actions, ...roles.guards];
+};
+
+interface SkillRoles {
+  context: string[];
+  actions: string[];
+  guards: string[];
+}
+
+const collectSkillPackRoles = (
+  pack: SkoposLoadedSkillPack,
+  recommended: boolean,
+  includeRequired = false,
+): SkillRoles => collectSkillModuleRoles(pack.modules, recommended, includeRequired);
+
+const collectSkillModuleRoles = (
+  modules: SkoposLoadedSkillPack['modules'],
+  recommended: boolean,
+  includeRequired = false,
+): SkillRoles => ({
+  context: uniqueSorted(
+    modules.flatMap((module) => [
+      ...(includeRequired || !recommended ? module.projectRoles.context : []),
+      ...(recommended ? module.projectRoles.recommendedContext : []),
+    ]),
+  ),
+  actions: uniqueSorted(
+    modules.flatMap((module) => [
+      ...(includeRequired || !recommended ? module.projectRoles.actions : []),
+      ...(recommended ? module.projectRoles.recommendedActions : []),
+    ]),
+  ),
+  guards: uniqueSorted(
+    modules.flatMap((module) => [
+      ...(includeRequired || !recommended ? module.projectRoles.guards : []),
+      ...(recommended ? module.projectRoles.recommendedGuards : []),
+    ]),
+  ),
+});
+
+const resolveBoundRoles = (
+  roles: string[],
+  bindings: Record<string, string>,
+): string[] => uniqueSorted(roles.flatMap((role) => bindings[role] ?? []));
+
+const uniqueSorted = (values: string[]): string[] => [...new Set(values)].sort();
 
 const EPOCH_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -787,7 +854,7 @@ export const buildSkoposSkillProjectionSourcePaths = (
     pack.sourcePath,
     binding.sourcePath,
     join(packDirectory, pack.rubricPath),
-    ...pack.contextModules.map((module) => join(packDirectory, module.path)),
+    ...pack.modules.map((module) => join(packDirectory, module.path)),
     ...pack.researchSources
       .map((source) => source.path)
       .filter((path): path is string => Boolean(path))
