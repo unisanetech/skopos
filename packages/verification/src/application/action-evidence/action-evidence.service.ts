@@ -24,7 +24,6 @@ const IGNORED_DIRECTORY_NAMES = new Set([
 ]);
 const IGNORED_SOURCE_PREFIXES = ['.skopos'];
 const IGNORED_EVIDENCE_OUTPUT_PREFIXES = [
-  '.skopos/index/memory.json',
   '.skopos/runs/operations.jsonl',
   '.skopos/runs',
 ];
@@ -113,11 +112,20 @@ export const finalizeSkoposEvidence = async ({
     manifest,
     ignoredSourcePaths,
   });
+  const outputBaseDirectory = resolveActionOutputBaseDirectory(
+    workspaceRoot,
+    manifest,
+    evidence.owner.runId,
+  );
   const outputState = await captureDeclaredPathState({
     workspaceRoot,
-    baseDirectory: resolveActionOutputBaseDirectory(workspaceRoot, manifest, evidence.owner.runId),
+    baseDirectory: outputBaseDirectory,
     declaredPaths: evidenceOutputPaths(manifest),
-    ignoredWorkspacePaths: [],
+    ignoredWorkspacePaths: evidenceOutputExcludes({
+      workspaceRoot,
+      baseDirectory: outputBaseDirectory,
+      manifest,
+    }),
   });
 
   return {
@@ -228,15 +236,20 @@ export const validateSkoposEvidence = async ({
       };
     }
 
+    const outputBaseDirectory = resolveActionOutputBaseDirectory(
+      workspaceRoot,
+      manifest,
+      evidence.owner.runId,
+    );
     const currentOutputState = await captureDeclaredPathState({
       workspaceRoot,
-      baseDirectory: resolveActionOutputBaseDirectory(
-        workspaceRoot,
-        manifest,
-        evidence.owner.runId,
-      ),
+      baseDirectory: outputBaseDirectory,
       declaredPaths: declaredEvidenceOutputs,
-      ignoredWorkspacePaths: [],
+      ignoredWorkspacePaths: evidenceOutputExcludes({
+        workspaceRoot,
+        baseDirectory: outputBaseDirectory,
+        manifest,
+      }),
     });
     if (currentOutputState.digest !== evidence.outputState.digest) {
       return {
@@ -456,6 +469,19 @@ const evidenceOutputPaths = (manifest: SkoposActionManifest): string[] =>
         (ignoredPath) =>
           outputPath === ignoredPath || outputPath.startsWith(`${ignoredPath}/`),
       ),
+  );
+
+const evidenceOutputExcludes = ({
+  workspaceRoot,
+  baseDirectory,
+  manifest,
+}: {
+  workspaceRoot: string;
+  baseDirectory: string;
+  manifest: SkoposActionManifest;
+}): string[] =>
+  (manifest.outputExcludes ?? []).map((excludedPath) =>
+    normalizeWorkspacePath(workspaceRoot, resolve(baseDirectory, excludedPath)),
   );
 
 const resolveActionOutputBaseDirectory = (

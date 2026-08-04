@@ -24,6 +24,11 @@ inputs:
   - tools/skopos
 outputs:
   - .skopos/index
+outputExcludes:
+  - .skopos/index/memory.json
+  - .skopos/index/readiness.json
+  - .skopos/index/work-queue.json
+  - .skopos/index/understanding
 affects:
   - .skopos/index
 capabilities:

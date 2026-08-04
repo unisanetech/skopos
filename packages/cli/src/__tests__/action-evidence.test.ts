@@ -158,6 +158,68 @@ describe('source-bound Action Evidence', () => {
     );
   });
 
+  it('ignores only declared operational descendants of shared-derived outputs', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-evidence-shared-output-'));
+    await mkdir(join(workspaceRoot, 'src'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'generated/runtime'), { recursive: true });
+    await mkdir(join(workspaceRoot, 'tools/skopos/actions'), { recursive: true });
+    await writeFile(join(workspaceRoot, 'src/input.ts'), 'export const value = 1;\n', 'utf8');
+    await writeFile(join(workspaceRoot, 'generated/semantic.json'), '{"value":1}\n', 'utf8');
+    await writeFile(join(workspaceRoot, 'generated/runtime/queue.json'), '{"items":1}\n', 'utf8');
+    await writeFile(
+      join(workspaceRoot, 'tools/skopos/actions/compile.yaml'),
+      'id: knowledge.compile\n',
+      'utf8',
+    );
+    await writeFile(join(workspaceRoot, 'skopos.config.yaml'), 'schemaVersion: 1\n', 'utf8');
+    const sharedOutputManifest: SkoposActionManifest = {
+      ...manifest,
+      id: 'knowledge.compile',
+      title: 'Compile knowledge',
+      sourcePath: 'tools/skopos/actions/compile.yaml',
+      outputs: ['generated'],
+      outputExcludes: ['generated/runtime'],
+    };
+    const evidence = await finalizeSkoposEvidence({
+      workspaceRoot,
+      manifest: sharedOutputManifest,
+      evidence: await buildSkoposEvidence({
+        workspaceRoot,
+        manifest: sharedOutputManifest,
+        runId: 'run-shared-output',
+      }),
+    });
+    const artifact = {
+      ...buildRunArtifact(evidence),
+      actionId: sharedOutputManifest.id,
+      actionTitle: sharedOutputManifest.title,
+      sourcePath: sharedOutputManifest.sourcePath,
+    };
+
+    await writeFile(join(workspaceRoot, 'generated/runtime/queue.json'), '{"items":2}\n', 'utf8');
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: sharedOutputManifest,
+        artifact,
+      }),
+    ).resolves.toEqual(expect.objectContaining({ status: 'valid' }));
+
+    await writeFile(join(workspaceRoot, 'generated/semantic.json'), '{"value":2}\n', 'utf8');
+    await expect(
+      validateSkoposEvidence({
+        workspaceRoot,
+        manifest: sharedOutputManifest,
+        artifact,
+      }),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        status: 'stale',
+        summary: expect.stringContaining('outputs changed'),
+      }),
+    );
+  });
+
   it('finalizes mutating actions against their stable post-action source state', async () => {
     const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-evidence-mutating-'));
     await mkdir(join(workspaceRoot, 'tools/skopos/actions'), { recursive: true });

@@ -1,4 +1,4 @@
-import { isAbsolute, join, relative } from 'node:path';
+import { isAbsolute, join, posix, relative } from 'node:path';
 
 import type { SkoposActionManifest } from '@skopos/model';
 import { z } from 'zod';
@@ -30,6 +30,7 @@ const actionManifestSchema = z
     inputs: z.array(z.string().min(1)).default([]),
     sourceExcludes: z.array(z.string().min(1)).default([]),
     outputs: z.array(z.string().min(1)).default([]),
+    outputExcludes: z.array(z.string().min(1)).default([]),
     affects: z.array(z.string().min(1)).default([]),
     capabilities: z.object({
       process: z.literal('required'),
@@ -82,6 +83,26 @@ const actionManifestSchema = z
         path: ['outputs'],
         message: 'Isolated artifact production requires at least one output.',
       });
+    }
+    for (const outputExclude of manifest.outputExcludes) {
+      const normalizedExclude = posix.normalize(outputExclude);
+      const ownsExcludedPath =
+        !posix.isAbsolute(normalizedExclude) &&
+        manifest.outputs.some((output) => {
+          const descendant = posix.relative(posix.normalize(output), normalizedExclude);
+          return (
+            descendant.length > 0 &&
+            descendant !== '..' &&
+            !descendant.startsWith('../')
+          );
+        });
+      if (!ownsExcludedPath) {
+        context.addIssue({
+          code: 'custom',
+          path: ['outputExcludes'],
+          message: `Output exclusion ${outputExclude} must be a descendant of a declared output.`,
+        });
+      }
     }
     if (manifest.effects.artifacts === 'none' && manifest.safety === 'artifact-producing') {
       context.addIssue({

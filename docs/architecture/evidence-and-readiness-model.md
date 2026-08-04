@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-03
+lastUpdated: 2026-08-04
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
@@ -34,6 +34,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-04`: Added explicit Action output exclusions for operational descendants
+  of shared-derived output trees while retaining source binding and semantic output
+  tamper detection.
 - `2026-08-03`: Named every Task proof subject as `task-closure` or
   `project-integration`, bound it to a stable admission baseline id, attributed
   selected generator outputs, required explicit overlay-safe Action execution, and
@@ -113,6 +116,13 @@ receive this exclusion, and changes to every other declared input still invalida
 Evidence normally. Action manifests may additionally declare `sourceExcludes` for
 known unrelated generated or volatile descendants of a necessary directory input;
 exact durable inputs remain preferred.
+
+Actions that compile a shared-derived directory may declare `outputExcludes` only for
+named descendants that are operationally rewritten outside the Action. Every exclusion
+must be nested under a declared output. Evidence continues to hash the remainder of the
+output tree, so Task, queue, readiness, or log projection churn can remain independent
+without hiding semantic generated-state drift. Excluding the declared output itself or
+an unrelated path is invalid.
 
 ### Progress and interruption Evidence
 

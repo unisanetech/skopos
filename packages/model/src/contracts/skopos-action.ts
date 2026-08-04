@@ -66,6 +66,7 @@ export interface SkoposActionManifest {
   inputs: string[];
   sourceExcludes?: string[];
   outputs: string[];
+  outputExcludes?: string[];
   affects: string[];
   capabilities: SkoposActionCapabilities;
   effects: SkoposActionEffects;
