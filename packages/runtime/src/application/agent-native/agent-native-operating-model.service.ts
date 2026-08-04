@@ -15,6 +15,7 @@ import type {
   SkoposTaskQuestionArtifact,
   SkoposTaskRisk,
 } from '@skopos/model';
+import { resolveSkoposTaskChangedPaths } from '@skopos/verification';
 
 import { buildSkoposCompactTaskBrief, inferSkoposTaskRisk } from './compact-task-brief.js';
 import {
@@ -100,6 +101,12 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
     phase,
     risk: resolvedRisk,
   });
+  const taskChanges = await resolveSkoposTaskChangedPaths({
+    workspaceRoot,
+    changeScope: task.changeScope,
+    currentTaskId: task.id,
+    generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
+  });
   const skillSelection = await selectSkoposSkillsForTaskRuntime({
     cwd: workspaceRoot,
     task: baseBrief.task,
@@ -109,6 +116,25 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
         : resolvedRisk === 'standard'
           ? 'standard'
           : 'light',
+    phase,
+    ownedPaths: task.changeScope.declaredOwnedPaths,
+    changedPaths: taskChanges.changedPaths,
+    affectedCapabilities: [
+      ...task.selectedActions.flatMap((action) => [action.id, ...action.outputPaths]),
+      ...task.selectedGuardIds,
+    ],
+    selectedActionIds: task.selectedActions.map((action) => action.id),
+    applicableGuardIds: task.selectedGuardIds,
+    acceptedFailureEvidence: operatingModel.context
+      .filter(
+        (entry) =>
+          entry.kind === 'negative-knowledge' &&
+          entry.provenance.some(
+            (reference) =>
+              reference.authority === 'accepted' || reference.authority === 'declared',
+          ),
+      )
+      .map((entry) => ({ id: entry.id.replace(/^knowledge:/, ''), summary: entry.summary })),
     operatingModel,
   });
 

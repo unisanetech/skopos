@@ -26,6 +26,13 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-04`: Implemented Task-aware selection and task-wide budgets. Runtime now
+  builds one deterministic envelope from the available Task contract, Scope ancestry,
+  owned and changed paths, inferred path capabilities, selected Actions, applicable
+  Guards, accepted failure evidence, phase, risk, and lifecycle. Positive intent plus
+  relevant applicability is required; anti-signals, generated-only changes, review
+  phase mismatch, duplicate judgment, and risk-based pack/module/token ceilings produce
+  structured suppression explanations.
 - `2026-08-04`: Implemented the first model/loader hard cut: the strict v1 manifest
   now owns narrow pack boundaries and module-local signals, applicability, project
   roles, rubric dimensions, and failure references. Guidance cost is measured by the
@@ -135,9 +142,19 @@ The first canonical schema and loader now enforce the following in place:
 5. the current runtime resolves only the context, Actions, and Guards named by selected
    modules
 6. the initial Product UI Craft pack and its accepted project binding use `0.1.0`
+7. Task admission passes current owned and changed paths into one normalized Skill
+   signal envelope instead of reducing selection to the goal and Scope label
+8. module eligibility requires positive structural intent plus Scope, path, capability,
+   or accepted failure applicability; filenames may support applicability but cannot
+   establish intent
+9. light, standard, and high-impact Tasks enforce one shared pack, module, and measured
+   token ceiling across all accepted packs
+10. every selected or suppressed module records a structured reason, evidence IDs, and
+    measured cost; selected modules expose only their rubric, failure, context, Action,
+    and Guard references
 
-Complete Task-envelope eligibility, task-wide budgeting, exact digest-bound acceptance,
-behavioral fixtures, and portable adoption proof remain later phases of the active
+Exact digest caching, content-bound acceptance, full deterministic fixture coverage,
+behavioral evaluation, and portable adoption proof remain later phases of the active
 Plan and Finding.
 
 ## Consequences

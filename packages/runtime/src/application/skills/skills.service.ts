@@ -15,6 +15,7 @@ import type {
 } from '@skopos/indexer';
 import type {
   SkoposAgentNativeOperatingModel,
+  SkoposExecutionPhase,
   SkoposTaskRisk,
   SkoposSkillHostProjectionArtifact,
   SkoposSkillHostProjectionEntry,
@@ -24,9 +25,18 @@ import type {
   SkoposSelectedSkill,
   SkoposSkillRecommendationArtifact,
   SkoposSkillRecommendationEntry,
+  SkoposSkillAcceptedFailureEvidence,
+  SkoposSkillModuleSelectionEvidence,
+  SkoposSkillSelectionExplanation,
+  SkoposSkillSelectionResult,
+  SkoposSkillTaskPathKind,
+  SkoposSkillTaskSignalEnvelope,
   SkoposTaskContract,
 } from '@skopos/model';
-import { SKOPOS_SKILL_PROJECTION_HOST_IDS } from '@skopos/model';
+import {
+  SKOPOS_SKILL_PROJECTION_HOST_IDS,
+  SKOPOS_SKILL_TASK_BUDGETS,
+} from '@skopos/model';
 
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
@@ -509,20 +519,46 @@ export const selectSkoposSkillsForTaskRuntime = async ({
   cwd,
   task,
   taskRisk,
+  phase = 'iteration',
+  ownedPaths = [],
   changedPaths = [],
+  affectedCapabilities = [],
+  selectedActionIds = [],
+  applicableGuardIds = [],
+  acceptedFailureEvidence = [],
   operatingModel,
 }: {
   cwd: string;
   task: SkoposTaskContract;
   taskRisk: SkoposTaskRisk;
+  phase?: SkoposExecutionPhase;
+  ownedPaths?: string[];
   changedPaths?: string[];
+  affectedCapabilities?: string[];
+  selectedActionIds?: string[];
+  applicableGuardIds?: string[];
+  acceptedFailureEvidence?: SkoposSkillAcceptedFailureEvidence[];
   operatingModel: SkoposAgentNativeOperatingModel;
-}): Promise<{ selectedSkills: SkoposSelectedSkill[]; diagnostics: string[] }> => {
+}): Promise<SkoposSkillSelectionResult> => {
   const workspaceRoot = resolve(cwd);
-  const [packs, bindings] = await Promise.all([
+  const [packs, bindings, projectLifecycle] = await Promise.all([
     listSkoposSkillPacksRuntime({ cwd: workspaceRoot }),
     listSkoposProjectSkillBindingsRuntime({ cwd: workspaceRoot }),
+    inferProjectLifecycle(workspaceRoot),
   ]);
+  const envelope = buildSkillTaskSignalEnvelope({
+    task,
+    taskRisk,
+    phase,
+    ownedPaths,
+    changedPaths,
+    affectedCapabilities,
+    selectedActionIds,
+    applicableGuardIds,
+    acceptedFailureEvidence,
+    projectLifecycle,
+  });
+  const budget = SKOPOS_SKILL_TASK_BUDGETS[taskRisk];
   const resolvedSkills = await buildResolvedSkillArtifactFromTrackedBindings({
     workspaceRoot,
     packs,
@@ -530,14 +566,14 @@ export const selectSkoposSkillsForTaskRuntime = async ({
     operatingModel,
   });
   const selectedSkills: SkoposSelectedSkill[] = [];
+  const explanations: SkoposSkillSelectionExplanation[] = [];
   const diagnostics: string[] = [];
-  const taskText = [
-    task.goal,
-    task.scope.scope.id,
-    task.scope.scope.title,
-    task.scope.scope.path,
-    ...changedPaths,
-  ].join(' ');
+  const candidatePacks: Array<{
+    pack: SkoposLoadedSkillPack;
+    binding: SkoposLoadedProjectSkillBinding;
+    modules: SkillModuleEligibility[];
+    score: number;
+  }> = [];
 
   for (const accepted of resolvedSkills.acceptedSkills) {
     const pack = packs.find(
@@ -549,7 +585,14 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       diagnostics.push(`Accepted skill ${accepted.packId} is missing its pack or binding source.`);
       continue;
     }
-    if (!pack.taskRisks.includes(taskRisk)) continue;
+    if (!pack.taskRisks.includes(taskRisk)) {
+      explanations.push(suppressedPackExplanation(pack, 'risk-mismatch'));
+      continue;
+    }
+    if (!pack.projectLifecycles.includes(projectLifecycle)) {
+      explanations.push(suppressedPackExplanation(pack, 'lifecycle-mismatch'));
+      continue;
+    }
     const validation = await validateSkoposProjectSkillBindingRuntime({
       cwd: workspaceRoot,
       pack,
@@ -558,49 +601,97 @@ export const selectSkoposSkillsForTaskRuntime = async ({
     });
     if (validation.status === 'fail') {
       diagnostics.push(...validation.diagnostics);
+      explanations.push(suppressedPackExplanation(pack, 'binding-invalid'));
       continue;
     }
-    const rankedModules = pack.modules
-      .filter(
-        (module) =>
-          !module.negativeSignals.some((signal) =>
-            hasStrongRelevantTerms(
-              taskText,
-              `${signal.summary} ${signal.evidence.join(' ')}`,
-            ),
-          ),
-      )
-      .map((module) => ({
-        module,
-        score: relevanceScore(
-          taskText,
-          [
-            module.title,
-            module.summary,
-            ...module.positiveSignals.flatMap((signal) => [
-              signal.summary,
-              ...signal.evidence,
-            ]),
-            ...module.applicability.scopeKinds,
-            ...module.applicability.pathKinds,
-            ...module.applicability.capabilities,
-          ].join(' '),
+    const evaluatedModules = pack.modules.map((module) =>
+      evaluateSkillModuleEligibility({ module, envelope }),
+    );
+    explanations.push(
+      ...evaluatedModules
+        .filter((entry) => !entry.eligible)
+        .map((entry) => ({ ...entry.explanation, packId: pack.packId })),
+    );
+    const eligibleModules = evaluatedModules
+      .filter((entry) => entry.eligible)
+      .sort(
+        (left, right) =>
+          right.score - left.score ||
+          left.module.measuredTokens - right.module.measuredTokens ||
+          left.module.id.localeCompare(right.module.id),
+      );
+    if (eligibleModules.length === 0) continue;
+    candidatePacks.push({
+      pack,
+      binding,
+      modules: eligibleModules,
+      score: eligibleModules[0]?.score ?? 0,
+    });
+  }
+
+  candidatePacks.sort(
+    (left, right) => right.score - left.score || left.pack.packId.localeCompare(right.pack.packId),
+  );
+  let measuredTaskTokens = 0;
+  let selectedModuleCount = 0;
+  const selectedRubricDimensions = new Set<string>();
+
+  for (const candidate of candidatePacks) {
+    const { pack, binding } = candidate;
+    if (selectedSkills.length >= budget.maximumPacks) {
+      explanations.push(
+        ...candidate.modules.map((entry) =>
+          suppressedModuleExplanation(pack, entry, 'pack-budget-exhausted'),
         ),
-      }))
-      .filter(({ module, score }) => score > 0 || module.importance === 'required')
-      .sort((left, right) => right.score - left.score || left.module.id.localeCompare(right.module.id));
-    const selectedModules: typeof rankedModules = [];
-    let estimatedContextTokens = 0;
-    for (const entry of rankedModules) {
-      if (selectedModules.length >= pack.selection.maximumModules) break;
+      );
+      continue;
+    }
+    const selectedModules: SkillModuleEligibility[] = [];
+    let measuredPackTokens = 0;
+    for (const entry of candidate.modules) {
       if (
-        estimatedContextTokens + entry.module.measuredTokens >
-        pack.selection.maximumMeasuredTokens
+        selectedModuleCount >= budget.maximumModules ||
+        selectedModules.length >= pack.selection.maximumModules
       ) {
+        explanations.push(
+          suppressedModuleExplanation(pack, entry, 'module-budget-exhausted'),
+        );
+        continue;
+      }
+      if (
+        measuredTaskTokens + entry.module.measuredTokens > budget.maximumMeasuredTokens ||
+        measuredPackTokens + entry.module.measuredTokens > pack.selection.maximumMeasuredTokens
+      ) {
+        explanations.push(
+          suppressedModuleExplanation(pack, entry, 'token-budget-exhausted'),
+        );
+        continue;
+      }
+      const distinctRubricDimensions = entry.module.rubricDimensions.filter(
+        (dimension) => !selectedRubricDimensions.has(dimension),
+      );
+      if (distinctRubricDimensions.length === 0) {
+        explanations.push(suppressedModuleExplanation(pack, entry, 'duplicate-judgment'));
         continue;
       }
       selectedModules.push(entry);
-      estimatedContextTokens += entry.module.measuredTokens;
+      measuredPackTokens += entry.module.measuredTokens;
+      measuredTaskTokens += entry.module.measuredTokens;
+      selectedModuleCount += 1;
+      for (const dimension of distinctRubricDimensions) selectedRubricDimensions.add(dimension);
+      explanations.push({
+        packId: pack.packId,
+        moduleId: entry.module.id,
+        outcome: 'selected',
+        reasonCode: 'selected',
+        summary: `${entry.module.title} has positive structural evidence and relevant applicability.`,
+        evidenceIds: [
+          ...entry.positiveSignalIds,
+          ...entry.applicabilityEvidence,
+          ...entry.failureSignalIds,
+        ],
+        measuredTokens: entry.module.measuredTokens,
+      });
     }
     if (selectedModules.length === 0) continue;
 
@@ -655,7 +746,14 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       selectedContext,
       selectedActionIds,
       selectedGuardIds,
-      estimatedContextTokens,
+      selectedRubricDimensions: uniqueSorted(
+        selectedModuleManifests.flatMap((module) => module.rubricDimensions),
+      ),
+      selectedFailureSignalIds: uniqueSorted(
+        selectedModuleManifests.flatMap((module) => module.failureSignalIds),
+      ),
+      measuredContextTokens: measuredPackTokens,
+      selectionEvidence: selectedModules.map(toSkillModuleSelectionEvidence),
       sourcePaths: [
         pack.sourcePath,
         binding.sourcePath,
@@ -664,7 +762,324 @@ export const selectSkoposSkillsForTaskRuntime = async ({
       ],
     });
   }
-  return { selectedSkills, diagnostics };
+  return { envelope, budget, selectedSkills, explanations, diagnostics };
+};
+
+interface SkillModuleEligibility {
+  module: SkoposLoadedSkillPack['modules'][number];
+  eligible: boolean;
+  score: number;
+  positiveSignalIds: string[];
+  applicabilityEvidence: string[];
+  failureSignalIds: string[];
+  explanation: SkoposSkillSelectionExplanation;
+}
+
+const buildSkillTaskSignalEnvelope = ({
+  task,
+  taskRisk,
+  phase,
+  ownedPaths,
+  changedPaths,
+  affectedCapabilities,
+  selectedActionIds,
+  applicableGuardIds,
+  acceptedFailureEvidence,
+  projectLifecycle,
+}: {
+  task: SkoposTaskContract;
+  taskRisk: SkoposTaskRisk;
+  phase: SkoposExecutionPhase;
+  ownedPaths: string[];
+  changedPaths: string[];
+  affectedCapabilities: string[];
+  selectedActionIds: string[];
+  applicableGuardIds: string[];
+  acceptedFailureEvidence: SkoposSkillAcceptedFailureEvidence[];
+  projectLifecycle: SkoposProjectLifecycle;
+}): SkoposSkillTaskSignalEnvelope => {
+  const scope = task.scope.scope;
+  const changedPathSet = new Set(changedPaths);
+  const paths = uniqueSorted([...ownedPaths, ...changedPaths]).map((path) => ({
+    path,
+    kinds: classifySkillTaskPath(path),
+    source: changedPathSet.has(path) ? 'changed' as const : 'owned' as const,
+  }));
+  return {
+    goal: task.goal,
+    acceptanceCriteria: task.acceptanceCriteria,
+    constraints: task.constraints,
+    nonGoals: task.nonGoals,
+    openDecisions: task.openDecisions.map((decision) => decision.question),
+    risk: taskRisk,
+    phase,
+    scopeIds: uniqueSorted([scope.id, ...(scope.ancestorIds ?? [])]),
+    scopeKinds: [scope.kind],
+    scopeTerms: uniqueSorted([
+      scope.id,
+      scope.title,
+      scope.path,
+      ...(scope.aliases ?? []),
+      ...(scope.codeRoots ?? []),
+    ]),
+    paths,
+    affectedCapabilities: uniqueSorted([
+      ...affectedCapabilities,
+      ...inferSkillPathCapabilities(paths),
+    ]),
+    selectedActionIds: uniqueSorted(selectedActionIds),
+    applicableGuardIds: uniqueSorted(applicableGuardIds),
+    acceptedFailureEvidence: [...acceptedFailureEvidence].sort((left, right) =>
+      left.id.localeCompare(right.id),
+    ),
+    projectLifecycle,
+  };
+};
+
+const evaluateSkillModuleEligibility = ({
+  module,
+  envelope,
+}: {
+  module: SkoposLoadedSkillPack['modules'][number];
+  envelope: SkoposSkillTaskSignalEnvelope;
+}): SkillModuleEligibility => {
+  const positiveIntentText = [
+    envelope.goal,
+    ...envelope.acceptanceCriteria,
+  ].join(' ');
+  const taskText = [
+    positiveIntentText,
+    ...envelope.constraints,
+    ...envelope.nonGoals,
+    ...envelope.openDecisions,
+    ...envelope.scopeTerms,
+    ...envelope.paths.map((entry) => entry.path),
+    ...envelope.affectedCapabilities,
+    ...envelope.selectedActionIds,
+    ...envelope.applicableGuardIds,
+  ].join(' ');
+  const negativeEvidenceText = [
+    ...envelope.nonGoals,
+    ...[...envelope.constraints, ...envelope.openDecisions].filter((entry) =>
+      /\b(no|not|without|exclude|forbid|prohibit|only|generated|vendored|backend|infrastructure|documentation)\b/i.test(entry),
+    ),
+    ...envelope.paths
+      .filter((entry) => entry.kinds.some((kind) => EXCLUDED_SKILL_PATH_KINDS.has(kind)))
+      .flatMap((entry) => [entry.path, ...entry.kinds]),
+  ].join(' ');
+  const matchingPositiveSignals = module.positiveSignals.filter(
+    (signal) => relevanceScore(positiveIntentText, skillSignalText(signal)) > 0,
+  );
+  const highSignalIds = matchingPositiveSignals
+    .filter((signal) => signal.confidence === 'high')
+    .map((signal) => signal.id);
+  const mediumSignalIds = matchingPositiveSignals
+    .filter((signal) => signal.confidence === 'medium')
+    .map((signal) => signal.id);
+  const failureSignalIds = module.failureSignalIds.filter((failureSignalId) =>
+    envelope.acceptedFailureEvidence.some((entry) => entry.id === failureSignalId),
+  );
+  const positiveSignalIds = uniqueSorted([
+    ...highSignalIds,
+    ...(mediumSignalIds.length >= 2 ? mediumSignalIds : []),
+  ]);
+  const blockingAntiSignalIds = negativeEvidenceText
+    ? module.negativeSignals
+        .filter((signal) => relevanceScore(negativeEvidenceText, skillSignalText(signal)) > 0)
+        .map((signal) => signal.id)
+    : [];
+  const applicabilityEvidence = collectSkillApplicabilityEvidence(module, envelope);
+  const score = relevanceScore(
+    taskText,
+    [
+      module.title,
+      module.summary,
+      ...matchingPositiveSignals.map(skillSignalText),
+      ...module.applicability.scopeKinds,
+      ...module.applicability.pathKinds,
+      ...module.applicability.capabilities,
+    ].join(' '),
+  );
+  const base = {
+    module,
+    score,
+    positiveSignalIds,
+    applicabilityEvidence,
+    failureSignalIds,
+  };
+  if (module.importance === 'on-demand' && envelope.phase !== 'closure' && envelope.phase !== 'stabilization') {
+    return ineligibleSkillModule(base, 'review-phase-mismatch', []);
+  }
+  if (blockingAntiSignalIds.length > 0) {
+    return ineligibleSkillModule(base, 'blocking-anti-signal', blockingAntiSignalIds);
+  }
+  if (positiveSignalIds.length === 0) {
+    return ineligibleSkillModule(base, 'positive-signal-missing', []);
+  }
+  if (applicabilityEvidence.length === 0 && failureSignalIds.length === 0) {
+    return ineligibleSkillModule(base, 'applicability-missing', []);
+  }
+  return {
+    ...base,
+    eligible: true,
+    explanation: {
+      packId: '',
+      moduleId: module.id,
+      outcome: 'selected',
+      reasonCode: 'selected',
+      summary: `${module.title} is eligible.`,
+      evidenceIds: [...positiveSignalIds, ...applicabilityEvidence, ...failureSignalIds],
+      measuredTokens: module.measuredTokens,
+    },
+  };
+};
+
+const collectSkillApplicabilityEvidence = (
+  module: SkoposLoadedSkillPack['modules'][number],
+  envelope: SkoposSkillTaskSignalEnvelope,
+): string[] => {
+  if (
+    envelope.paths.length > 0 &&
+    envelope.paths.every((entry) =>
+      entry.kinds.some((kind) => EXCLUDED_SKILL_PATH_KINDS.has(kind)),
+    )
+  ) {
+    return [];
+  }
+  const scopeText = [...envelope.scopeKinds, ...envelope.scopeTerms].join(' ');
+  const pathKinds = new Set(envelope.paths.flatMap((entry) => entry.kinds));
+  const capabilityIds = new Set(
+    [
+      ...envelope.affectedCapabilities,
+      ...envelope.selectedActionIds,
+      ...envelope.applicableGuardIds,
+    ].map((entry) => entry.toLowerCase()),
+  );
+  const scopeEvidence = module.applicability.scopeKinds
+    .filter((kind) => relevanceScore(scopeText, kind) > 0)
+    .map((kind) => `scope:${kind}`);
+  const capabilityEvidence = module.applicability.capabilities
+    .filter((capability) => capabilityIds.has(capability.toLowerCase()))
+    .map((capability) => `capability:${capability}`);
+  const pathEvidence = module.applicability.pathKinds
+    .filter((kind) => pathKinds.has(kind as SkoposSkillTaskPathKind))
+    .map((kind) => `path:${kind}`);
+  const specializedPathEvidence = pathEvidence.filter(
+    (entry) => entry !== 'path:authored-source' && entry !== 'path:test',
+  );
+  return uniqueSorted([
+    ...scopeEvidence,
+    ...capabilityEvidence,
+    ...(scopeEvidence.length > 0 || capabilityEvidence.length > 0
+      ? pathEvidence
+      : specializedPathEvidence),
+  ]);
+};
+
+const ineligibleSkillModule = (
+  entry: Omit<SkillModuleEligibility, 'eligible' | 'explanation'>,
+  reasonCode: SkoposSkillSelectionExplanation['reasonCode'],
+  evidenceIds: string[],
+): SkillModuleEligibility => ({
+  ...entry,
+  eligible: false,
+  explanation: {
+    packId: '',
+    moduleId: entry.module.id,
+    outcome: 'suppressed',
+    reasonCode,
+    summary: `${entry.module.title} was suppressed: ${reasonCode.replaceAll('-', ' ')}.`,
+    evidenceIds,
+    measuredTokens: entry.module.measuredTokens,
+  },
+});
+
+const suppressedPackExplanation = (
+  pack: SkoposLoadedSkillPack,
+  reasonCode: SkoposSkillSelectionExplanation['reasonCode'],
+): SkoposSkillSelectionExplanation => ({
+  packId: pack.packId,
+  outcome: 'suppressed',
+  reasonCode,
+  summary: `${pack.displayName} was suppressed: ${reasonCode.replaceAll('-', ' ')}.`,
+  evidenceIds: [],
+  measuredTokens: 0,
+});
+
+const suppressedModuleExplanation = (
+  pack: SkoposLoadedSkillPack,
+  entry: SkillModuleEligibility,
+  reasonCode: SkoposSkillSelectionExplanation['reasonCode'],
+): SkoposSkillSelectionExplanation => ({
+  packId: pack.packId,
+  moduleId: entry.module.id,
+  outcome: 'suppressed',
+  reasonCode,
+  summary: `${entry.module.title} was suppressed: ${reasonCode.replaceAll('-', ' ')}.`,
+  evidenceIds: [
+    ...entry.positiveSignalIds,
+    ...entry.applicabilityEvidence,
+    ...entry.failureSignalIds,
+  ],
+  measuredTokens: entry.module.measuredTokens,
+});
+
+const toSkillModuleSelectionEvidence = (
+  entry: SkillModuleEligibility,
+): SkoposSkillModuleSelectionEvidence => ({
+  moduleId: entry.module.id,
+  positiveSignalIds: entry.positiveSignalIds,
+  applicabilityEvidence: entry.applicabilityEvidence,
+  failureSignalIds: entry.failureSignalIds,
+  score: entry.score,
+  measuredTokens: entry.module.measuredTokens,
+});
+
+const skillSignalText = (signal: { id: string; summary: string; evidence: string[] }): string =>
+  `${signal.id} ${signal.summary} ${signal.evidence.join(' ')}`;
+
+const EXCLUDED_SKILL_PATH_KINDS = new Set<SkoposSkillTaskPathKind>([
+  'generated',
+  'vendored',
+  'build',
+  'distribution',
+]);
+
+const classifySkillTaskPath = (path: string): SkoposSkillTaskPathKind[] => {
+  const normalized = path.toLowerCase();
+  const kinds = new Set<SkoposSkillTaskPathKind>();
+  if (/(^|\/)(\.skopos|\.cache|generated|__generated__)(\/|$)/.test(normalized)) kinds.add('generated');
+  if (/(^|\/)(node_modules|vendor|vendored)(\/|$)/.test(normalized)) kinds.add('vendored');
+  if (/(^|\/)(dist|build|coverage)(\/|$)/.test(normalized)) kinds.add('build');
+  if (/(^|\/)(release|releases|distribution)(\/|$)/.test(normalized)) kinds.add('distribution');
+  if (/(^|\/)(__tests__|tests?|specs?)(\/|\.)/.test(normalized) || /\.(test|spec)\.[^.]+$/.test(normalized)) kinds.add('test');
+  if (/\.(css|scss|sass|less)$/.test(normalized)) kinds.add('style');
+  if (/(^|\/)(locales?|i18n|translations?)(\/|$)/.test(normalized)) kinds.add('localization');
+  if (/(^|\/)(evidence|proof|fixtures?)(\/|$)/.test(normalized)) kinds.add('evidence');
+  if (/(^|\/)(index|exports?)\.[^.]+$/.test(normalized)) kinds.add('public-export');
+  if (/\.(md|mdx|rst|txt)$/.test(normalized) || normalized.startsWith('docs/')) kinds.add('documentation');
+  if (/\.(json|ya?ml|toml|ini)$/.test(normalized)) kinds.add('configuration');
+  if (/\.(c|cc|cpp|cs|go|java|js|jsx|kt|php|py|rb|rs|swift|ts|tsx|vue|svelte)$/.test(normalized)) kinds.add('authored-source');
+  if (kinds.size === 0) kinds.add('unknown');
+  return [...kinds].sort();
+};
+
+const inferSkillPathCapabilities = (
+  paths: SkoposSkillTaskSignalEnvelope['paths'],
+): string[] => {
+  const capabilities: string[] = [];
+  for (const entry of paths) {
+    const path = entry.path.toLowerCase();
+    if (/\.(jsx|tsx|vue|svelte)$/.test(path)) {
+      capabilities.push('frontend', 'browser-rendering', 'client-rendering', 'component-library');
+    }
+    if (entry.kinds.includes('style')) {
+      capabilities.push('frontend', 'browser-rendering', 'design-tokens');
+    }
+    if (entry.kinds.includes('localization')) capabilities.push('interface-copy');
+    if (entry.kinds.includes('public-export')) capabilities.push('public-api', 'symbol-search');
+  }
+  return capabilities;
 };
 
 const loadOperatingModelCapabilities = async (
@@ -906,7 +1321,15 @@ const significantTerms = (value: string): Set<string> =>
     value
       .toLowerCase()
       .split(/[^a-z0-9]+/g)
-      .filter((term) => term.length >= 4),
+      .filter(
+        (term) =>
+          term.length >= 4 ||
+          term === 'ui' ||
+          term === 'ux' ||
+          term === 'api' ||
+          term === 'seo' ||
+          term === 'web',
+      ),
   );
 
 const relevanceScore = (left: string, right: string): number => {
@@ -916,6 +1339,3 @@ const relevanceScore = (left: string, right: string): number => {
   for (const term of leftTerms) if (rightTerms.has(term)) score += 1;
   return score;
 };
-
-const hasStrongRelevantTerms = (left: string, right: string): boolean =>
-  relevanceScore(left, right) >= 2;

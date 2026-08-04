@@ -1,6 +1,7 @@
 import type { SkoposArtifactEnvelope } from './skopos-artifact-envelope.js';
 import type {
   SkoposContextEntry,
+  SkoposExecutionPhase,
 } from './skopos-agent-native-operating-model.js';
 import type {
   SkoposPolicySignal,
@@ -52,6 +53,18 @@ export interface SkoposSkillSelectionPolicy {
   maximumMeasuredTokens: number;
   maximumModules: number;
 }
+
+export interface SkoposSkillTaskBudget {
+  maximumPacks: number;
+  maximumModules: number;
+  maximumMeasuredTokens: number;
+}
+
+export const SKOPOS_SKILL_TASK_BUDGETS: Record<SkoposTaskRisk, SkoposSkillTaskBudget> = {
+  light: { maximumPacks: 1, maximumModules: 1, maximumMeasuredTokens: 800 },
+  standard: { maximumPacks: 2, maximumModules: 3, maximumMeasuredTokens: 1800 },
+  'high-impact': { maximumPacks: 3, maximumModules: 5, maximumMeasuredTokens: 2800 },
+};
 
 export interface SkoposSkillRoleRequirements {
   context: string[];
@@ -204,15 +217,107 @@ export interface SkoposSelectedSkill {
   selectedContext: SkoposContextEntry[];
   selectedActionIds: string[];
   selectedGuardIds: string[];
-  estimatedContextTokens: number;
+  selectedRubricDimensions: string[];
+  selectedFailureSignalIds: string[];
+  measuredContextTokens: number;
+  selectionEvidence: SkoposSkillModuleSelectionEvidence[];
   sourcePaths: string[];
+}
+
+export type SkoposSkillTaskPathKind =
+  | 'authored-source'
+  | 'test'
+  | 'style'
+  | 'localization'
+  | 'evidence'
+  | 'public-export'
+  | 'generated'
+  | 'vendored'
+  | 'build'
+  | 'distribution'
+  | 'documentation'
+  | 'configuration'
+  | 'unknown';
+
+export interface SkoposSkillTaskPathSignal {
+  path: string;
+  kinds: SkoposSkillTaskPathKind[];
+  source: 'owned' | 'changed';
+}
+
+export interface SkoposSkillAcceptedFailureEvidence {
+  id: string;
+  summary: string;
+}
+
+export interface SkoposSkillTaskSignalEnvelope {
+  goal: string;
+  acceptanceCriteria: string[];
+  constraints: string[];
+  nonGoals: string[];
+  openDecisions: string[];
+  risk: SkoposTaskRisk;
+  phase: SkoposExecutionPhase;
+  scopeIds: string[];
+  scopeKinds: string[];
+  scopeTerms: string[];
+  paths: SkoposSkillTaskPathSignal[];
+  affectedCapabilities: string[];
+  selectedActionIds: string[];
+  applicableGuardIds: string[];
+  acceptedFailureEvidence: SkoposSkillAcceptedFailureEvidence[];
+  projectLifecycle: SkoposProjectLifecycle;
+}
+
+export type SkoposSkillSelectionReasonCode =
+  | 'selected'
+  | 'risk-mismatch'
+  | 'lifecycle-mismatch'
+  | 'binding-invalid'
+  | 'positive-signal-missing'
+  | 'applicability-missing'
+  | 'blocking-anti-signal'
+  | 'review-phase-mismatch'
+  | 'duplicate-judgment'
+  | 'pack-budget-exhausted'
+  | 'module-budget-exhausted'
+  | 'token-budget-exhausted';
+
+export interface SkoposSkillModuleSelectionEvidence {
+  moduleId: string;
+  positiveSignalIds: string[];
+  applicabilityEvidence: string[];
+  failureSignalIds: string[];
+  score: number;
+  measuredTokens: number;
+}
+
+export interface SkoposSkillSelectionExplanation {
+  packId: string;
+  moduleId?: string;
+  outcome: 'selected' | 'suppressed';
+  reasonCode: SkoposSkillSelectionReasonCode;
+  summary: string;
+  evidenceIds: string[];
+  measuredTokens: number;
+}
+
+export interface SkoposSkillSelectionResult {
+  envelope: SkoposSkillTaskSignalEnvelope;
+  budget: SkoposSkillTaskBudget;
+  selectedSkills: SkoposSelectedSkill[];
+  explanations: SkoposSkillSelectionExplanation[];
+  diagnostics: string[];
 }
 
 export interface SkoposSkillSelectionArtifact
   extends SkoposArtifactEnvelope<'skill-selection'> {
   workspaceRoot: string;
   taskId: string;
+  envelope: SkoposSkillTaskSignalEnvelope;
+  budget: SkoposSkillTaskBudget;
   selectedSkills: SkoposSelectedSkill[];
+  explanations: SkoposSkillSelectionExplanation[];
   diagnostics: string[];
 }
 

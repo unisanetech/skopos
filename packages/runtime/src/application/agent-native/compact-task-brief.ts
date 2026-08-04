@@ -91,7 +91,7 @@ export const buildSkoposCompactTaskBrief = ({
         bindingId: skill.bindingId,
         reason: skill.reason,
         selectedModuleIds: skill.selectedModuleIds,
-        estimatedContextTokens: skill.estimatedContextTokens,
+        estimatedContextTokens: skill.measuredContextTokens,
       })),
     },
     diagnostics: [...new Set(operatingModel.diagnostics)],

@@ -95,35 +95,32 @@ describe('product UI craft skill pack', () => {
   });
 
   it('resolves capabilities only from the modules selected for the task', async () => {
-    const task = {
-      goal: 'Narrow the hydration boundary.',
-      scope: {
-        scope: {
-          id: 'skopos-ui',
-          title: 'Skopos UI',
-          path: 'packages/ui',
-        },
-      },
-    } as SkoposTaskContract;
-    const operatingModel = {
-      schemaVersion: 1,
-      context: [],
-      actions: [
-        { id: 'ui.build-console-app' },
-        { id: 'quality.run-proof-phase' },
-      ],
-      guards: [
-        { id: 'quality.typecheck' },
-        { id: 'quality.focused-behavior-proof' },
-      ],
-      diagnostics: [],
-    } as SkoposAgentNativeOperatingModel;
+    const task = buildSkillTestTask('Narrow the hydration boundary.');
+    task.acceptanceCriteria.push('Keep the client rendering boundary narrow.');
+    task.constraints.push('Preserve server rendering outside the interactive island.');
+    task.nonGoals.push('Do not redesign the product page.');
+    task.openDecisions.push({
+      id: 'decision.hydration-owner',
+      question: 'Which component owns hydration?',
+      blocking: false,
+    });
+    const operatingModel = buildSkillTestOperatingModel();
 
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
       task,
       taskRisk: 'standard',
-      changedPaths: ['packages/ui/src/app/styles.css'],
+      ownedPaths: ['packages/ui/src/app'],
+      changedPaths: ['packages/ui/src/app/page.tsx'],
+      affectedCapabilities: ['hydration'],
+      selectedActionIds: ['quality.run-proof-phase'],
+      applicableGuardIds: ['quality.typecheck'],
+      acceptedFailureEvidence: [
+        {
+          id: 'failure.client-boundary-expansion',
+          summary: 'Client rendering expanded beyond the interactive island.',
+        },
+      ],
       operatingModel,
     });
 
@@ -138,6 +135,150 @@ describe('product UI craft skill pack', () => {
     });
     expect(result.selectedSkills[0]?.selectedActionIds).not.toContain(
       'ui.build-console-app',
+    );
+    expect(result.selectedSkills[0]?.measuredContextTokens).toBeGreaterThan(0);
+    expect(result.envelope).toMatchObject({
+      acceptanceCriteria: ['Keep the client rendering boundary narrow.'],
+      constraints: ['Preserve server rendering outside the interactive island.'],
+      nonGoals: ['Do not redesign the product page.'],
+      openDecisions: ['Which component owns hydration?'],
+      selectedActionIds: ['quality.run-proof-phase'],
+      applicableGuardIds: ['quality.typecheck'],
+      projectLifecycle: 'established-brownfield',
+    });
+    expect(result.envelope.scopeIds).toEqual(['skopos', 'skopos-ui']);
+    expect(result.envelope.paths).toContainEqual(
+      expect.objectContaining({
+        path: 'packages/ui/src/app/page.tsx',
+        source: 'changed',
+        kinds: expect.arrayContaining(['authored-source']),
+      }),
+    );
+    expect(result.explanations).toContainEqual(
+      expect.objectContaining({
+        moduleId: 'ui-craft.react-boundaries',
+        outcome: 'selected',
+        reasonCode: 'selected',
+      }),
+    );
+  });
+
+  it('suppresses keyword overlap without relevant UI applicability', async () => {
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      task: buildSkillTestTask('Refactor the backend rendering adapter.', {
+        id: 'skopos-runtime',
+        title: 'Skopos Runtime',
+        path: 'packages/runtime',
+        kind: 'service',
+      }),
+      taskRisk: 'standard',
+      changedPaths: ['packages/runtime/src/adapters/database.ts'],
+      operatingModel: buildSkillTestOperatingModel(),
+    });
+
+    expect(result.selectedSkills).toEqual([]);
+    expect(result.explanations).toContainEqual(
+      expect.objectContaining({
+        outcome: 'suppressed',
+        reasonCode: 'applicability-missing',
+      }),
+    );
+  });
+
+  it('suppresses Skills when all changed paths are generated output', async () => {
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      task: buildSkillTestTask('Refresh the product interface rendering output.'),
+      taskRisk: 'standard',
+      changedPaths: ['.cache/generated/product-page.tsx'],
+      operatingModel: buildSkillTestOperatingModel(),
+    });
+
+    expect(result.selectedSkills).toEqual([]);
+    expect(result.envelope.paths[0]?.kinds).toContain('generated');
+  });
+
+  it('lets an explicit anti-signal block otherwise relevant intent', async () => {
+    const task = buildSkillTestTask('Update the product page hierarchy.');
+    task.nonGoals.push(
+      'No rendered product surface is in scope; backend infrastructure only.',
+    );
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      task,
+      taskRisk: 'standard',
+      changedPaths: ['packages/ui/src/app/page.tsx'],
+      operatingModel: buildSkillTestOperatingModel(),
+    });
+
+    expect(
+      result.explanations.find(
+        (entry) => entry.moduleId === 'ui-craft.hierarchy-and-brand',
+      ),
+    ).toMatchObject({
+      outcome: 'suppressed',
+      reasonCode: 'blocking-anti-signal',
+      evidenceIds: ['anti.no-rendered-product-surface'],
+    });
+  });
+
+  it('enforces one measured Skill budget across the Task', async () => {
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      task: buildSkillTestTask(
+        'Rewrite interface labels, errors, empty states, typography, spacing, and responsive recovery.',
+      ),
+      taskRisk: 'standard',
+      changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
+      operatingModel: buildSkillTestOperatingModel(),
+    });
+
+    const measuredTokens = result.selectedSkills.reduce(
+      (total, skill) => total + skill.measuredContextTokens,
+      0,
+    );
+    const moduleCount = result.selectedSkills.reduce(
+      (total, skill) => total + skill.selectedModuleIds.length,
+      0,
+    );
+    expect(result.budget).toEqual({
+      maximumPacks: 2,
+      maximumModules: 3,
+      maximumMeasuredTokens: 1800,
+    });
+    expect(measuredTokens).toBeLessThanOrEqual(result.budget.maximumMeasuredTokens);
+    expect(moduleCount).toBeLessThanOrEqual(result.budget.maximumModules);
+    expect(result.explanations).toContainEqual(
+      expect.objectContaining({
+        reasonCode: expect.stringMatching(/^(module|token)-budget-exhausted$/),
+      }),
+    );
+  });
+
+  it('suppresses an oversized module instead of truncating its guidance', async () => {
+    const result = await selectSkoposSkillsForTaskRuntime({
+      cwd: skoposRoot,
+      task: buildSkillTestTask('Rewrite the interface labels and action wording.'),
+      taskRisk: 'light',
+      changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
+      operatingModel: buildSkillTestOperatingModel(),
+    });
+
+    expect(
+      result.selectedSkills.flatMap((skill) => skill.selectedModuleIds),
+    ).not.toContain('ui-craft.human-interface-writing');
+    expect(
+      result.selectedSkills.reduce(
+        (total, skill) => total + skill.measuredContextTokens,
+        0,
+      ),
+    ).toBeLessThanOrEqual(800);
+    expect(result.explanations).toContainEqual(
+      expect.objectContaining({
+        moduleId: 'ui-craft.human-interface-writing',
+        reasonCode: 'token-budget-exhausted',
+      }),
     );
   });
 
@@ -174,3 +315,53 @@ describe('product UI craft skill pack', () => {
     await rm(temporaryRoot, { recursive: true, force: true });
   });
 });
+
+const buildSkillTestTask = (
+  goal: string,
+  scope: {
+    id: string;
+    title: string;
+    path: string;
+    kind: 'workspace' | 'product' | 'application' | 'service' | 'package' | 'domain' | 'infrastructure' | 'tool';
+  } = {
+    id: 'skopos-ui',
+    title: 'Skopos UI',
+    path: 'packages/ui',
+    kind: 'application',
+  },
+): SkoposTaskContract => ({
+  goal,
+  scope: {
+    query: scope.id,
+    matchedBy: 'id',
+    scope: {
+      ...scope,
+      aliases: [],
+      summary: scope.title,
+      confidence: 'high',
+      ancestorIds: ['skopos'],
+      codeRoots: [scope.path],
+    },
+  },
+  acceptanceCriteria: [],
+  nonGoals: [],
+  constraints: [],
+  openDecisions: [],
+  requiredProof: [],
+  missingFields: [],
+  provenance: [],
+});
+
+const buildSkillTestOperatingModel = (): SkoposAgentNativeOperatingModel => ({
+  schemaVersion: 1,
+  context: [],
+  actions: [
+    { id: 'ui.build-console-app' },
+    { id: 'quality.run-proof-phase' },
+  ],
+  guards: [
+    { id: 'quality.typecheck' },
+    { id: 'quality.focused-behavior-proof' },
+  ],
+  diagnostics: [],
+} as SkoposAgentNativeOperatingModel);

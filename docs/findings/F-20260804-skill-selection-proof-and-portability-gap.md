@@ -32,20 +32,20 @@ canonical Skill system, not a versioned migration.
 
 ## Evidence
 
-1. Task selection currently builds relevance input from the goal, Scope identity, Scope
-   path, and optional changed paths. It does not evaluate the complete acceptance,
-   constraints, non-goals, open decisions, owned paths, affected capabilities, or
-   accepted failure history.
-2. The normal agent-native caller does not pass changed paths into selection.
-3. Module-local positive and negative signals now drive deterministic ranking and
-   suppression, but the selector still lacks the complete structured eligibility
-   envelope and accepted failure-history input required by the Decision.
+1. Task selection now builds a deterministic normalized envelope from all currently
+   available Task contract, Scope ancestry, path, capability, Action, Guard, lifecycle,
+   phase, risk, and accepted failure inputs.
+2. The normal agent-native caller now resolves Task-attributed changed paths and passes
+   both owned and changed paths into selection.
+3. Module-local positive intent plus relevant applicability now establishes eligibility;
+   negative evidence, generated-only changes, and ambiguous keyword overlap suppress
+   selection with structured explanations. Broader multi-pack fixture coverage remains
+   incomplete.
 4. Module-local context, Action, and Guard resolution is now implemented. Its selection
    behavior still needs deterministic positive, negative, ambiguous, and overlap
    fixtures before this correction is certified.
-5. Guidance cost is now loader-measured rather than author-estimated, but limits still
-   apply per pack. Skill context is appended to the compact brief without one task-wide
-   pack, module, or measured-token ceiling.
+5. Guidance cost is loader-measured and one risk-based Task ceiling now limits packs,
+   modules, and measured tokens across all accepted packs without truncating modules.
 6. Selected modules now receive only paths bound to their declared context roles.
    Project adaptation notes still do not become bounded module-specific judgment.
 7. Catalog resolution deduplicates by `packId`, while acceptance pins a version label
@@ -99,6 +99,11 @@ canonical Skill system, not a versioned migration.
 
 ## Changelog
 
+- `2026-08-04`: Implemented the Task signal envelope, normal changed-path propagation,
+  structured positive/applicability eligibility, anti-signal and generated-output
+  suppression, module-local rubric/failure projection, structured explanations, and
+  light/standard/high-impact Task-wide measured budgets. Exact caching, digest-bound
+  acceptance, complete fixtures, behavioral evaluation, and external proof remain open.
 - `2026-08-04`: Recorded the first model/loader hard cut. Strict v1 manifests,
   loader-measured module cost, module-local signals and capability roles, obsolete
   field rejection, and the initial `0.1.0` Product UI Craft identity are implemented.

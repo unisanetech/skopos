@@ -658,11 +658,11 @@ into pack modules.
 
 ### Phase 2: complete Task-aware selection
 
-1. build the complete Task signal envelope
-2. implement structured eligibility and anti-signal suppression
-3. add module-local role and rubric ownership
-4. enforce Task-wide measured budgets
-5. add structured explanations and exact caching
+1. build the complete Task signal envelope — complete for currently available signals
+2. implement structured eligibility and anti-signal suppression — complete
+3. add module-local role and rubric ownership — complete
+4. enforce Task-wide measured budgets — complete
+5. add structured explanations and exact caching — explanations complete; exact caching pending
 
 ### Phase 3: build economical evaluation
 
