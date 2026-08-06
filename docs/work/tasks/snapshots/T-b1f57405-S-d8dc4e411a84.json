@@ -1,0 +1,36 @@
+{
+  "snapshotId": "S-d8dc4e411a84",
+  "taskId": "T-b1f57405",
+  "sessionId": "release-security-r1-20260807",
+  "actorId": "codex-release",
+  "baseRevision": "013989cca26efee182e1a3eae26f144af118f220",
+  "paths": [
+    {
+      "path": ".github/workflows/release-security.yml",
+      "digest": "2d82688678e4ab875a0753bd69fc0bac3aec7ad926d1d150d1b832f250c2ca2d"
+    },
+    {
+      "path": "docs/operations/release-security.md",
+      "digest": "64943e6eccc22c0dbdd0ce42f9fd4d2d98a526a21d11dd222e14ecefc1f1c8e0"
+    },
+    {
+      "path": "package.json",
+      "digest": "ac09f6579ba2231dc5a6292c60cf8796d1f87120606bfc6dc45d8c08f0c4b696"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "94ffb50e75d566f433e4a5b50c4ecc120ae8086be55fb503730a2d5e185bb8c9"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "459b6120ba60c01a1d39fdef0c7afdf487e82e82130d34dd68bbd3aacead5953"
+    },
+    {
+      "path": "scripts/release",
+      "digest": "c354a885eb2950a10b48ef9b8545a5df94f9491fd20bbf10cbf53c8181b6d6fe"
+    }
+  ],
+  "digest": "d8dc4e411a8442b29e41f992b2085f844dd1658edbf0c8515951ac01043f07dc",
+  "createdAt": "2026-08-06T22:16:43.775Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-b1f57405-S-d8dc4e411a84.json"
+}

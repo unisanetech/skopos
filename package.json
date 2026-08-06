@@ -13,6 +13,7 @@
     "typecheck": "pnpm --filter \"@skopos/*\" check-types",
     "release:check": "pnpm --filter @skopos/cli exec -- vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts",
     "release:smoke": "pnpm build && pnpm --filter @skopos/cli release:smoke",
+    "release:security:validate": "node scripts/release/validate-release-security.mjs",
     "proof": "pnpm --filter @skopos/cli proof",
     "proof:external-continuation": "pnpm --filter @skopos/cli proof:external-continuation --",
     "proof:product-ui-craft-efficacy": "pnpm --filter @skopos/cli proof:product-ui-craft-efficacy --",

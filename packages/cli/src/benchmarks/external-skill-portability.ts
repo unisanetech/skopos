@@ -324,7 +324,6 @@ const proveMinimalProject = async ({
       `${JSON.stringify({
         name: 'skopos-skill-portability-minimal',
         private: true,
-        pnpm: { overrides: { yaml: '2.8.3' } },
       }, null, 2)}\n`,
       'utf8',
     ),
@@ -803,7 +802,13 @@ const startTask = (
     '--accept', task.acceptance,
     '--own', task.ownedPath,
     '--actor', actor,
-    ...(sessionId ? ['--session-id', sessionId, '--host', 'portability-harness'] : []),
+    ...(sessionId
+      ? [
+          '--session-id', sessionId,
+          '--host', 'portability-harness',
+          '--lease-seconds', '600',
+        ]
+      : []),
     '--json',
   ]);
   return started.task;
@@ -826,7 +831,6 @@ const installPackedCli = async ({
       `${JSON.stringify({
         name: 'skopos-portability-runner',
         private: true,
-        pnpm: { overrides: { yaml: '2.8.3' } },
       }, null, 2)}\n`,
       'utf8',
     );
