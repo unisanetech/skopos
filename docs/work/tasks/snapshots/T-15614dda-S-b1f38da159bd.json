@@ -1,0 +1,32 @@
+{
+  "snapshotId": "S-b1f38da159bd",
+  "taskId": "T-15614dda",
+  "sessionId": "release-prep-20260807",
+  "actorId": "codex-release",
+  "baseRevision": "54edabe63cf1dcda120003a017b8663ed79e2384",
+  "paths": [
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "8aad5a95a9986a93f226e34b6417fd9def44e6cbffdf43e341f3b0f042f8b0e7"
+    },
+    {
+      "path": "package.json",
+      "digest": "3b479ffbd8d7a4169369cfe2e048f99507471608db25f16e4721091d43b1ccee"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "37f1e3bb2fe52c816ec23c45e175780c25495d3078a507f13655617b6b92b652"
+    },
+    {
+      "path": "packages/ui/package.json",
+      "digest": "46b7f2f42a263630fe417402a025a8108a50ec5ab4b3a8add12e89fc98c11072"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "e0b1c23efb9757c8a3522db6ced504d60bbe0b73aa218c0f59029e903b9ac329"
+    }
+  ],
+  "digest": "b1f38da159bdb904d8bdac58fa7ff834207b072a2999b1d2ef8613034510baad",
+  "createdAt": "2026-08-06T21:30:55.550Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-15614dda-S-b1f38da159bd.json"
+}
