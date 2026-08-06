@@ -1,210 +1,318 @@
 # Skopos
 
-**The repo-native operating memory layer for coding agents.**
+**Project memory, task continuity, and trustworthy proof for coding agents.**
 
-Skopos helps Codex, Claude Code, Cursor, and other coding agents understand, continue,
-change, verify, and maintain a software project without losing intent or drifting from
-project truth.
+Skopos helps coding agents remember how your project works, continue unfinished work
+safely, coordinate changes, and prove when work is actually complete.
 
-It works with the coding agent rather than replacing it:
+Its knowledge lives with the repository. A new Codex, Claude Code, Cursor, or other
+agent session can recover the project's rules, current work, decisions, and validation
+commands without rediscovering everything from scratch.
 
-- the agent reasons, edits, communicates, and chooses tools
-- Skopos supplies authoritative project Memory, scoped context, Task continuity,
-  project Actions, deterministic Guards, Evidence, and explainable Readiness
+Skopos does not replace the coding agent. The agent still reasons, writes code, chooses
+tools, and talks with the developer. Skopos gives that agent a durable operating layer
+for the parts that should survive beyond one chat.
 
-Skopos is project-agnostic. Unisane inspired the original problem, but Unisane-specific
-architecture, commands, and gates do not belong in Skopos core.
+> **Current status:** Skopos is pre-release and is not yet published for public use.
+> The first-release product contract is implemented and the current committed candidate
+> passes the automated clean-clone, packed-install, and release-proof baseline. Broader
+> product convergence and Product UI Craft efficacy work are still open. See
+> [Current status](#current-status) for details.
 
-## Pre-Release Status
+## The Problem Skopos Solves
 
-Skopos has not launched. This repository implements the first-release contract directly:
+A coding-agent conversation is temporary. A real software project is not.
 
-- no prototype compatibility layer or old-state migration
-- no overlapping work or closure authorities
-- no public release until clean-clone, cross-project, package-install, and Unisane
-  adoption proof pass
+Without durable project context, each new session may need to rediscover:
 
-Start with the [accepted product decision](docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md)
-and [canonical convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md).
+- how the system is designed
+- which rules and conventions matter
+- what someone is already changing
+- why earlier decisions were made
+- which commands prove a change is safe
+- what still blocks the work from being called complete
 
-## Why Developers Use Skopos
+That repeated discovery costs time and can lead to conflicting edits, forgotten intent,
+duplicated work, and confident completion claims without reliable evidence.
 
-A coding-agent chat is temporary. A real project is not.
+Skopos stores the important parts as project truth, then gives each agent only the
+context and work state it needs.
 
-Without a durable operating layer, every new Session must rediscover architecture,
-ownership, conventions, current intent, validation, and unfinished work. Long or
-parallel Sessions also lose context, duplicate work, overwrite one another, and claim
-completion without stable proof.
+## A Simple Example
 
-Skopos makes those project-level concerns durable and queryable:
+Imagine an agent is asked to add retry handling to an API client.
 
-1. canonical, scoped Project Memory
-2. agent-guided adoption and documentation restructuring
-3. one Task model for executable work
-4. durable Plans for multi-Task direction
-5. a derived Work Queue
-6. project-defined Actions selected by deterministic Guards
-7. acceptance-linked Evidence and Readiness
-8. safe continuation, handoff, and same-working-directory coordination
+Without Skopos, the agent may search the whole repository, guess which package owns the
+client, overlook an earlier retry decision, run a broad test suite, and leave the next
+session to reconstruct what happened.
 
-The local broker coordinates Session leases, Task reservations, resource claims,
-mutation records, contamination audits, audited takeover, and immutable Task
-snapshots. It reports `cooperative`: direct filesystem and Git mutations can still
-bypass Skopos, so preventive safety is not claimed.
+With Skopos, the workflow becomes explicit:
 
-## Canonical Project Shape
+1. The agent loads the relevant architecture, standards, and current work.
+2. It starts a Task with a goal, acceptance criterion, and owned paths.
+3. Skopos warns other cooperating sessions about overlapping work.
+4. Project-defined Actions run the correct checks for the affected area.
+5. Evidence is attached to the Task's acceptance criteria.
+6. Skopos reports what passed, what remains, and whether the Task is ready to close.
+7. A later session can continue from the recorded Task instead of starting over.
 
-Durable human and project truth stays in normal tracked files:
+The coding agent still implements the retry logic. Skopos keeps the work connected to
+project intent and proof.
 
-```txt
-project/
-├── README.md
-├── AGENTS.md
-├── skopos.config.*
-├── tools/skopos/
-│   ├── scopes.yaml
-│   ├── profiles/
-│   ├── actions/
-│   ├── guards/
-│   ├── policies.yaml
-│   ├── skills/
-│   └── extensions/
-└── docs/
-    ├── 00-start-here.md
-    ├── overview.md
-    ├── architecture/
-    ├── standards/
-    ├── domains/
-    ├── guides/
-    ├── operations/
-    ├── decisions/
-    ├── findings/
-    ├── patterns/
-    ├── work/
-    │   ├── plans/
-    │   ├── tasks/
-    │   └── archive/
-    ├── reference/
-    │   └── generated/
-    ├── archive/
-    └── scopes/
-        └── <stable-scope-id>/
+## What Skopos Provides
+
+### Project knowledge that survives the chat
+
+Architecture, standards, domain knowledge, decisions, findings, patterns, and
+operational guidance remain normal, reviewable files in the repository. Skopos indexes
+and retrieves them as scoped Project Memory.
+
+### Work that can be continued safely
+
+A Task records the goal, acceptance criteria, owned paths, decisions, progress, and
+evidence. Plans hold longer-running direction, while the Work Queue derives the next
+useful action from actual project state.
+
+### Checks that match the change
+
+Projects register their existing build, test, lint, generation, and verification
+commands as Actions. Deterministic Guards decide which evidence is required for the
+paths and Scopes a Task changes.
+
+### Honest completion
+
+Evidence is linked to acceptance criteria and the exact Task snapshot it proves.
+Readiness explains what has passed and what is still blocking closure, so “done” is a
+verifiable state rather than an agent's impression.
+
+### Cooperative multi-session coordination
+
+Skopos tracks sessions, Task reservations, owned-path claims, mutations, handoffs, and
+takeovers in the local workspace. It can detect and explain likely collisions between
+cooperating agents.
+
+This coordination is intentionally reported as **cooperative**. Skopos does not prevent
+someone from changing files or Git state outside its workflow, and it does not claim to
+be a filesystem sandbox.
+
+### Guided adoption for real projects
+
+For an existing project, Skopos first discovers code, documentation, instructions,
+commands, CI, and conventions without rewriting them. It separates facts from
+inferences, highlights contradictions and missing knowledge, and prepares a reviewable
+documentation proposal. Human-authored docs change only after approval.
+
+For a new project, it creates the minimum useful memory router and Scope registry, then
+grows the structure only when the project develops real knowledge that needs a home.
+
+## How It Works
+
+The same basic lifecycle is used across supported coding-agent hosts:
+
+```text
+Understand the project
+  → start or resume a Task
+  → load relevant Memory and Scope context
+  → claim and perform the work
+  → run the required Actions
+  → capture Evidence
+  → verify Readiness
+  → finish or hand off
 ```
 
-Only `docs/00-start-here.md` and `docs/overview.md` are universal. The other families
-exist only when they own real project truth. `patterns/` contains both
-`preferred-pattern` and `failure-pattern` entries; there is no separate
-`failure-patterns/` tree.
+Behind that lifecycle, Skopos has five responsibilities:
 
-The tree is a standard, not empty ceremony. Nested Scopes provide the same relative
-roles for monorepos, platforms, packages, services, or other project-specific units.
-Their default Memory root is `docs/scopes/<stable-scope-id>/`; a project may explicitly
-declare a colocated root in `tools/skopos/scopes.yaml`.
+1. **Remember** — keep durable project knowledge in tracked files.
+2. **Orient** — retrieve the smallest useful context for the current session.
+3. **Coordinate** — connect a Task, its owned paths, and cooperating sessions.
+4. **Prove** — run project-defined checks and bind their evidence to the work.
+5. **Continue** — preserve decisions and progress for closure, handoff, or recovery.
 
-`.skopos/**` is ignored, local, generated, and rebuildable. It contains indexes,
-caches, Session state, coordination leases, Evidence envelopes, and generated UI
-assets—not the only copy of durable project truth. Human-facing generated reference may be tracked under
-`docs/reference/generated/**`; runtime UI and machine indexes stay under `.skopos/**`.
+## Core Terms in Plain Language
 
-## Existing And New Projects
+| Term | What it means |
+| --- | --- |
+| **Project Memory** | Durable knowledge about how the project works and why. |
+| **Scope** | A meaningful part of the project, such as an app, service, or package. |
+| **Task** | One executable unit of work with a goal, acceptance criteria, and proof. |
+| **Plan** | Longer-running direction that may contain several Tasks. |
+| **Work Queue** | The next useful work derived from current Tasks, decisions, and blockers. |
+| **Action** | A project command such as a test, build, generator, or audit. |
+| **Guard** | A deterministic rule that decides which checks a change requires. |
+| **Evidence** | A recorded result or observation that supports an acceptance criterion. |
+| **Readiness** | An explanation of whether work can close and what still blocks it. |
+| **Session** | One agent's active working context and coordination identity. |
 
-For an existing project, Skopos first discovers the real code, docs, instructions,
-commands, CI, and local conventions without changing them. A coding agent then analyzes
-facts, inferences, contradictions, and missing knowledge. Skopos produces a reviewable
-`keep`/`move`/`merge`/`split`/`rewrite`/`archive`/`delete` restructuring proposal and
-changes human-authored docs only after approval. Actual existing-project init creates
-the assessment artifacts automatically but does not invent `docs/00-start-here.md` or
-`tools/skopos/scopes.yaml` before that review.
+These terms form one operating model. Skopos is the project's Memory, Task, evidence,
+and closure authority; project-specific integrations contribute context, Actions, and
+Guards instead of creating a second workflow.
 
-Mapping is an intake technique, not a permanent adopted state. Full adoption converges
-the project on the Memory standard. A developer may stop at assessment-only mode, but
-Skopos must report the resulting Readiness honestly.
+## Try This Repository
 
-For a new project, Skopos scaffolds the minimum useful root Memory router and declared
-Scope registry, reports adoption-aware Readiness, and expands the tree only as real
-Scopes and project truth emerge.
+Skopos is currently used directly from its source workspace.
 
-## Target Agent Lifecycle
+### Requirements
 
-Every supported coding-agent host projects the same lifecycle:
+- Node.js 22.5 or newer
+- pnpm 10.26.0
 
-```txt
-Session start
-  → Task start or resume
-  → targeted Memory and Scope context
-  → claimed edits and Actions
-  → checkpoint and handoff
-  → snapshot verification
-  → Readiness and closure
-```
-
-The primary CLI vocabulary is:
-
-```txt
-skopos adopt
-skopos knowledge
-skopos session context
-skopos start
-skopos task show
-skopos work next
-skopos decide
-skopos actions list
-skopos actions run
-skopos evidence record
-skopos verify
-skopos readiness
-skopos coordination status
-```
-
-The current coordination core is available through:
-
-```txt
-skopos coordination session open
-skopos coordination session heartbeat
-skopos coordination task reserve
-skopos coordination claim add
-skopos coordination status
-```
-
-Supported host adapters pass stable Claude Code or Codex Session identity into:
-
-```txt
-skopos session context . --actor <actor> --host <host> --session-id <id>
-skopos start "<goal>" . --actor <actor> --host <host> --session-id <id> --own <path>
-```
-
-These lifecycle commands open or renew the Session, reserve one writing Task, and
-publish declared owned-path claims. They report cooperative enforcement and do not
-claim that direct filesystem or Git writes are prevented.
-
-Task start defaults to the bounded `task-closure` proof subject. Use the explicit
-integration form only when the requested outcome is a named integration or release
-baseline:
-
-```txt
-skopos start "<integration goal>" . --proof-subject project-integration --own <integration-path> --actor <actor>
-```
-
-`project-integration` requires an owned path and creates a detailed high-impact Task.
-It does not turn unrelated dirty-worktree changes into proof. Run
-`skopos start --help` for the exact proof-subject contract.
-
-## Contributing
-
-Install dependencies:
+### Set up the workspace
 
 ```bash
 pnpm install
+pnpm build
+pnpm skopos:init
+pnpm skopos:session
 ```
 
-The CLI currently requires Node.js 22.5 or newer for the local SQLite coordination
-broker.
+The build step comes before initialization because this repository runs the local
+source CLI against its internal workspace packages. The final command prints compact
+session context: current work, material decisions, project health, and the recommended
+next action.
 
-Discover current repository commands from `package.json`. Run focused proof for the
-surface being changed; release proof remains blocked until the convergence Plan is
-complete.
+To explore the visual interface during development:
 
-Repository orientation begins at [docs/00-start-here.md](docs/00-start-here.md).
+```bash
+pnpm skopos:ui:dev
+```
+
+Skopos has not been publicly released, so this README intentionally does not offer a
+registry installation command yet.
+
+## A Typical Agent Workflow
+
+In an installed project, agents use `skopos` directly. In this self-hosted repository,
+the package scripts wrap the local source CLI.
+
+```bash
+# Recover project and work context
+skopos session context . --actor <id> --json
+
+# Start a bounded piece of work
+skopos start "<goal>" . \
+  --accept "<criterion>" \
+  --own <path> \
+  --actor <id>
+
+# Ask for the next useful action
+skopos work next . --actor <id> --json
+
+# Diagnose whether the Task has enough evidence to close
+skopos verify <task-id> . --phase closure --json
+
+# Close only after the required evidence passes
+skopos finish <task-id> . --actor <id> --json
+```
+
+Use `skopos --help` for the complete CLI and `skopos <command> --help` for a command's
+exact contract. Common supporting commands include `skopos knowledge`, `skopos adopt`,
+`skopos task show`, `skopos decide`, `skopos actions`, `skopos evidence`,
+`skopos readiness`, and `skopos coordination`.
+
+An explicit integration or release baseline uses a stricter proof subject:
+
+```bash
+skopos start "<integration goal>" . \
+  --proof-subject project-integration \
+  --own <integration-path> \
+  --actor <id>
+```
+
+That form is for a named integration outcome. It does not absorb unrelated dirty
+working-tree changes into the proof boundary.
+
+## Where Project Truth Lives
+
+Human-authored truth stays in familiar tracked files:
+
+```text
+project/
+├── README.md                    # human introduction
+├── AGENTS.md                    # coding-agent instructions
+├── skopos.config.*              # Skopos configuration
+├── tools/skopos/                # Scopes, Actions, Guards, policy, and extensions
+└── docs/
+    ├── 00-start-here.md         # documentation router
+    ├── overview.md
+    ├── architecture/
+    ├── standards/
+    ├── decisions/
+    ├── findings/
+    ├── patterns/
+    ├── work/                    # Plans, active Tasks, and archive
+    └── scopes/                  # knowledge owned by declared Scopes
+```
+
+Only `docs/00-start-here.md` and `docs/overview.md` are universal. Other directories
+exist when they own real project knowledge; Skopos does not require empty ceremony.
+Large repositories can declare nested Scopes for apps, services, packages, platforms,
+or other stable units.
+
+The local `.skopos/**` directory contains rebuildable indexes, caches, session state,
+coordination leases, evidence envelopes, and generated UI assets. It is ignored by Git
+and must never be the only copy of durable project truth.
+
+## What Skopos Is Not
+
+Skopos is not:
+
+- a replacement for a coding agent or human judgment
+- a second source-control system
+- a substitute for the project's tests or CI
+- a cloud-only knowledge database
+- a guarantee that direct, uncoordinated filesystem changes cannot happen
+- a home for one adopter's private architecture or business-specific commands
+
+Skopos core stays project-agnostic. A project keeps its own domain rules and commands;
+Skopos provides the generic model that retrieves, coordinates, selects, and proves
+them.
+
+## Current Status
+
+Skopos is **pre-release**. It has not launched or been published as a public package.
+
+The current source implements the first-release model for Project Memory, Scopes,
+Plans, Tasks, Sessions, Work Queue, Actions, Guards, Evidence, Readiness, coordination,
+adoption, Skills, handoff, CLI, MCP, and UI. The current committed release candidate
+also passes the automated clean-clone reconstruction, locked install, build and init,
+typecheck, test, release proof, packed-install smoke, responsive UI, and accessibility
+baseline.
+
+That proof is an important baseline, not a launch announcement. Release remains blocked
+while the broader [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
+and the separate [Product UI Craft efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md)
+remain open. Project-level adoption outcomes must also satisfy the Plan's final gate.
+
+There is no prototype compatibility promise or old-state migration contract. Until the
+release gate is fully accepted, APIs, commands, and project structure may still change.
+
+## Learn More
+
+- [Start here](docs/00-start-here.md) — the human documentation router
+- [Product overview](docs/overview.md) — the canonical product boundary and model
+- [Architecture](docs/architecture/00-architecture.md) — packages, runtime, and data flow
+- [Agent-native operating model](docs/architecture/agent-native-operating-model.md) — how agents and Skopos divide responsibilities
+- [Developer workflows](docs/guides/developer-workflows.md) — practical repository commands
+- [Accepted product decision](docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md) — why this model exists
+
+## Contributing
+
+Start with the setup steps in [Try This Repository](#try-this-repository), then read
+[docs/00-start-here.md](docs/00-start-here.md) before making broad changes.
+
+Use the narrowest reliable check for the surface you change. The common repository
+validation commands are:
+
+```bash
+pnpm typecheck
+pnpm test
+pnpm proof
+pnpm release:check
+```
+
+These commands are a capability catalog, not a requirement to run every check for every
+edit. Skopos Tasks and Guards select proportional evidence from the affected paths and
+Scopes.
 
 ## License
 
