@@ -35,6 +35,12 @@ assert.match(workflow, /551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b
 assert.match(workflow, /format: cyclonedx-json/u);
 assert.match(workflow, /scan-installed-licenses\.mjs \.release\/install \.release\/licenses\.json/u);
 assert.match(workflow, /pnpm audit --prod --audit-level high/u);
+assert.match(workflow, /name: Build workspace packages\n\s+run: pnpm build/u);
+assert.match(
+  workflow,
+  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/skopos-cli-0\.1\.0\.tgz" --omit=dev --ignore-scripts --package-lock=false/u,
+);
+assert.doesNotMatch(workflow, /pnpm --dir \.release\/install add/u);
 
 for (const os of ['ubuntu-24.04', 'macos-15', 'windows-2025']) {
   assert.match(workflow, new RegExp(`os: ${os.replace('.', '\\.')}`));
