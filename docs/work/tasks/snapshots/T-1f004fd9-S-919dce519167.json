@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-919dce519167",
+  "taskId": "T-1f004fd9",
+  "sessionId": "codex-stabilization-20260806",
+  "actorId": "codex-stabilization",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": ".cursor/rules/project.mdc",
+      "digest": "119fb91a8331082239ca93a8891e070f3c45dcb4e8bcef20103c4bd56e278bd2"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "digest": "34d9ec0836bcea2b6321db421e3c44a8917842cec97ec8ae88a3361ed5513895"
+    },
+    {
+      "path": "AGENTS.md",
+      "digest": "32f19625ee885cc954fc191e2c7ef8df23184b7c2305473d84f74558a2ebb44f"
+    },
+    {
+      "path": "CLAUDE.md",
+      "digest": "b5c0d115a6cba13e14f44d7c08211764e214638385308c8e2e3a35247ed88c48"
+    },
+    {
+      "path": "README.md",
+      "digest": "c3b4e91defa1e33c93bb80bc3f7efdb7f3d97988106f891fbbdc64f2e8e426c0"
+    },
+    {
+      "path": "docs",
+      "digest": "0b979edc312acca75ed39d32a12fd609ac11fe2986513e80145870bb9ffb72fe"
+    },
+    {
+      "path": "package.json",
+      "digest": "3b479ffbd8d7a4169369cfe2e048f99507471608db25f16e4721091d43b1ccee"
+    },
+    {
+      "path": "packages",
+      "digest": "479b6b7c7179ffd623bad5a93e70e49e962a2c06fde4118d2d246f9877f03fc0"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "17490681e1fbe9974f42ddb62192b1e45b9b696f9c3e2cf8dd1f1bd6d74d6dde"
+    },
+    {
+      "path": "skill-packs",
+      "digest": "30f592f80b7c3b9d22c6d7416b046d5d1786efc325df9d0f4f7aa619a6e7cd23"
+    },
+    {
+      "path": "tools",
+      "digest": "878c2ca19029bd7292594d647543d48fc3d09b6eb233fc3758505fc117e783b7"
+    }
+  ],
+  "digest": "919dce51916735314c56541676f57d246b9da58608df9028e2b5113fdb4114e3",
+  "createdAt": "2026-08-06T14:08:38.516Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-1f004fd9-S-919dce519167.json"
+}
