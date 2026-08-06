@@ -27,13 +27,13 @@ export function SidebarList<T>({
 }): React.JSX.Element {
   return items.length > 0 ? (
     <div>
-      <ul className="overflow-hidden border-y border-[var(--line)]">
+      <ul className="overflow-hidden border-y border-outline-weak">
         {items.map((item, index) => (
           <li
             key={getKey(item)}
             className={cn(
               'px-3 py-3',
-              index > 0 ? 'border-t border-[var(--line)]' : undefined,
+              index > 0 ? 'border-t border-outline-weak' : undefined,
             )}
           >
             {renderItem(item)}
@@ -62,21 +62,21 @@ export function ExternalLinkList({
 }): React.JSX.Element {
   return links.length > 0 ? (
     <div>
-      <ul className="border-y border-[var(--line)]">
+      <ul className="border-y border-outline-weak">
         {links.map((link) => (
-          <li key={link.id} className="border-t border-[var(--line)] first:border-t-0">
+          <li key={link.id} className="border-t border-outline-weak first:border-t-0">
             <a
               href={link.href}
               target="_blank"
               rel="noreferrer"
-              className="block py-3.5 transition-colors hover:bg-[color:rgba(255,252,246,0.5)]"
+              className="block py-3.5 transition-colors hover:bg-state-hover"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <p className="skopos-caption font-medium tracking-[-0.01em]">{link.title}</p>
+                <p className="text-body-small text-on-surface font-medium">{link.title}</p>
                 <StatusPill value={link.kind} tone="neutral" />
               </div>
               {showPaths ? (
-                <p className="skopos-mono-caption mt-1.5 break-all">{link.displayPath}</p>
+                <p className="font-mono text-body-small text-on-surface-variant mt-1.5 break-all">{link.displayPath}</p>
               ) : null}
             </a>
           </li>
@@ -101,17 +101,17 @@ export function SimplePlanList({
 }): React.JSX.Element {
   return plans.length > 0 ? (
     <div>
-      <ul className="border-y border-[var(--line)]">
+      <ul className="border-y border-outline-weak">
         {plans.map((planView, index) => (
           <li
             key={planView.plan.id}
             className={cn(
               'py-3.5',
-              index > 0 ? 'border-t border-[var(--line)]' : undefined,
+              index > 0 ? 'border-t border-outline-weak' : undefined,
             )}
           >
-            <p className="skopos-caption font-medium tracking-[-0.01em]">{planView.plan.title}</p>
-            <p className="skopos-helper-copy mt-1">{planView.plan.summary}</p>
+            <p className="text-body-small text-on-surface font-medium">{planView.plan.title}</p>
+            <p className="text-body-medium text-on-surface-variant mt-1">{planView.plan.summary}</p>
           </li>
         ))}
       </ul>
@@ -139,7 +139,7 @@ function InspectorPreviewNote({
   }
 
   return (
-    <p className="skopos-caption mt-2 px-0.5 text-[var(--muted)]">
+    <p className="text-body-small text-on-surface mt-2 px-0.5 text-on-surface-variant">
       Showing {visibleCount} of {totalCount} {noun}.
     </p>
   );

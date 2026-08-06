@@ -1,0 +1,11 @@
+{
+  "snapshotId": "S-e3b0c44298fc",
+  "taskId": "T-c88702f8",
+  "sessionId": "ui-craft-fresh-canary-closure",
+  "actorId": "codex-ui-craft-fresh-canary",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [],
+  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "createdAt": "2026-08-06T09:43:51.623Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c88702f8-S-e3b0c44298fc.json"
+}

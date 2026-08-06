@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-craft-budget",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Keep focused interface-writing guidance and its project adaptation inside the standard Task token budget.",
+  "fixtureId": "ui-product-craft-budget",
+  "packId": "ui.product-craft",
+  "category": "budget",
+  "task": {
+    "goal": "Rewrite interface labels, action wording, errors, empty-state guidance, confirmations, and recovery language.",
+    "scope": {
+      "id": "fixture-product-ui",
+      "title": "Fixture Product UI",
+      "path": "src/ui",
+      "kind": "application",
+      "ancestorIds": ["fixture-product"],
+      "aliases": ["product-ui", "frontend", "content-design"],
+      "codeRoots": ["src/ui"]
+    },
+    "acceptanceCriteria": ["Every user-facing string helps someone choose, act, understand, or recover."],
+    "constraints": [],
+    "nonGoals": [],
+    "openDecisions": [],
+    "risk": "standard",
+    "phase": "iteration",
+    "ownedPaths": ["src/ui/settings.tsx"],
+    "changedPaths": ["src/ui/settings.tsx"],
+    "affectedCapabilities": ["interface-copy", "user-feedback", "recovery"],
+    "selectedActionIds": ["ui.build-console-app"],
+    "applicableGuardIds": ["quality.typecheck"],
+    "acceptedFailureEvidence": [],
+    "projectLifecycle": "early-product"
+  },
+  "expectation": {
+    "selectedModuleIds": ["ui-craft.human-interface-writing"],
+    "suppressedModuleReasonCodes": {},
+    "selectedActionIds": ["ui.capture-responsive-proof"],
+    "selectedGuardIds": ["ui.accessibility-proof"],
+    "maximumSelectedModules": 3,
+    "maximumMeasuredTokens": 1800
+  }
+}

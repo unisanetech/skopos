@@ -11,7 +11,7 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-07-28
+lastUpdated: 2026-08-06
 relatedDocs:
   - domains/product/vision.md
   - domains/product/positioning.md
@@ -27,6 +27,9 @@ Skopos turns a repository into a durable, agent-ready working environment.
 
 ## Changelog
 
+- `2026-08-06`: Reconciled the current-status statement with the implemented canonical
+  CLI and runtime. Skopos remains pre-release while the active convergence Plan,
+  Skill-efficacy Finding, and release proof are open.
 - `2026-07-28`: Added first-class preferred and failure Patterns to the Memory model
   and clarified that relevant Plans, Tasks, Findings, Decisions, and other roles reach
   agent context through Scope-aware retrieval.
@@ -162,6 +165,9 @@ coordinates, and proves them.
 
 ## Current Status
 
-The accepted decision and convergence Plan describe target truth. The current source
-still implements prototype concepts. Each implementation phase must update current
-architecture docs only after the corresponding code lands.
+The current source implements the canonical Project Memory, Scope, Plan, Task, Session,
+Work Queue, Action, Guard, Evidence, Readiness, coordination, adoption, Skill, handoff,
+CLI, MCP, and UI model without a prototype compatibility surface. Skopos remains
+pre-release while the convergence Plan is active, Product UI Craft efficacy still has
+an open promotion Finding, and the complete clean-clone and packed-install release gate
+has not been certified from one committed candidate.

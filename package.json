@@ -14,6 +14,8 @@
     "release:check": "pnpm --filter @skopos/cli exec -- vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts",
     "release:smoke": "pnpm build && pnpm --filter @skopos/cli release:smoke",
     "proof": "pnpm --filter @skopos/cli proof",
+    "proof:external-continuation": "pnpm --filter @skopos/cli proof:external-continuation --",
+    "proof:product-ui-craft-efficacy": "pnpm --filter @skopos/cli proof:product-ui-craft-efficacy --",
     "benchmark:transport": "pnpm --filter @skopos/cli benchmark:transport",
     "benchmark:external-workspace": "pnpm --filter @skopos/cli benchmark:external-workspace --",
     "instructions:sync": "pnpm exec node --import tsx packages/cli/src/cli.ts instructions sync . --json",
@@ -23,6 +25,11 @@
     "skopos:ui": "pnpm exec node --import tsx packages/cli/src/cli.ts ui render . --json",
     "skopos:ui:app": "pnpm exec node --import tsx packages/cli/src/cli.ts ui build .",
     "skopos:ui:dev": "pnpm exec node --import tsx packages/cli/src/cli.ts ui dev .",
-    "skopos:ui:serve": "pnpm exec node --import tsx packages/cli/src/cli.ts ui serve ."
+    "skopos:ui:serve": "pnpm exec node --import tsx packages/cli/src/cli.ts ui serve .",
+    "skopos:ui:proof": "pnpm --filter @skopos/cli ui:proof ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "tsx": "^4.20.3"
   }
 }

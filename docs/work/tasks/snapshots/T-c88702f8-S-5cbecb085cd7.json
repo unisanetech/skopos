@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-5cbecb085cd7",
+  "taskId": "T-c88702f8",
+  "sessionId": "ui-craft-fresh-canary-closure",
+  "actorId": "codex-ui-craft-fresh-canary",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "579469608cd3a8faaae21f23494e69ffd68bcc241a941624c04df20159c80e2e"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "f087ea71b19e56d86ed6311390a0b1b467055b894e51b91bb99d3d5f01ae8570"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "cb12d8508b26c24b6e03ea655d31a28a046eae2edaf3c1fe0c83e02b90ef5398"
+    }
+  ],
+  "digest": "5cbecb085cd7a52ef0215305c6bfd65549ee05858f4a890d421de1ca4a7b3fdc",
+  "createdAt": "2026-08-06T09:44:20.032Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c88702f8-S-5cbecb085cd7.json"
+}

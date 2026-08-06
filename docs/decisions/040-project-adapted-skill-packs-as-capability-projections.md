@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-07-25
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-06
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -26,6 +26,231 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-06`: The isolated Unisane ecommerce canary exposed a project-adaptation
+  defect: the worker imported six library components but still invented navigation,
+  drawer, segmented-control, filter, and progress contracts and introduced 58 distinct
+  hardcoded colors. Product UI Craft's prose already preferred reuse, but its component
+  module selected only for reusable API evolution, bound project authorities were not
+  projected as explicit Task context, and missing recommended conformance capabilities
+  were silent. Selection now covers ordinary rendered control composition, projects
+  inject their exact component/token sources and mapped Actions/Guards, and missing
+  `design-system-inventory` or `design-system-conformance` roles appear as unverified
+  adaptation gaps. The contract stays library-neutral and permits a truthful project
+  with no shared library. Eight deterministic fixtures and 16 focused tests pass; the
+  exact accepted combined identity is
+  `sha256:e52c330014f4d3db144c5edc1086f8a0b6da8cd6e3101f44f54c8aafba2ac66a`.
+  This corrects guidance delivery and proof truth; it does not retroactively improve the
+  canary or certify efficacy.
+
+- `2026-08-06`: Reran the revised exact Product UI Craft source as a blank packed
+  external ecommerce canary instead of reusing the historical Unisane dashboard.
+  The external Task selected exactly responsive/state, hierarchy/brand, and visual
+  composition guidance at 1,790 estimated tokens and all 7 fixtures passed. The first
+  worker pass built but independent proof found 65 serious/critical viewport-node
+  findings, intermediate and mobile local overflow, and incomplete background
+  inertness. A source-only proof-correction loop reached three passing viewports with
+  zero global or local horizontal overflow, zero serious/critical Axe violations, and
+  complete modal focus, Escape, inert-background, focus-return, filter, and empty-state
+  behavior. The two worker calls used 1,204,955 input tokens (1,033,216 cached; 171,739
+  fresh) and 19,146 output. Subjective review remains `needs-attention`: Unisane blue
+  primary controls compete with custom green interaction roles, the persistent dark
+  sidebar/card stack lacks an approved same-task precedent, and packed
+  `@unisane/ui` Progress does not forward an accessible name. The canary used a local
+  accessible progress element and leaves that package-adaptation gap explicit. No
+  Skill source changed, the accepted identity remains
+  `sha256:796fc1c94cdd61769a0629df3d76bfb3e97ec04efa128fb3567b7881fb00494f`,
+  and this unpaired, non-blinded canary does not certify efficacy.
+
+- `2026-08-06`: A rendered audit of the isolated Unisane `@unisane/ui` ecommerce
+  seller-dashboard canary exposed gaps that build and Axe proof did not: incomplete
+  modal-drawer focus containment, accidental local scrollbar residue, ambiguous
+  current/hover/focus states, overly heavy persistent icons, low-value dominant space,
+  and product character carried mainly by accent color. Product UI Craft now treats
+  those as explicit review or blocking conditions while leaving domain-data semantics
+  to project truth. All seven deterministic fixtures pass; the review trio measures
+  1,737 tokens inside the 1,800 standard Task ceiling, and 18 focused tests pass. The
+  revised exact accepted identity is
+  `sha256:796fc1c94cdd61769a0629df3d76bfb3e97ec04efa128fb3567b7881fb00494f`.
+  The prior 6-2 model-reviewed run remains valid historical Evidence for its old source
+  identity but cannot certify this revision; no paid model run or independent human
+  blind adjudication was performed.
+
+- `2026-08-06`: The first packed Unisane `@unisane/ui` dashboard admission failed
+  closed before UI authoring: Task `T-348eadda` selected only
+  `ui-craft.hierarchy-and-brand` because its truthful imperative non-goal—do not change
+  existing product behavior—was misread as the visual, responsive, and component
+  anti-signals. Anti-signal evidence now excludes preservation imperatives such as
+  `do not`, `preserve`, `keep`, and `avoid`; direct assertions such as documentation
+  only, generated files only, or no rendered surface in scope remain eligible negative
+  evidence. The exact real-canary non-goal is now part of the alias-free positive
+  fixture, all seven fixtures and 18 focused tests pass, and re-acceptance produced
+  combined digest
+  `sha256:74f7b07ec76849bdb2d6401ca1e53c81fcd24a480af283f76830a6175f9ea4ab`.
+  No dashboard or efficacy result exists yet; the isolated canary must rerun from this
+  packed identity.
+
+- `2026-08-06`: Corrected the selection-contract gap exposed by dashboard Task
+  `T-28e5cb45`, which remains a no-Skill baseline because its generated selection
+  contained zero modules. Skill module applicability now accepts only canonical
+  Skopos Scope kinds, the loader rejects pseudo-kinds such as `frontend` and
+  `product-ui`, and Scope applicability uses exact kind identity instead of alias-term
+  overlap. Positive signal matching now requires coherent structural evidence, while
+  an anti-signal requires at least two normalized terms from one negative Task clause;
+  an unrelated pack-preservation constraint can no longer block a rendered UI Task.
+  Product UI Craft passes all seven exact fixtures, including a canonical
+  `application` fixture with no UI aliases, and was re-accepted at combined digest
+  `sha256:d4814dbf0106e5415237e100b9cc0baf7b8e54ad3625358bfb597905a0416da9`.
+  This corrects selection truth only; a fresh isolated Unisane `@unisane/ui` dashboard
+  canary is still required and no efficacy or promotion claim follows.
+
+- `2026-08-06`: Completed the exact eight-case visual-modernity comparison
+  `product-ui-craft-v3-full-real-20260806-r2`. All 16 isolated workers and 8 blinded
+  model reviewers completed. Product UI Craft won 6 cases—transaction trust,
+  discovery coordination, responsive transformation, failure recovery, product
+  character, and complete service flow—while control won operations workbench and
+  documentation workspace; there were no ties, invalid or aborted cases, authority
+  regressions, correction turns, or supervision events. Containment found no source-
+  checkout or cross-arm reference and no `NODE_PATH`. Usage was 3,116,064 input tokens
+  (2,364,672 cached; 751,392 fresh) and 161,668 output, within the
+  4,000,000/1,200,000/200,000 ceilings. Candidate fresh input was 2,550 tokens lower
+  than control, but candidate output was 13,277 tokens higher, used 40 versus 38 tool
+  calls, and accumulated about 234 seconds more worker duration. The repeated
+  operations case reversed its one-case smoke winner, demonstrating run variance. The
+  generated full report is therefore `inconclusive`: model review meets the numerical
+  6-2 threshold, but independent human blind adjudication remains required before
+  promotion or catalog expansion.
+
+- `2026-08-06`: The first authorized full attempt stopped before inference because the
+  smoke gate incorrectly compared the one-case template aggregate with the eight-case
+  aggregate. Correction Task `T-09216701`, snapshot `S-f1f3c41c98f4`, now compares
+  shared identities exactly while validating smoke case-set, budget, and template
+  identities against their own current smoke projections. An exact v3 smoke passes
+  and a stale v2 smoke fails closed, both with zero model calls. Worker/reviewer
+  prompts, cases, templates, Skill guidance, rubric, budgets, scoring, and promotion
+  thresholds were unchanged.
+
+- `2026-08-06`: Completed the exact visual-modernity smoke
+  `product-ui-craft-v3-smoke-real-20260806-r1` with two isolated workers and one
+  blinded model reviewer. Product UI Craft won `operations-workbench`: task-archetype
+  fit scored 3-1, visual quietness 3-2, background/layer architecture tied at 3-3,
+  and state/recovery completeness scored 3-1. The reviewer found the candidate's
+  severity, ownership, recency, next action, selection, and recovery controls remained
+  visible across both viewports, while the control clipped critical mobile columns and
+  omitted the selected-incident action area. All three calls completed with no invalid
+  or aborted arm, authority regression, correction turn, supervision event,
+  source-checkout reference, cross-arm reference, or `NODE_PATH`. Usage was 386,472
+  input tokens (298,240 cached; 88,232 fresh) and 20,304 output tokens, within every
+  smoke ceiling. This is a positive one-case smoke result and a valid execution gate
+  for its exact identity, not full efficacy certification or independent human review.
+  No pack, case, prompt, rubric, or runner source changed after the outcome.
+
+- `2026-08-06`: Preserved the negative second-cycle smoke as immutable historical
+  Evidence and hardened Product UI Craft under a new exact source identity after
+  screenshot review found excessive competing color, weak canvas/layer architecture,
+  generic dark-shell plus tinted-canvas composition, permanent three-column framing,
+  and contradictory populated-plus-empty state. The revised guidance and rubric now
+  require semantic color roles, an attention inventory, neutral-dominant surfaces,
+  explicit background layers, bounded containment cues, state consistency, and
+  same-task precedent without prescribing one house style. The three relevant modules
+  measure 561, 822, and 588 tokens (1,971 total) inside the unchanged 2,200-token
+  fixture budget. All seven deterministic fixtures and 17 focused tests pass; exact
+  re-acceptance produced combined digest
+  `sha256:67f67f3716495aa0b9f9ea17511f4e913f862ef47196a79e116133a222a3776e`.
+  New 3-call smoke and 24-call full no-model preflights pass with zero executed model
+  calls and zero observed tokens. No efficacy outcome exists for this identity; the
+  historical smoke cannot gate its full run, and catalog expansion remains blocked.
+
+- `2026-08-06`: Completed the exact successor smoke
+  `product-ui-craft-v2-smoke-real-20260806-r1` with two isolated workers and one
+  blinded model reviewer. The no-Skill control won `operations-workbench`: task-
+  archetype/reference fit, information hierarchy/brand fit, and surface/density scored
+  3-2 for control, while user-task clarity tied 2-2. The candidate exposed clearer next
+  actions but also rendered a contradictory empty state beneath three incidents. All
+  three calls completed with no invalid or aborted arm, authority regression,
+  correction turn, supervision event, checkout reference, cross-arm reference, or
+  `NODE_PATH`. Usage was 259,663 input tokens (187,648 cached; 72,015 fresh) and 17,260
+  output tokens, within every smoke ceiling. The report's `pass` means the execution
+  gate passed; the observed efficacy result is negative and does not promote the pack.
+  No Skill, case, prompt, rubric, or runner source was changed after the outcome.
+
+- `2026-08-06`: Bound the prior negative paired result to historical Task
+  `T-d64f23b2` and immutable snapshot `S-baa17a745170`, then froze a successor suite
+  for the materially revised archetype-aware Product UI Craft source. The successor
+  suite uses eight distinct case-local templates spanning operational, transactional,
+  discovery, documentation, responsive, recovery, product-character, and complete-flow
+  surfaces. Smoke and full no-model preflights pass against the exact accepted identity
+  with matrices of 3 and 24 calls, respectively; both reports contain zero executed
+  commands and zero observed model tokens. This preparation is not new efficacy
+  evidence. A separately authorized real smoke must precede any successor full run.
+
+- `2026-08-05`: Completed the frozen eight-case real paired run
+  `product-ui-craft-full-20260805-r3` after exact re-acceptance and a new passing
+  three-call smoke. All 24 full-run calls completed, but blinded model review recorded
+  2 candidate wins and 6 control wins, with one candidate-only authority regression in
+  `empty-and-error-states`. Full-run usage was 2,447,492 input tokens (1,832,704
+  cached; 614,788 fresh) and 85,528 output tokens, inside every declared ceiling. The
+  generated report remains `fail`: two reviewer traces mentioned evaluator-owned
+  screenshot paths under `.skopos/evaluations`, while worker traces had no source-
+  checkout reference and no cross-arm reference occurred. Product UI Craft is not
+  efficacy-certified or promoted; independent human blind review remains pending, and
+  no post-outcome prompt, case, rubric, guidance, or harness change was made.
+
+- `2026-08-05`: The first valid real smoke passed its infrastructure gate with one
+  complete isolated pair and blinded model review, no containment or authority finding,
+  and 318,676 total input tokens (247,040 cached; 71,636 fresh) plus 14,883 output
+  tokens. The no-Skill control won the fixed `settings-hierarchy` case on clarity,
+  hierarchy, and alignment; surfaces/density tied. This is a negative smoke observation,
+  not an efficacy decision: the smoke has one case, model review is not independent
+  human adjudication, and the full eight-case promotion suite has not run. The pack,
+  cases, prompts, and rubric remain frozen rather than being tuned to this outcome.
+- `2026-08-05`: Made real Skill efficacy proof proportional. Paired evaluation now
+  preflights the authenticated host, browser, frozen assets, isolated root, and clean
+  executable resolution before inference; a one-case, three-call smoke stage must pass
+  before the eight-case promotion stage can start. Reports bind prompt, case-set, budget,
+  and environment identities, separate fresh from cached input, stop at declared token
+  ceilings, retain partial failure evidence and durable blinded review bundles, and do
+  not treat model review as independent human adjudication. Two invalid infrastructure
+  attempts produced no efficacy result: the first consumed zero tokens after non-Git
+  startup rejection; the second exposed inherited repository `PATH` resolution and was
+  interrupted after three worker calls. Cases, rubric, and Skill content were not tuned
+  from an observed outcome.
+- `2026-08-05`: Corrected the packed portability proof contract. Billquest now binds
+  `ui.accessibility-proof` to an executed static Next lint Action instead of responsive
+  proof, leaves rendered Axe auditing explicitly uncertified, and declares the actual
+  `npm` executable and controlled cache effects. The harness now emits pass or fail
+  reports with stage, project, command, failure classification, partial evidence, and
+  cleanup outcome. Containment is limited to observed Skopos paths, installed contents,
+  links, dependency protocols, and controlled temp/npm-cache roots; it is not an
+  operating-system-wide write claim. The installed `skills context` and help contracts
+  are now explicitly owned and tested by correction Task `T-6d37da41`.
+- `2026-08-05`: Proved Product UI Craft adoption from one minimal project and a
+  sanitized Billquest canary using only a packed `@skopos/cli` tarball plus ordinary
+  declared dependencies. The installed binary now exposes canonical tracked-Task Skill
+  context; both external projects passed all six fixtures, relevant and irrelevant Task
+  selection, module-local capabilities, five host projections, exact reuse and
+  capability-identity invalidation, with no observed source-checkout, workspace-link,
+  `NODE_PATH`, forbidden-symlink, or Skopos-generated-path containment leak.
+- `2026-08-04`: Certified the first automated Skopos browser canary without collapsing
+  proof roles. Eight desktop/mobile route captures now pass overflow and serious/critical
+  Axe checks after shared interaction and scroll-region fixes; screenshots and the JSON
+  report remain generated Evidence, not subjective visual approval.
+- `2026-08-04`: Replaced misleading Product UI Craft proof bindings with specialized
+  browser-owned capabilities. `ui.capture-responsive-proof` now builds and serves the
+  routed console locally, captures four routes at desktop and mobile viewports, detects
+  horizontal overflow, and runs WCAG-focused Axe analysis. The required
+  `ui.accessibility-proof` Guard consumes that Action's source-bound Evidence; console
+  build and generic behavior observation remain separate proof roles.
+- `2026-08-04`: Implemented isolated paired-evaluation and blinded-review support.
+  Versioned suites now declare task prompts, clean project templates, candidate modules,
+  and selected rubric dimensions. Control and candidate workers receive separate opaque
+  workspaces; reviewers receive randomized labels and output artifacts without arm or
+  guidance identity. Generated reports bind source and environment identity and record
+  wins, losses, ties, token cost, and authority regressions.
+- `2026-08-04`: Implemented strict fixture discovery and deterministic candidate
+  evaluation. Each declared fixture ID now resolves to one versioned manifest, missing,
+  duplicate, or undeclared fixtures fail loading, and Skill adoption is blocked unless
+  the candidate pack and binding pass every declared fixture. Reports remain generated
+  non-authoritative views bound to the exact acceptance identity.
 - `2026-08-04`: Implemented exact content-bound acceptance and selection reuse.
   Human approval now pins pack, binding declaration, bound project source, capability
   catalog, rubric, fixture, and combined digests. Stale approval suppresses the Skill
@@ -133,6 +358,26 @@ old-pack compatibility path.
 19. Pack promotion requires deterministic selection fixtures, paired no-Skill or
     prior-version forward tests, bounded local telemetry, a real project canary, and
     portable proof in Skopos plus one non-Skopos project for reusable built-in packs.
+20. Deterministic fixtures are strict versioned manifests executed against the candidate
+    pack and project binding before acceptance. Fixture evaluation uses the production
+    eligibility, capability-locality, and budget selector without inheriting stale human
+    acceptance; its generated report cannot replace Evidence, Readiness, or human review.
+21. Paired evaluation uses fresh isolated workspaces and an explicit worker adapter.
+    Worker inputs never contain evaluator oracles, prior conclusions, or the other arm's
+    output. Reviewers receive only the Task, selected rubric dimensions, randomized arm
+    labels, and arm outputs. The report records the exact model, host, adapter, reviewer,
+    toolchain, permission, pack, binding, project, capability, fixture, rubric, and suite
+    identities used for that run.
+22. Real evaluation is staged and proportional. Deterministic fixtures run first. One
+    fixed smoke case proves the exact worker, reviewer, browser, containment, telemetry,
+    and failure-report path before a full suite may spend model budget. The full stage
+    requires the exact successful smoke identity, enforces declared fresh, cached, and
+    output-token ceilings, stops after infrastructure or authority failure, and remains
+    non-promotional until subjective dimensions receive independent human adjudication.
+23. Responsive visual capture and accessibility proof must bind to a browser-capable
+    project Action that emits screenshots plus machine-readable route/viewport results.
+    Build success is not visual proof, automated Axe analysis is not subjective visual
+    approval, and a generic agent observation is not accessibility certification.
 
 ## Implemented Baseline
 
@@ -166,9 +411,47 @@ The first canonical schema and loader now enforce the following in place:
 13. one generated per-Task selection artifact owns both cache reuse and explanations;
     its identity includes the selection algorithm, normalized Task signals, accepted
     Skill identities, Action/Guard catalog, and resolved policy
+14. every declared Product UI Craft fixture resolves exactly once and executes without
+    a model or network call across positive, visual-restraint, negative, ambiguous,
+    generated-output, capability-locality, and budget cases
+15. `skills apply` evaluates the candidate source first and refuses acceptance while
+    any deterministic fixture fails
+16. one strict Product UI Craft evaluation suite owns eight paired cases and a clean
+    runnable project template; the runtime isolates arms, bounds real non-symlink
+    artifacts to each arm, blinds reviewer inputs, validates rubric scores on the
+    declared 0-3 scale, supports a one-case smoke projection without changing the suite,
+    retains invalid or aborted partial evidence, and emits generated comparison data
+17. the Skopos binding maps responsive visual capture to
+    `ui.capture-responsive-proof` and accessibility proof to the required
+    `ui.accessibility-proof` Guard; the old console-build and generic-observation aliases
+    no longer claim those semantics
+18. the first Skopos canary emits eight desktop/mobile screenshots plus one
+    machine-readable report and passes horizontal-overflow and serious/critical Axe
+    checks; subjective composition review remains outside that automated claim
+19. the packed CLI exposes the existing canonical compact Task brief through
+    `skills context <task-id>`, allowing installed consumers to obtain Task-selected
+    guidance without importing repository TypeScript source
+20. one generated minimal project and one sanitized Billquest copy install the packed
+    CLI outside the source checkout, pass the six fixtures bound to that portability
+    identity, apply an exact
+    project binding, select module-local context and capabilities only for relevant
+    Tasks, generate five host projections, reuse an unchanged selection, and suppress a
+    stale selection after capability identity changes
 
-Complete deterministic fixture coverage, behavioral evaluation, and portable adoption
-proof remain later phases of the active Plan and Finding.
+The deterministic fixture baseline, staged paired-evaluation infrastructure, automated
+responsive/accessibility canary, packed non-Skopos adoption, and exact re-acceptance are
+complete for Product UI Craft. Historical frozen runs remain valid only for their bound
+source identities: the first full run recorded 2 candidate wins, 6 control wins, one
+candidate authority regression, and a reviewer-trace containment limitation; the
+second-cycle `operations-workbench` smoke also favored the control on three dimensions
+and tied one. Screenshot review of that smoke drove a new visual-modernity source,
+rubric, fixture, and suite identity. Its seven fixtures and focused tests pass, and its
+exact real `operations-workbench` smoke now favors the candidate on three dimensions
+and ties one, with clean containment and bounded cost. This one-case result is not full
+efficacy certification. Product UI Craft and catalog expansion stay blocked pending a
+separately authorized 24-call full comparison bound to this exact smoke identity and
+independent subjective human review. Invalid or zero-token launches remain diagnostic
+infrastructure evidence and do not count as Skill outcomes.
 
 ## Consequences
 

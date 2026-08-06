@@ -8,11 +8,16 @@ command: pnpm instructions:sync
 cwd: .
 inputs:
   - AGENTS.md
+  - package.json
+  - packages/cli/src/cli/commands/instructions.ts
+  - packages/instructions/src
 outputs:
+  - AGENTS.md
   - CLAUDE.md
   - .cursor/rules/project.mdc
   - .github/copilot-instructions.md
 affects:
+  - AGENTS.md
   - CLAUDE.md
   - .cursor/rules/project.mdc
   - .github/copilot-instructions.md

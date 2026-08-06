@@ -1,7 +1,14 @@
 import * as React from 'react';
+import { useNavigate } from '@tanstack/react-router';
 
+import { Alert } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Dialog } from '@/components/ui/dialog';
+import { Icon } from '@/components/ui/icon';
+import { List, ListItem } from '@/components/ui/list';
+import { SearchBar } from '@/components/ui/search-bar';
+import { Typography } from '@/components/ui/typography';
 import type { SkoposUiConsoleState } from '../../contracts/skopos-ui-console-state.js';
-import { cn } from '../../support/ui/classnames.js';
 import {
   getSkoposConsoleSearchContext,
   type SkoposConsoleSearchGroup,
@@ -17,7 +24,7 @@ export function getSkoposSearchShortcutLabel(): string {
   return /mac/i.test(navigator.platform) ? '⌘K' : 'Ctrl K';
 }
 
-export function SearchDock({
+export function ProjectSearchDialog({
   state,
   currentPath,
   openSignal = 0,
@@ -26,10 +33,10 @@ export function SearchDock({
   currentPath: string;
   openSignal?: number;
 }): React.JSX.Element {
+  const navigate = useNavigate();
   const shortcutLabel = React.useMemo(() => getSkoposSearchShortcutLabel(), []);
-  const rootRef = React.useRef<HTMLDivElement | null>(null);
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
   const lastOpenSignalRef = React.useRef(openSignal);
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
   const [selectedIndex, setSelectedIndex] = React.useState(0);
@@ -44,40 +51,19 @@ export function SearchDock({
     [currentPath, deferredQuery, state],
   );
 
-  const focusInput = React.useCallback(() => {
-    if (typeof window === 'undefined') {
-      inputRef.current?.focus();
-      return;
-    }
-
-    const schedule =
-      typeof window.requestAnimationFrame === 'function'
-        ? window.requestAnimationFrame.bind(window)
-        : (callback: FrameRequestCallback) => window.setTimeout(callback, 0);
-
-    schedule(() => {
-      inputRef.current?.focus({ preventScroll: true });
-    });
-  }, []);
-
   const closeDock = React.useCallback(() => {
     setIsOpen(false);
     setQuery('');
     setSelectedIndex(0);
-    inputRef.current?.blur();
   }, []);
 
-  const openDock = React.useCallback(
-    (options?: { clearQuery?: boolean }) => {
-      setIsOpen(true);
-      if (options?.clearQuery) {
-        setQuery('');
-      }
-      setSelectedIndex(0);
-      focusInput();
-    },
-    [focusInput],
-  );
+  const openDock = React.useCallback((options?: { clearQuery?: boolean }) => {
+    setIsOpen(true);
+    if (options?.clearQuery) {
+      setQuery('');
+    }
+    setSelectedIndex(0);
+  }, []);
 
   const openResult = React.useCallback(
     (result: SkoposConsoleSearchResult | undefined) => {
@@ -89,17 +75,14 @@ export function SearchDock({
       setQuery('');
       setSelectedIndex(0);
 
-      if (result.external || !result.href.startsWith('#')) {
+      if (result.external) {
         window.location.assign(new URL(result.href, window.location.href).toString());
         return;
       }
 
-      const nextHash = result.href.slice(1);
-      if (window.location.hash !== nextHash) {
-        window.location.hash = nextHash;
-      }
+      void navigate({ href: result.href });
     },
-    [],
+    [navigate],
   );
 
   React.useEffect(() => {
@@ -150,25 +133,6 @@ export function SearchDock({
     };
   }, [closeDock, isOpen, openDock]);
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event: PointerEvent): void => {
-      if (rootRef.current?.contains(event.target as Node)) {
-        return;
-      }
-
-      closeDock();
-    };
-
-    window.addEventListener('pointerdown', handlePointerDown);
-    return () => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, [closeDock, isOpen]);
-
   const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>): void => {
     const resultCount = searchContext.flatResults.length;
 
@@ -212,33 +176,63 @@ export function SearchDock({
     selectedIndex >= 0 ? searchResultOptionId(searchContext.flatResults[selectedIndex]?.id) : undefined;
 
   return (
-    <div className="skopos-search-dock-host" aria-live="polite">
-      <div
-        ref={rootRef}
-        className={cn('skopos-search-dock-shell', isOpen && 'skopos-search-dock-shell-open')}
-      >
-        <div
-          className={cn(
-            'skopos-search-results-sheet',
-            isOpen ? 'skopos-search-results-sheet-open' : 'skopos-search-results-sheet-closed',
-          )}
-        >
-          <div className="skopos-search-results-head">
-            <p className="skopos-search-results-title">
-              {searchContext.query.isEmpty
-                ? 'Search project knowledge'
-                : `${searchContext.total} result${searchContext.total === 1 ? '' : 's'}`}
-            </p>
-            <p className="skopos-search-results-copy">
-              Search docs, decisions, tasks, plans, issues, and project areas. Filters like{' '}
-              <code>task:</code>, <code>plan:</code>, and <code>doc:</code> also work.
-            </p>
-          </div>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (open) openDock();
+        else closeDock();
+      }}
+      title="Search your project"
+      description="Find the exact task, decision, document, issue, or project area."
+      mobilePresentation="fullscreen"
+      className="md:max-w-3xl"
+      contentClassName="p-0"
+      initialFocusRef={searchInputRef}
+    >
+      <div className="border-b border-outline-weak bg-surface-container-low p-4">
+        <label htmlFor="skopos-search-input" className="sr-only">
+          Search Skopos workspace
+        </label>
+        <SearchBar
+          ref={searchInputRef}
+          id="skopos-search-input"
+          role="combobox"
+          aria-expanded={isOpen}
+          aria-controls="skopos-search-results"
+          aria-activedescendant={activeDescendant}
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+          }}
+          onKeyDown={handleInputKeyDown}
+          placeholder="Search docs, scopes, tasks, plans..."
+          autoComplete="off"
+          spellCheck={false}
+          size="lg"
+          trailingIcon={<span className="text-label-small">{shortcutLabel}</span>}
+        />
+        <Typography variant="bodySmall" className="mt-2 text-on-surface-variant">
+          Filters such as <code>task:</code>, <code>plan:</code>, and <code>doc:</code> also work.
+        </Typography>
+      </div>
+      <div aria-live="polite">
+        <div className="flex items-center justify-between gap-3 px-5 py-3">
+          <Typography variant="labelMedium" className="text-on-surface-variant">
+            {searchContext.query.isEmpty
+              ? 'Start here'
+              : `${searchContext.total} result${searchContext.total === 1 ? '' : 's'}`}
+          </Typography>
+          {!searchContext.query.isEmpty ? (
+            <Badge variant="tonal" color="secondary" size="sm">
+              {searchContext.total}
+            </Badge>
+          ) : null}
+        </div>
           {searchContext.groups.length > 0 ? (
             <div
               id="skopos-search-results"
               role="listbox"
-              className="skopos-search-results-scroll skopos-scroll"
+              className="skopos-scroll max-h-[55dvh] overflow-y-auto border-t border-outline-weak"
             >
               {searchContext.groups.map((group, groupIndex) => {
                 const offset = countResultsBeforeGroup(searchContext.groups, groupIndex);
@@ -255,56 +249,14 @@ export function SearchDock({
               })}
             </div>
           ) : (
-            <div className="skopos-search-empty-state">
-              <p className="skopos-search-empty-title">No exact result</p>
-              <p className="skopos-search-empty-copy">
-                Try a shorter phrase or narrow the query with a structured filter.
-              </p>
+            <div className="p-5">
+              <Alert variant="info" title="Nothing matched that search">
+                Try fewer words, a Task id, or a filter such as <code>task:</code>.
+              </Alert>
             </div>
           )}
-        </div>
-        <div className="skopos-search-dock">
-          <label htmlFor="skopos-search-input" className="sr-only">
-            Search Skopos workspace
-          </label>
-          <span aria-hidden="true" className="skopos-search-dock-icon">
-            <svg
-              viewBox="0 0 20 20"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="skopos-search-dock-icon-svg"
-            >
-              <circle cx="8.5" cy="8.5" r="4.75" />
-              <path d="M12.25 12.25 16 16" />
-            </svg>
-          </span>
-          <input
-            id="skopos-search-input"
-            ref={inputRef}
-            type="text"
-            role="combobox"
-            aria-expanded={isOpen}
-            aria-controls="skopos-search-results"
-            aria-activedescendant={activeDescendant}
-            value={query}
-            onFocus={() => setIsOpen(true)}
-            onChange={(event) => {
-              setIsOpen(true);
-              setQuery(event.target.value);
-            }}
-            onKeyDown={handleInputKeyDown}
-            className="skopos-search-dock-input"
-            placeholder="Search docs, scopes, tasks, plans..."
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <SearchDockShortcut label={shortcutLabel} />
-        </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -322,48 +274,54 @@ function SearchResultGroupBlock({
   onOpen: (result: SkoposConsoleSearchResult) => void;
 }): React.JSX.Element {
   return (
-    <section className="skopos-search-group">
-      <div className="skopos-search-group-head">
-        <p className="skopos-search-group-title">{group.label}</p>
-        <p className="skopos-search-group-count">{group.total}</p>
+    <section className="border-b border-outline-weak last:border-b-0">
+      <div className="flex items-center justify-between gap-3 bg-surface-container-low px-5 py-2">
+        <Typography variant="labelSmall" className="text-on-surface-variant">
+          {group.label}
+        </Typography>
+        <Badge variant="tonal" color="secondary" size="sm">
+          {group.total}
+        </Badge>
       </div>
-      <div className="skopos-search-group-results">
+      <List className="py-0">
         {group.results.map((result, index) => {
           const absoluteIndex = selectedOffset + index;
           return (
-            <button
+            <ListItem
               key={result.id}
               id={searchResultOptionId(result.id)}
-              type="button"
               role="option"
               aria-selected={selectedIndex === absoluteIndex}
-              className={cn(
-                'skopos-search-result-row',
-                selectedIndex === absoluteIndex && 'skopos-search-result-row-active',
-              )}
+              selected={selectedIndex === absoluteIndex}
+              headline={result.title}
+              supportingText={result.summary}
+              trailing={
+                <span className="flex items-center gap-2">
+                  <Badge variant="tonal" color="secondary" size="sm">
+                    {labelForSearchKind(result.kind)}
+                  </Badge>
+                  {result.meta ? (
+                    <Typography
+                      variant="labelSmall"
+                      className="hidden max-w-36 truncate text-on-surface-variant md:block"
+                    >
+                      {result.meta}
+                    </Typography>
+                  ) : null}
+                  {result.external ? <Icon symbol="open_in_new" size="sm" /> : null}
+                </span>
+              }
               onMouseEnter={() => onSelect(absoluteIndex)}
               onFocus={() => onSelect(absoluteIndex)}
               onClick={() => onOpen(result)}
-            >
-              <div className="min-w-0">
-                <div className="skopos-search-result-title-row">
-                  <p className="skopos-search-result-title truncate">{result.title}</p>
-                  <span className="skopos-search-kind-badge">
-                    {labelForSearchKind(result.kind)}
-                  </span>
-                </div>
-                <p className="skopos-search-result-summary truncate">{result.summary}</p>
-              </div>
-              <div className="skopos-search-result-aside">
-                {result.meta ? <span className="skopos-search-result-meta">{result.meta}</span> : null}
-                {result.external ? <span className="skopos-search-result-external">↗</span> : null}
-              </div>
-            </button>
+            />
           );
         })}
-      </div>
+      </List>
       {group.truncated ? (
-        <p className="skopos-search-group-more">Showing top {group.results.length} of {group.total}.</p>
+        <Typography variant="bodySmall" className="px-5 py-2 text-on-surface-variant">
+          Showing top {group.results.length} of {group.total}.
+        </Typography>
       ) : null}
     </section>
   );
@@ -377,21 +335,6 @@ const countResultsBeforeGroup = (
 
 const searchResultOptionId = (resultId?: string): string | undefined =>
   resultId ? `skopos-search-option-${resultId}` : undefined;
-
-function SearchDockShortcut({ label }: { label: string }): React.JSX.Element {
-  if (label.startsWith('⌘')) {
-    return (
-      <span className="skopos-search-dock-shortcut">
-        <span className="skopos-search-dock-shortcut-symbol" aria-hidden="true">
-          ⌘
-        </span>
-        <span className="skopos-search-dock-shortcut-key">K</span>
-      </span>
-    );
-  }
-
-  return <span className="skopos-search-dock-shortcut">{label}</span>;
-}
 
 const labelForSearchKind = (kind: SkoposConsoleSearchKind): string => {
   switch (kind) {

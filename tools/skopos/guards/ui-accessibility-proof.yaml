@@ -1,0 +1,20 @@
+id: ui.accessibility-proof
+title: UI changes require browser accessibility proof
+description: Require project-owned responsive rendering, overflow detection, screenshots, and automated WCAG-focused accessibility analysis for material UI behavior changes.
+owner: skopos-ui
+scope:
+  - workspace
+strength: required
+appliesTo:
+  paths:
+    - packages/ui/**
+    - packages/cli/src/scripts/capture-ui-proof.ts
+  phases:
+    - closure
+  risks:
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - ui.capture-responsive-proof
+  evidence: source-bound-action

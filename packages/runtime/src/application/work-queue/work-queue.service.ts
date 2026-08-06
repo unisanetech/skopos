@@ -1,3 +1,4 @@
+import type { Dirent } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
 
@@ -110,7 +111,7 @@ const loadTaskArtifacts = async (workspaceRoot: string): Promise<SkoposTaskArtif
 };
 
 const findTaskFiles = async (directory: string): Promise<string[]> => {
-  let entries: Awaited<ReturnType<typeof readdir>>;
+  let entries: Dirent[];
   try {
     entries = await readdir(directory, { withFileTypes: true });
   } catch (error) {

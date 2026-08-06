@@ -1245,12 +1245,7 @@ const collectArtifactCounts = async (workspaceRoot: string): Promise<SkoposUiArt
 });
 
 const countJsonArtifacts = async (directoryPath: string): Promise<number> => {
-  try {
-    const entries = await readdir(directoryPath, { withFileTypes: true });
-    return entries.filter((entry) => entry.isFile() && entry.name.endsWith('.json')).length;
-  } catch {
-    return 0;
-  }
+  return countFiles(directoryPath, '.json');
 };
 
 const countFiles = async (directoryPath: string, extension: string): Promise<number> => {

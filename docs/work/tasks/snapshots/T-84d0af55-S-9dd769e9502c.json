@@ -1,0 +1,64 @@
+{
+  "snapshotId": "S-9dd769e9502c",
+  "taskId": "T-84d0af55",
+  "sessionId": "ui-craft-visual-modernity-closure",
+  "actorId": "codex-ui-craft-visual-modernity",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "40ab559f415eeb540ba825ed51688d93ccc8879b7a758a705526b7920098a160"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "4574e18c6da5892c74f93554ae25928f713982d0bdd9b2a73631d1933373e89f"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "b911da8cc04025dfb05682a01e4543a079720e917717e131a29240e33caf3f66"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "3ba08fb7cd3b4432e6dae48450e9fabdf0a9efdd89625826f8f3759e8ca26eba"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-packs.test.ts",
+      "digest": "24eb6eb19a375bfa0eff0bb288b305e191a43c4272e7201e3e756b285b7b39ce"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/evaluations/core.suite.json",
+      "digest": "7968125ef68c91acd3916cd25f9eeaac0ffabb89f287c0c86e3d5623a9206745"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/fixtures",
+      "digest": "03ff7df2a4ca9ad1f3b717015acd40e9edd664832cedb7094d5aee5a455ba468"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/guidance/anti-slop-review.md",
+      "digest": "a88f220ea9b8f2c7919e759f0615bf66e28e5342f9c4f6fbdeadcff3e44578bc"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/guidance/hierarchy-and-brand.md",
+      "digest": "bc79fe1c96717e12bdd43f09494ae41cfe271e24bbe912765c225ee810625c94"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/guidance/visual-composition-and-polish.md",
+      "digest": "aacd2c8b46d23fecf488a98ca955c445adcdaf601af11ea5a69b382bf6cf2ccd"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/pack.json",
+      "digest": "5070eaad6febd668aaa2dfa6ba98a79dca34453e2dd7c7b4c3f1d93cb4e7c51f"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/rubrics/product-ui-review.json",
+      "digest": "7367f22b6f5295c6a4fea8668827efcb2dba50b0c16fba601b61272153a099a0"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-craft.json",
+      "digest": "10089c27289e63b1409655c4a5bdfa3dc68954f87599bd68497b3618a9a79d9d"
+    }
+  ],
+  "digest": "9dd769e9502cf95e51898656f26561a911b75d9c7d786b3568d1fec3149aa23f",
+  "createdAt": "2026-08-05T20:05:57.458Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-84d0af55-S-9dd769e9502c.json"
+}

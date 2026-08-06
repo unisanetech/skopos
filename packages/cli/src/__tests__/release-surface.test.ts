@@ -133,6 +133,17 @@ describe('skopos release surface contract', () => {
       }),
     );
   });
+
+  it('declares the runtime and Node types used by root self-hosting commands', async () => {
+    const rootPackageJson = await loadRootPackageJson();
+    const sourceBackedScripts = Object.entries(rootPackageJson.scripts ?? {})
+      .filter(([, command]) => command.includes('--import tsx'))
+      .map(([name]) => name);
+
+    expect(sourceBackedScripts).not.toEqual([]);
+    expect(rootPackageJson.devDependencies?.['@types/node']).toBe('^22.12.0');
+    expect(rootPackageJson.devDependencies?.tsx).toBe('^4.20.3');
+  });
 });
 
 interface PackageJsonShape {
@@ -140,6 +151,8 @@ interface PackageJsonShape {
   version: string;
   license?: string;
   private?: boolean;
+  scripts?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   files?: string[];
   publishConfig?: {
     access?: string;

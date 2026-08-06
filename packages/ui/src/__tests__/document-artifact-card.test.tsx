@@ -15,7 +15,7 @@ describe('KnowledgeDocumentArtifactCard', () => {
             title: 'Architecture artifact',
             kind: 'artifact',
             format: 'json',
-            href: '#/docs/architecture',
+            href: '/docs/architecture',
             displayPath: '/repo/.skopos/index/architecture.json',
             exists: true,
             summary: 'Compiled architecture state.',

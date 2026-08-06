@@ -49,14 +49,14 @@ export const pillToneClass = (
 ): string => {
   switch (tone) {
     case 'positive':
-      return 'border-transparent bg-[var(--accent-soft)] text-[var(--accent)]';
+      return 'border-transparent bg-primary-container text-primary';
     case 'warning':
-      return 'border-transparent bg-[var(--warning-soft)] text-[var(--warning)]';
+      return 'border-transparent bg-[var(--color-warning-container)] text-[var(--color-warning)]';
     case 'danger':
-      return 'border-transparent bg-[var(--danger-soft)] text-[var(--danger)]';
+      return 'border-transparent bg-[var(--color-error-container)] text-[var(--color-error)]';
     case 'info':
-      return 'border-transparent bg-[var(--info-soft)] text-[var(--info)]';
+      return 'border-transparent bg-[var(--color-info-container)] text-[var(--color-info)]';
     default:
-      return 'border-[var(--line)] bg-[var(--panel-strong)] text-[var(--muted-strong)]';
+      return 'border-outline-weak bg-surface-container-low text-on-surface';
   }
 };

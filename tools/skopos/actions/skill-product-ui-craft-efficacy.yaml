@@ -1,0 +1,43 @@
+id: skill.product-ui-craft-efficacy
+title: Run Product UI Craft paired efficacy smoke proof
+description: Runs the fixed one-case Codex control-versus-Skill smoke gate and blinded reviewer after explicit authorization; full promotion requires its exact passing report.
+category: quality-check
+scope:
+  - workspace
+command: pnpm proof:product-ui-craft-efficacy -- --stage=smoke --execute --authorized
+cwd: .
+inputs:
+  - packages/model/src/contracts/skopos-skill-pack.ts
+  - packages/runtime/src/application/skills/skill-evaluations.service.ts
+  - packages/cli/src/benchmarks/product-ui-craft-efficacy.ts
+  - skill-packs/ui/product-craft/pack.json
+  - skill-packs/ui/product-craft/evaluations/core.suite.json
+  - skill-packs/ui/product-craft/rubrics/product-ui-review.json
+  - skill-packs/ui/product-craft/evaluations/templates/settings-workspace
+  - skill-packs/ui/product-craft/fixtures
+outputs:
+  - .skopos/evaluations
+  - .skopos/index/skills/paired-evaluations
+affects: []
+capabilities:
+  process: required
+  network: required
+  browser: required
+  tools: [pnpm, node, codex]
+  secrets: []
+  services: [openai-codex]
+effects:
+  workspace: none
+  artifacts: isolated
+  external: declared
+concurrency: exclusive
+workspaceMode: overlay-safe
+safety: artifact-producing
+requiresApproval: true
+timeoutMs: 7200000
+whenToUse: Run only for an explicitly authorized Product UI Craft real-adapter smoke gate before full efficacy certification.
+phases:
+  - closure
+risks:
+  - high-impact
+owner: skopos-skills

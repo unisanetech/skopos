@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-672055d01ab6",
+  "taskId": "T-4d83ef10",
+  "sessionId": "ui-craft-v3-full-closure",
+  "actorId": "codex-ui-craft-v3-full",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "089ab7fb8827371b93fc6ea1c01511302d37b54789754db4e8dd9214724fea2b"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "dd501a3668a415adc9dab21d29bc6dba648ab4b63e2292c695a14b9cc42974e9"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "29bea37272a0c0f8b24da7c66bc3752357bd76778c022bd5f73de20608305036"
+    }
+  ],
+  "digest": "672055d01ab6f9f91d3195a1a4c71810351c3104db117940ffc7ffeb1de74aa2",
+  "createdAt": "2026-08-05T21:07:47.280Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4d83ef10-S-672055d01ab6.json"
+}

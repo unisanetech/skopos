@@ -13,7 +13,7 @@ view: transition
 lastUpdated: 2026-06-25
 relatedDocs:
   - ../README.md
-  - ../../decisions/012-system-ui-dev-loop-and-hot-reload.md
+  - ../../scopes/skopos-ui/decisions/012-system-ui-dev-loop-and-hot-reload.md
   - ../../operations/local-development.md
 reviewCycle: per workpack
 ---
@@ -64,5 +64,5 @@ reviewCycle: per workpack
 ## Linked Docs
 
 1. `../README.md`
-2. `../../decisions/012-system-ui-dev-loop-and-hot-reload.md`
+2. `../../scopes/skopos-ui/decisions/012-system-ui-dev-loop-and-hot-reload.md`
 3. `../../operations/local-development.md`

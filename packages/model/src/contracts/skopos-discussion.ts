@@ -33,6 +33,14 @@ export interface SkoposDiscussionHandoffRunResult {
   handoff: SkoposDiscussionHandoffArtifact;
 }
 
+export interface SkoposDiscussionHandoffInspectRunResult {
+  workspaceRoot: string;
+  summary: string;
+  handoffPath: string;
+  handoff: SkoposDiscussionHandoffArtifact;
+  prompt?: string;
+}
+
 export interface SkoposDiscussionRecentEntry {
   id: string;
   summary: string;

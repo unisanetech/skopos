@@ -41,6 +41,9 @@ const DEFAULT_LEASE_SECONDS = 30;
 const MIN_LEASE_SECONDS = 5;
 const MAX_LEASE_SECONDS = 3600;
 const COORDINATION_DATABASE_PATH = '.skopos/coordination.sqlite';
+const COORDINATION_BUSY_TIMEOUT_MS = 5000;
+const JOURNAL_MODE_RETRY_DELAY_MS = 20;
+const JOURNAL_MODE_MAX_ATTEMPTS = 25;
 const taskMutationQueues = new Map<string, Promise<void>>();
 
 export interface OpenSkoposCoordinationSessionOptions {
@@ -1092,10 +1095,49 @@ const ensureCoordinationDatabase = async (
 const openDatabase = (databasePath: string): SqliteDatabase => {
   const DatabaseSync = loadDatabaseSync();
   const db = new DatabaseSync(databasePath);
-  db.exec('PRAGMA foreign_keys = ON');
-  db.exec('PRAGMA journal_mode = WAL');
-  db.exec('PRAGMA busy_timeout = 5000');
-  return db;
+  try {
+    db.exec('PRAGMA foreign_keys = ON');
+    db.exec(`PRAGMA busy_timeout = ${COORDINATION_BUSY_TIMEOUT_MS}`);
+    ensureWalJournalMode(db);
+    return db;
+  } catch (error) {
+    db.close();
+    throw error;
+  }
+};
+
+const ensureWalJournalMode = (db: SqliteDatabase): void => {
+  for (let attempt = 0; attempt < JOURNAL_MODE_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const currentMode = readJournalMode(db);
+      if (currentMode === 'wal') return;
+
+      const selectedMode = (
+        db.prepare('PRAGMA journal_mode = WAL').get() as { journal_mode?: string }
+      ).journal_mode?.toLowerCase();
+      if (selectedMode === 'wal') return;
+      throw new Error(`SQLite refused WAL journal mode and retained ${selectedMode ?? currentMode}.`);
+    } catch (error) {
+      if (!isSqliteBusyError(error) || attempt === JOURNAL_MODE_MAX_ATTEMPTS - 1) {
+        throw error;
+      }
+      waitForJournalModeRetry();
+    }
+  }
+};
+
+const readJournalMode = (db: SqliteDatabase): string =>
+  ((db.prepare('PRAGMA journal_mode').get() as { journal_mode?: string }).journal_mode ?? '')
+    .toLowerCase();
+
+const isSqliteBusyError = (error: unknown): boolean => {
+  const errcode = (error as { errcode?: unknown }).errcode;
+  return typeof errcode === 'number' && (errcode & 0xff) === 5;
+};
+
+const waitForJournalModeRetry = (): void => {
+  const signal = new Int32Array(new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT));
+  Atomics.wait(signal, 0, 0, JOURNAL_MODE_RETRY_DELAY_MS);
 };
 
 const loadDatabaseSync = (): (new (path: string) => SqliteDatabase) => {

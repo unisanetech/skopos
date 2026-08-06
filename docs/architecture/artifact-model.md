@@ -9,11 +9,12 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-02
+lastUpdated: 2026-08-05
 relatedDocs:
   - 00-architecture.md
   - docs-governance.md
   - ../standards/terminology.md
+  - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
 reviewCycle: when persistence or artifact ownership changes
 ---
 
@@ -23,6 +24,10 @@ Skopos distinguishes tracked project truth from rebuildable local projections.
 
 ## Changelog
 
+- `2026-08-05`: Clarified that the exact Task handoff may contain one bounded,
+  agent-authored conversation capsule plus compiled freshness identities. It remains a
+  disposable generated projection; portable recovery continues to rely on the tracked
+  Task and optional immutable snapshot.
 - `2026-08-02`: Made tracked Task projection and clean reconstruction relative to
   each Task's declared Scope Memory root.
 - `2026-07-31`: Defined inferred Memory obligations, their explicit resolution
@@ -96,6 +101,14 @@ Rules:
 7. Task authority and its tracked portable projection are replaced inside one
    coordination-backed mutation transaction; collision-resistant temporary files are
    implementation detail, not concurrency authority
+8. a Task handoff combines compiled Task/Memory state with a bounded agent-authored
+   conversation capsule; each field records provenance and the complete artifact is
+   subject to redaction, token budget, and freshness validation
+9. raw discussion journals, host transcript locations, host thread ids, delivery
+   outcomes, and handoff artifacts remain local generated state
+10. clean reconstruction must recover durable project and Task truth without any local
+    conversation capsule; cross-machine continuation may use an explicitly pushed
+    immutable Task snapshot but never an ambient host transcript
 
 ## Artifact Envelope
 

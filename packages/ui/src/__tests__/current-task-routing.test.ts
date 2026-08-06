@@ -6,7 +6,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
-import { resolveSkoposUiCurrentTaskRouting } from '../application/build-console-state/build-console-state.service.js';
+import {
+  resolveSkoposUiCurrentTaskRouting,
+} from '../application/build-console-state/build-console-state.service.js';
 
 const temporaryRoots: string[] = [];
 
@@ -30,7 +32,6 @@ describe('Skopos UI current Task routing', () => {
       taskId: first.task.id,
       actorId: 'agent-a',
     });
-
     await buildSkoposStartRuntime({
       cwd: workspaceRoot,
       goal: 'Second UI Task',

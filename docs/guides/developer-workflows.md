@@ -9,11 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-31
+lastUpdated: 2026-08-05
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
   - ../standards/validation.md
+  - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
+  - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
+  - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
 reviewCycle: when CLI behavior changes
 ---
 
@@ -21,6 +24,11 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-08-05`: Documented the accepted fresh-session continuation direction: enrich
+  the exact Task handoff with bounded agent-authored conversation context, validate it
+  against live state, and use truthful host delivery or the manual prompt fallback.
+- `2026-08-04`: Documented explicit Task-closure versus Project-integration proof
+  subjects, required overlay-safe Action declarations, and command-specific help.
 - `2026-07-31`: Replaced the manual verification-state/Readiness sequence with
   `skopos finish`, made hot-path JSON compact by default with explicit `--full`
   inspection, and documented precise Action source exclusions.
@@ -64,6 +72,22 @@ Add more `--accept`, `--own`, `--constraint`, and `--non-goal` values as needed.
 standard or high-impact risk when work crosses Sessions, changes architecture or public
 behavior, or needs durable coordination.
 
+The default proof subject is `task-closure`: only the admitted Task-owned boundary is
+eligible for closure proof. When the requested result is explicitly an integration or
+release baseline, start a separate integration Task:
+
+```bash
+skopos start "<integration goal>" . \
+  --proof-subject project-integration \
+  --own <integration-path> \
+  --actor <id>
+```
+
+`project-integration` requires at least one owned path and is always detailed and
+high-impact. It is not a dirty-worktree escape hatch: pre-existing, other-Task, and
+unattributed paths remain classified separately. Inspect `skopos start --help` before
+choosing the wider proof subject.
+
 Material decisions are resolved with:
 
 ```bash
@@ -81,6 +105,53 @@ Task state, open questions, and recommendations are Task-owned. Tracked standard
 high-impact Tasks reconstruct local state after a clean clone. Hot-path JSON is compact
 by default; add `--full` only when complete portable state is required.
 
+## Continue In A Fresh Session
+
+Use fresh continuation when the current coding-agent conversation is large enough to
+slow work or obscure the current objective. Native host resume keeps the old
+conversation and is not the same operation.
+
+The implemented workflow is:
+
+1. refresh the current Task checkpoint
+2. let the current agent contribute a bounded summary of user intent, accumulated
+   constraints, Session progress, rejected approaches, stopping position, exclusions,
+   and next action
+3. write the classified capsule to a temporary reviewed JSON file and create the exact Task-scoped handoff:
+
+   ```bash
+   skopos discuss handoff create . --task <task-id> --context <capsule.json> --json
+   skopos discuss handoff show . --task <task-id> --json
+   ```
+4. validate source, Task, Evidence, policy, Skill selection, privacy, budget, and coordination freshness:
+
+   ```bash
+   skopos discuss handoff verify . --task <task-id> --json
+   skopos discuss handoff render . --task <task-id> --json
+   ```
+5. transfer writing ownership through the existing Session and Task lifecycle
+6. create a fresh host Session when supported, or copy the rendered manual prompt
+7. open the receiving Skopos writer Session, accept the current handoff, then run `skopos session context` before continuing:
+
+   ```bash
+   skopos discuss handoff accept . --task <task-id> --actor <id> --receiving-session <id> --host <host> --json
+   skopos session context . --actor <id> --session-id <id> --host <host> --json
+   ```
+
+`refresh` recompiles live truth around the preserved capsule; it never derives semantic
+conversation judgment from a transcript. `current` may be accepted, `refreshable`
+must be rebuilt, `stale` requires owned-state inspection, `conflicted` requires Action,
+mutation, claim, or contamination reconciliation, and `invalid` is rejected. Sensitive
+values are redacted before persistence. Over-budget prompts fail explicitly and are
+not silently truncated.
+
+Codex reports host-API creation, injection, origin identity/messaging, pre-compaction,
+and completion capabilities. Claude Code currently provides origin identity,
+pre-compaction, and completion hooks but not proven fresh-process creation or prompt
+injection. Manual hosts provide no automation: review and copy the rendered prompt.
+In every case, generated or rendered is not delivered, native resume is not a fresh
+Session, and the originating Session is never archived or deleted implicitly.
+
 ## Run Project Capabilities
 
 ```bash
@@ -97,6 +168,8 @@ Action `inputs` should name the narrowest durable source families the command ac
 proves. When a necessary directory input contains unrelated generated or volatile
 content, declare `sourceExcludes` explicitly rather than hashing the whole noisy tree.
 Skopos always keeps its current Task projection outside Task-bound Action Evidence.
+Every Action executed against the live workspace must explicitly declare
+`workspaceMode: overlay-safe`; omission is invalid rather than an inferred default.
 
 To integrate existing project commands without guessing authority:
 

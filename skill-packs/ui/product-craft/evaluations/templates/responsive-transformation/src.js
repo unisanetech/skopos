@@ -1,0 +1,1 @@
+document.querySelectorAll('.visit').forEach(button=>button.addEventListener('click',()=>document.querySelector('#patient').textContent=button.dataset.patient));document.querySelector('#menu').addEventListener('click',()=>document.querySelector('main>aside:first-child').classList.toggle('open'));

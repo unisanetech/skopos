@@ -9,8 +9,8 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phase-5-and-6-in-progress
-lastUpdated: 2026-08-03
+implementationStatus: convergence-and-release-proof-in-progress
+lastUpdated: 2026-08-06
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
@@ -34,6 +34,17 @@ reviewCycle: per phase
 # Canonical Product Convergence Plan
 
 ## Changelog
+
+- `2026-08-06`: Reconciled the Plan header with the implemented canonical product
+  surface and current release work. The product remains pre-release until the active
+  Skill-efficacy Finding and complete clean-clone, packed-install, and release proof
+  pass from one committed candidate.
+- `2026-08-05`: Certified Phase 4 adoption through Task T-db2a2a6c. The canonical CLI
+  proof now covers assessment-only, healthy greenfield, healthy brownfield, and a messy
+  brownfield project that blocks without mutation until a reviewed restructuring is
+  applied. All four lanes enforce exact verification and activation before
+  `agent-ready`; typecheck and console-build Actions passed. The two stale adoption
+  proof Findings moved to historical archive.
 
 - `2026-08-03`: Completed stale recovery and disposition parity. Expired Actions are
   explicitly recovered before Task ownership, live Actions and open Git mutations
@@ -673,6 +684,11 @@ permanently mapping its problems.
 7. source-relative Scope inference never becomes canonical without review and standard
    verification
 8. a changed source root, rule, metadata record, or document invalidates intake output
+
+Status: certified on 2026-08-05 by Task T-db2a2a6c. The canonical adoption matrix
+exercises all project-shape and ambiguity lanes above; scanner-only assessment remains
+non-ready, while only exact reviewed execution, strict standard verification, and
+activation reach `agent-ready`.
 
 ## Phase 5 — Profiles, Actions, And Guards
 

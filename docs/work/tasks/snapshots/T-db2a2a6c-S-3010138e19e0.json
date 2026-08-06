@@ -1,0 +1,60 @@
+{
+  "snapshotId": "S-3010138e19e0",
+  "taskId": "T-db2a2a6c",
+  "sessionId": "adoption-production-certification-20260805",
+  "actorId": "codex-adoption-production-certification",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/architecture/docs-governance.md",
+      "digest": "30be81d31f12fb233784972a622fda5600c90f1bf209279b287d942249323962"
+    },
+    {
+      "path": "docs/decisions/028-initial-synthesized-repo-understanding-contract.md",
+      "digest": "e5b57c4d0bb916868e2ea4731b9d21427e86c886b6617e9e9884372b476277a0"
+    },
+    {
+      "path": "docs/findings/F-20260629-proof-fixtures-understanding-depth-gap.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/findings/F-20260629-understand-scanner-only-onboarding-gap.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/findings/archive/F-20260629-proof-fixtures-understanding-depth-gap.md",
+      "digest": "3f24360ab517d524d54934159d09158ea17cecc947d314f40ed85fdbda77af76"
+    },
+    {
+      "path": "docs/findings/archive/F-20260629-understand-scanner-only-onboarding-gap.md",
+      "digest": "0f602d7e464e493c8818dba5cc577a9924e88dc135a34e1d82927ef6efed4a5c"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "096058e64661c6c18a5e928fa54ba483e63e49c93e85e06d98ec3847c997be63"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "1f3003242e7fd66e21940ff620aec366488c3cf6f888857ee0523e815cbfd730"
+    },
+    {
+      "path": "packages/cli/src/__tests__/adoption-matrix.test.ts",
+      "digest": "adcdad28364d52774ee6ed8393608f1543df8aa270e185fd062921e078fe8145"
+    },
+    {
+      "path": "packages/runtime/src/application/adoption/adoption.service.ts",
+      "digest": "1c4444e84b8e2e12c0469c239506899aae382308068a125810d8bbc66103d0af"
+    },
+    {
+      "path": "packages/ui/src/platform/console-state/work-selectors.ts",
+      "digest": "253206466d6140674193c2ecd679a2550f0cff06cf3e63d399b3dec4c4e909b3"
+    },
+    {
+      "path": "packages/ui/src/screens/work/execution-screens.tsx",
+      "digest": "daf876bdcd607c2f72b89476c876bae9bc7fb784eb1a3e6a2e81a9667302247e"
+    }
+  ],
+  "digest": "3010138e19e07d48666eb5471a7ac8cdeb23c7b94bed299c3e2eac7b5d59ef84",
+  "createdAt": "2026-08-05T12:47:16.344Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-db2a2a6c-S-3010138e19e0.json"
+}

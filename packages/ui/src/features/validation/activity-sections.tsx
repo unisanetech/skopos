@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Link } from '@tanstack/react-router';
 
-import { Card } from '../../patterns/sections/content-primitives.js';
+import { ContentSection } from '../../patterns/sections/content-primitives.js';
 import {
   EmptyMessage,
   KeyValueList,
@@ -26,34 +26,24 @@ export function ActivityInspectorAside({
 }): React.JSX.Element {
   return (
     <>
-      {postureItems.length > 0 ? (
-        <SidebarCard title="At a glance">
-          <KeyValueList items={postureItems} />
-        </SidebarCard>
-      ) : null}
-      <SidebarCard title="Latest activity">
+      <SidebarCard title="Latest change">
         {latestEntry ? (
           <>
-            <p className="text-[13.5px] leading-6 text-[var(--muted-strong)]">
+            <p className="text-body-medium leading-6 text-on-surface">
               {latestEntry.headline}
             </p>
             {latestEntry.summary ? (
-              <p className="mt-2 text-[13px] leading-6 text-[var(--muted)]">
+              <p className="mt-2 text-body-medium leading-6 text-on-surface-variant">
                 {latestEntry.summary}
               </p>
             ) : null}
             <div className="mt-3">
               <KeyValueList
                 items={[
-                  { label: 'Kind', value: latestEntry.kindLabel },
                   ...(latestEntry.statusLabel
                     ? [{ label: 'Status', value: latestEntry.statusLabel }]
                     : []),
                   { label: 'When', value: formatDateTime(latestEntry.timestamp) },
-                  ...(latestEntry.countLabel
-                    ? [{ label: 'Repeated', value: latestEntry.countLabel }]
-                    : []),
-                  ...(latestEntry.actorId ? [{ label: 'Actor', value: latestEntry.actorId }] : []),
                 ]}
               />
             </div>
@@ -65,6 +55,11 @@ export function ActivityInspectorAside({
           />
         )}
       </SidebarCard>
+      {postureItems.length > 0 ? (
+        <SidebarCard title="Supporting totals" collapsible defaultOpen={false}>
+          <KeyValueList items={postureItems} />
+        </SidebarCard>
+      ) : null}
     </>
   );
 }
@@ -77,29 +72,36 @@ export function ActivityGuidanceCard({
   eventGroupCount: number;
 }): React.JSX.Element {
   return (
-    <Card
-      title="How to use this page"
-      description="Activity shows what Skopos recently recorded, so you can understand why the current state changed."
+    <ContentSection
+      title={latestEntry ? 'The latest project change' : 'No project changes yet'}
+      description={
+        latestEntry?.summary ??
+        'Skopos has not recorded enough activity to explain a recent change.'
+      }
     >
       <div className="grid gap-3 md:grid-cols-3">
         <GuidancePoint
-          label="Latest change"
+          label="What changed"
           text={latestEntry?.headline ?? 'No recent activity has been recorded yet.'}
         />
         <GuidancePoint
-          label="Use when"
-          text="You need to trace when tasks, plans, readiness, evidence, or action state changed."
+          label="Why it matters"
+          text={
+            latestEntry?.statusLabel
+              ? `This work is now ${latestEntry.statusLabel.toLowerCase()}.`
+              : 'This is the newest recorded change to the project story.'
+          }
         />
         <GuidancePoint
           label="Next step"
           text={
             eventGroupCount > 0
-              ? 'Open a linked task or plan when an event needs more context.'
+              ? 'Open the linked Task or Plan when you need the full intent and current next step.'
               : 'Start or refresh Skopos action state to populate activity.'
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -109,37 +111,58 @@ export function ActivityTimelineCard({
   feedGroups: ActivityFeedGroup[];
 }): React.JSX.Element {
   return (
-    <Card
-      title="Recent changes"
-      description="Grouped events from work sessions, plans, readiness checks, and evidence runs."
+    <ContentSection
+      title="Project story"
+      description="Meaningful work changes first, with system events available only when you need to investigate."
     >
       {feedGroups.length > 0 ? (
         <div className="space-y-6">
-          {feedGroups.map((group) => (
-            <section key={group.id}>
-              <p className="skopos-eyebrow mb-2.5">{group.label}</p>
-              <ol className="border-y border-[var(--line)]">
-                {group.entries.map((entry, index) => (
+          {feedGroups.map((group) => {
+            const storyEntries = group.entries.filter((entry) => entry.feedKind !== 'event');
+            const systemEntries = group.entries.filter((entry) => entry.feedKind === 'event');
+
+            return <section key={group.id}>
+              <p className="text-role-eyebrow text-on-surface-variant mb-2.5">{group.label}</p>
+              {storyEntries.length > 0 ? <ol className="border-y border-outline-weak">
+                {storyEntries.map((entry, index) => (
                   <li
                     key={entry.id}
                     className={[
                       'px-0 py-4',
-                      index > 0 ? 'border-t border-[var(--line)]' : '',
+                      index > 0 ? 'border-t border-outline-weak' : '',
                     ]
                       .filter(Boolean)
                       .join(' ')}
                   >
                     <div className="flex items-start justify-between gap-4">
                       <ActivityFeedEntryBody entry={entry} />
-                      <p className="skopos-mono-caption shrink-0 text-right">
+                      <p className="text-body-small text-on-surface-variant shrink-0 text-right">
                         {formatDateTime(entry.timestamp)}
                       </p>
                     </div>
                   </li>
                 ))}
-              </ol>
-            </section>
-          ))}
+              </ol> : null}
+              {systemEntries.length > 0 ? (
+                <details className={storyEntries.length > 0 ? 'mt-3' : undefined}>
+                  <summary className="cursor-pointer text-body-small font-medium text-on-surface-variant">
+                    {systemEntries.length} supporting system event
+                    {systemEntries.length === 1 ? '' : 's'}
+                  </summary>
+                  <ol className="mt-2 border-y border-outline-weak">
+                    {systemEntries.map((entry, index) => (
+                      <li
+                        key={entry.id}
+                        className={index > 0 ? 'border-t border-outline-weak py-3' : 'py-3'}
+                      >
+                        <ActivityFeedEntryBody entry={entry} compact />
+                      </li>
+                    ))}
+                  </ol>
+                </details>
+              ) : null}
+            </section>;
+          })}
         </div>
       ) : (
         <EmptyMessage
@@ -147,7 +170,7 @@ export function ActivityTimelineCard({
           description="No Skopos activity has been recorded yet. Start or claim a task to connect work with history."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -159,11 +182,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>
@@ -172,13 +195,14 @@ function GuidancePoint({
 
 function ActivityFeedEntryBody({
   entry,
+  compact = false,
 }: {
   entry: ActivityFeedEntry;
+  compact?: boolean;
 }): React.JSX.Element {
   const content = (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <StatusPill value={entry.kindLabel} tone="neutral" />
         {entry.statusLabel ? (
           <StatusPill value={entry.statusLabel} tone={entry.statusTone ?? 'neutral'} />
         ) : null}
@@ -186,23 +210,21 @@ function ActivityFeedEntryBody({
           <StatusPill value={entry.countLabel} tone="neutral" />
         ) : null}
       </div>
-      <p className="mt-2 text-[15px] font-medium leading-7 tracking-[-0.01em] text-[var(--muted-strong)]">
+      <p className={`${compact ? 'mt-1 text-body-medium' : 'mt-2 text-title-small leading-7'} font-medium text-on-surface`}>
         {entry.headline}
       </p>
       {entry.summary ? (
-        <p className="mt-1.5 text-[13.5px] leading-6 text-[var(--muted)]">{entry.summary}</p>
+        <p className="mt-1.5 text-body-medium leading-6 text-on-surface-variant">{entry.summary}</p>
       ) : null}
-      {entry.actorId || entry.rangeStart ? (
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
-          {entry.actorId ? (
-            <p className="skopos-mono-caption">{entry.actorId}</p>
-          ) : null}
-          {entry.rangeStart ? (
-            <p className="skopos-mono-caption">
-              {formatTimeRange(entry.rangeStart, entry.timestamp)}
-            </p>
-          ) : null}
-        </div>
+      {entry.actorId || entry.rangeStart || entry.feedKind === 'event' ? (
+        <details className="mt-2 text-body-small text-on-surface-variant">
+          <summary className="cursor-pointer">Technical details</summary>
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono">
+            <span>{entry.kindLabel}</span>
+            {entry.actorId ? <span>{entry.actorId}</span> : null}
+            {entry.rangeStart ? <span>{formatTimeRange(entry.rangeStart, entry.timestamp)}</span> : null}
+          </div>
+        </details>
       ) : null}
     </>
   );

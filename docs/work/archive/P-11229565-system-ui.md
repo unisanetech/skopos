@@ -21,16 +21,16 @@ relatedDocs:
   - P-37fa9180-prototype-roadmap.md
   - P-b4e43e34-prototype-implementation-checklist.md
   - P-b67761d4-human-guidance-and-developer-experience.md
-  - ../../decisions/008-system-ui-routed-app-stack.md
-  - ../../decisions/009-system-ui-app-shell-and-layout-doctrine.md
-  - ../../decisions/010-system-ui-information-hierarchy-and-signal-placement.md
-  - ../../decisions/011-system-ui-navigation-and-knowledge-routing.md
-  - ../../decisions/012-system-ui-dev-loop-and-hot-reload.md
-  - ../../decisions/013-system-ui-shell-refinement-and-scroll-ownership.md
-  - ../../decisions/014-system-ui-component-architecture-and-layout-normalization.md
-  - ../../decisions/015-system-ui-markdown-rendering-and-doc-reader-pipeline.md
-  - ../../decisions/016-system-ui-diagram-and-graph-presentation.md
-  - ../../decisions/017-system-ui-search-and-command-dock.md
+  - ../../scopes/skopos-ui/decisions/008-system-ui-routed-app-stack.md
+  - ../../scopes/skopos-ui/decisions/archive/009-system-ui-app-shell-and-layout-doctrine.md
+  - ../../scopes/skopos-ui/decisions/archive/010-system-ui-information-hierarchy-and-signal-placement.md
+  - ../../scopes/skopos-ui/decisions/archive/011-system-ui-navigation-and-knowledge-routing.md
+  - ../../scopes/skopos-ui/decisions/012-system-ui-dev-loop-and-hot-reload.md
+  - ../../scopes/skopos-ui/decisions/archive/013-system-ui-shell-refinement-and-scroll-ownership.md
+  - ../../scopes/skopos-ui/decisions/archive/014-system-ui-component-architecture-and-layout-normalization.md
+  - ../../scopes/skopos-ui/decisions/015-system-ui-markdown-rendering-and-doc-reader-pipeline.md
+  - ../../scopes/skopos-ui/decisions/016-system-ui-diagram-and-graph-presentation.md
+  - ../../scopes/skopos-ui/decisions/archive/017-system-ui-search-and-command-dock.md
   - ../../decisions/023-supervision-cost-and-workflow-weight-discipline.md
   - ../../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md
   - ../../decisions/030-human-guidance-and-developer-experience-contract.md
@@ -170,8 +170,8 @@ Chosen stack:
 
 Reference decision:
 
-- `../../decisions/008-system-ui-routed-app-stack.md`
-- `../../decisions/009-system-ui-app-shell-and-layout-doctrine.md`
+- `../../scopes/skopos-ui/decisions/008-system-ui-routed-app-stack.md`
+- `../../scopes/skopos-ui/decisions/archive/009-system-ui-app-shell-and-layout-doctrine.md`
 
 ## Product Direction
 

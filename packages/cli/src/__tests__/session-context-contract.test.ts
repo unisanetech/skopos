@@ -116,10 +116,13 @@ describe('session communication contract', () => {
       claude.writes.find((write) => write.path.endsWith('session-start-hook.mjs'))!.path,
       'utf8',
     );
-    const codexScript = await readFile(
+    const [codexScript, claudePreCompactScript] = await Promise.all([readFile(
       codex.writes.find((write) => write.path.endsWith('codex-discussion-adapter.mjs'))!.path,
       'utf8',
-    );
+    ), readFile(
+      claude.writes.find((write) => write.path.endsWith('pre-compact-hook.mjs'))!.path,
+      'utf8',
+    )]);
 
     expect(claudeScript).toContain("'session', 'context'");
     expect(codexScript).toContain("'session', 'context'");
@@ -129,6 +132,9 @@ describe('session communication contract', () => {
     expect(codexScript).toContain("'--session-id', payload.sessionId.trim()");
     expect(claudeScript).not.toContain("['discuss', 'recent'");
     expect(codexScript).not.toContain("['discuss', 'recent'");
+    expect(claudePreCompactScript).toContain("['discuss', 'handoff', 'refresh'");
+    expect(codexScript).toContain("['discuss', 'handoff', 'verify'");
+    expect(codexScript).toContain("['discuss', 'handoff', 'render'");
   });
 
   it('delivers one material adoption question through normal session context', async () => {

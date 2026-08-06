@@ -87,6 +87,9 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
             enforcementRuleIds:
               projectionModel.hosts.find((host) => host.hostId === 'codex')
                 ?.enforcementRuleIds ?? [],
+            freshContinuation:
+              projectionModel.hosts.find((host) => host.hostId === 'codex')
+                ?.freshContinuation,
           }
         : undefined,
       entrypoint: ENTRYPOINT_RELATIVE_PATH,
@@ -109,7 +112,11 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
         },
         preCompact: {
           command: `node ${ENTRYPOINT_RELATIVE_PATH} pre-compact`,
-          output: 'JSON from `skopos discuss handoff --json`.',
+          output: 'JSON from `skopos discuss handoff refresh --json`; failure means no reviewed semantic capsule exists yet.',
+        },
+        continuationReview: {
+          command: `node ${ENTRYPOINT_RELATIVE_PATH} continuation-review`,
+          output: 'Verified host-neutral continuation prompt; this does not create or deliver a Codex task.',
         },
         stop: {
           command: `node ${ENTRYPOINT_RELATIVE_PATH} stop`,
@@ -199,6 +206,16 @@ const { raw, payload } = await readInput();
 const projectDir = resolveProjectDir(payload);
 const messageInput = typeof payload.message === 'string' ? payload.message : raw;
 
+const exactTaskId = () => {
+  const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'codex', '--json']);
+  const context = parseJsonOutput(contextResult);
+  if (contextResult.status !== 0 || typeof context.currentTaskId !== 'string') {
+    process.stderr.write(contextResult.stderr || 'Skopos could not resolve one exact current Task for continuation.\\n');
+    process.exit(1);
+  }
+  return context.currentTaskId;
+};
+
 const buildTurnArgs = (role, sourceEvent) => {
   const args = [
     'discuss',
@@ -240,8 +257,19 @@ switch (eventName) {
     result = runSkopos(projectDir, ['discuss', 'checkpoint', projectDir, '--json']);
     break;
   case 'pre-compact':
-    result = runSkopos(projectDir, ['discuss', 'handoff', projectDir, '--json']);
+    result = runSkopos(projectDir, ['discuss', 'handoff', 'refresh', projectDir, '--task', exactTaskId(), '--json']);
     break;
+  case 'continuation-review': {
+    const taskId = exactTaskId();
+    const verification = runSkopos(projectDir, ['discuss', 'handoff', 'verify', projectDir, '--task', taskId, '--json']);
+    const verified = parseJsonOutput(verification);
+    if (verification.status !== 0 || verified.handoff?.validation?.freshness !== 'current') {
+      process.stdout.write(JSON.stringify({ result: 'fail', stage: 'verify', verification: verified }));
+      process.exit(1);
+    }
+    result = runSkopos(projectDir, ['discuss', 'handoff', 'render', projectDir, '--task', taskId, '--json']);
+    break;
+  }
   case 'stop': {
     if (typeof payload.message === 'string' && payload.message.trim().length > 0) {
       runSkopos(projectDir, buildTurnArgs('assistant', 'stop'), { input: payload.message });
@@ -334,8 +362,11 @@ Use the generated entrypoint at \`${ENTRYPOINT_RELATIVE_PATH}\` from an external
 - \`user-turn\` -> \`skopos discuss append-turn --role user --message-stdin --json\`
 - \`assistant-turn\` -> \`skopos discuss append-turn --role assistant --message-stdin --json\`
 - \`major-state-change\` -> \`skopos discuss checkpoint --json\`
-- \`pre-compact\` -> \`skopos discuss handoff --json\`
+- \`pre-compact\` -> refresh an already agent-authored handoff; it cannot synthesize semantic conversation judgment from a raw transcript
+- \`continuation-review\` -> verify freshness and render one reviewed host-neutral prompt
 - \`stop\` -> load \`skopos session context --json\`, then assess the current Task with \`skopos readiness <task-id> --for close --json\`
 
 The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context. The agent should follow the Task risk and detail selected by Skopos and should not claim completion until close Readiness is ready. Do not replay raw discussion journals into the prompt.
+
+Fresh Codex task creation, initial-prompt injection, origin identification and messaging, and completion reporting require the Codex host task API. The wrapper reports those host capabilities but does not pretend that rendering a prompt delivered it. After explicit user intent, the host must verify and render, create the fresh task in the same project directory, inject the exact prompt, accept the handoff for the receiving Session, and record the real host outcome. If any host call fails, report that stage as failed and retain the reviewed manual-copy prompt.
 `;

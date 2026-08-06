@@ -1,5 +1,8 @@
 import * as React from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
+
+import type { SkoposUiConsoleTaskView } from '../../contracts/skopos-ui-console-state.js';
+import { SegmentedButton } from '../../components/ui/segmented-button.js';
 
 import {
   DiscussionGuidanceCard,
@@ -8,32 +11,32 @@ import {
   TaskDiscussionContextCard,
   TaskDetailInspectorAside,
   TaskFocusCard,
-  TaskFrameCard,
   TaskGuidanceCard,
   TaskLinkedWorkCard,
   TaskActionRecordingCard,
+  TaskContractCard,
   TaskListGuidanceCard,
   TaskListInspectorAside,
   TaskQueueCard,
-  OverviewAdapterSupportCard,
   OverviewInspectorAside,
   OverviewProjectKnowledgeCard,
   OverviewRecentDiscussionCard,
-  OverviewRecentPlansCard,
   OverviewUnderstandingCard,
+  NowGuidanceCard,
 } from '../../features/work/task-sections.js';
 import { DetailPage } from '../../patterns/pages/detail-page.js';
 import { ListPage } from '../../patterns/pages/list-page.js';
 import { PageSectionStack } from '../../patterns/pages/shared.js';
 import { ReviewPage } from '../../patterns/pages/review-page.js';
 import {
-  Card,
+  ContentSection,
   RouteFilterBar,
 } from '../../patterns/sections/content-primitives.js';
 import {
   getExecutionOverviewContext,
   getTaskDetailContext,
   getTaskListContext,
+  requiresAdoptionOrientation,
 } from '../../platform/console-state/work-selectors.js';
 import {
   getTaskDiscussionContext,
@@ -49,41 +52,41 @@ import {
   toneForTaskState,
   toneForReadiness,
 } from '../../support/ui/tone-helpers.js';
-import { filterChipClass } from '../../support/ui/filter-chip.js';
 
 export function ExecutionOverviewView(): React.JSX.Element {
   const state = requireConsoleState();
-  const { activeTasks, warningChecks, proofSummary, recentPlans } =
+  const { activeTasks, focusTasks, warningChecks } =
     getExecutionOverviewContext(state);
   const { latestDiscussionHandoff, recentDiscussionCheckpoints, activeTaskView } =
     getOverviewDiscussionContext(state);
+  const showProjectOrientation =
+    activeTasks.length === 0 ||
+    requiresAdoptionOrientation(state);
 
   return (
     <ReviewPage
-      kicker="Current work"
       title={state.workspaceLabel}
-      description={buildReadinessSentence({
-        readiness: state.readinessReport.readiness,
-        passCount: state.readinessReport.checks.filter((check) => check.status === 'pass').length,
-        warningCount: warningChecks.length,
-        failureCount: state.readinessReport.checks.filter((check) => check.status === 'fail').length,
-      })}
+      description={state.sessionContext?.summary ?? 'Current Project guidance is available.'}
       badges={[
-        <StatusPill
-          key="readiness"
-          value={`confidence ${state.readinessReport.readiness}`}
-          tone={toneForReadiness(state.readinessReport.readiness)}
-        />,
-        <StatusPill
-          key="readiness"
-          value={state.readinessReport.readiness}
-          tone={toneForReadiness(state.readinessReport.readiness)}
-        />,
-        state.proofReport ? (
+        state.sessionContext?.pendingDecision ? (
           <StatusPill
-            key="proof"
-            value={`evidence ${state.proofReport.scorecard.status}`}
-            tone={state.proofReport.scorecard.status === 'pass' ? 'positive' : 'danger'}
+            key="decision"
+            value={state.sessionContext.pendingDecision.blocking ? 'decision required' : 'recommendation'}
+            tone="warning"
+          />
+        ) : null,
+        state.sessionContext?.currentTask ? (
+          <StatusPill
+            key="task"
+            value={`Task ${state.sessionContext.currentTask.state}`}
+            tone={toneForTaskState(state.sessionContext.currentTask.state)}
+          />
+        ) : null,
+        state.sessionContext?.adoption && state.sessionContext.adoption.state !== 'agent-ready' ? (
+          <StatusPill
+            key="adoption"
+            value={`adoption ${state.readinessReport.readiness}`}
+            tone={toneForReadiness(state.readinessReport.readiness)}
           />
         ) : null,
       ]}
@@ -91,71 +94,59 @@ export function ExecutionOverviewView(): React.JSX.Element {
         <OverviewInspectorAside
           activeTaskCount={activeTasks.length}
           attentionLabel={warningChecks.length > 0 ? `${warningChecks.length} checks` : 'clear'}
-          proofPassRate={
-            proofSummary
-              ? `${Math.round(proofSummary.scorecard.weightedPassRate * 100)}%`
-              : 'not run'
+          decisionLabel={
+            state.sessionContext?.pendingDecision
+              ? state.sessionContext.pendingDecision.blocking
+                ? 'required'
+                : 'recommended'
+              : undefined
           }
-          generatedAt={state.generatedAt}
         />
       }
     >
       <PageSectionStack>
-        <OverviewUnderstandingCard understanding={state.understanding} />
-        <OverviewProjectKnowledgeCard memoryView={state.memoryView} />
-        <TaskFocusCard tasks={activeTasks} />
-        <OverviewAdapterSupportCard adapterSupport={state.adapterSupport} />
-        <OverviewRecentDiscussionCard
-          latestDiscussionHandoff={latestDiscussionHandoff}
-          recentDiscussionCheckpoints={recentDiscussionCheckpoints}
-          activeTaskView={activeTaskView}
-        />
-        <Card
-          title="Attention"
-          description="Checks currently asking for human review."
-        >
-          {warningChecks.length > 0 ? (
-            <div className="border-y border-[var(--line)]">
+        <NowGuidanceCard state={state} />
+        <TaskFocusCard tasks={focusTasks} />
+        {showProjectOrientation ? (
+          <>
+            <OverviewUnderstandingCard understanding={state.understanding} />
+            <OverviewProjectKnowledgeCard memoryView={state.memoryView} />
+          </>
+        ) : null}
+        {latestDiscussionHandoff || recentDiscussionCheckpoints.length > 0 ? (
+          <OverviewRecentDiscussionCard
+            latestDiscussionHandoff={latestDiscussionHandoff}
+            recentDiscussionCheckpoints={recentDiscussionCheckpoints}
+            activeTaskView={activeTaskView}
+          />
+        ) : null}
+        {warningChecks.length > 0 ? (
+          <ContentSection
+            title="Attention"
+            description="Checks currently asking for human review."
+          >
+            <div className="border-y border-outline-weak">
               {warningChecks.slice(0, 4).map((check, index) => (
                 <div
                   key={check.id}
-                  className={`py-3.5 ${index > 0 ? 'border-t border-[var(--line)]' : ''}`}
+                  className={`py-3.5 ${index > 0 ? 'border-t border-outline-weak' : ''}`}
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="text-[13px] font-medium tracking-[-0.01em]">{check.id}</p>
+                    <p className="text-body-medium font-medium">{check.id}</p>
                     <StatusPill value={check.status} tone={toneForCheck(check.status)} />
                   </div>
-                  <p className="mt-1.5 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
+                  <p className="mt-1.5 text-body-small text-on-surface-variant">
                     {check.summary}
                   </p>
                 </div>
               ))}
             </div>
-          ) : (
-            <EmptyMessage
-              title="Nothing urgent"
-              description="Readiness checks are currently not surfacing blockers or warning-level attention."
-            />
-          )}
-        </Card>
-        <OverviewRecentPlansCard recentPlans={recentPlans} />
+          </ContentSection>
+        ) : null}
       </PageSectionStack>
     </ReviewPage>
   );
 }
-
-const buildReadinessSentence = ({
-  readiness,
-  passCount,
-  warningCount,
-  failureCount,
-}: {
-  readiness: string;
-  passCount: number;
-  warningCount: number;
-  failureCount: number;
-}): string =>
-  `Readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
 
 export function ExecutionTasksView({
   search,
@@ -163,6 +154,7 @@ export function ExecutionTasksView({
   search: { view: 'open' | 'blocked' | 'claimed' | 'complete' };
 }): React.JSX.Element {
   const state = requireConsoleState();
+  const navigate = useNavigate();
   const {
     openTasks,
     allCompletedTasks,
@@ -177,9 +169,8 @@ export function ExecutionTasksView({
 
   return (
     <ListPage
-      kicker="Tasks"
       title="Tracked work sessions"
-      description="A task is the active container Skopos uses to track work, decisions, progress, and closure evidence."
+      description="Choose the work that needs attention now. Closed work stays nearby without competing with the active queue."
       aside={
         <TaskListInspectorAside
           openCount={openTasks.length}
@@ -191,30 +182,22 @@ export function ExecutionTasksView({
       }
       filters={
         <RouteFilterBar label="Queue view">
-          {([
-            ['open', 'Open'],
-            ['blocked', 'Blocked'],
-            ['claimed', 'Claimed'],
-            ['complete', 'Closed'],
-          ] as const).map(([value, label]) => (
-            <Link
-              key={value}
-              to="/tasks"
-              search={{ view: value }}
-              className={filterChipClass(search.view === value)}
-            >
-              {label}
-            </Link>
-          ))}
+          <SegmentedButton
+            aria-label="Queue view"
+            size="sm"
+            value={search.view}
+            options={[
+              { value: 'open', label: 'Open' },
+              { value: 'blocked', label: 'Blocked' },
+              { value: 'claimed', label: 'Claimed' },
+              { value: 'complete', label: 'Closed' },
+            ]}
+            onValueChange={(view) => void navigate({ to: '/tasks', search: { view } })}
+          />
         </RouteFilterBar>
       }
     >
       <PageSectionStack className="gap-5">
-        <TaskListGuidanceCard
-          openCount={openTasks.length}
-          blockedCount={blockedTaskCount}
-          claimedCount={claimedTaskCount}
-        />
         <TaskQueueCard
           title={primaryTitle}
           description={primaryDescription}
@@ -233,6 +216,11 @@ export function ExecutionTasksView({
             compact
           />
         ) : null}
+        <TaskListGuidanceCard
+          openCount={openTasks.length}
+          blockedCount={blockedTaskCount}
+          claimedCount={claimedTaskCount}
+        />
       </PageSectionStack>
     </ListPage>
   );
@@ -249,7 +237,6 @@ export function ExecutionDiscussionView(): React.JSX.Element {
 
   return (
     <ReviewPage
-      kicker="Discussion"
       title="What did we agree in chat?"
       description="Handoffs and checkpoints that preserve accepted direction, open questions, and resume context."
       badges={[
@@ -313,7 +300,6 @@ export function ExecutionTaskDetailView({
   if (!taskView) {
     return (
       <DetailPage
-        kicker="Task detail"
         title="Task not found"
         description="The requested task is not present in this snapshot."
       >
@@ -329,9 +315,9 @@ export function ExecutionTaskDetailView({
 
   return (
     <DetailPage
-      kicker="Task detail"
       title={task.title}
-      description={task.goal}
+      titleScale="compact"
+      description={getTaskHeaderDescription(task)}
       badges={[
         <StatusPill
           key="state"
@@ -356,15 +342,31 @@ export function ExecutionTaskDetailView({
     >
       <PageSectionStack>
         {guidance ? <TaskGuidanceCard guidance={guidance} /> : null}
-        <TaskActionRecordingCard taskView={taskView} />
-        <TaskFrameCard taskView={taskView} />
+        <TaskChecklistCard taskView={taskView} />
+        <TaskContractCard state={state} taskView={taskView} />
         <TaskDiscussionContextCard
           latestDiscussionHandoff={latestDiscussionHandoff}
           taskCheckpoints={taskCheckpoints}
         />
-        <TaskChecklistCard taskView={taskView} />
         <TaskLinkedWorkCard linkedTaskViews={linkedTaskViews} />
+        <TaskActionRecordingCard taskView={taskView} />
       </PageSectionStack>
     </DetailPage>
   );
 }
+
+const getTaskHeaderDescription = (
+  task: SkoposUiConsoleTaskView['task'],
+): string => {
+  const title = task.title.trim();
+  const goal = task.goal.trim();
+  const summary = task.summary?.trim() ?? '';
+
+  if (goal && goal !== title) {
+    return goal;
+  }
+  if (summary && summary !== title) {
+    return summary;
+  }
+  return `Track progress, decisions, and proof for ${task.id}.`;
+};

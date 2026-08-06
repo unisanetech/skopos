@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-04-17
-lastUpdated: 2026-04-17
+lastUpdated: 2026-08-05
 relatedDocs:
   - ../overview.md
   - ../domains/product/vision.md
@@ -29,6 +29,11 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-05`: Reconciled the original scanner synthesis with canonical adoption.
+  Generated understanding remains useful diagnostic orientation, but cannot establish
+  reviewed project truth or `agent-ready` status. The four-lane adoption matrix now
+  proves that only approved, executed, strictly verified, and activated project Memory
+  can cross that boundary.
 - `2026-04-17`: Added the initial synthesized repo-understanding contract so Skopos brownfield onboarding now has a compact human-meaningful understanding layer above raw bootstrap, scope, symbol, and graph artifacts instead of relying on machine-readable surfaces alone.
 
 ## Context
@@ -62,6 +67,13 @@ Skopos should generate:
 3. one compact implementation-hotspots surface
 
 This understanding layer is now part of the brownfield onboarding contract for messy repos.
+
+It is an assessment and orientation input, not adoption authority. Scanner synthesis
+must identify provenance and uncertainty; an originating coding agent reviews the
+project, resolves or surfaces material contradictions, and authors the bounded semantic
+analysis used by canonical adoption. Until the approved restructuring is executed,
+strictly verified, and explicitly activated, Session, Trust, and UI must not represent
+the project as `agent-ready`.
 
 ## Canonical Rules
 

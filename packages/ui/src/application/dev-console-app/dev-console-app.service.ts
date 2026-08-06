@@ -66,7 +66,7 @@ export const devSkoposUiConsoleApp = async ({
             createWorkspaceFileMiddleware(workspaceRoot),
           );
 
-          viteServer.watcher.add(watchTargets(workspaceRoot));
+          viteServer.watcher.add(resolveSkoposUiDevWatchTargets(workspaceRoot));
 
           const scheduleRefresh = (): void => {
             if (debounceHandle) {
@@ -184,31 +184,12 @@ const resolveDevServerUrl = (
   };
 };
 
-const watchTargets = (workspaceRoot: string): string[] => [
-  resolve(workspaceRoot, 'docs', '**', '*.md'),
-  resolve(workspaceRoot, 'docs', '**', '*.mdx'),
-  resolve(workspaceRoot, 'docs', '**', '*.txt'),
-  resolve(workspaceRoot, 'docs', '**', '*.json'),
-  resolve(workspaceRoot, 'docs', '**', '*.yaml'),
-  resolve(workspaceRoot, 'docs', '**', '*.yml'),
-  resolve(workspaceRoot, '.skopos', 'index', 'bootstrap.json'),
-  resolve(workspaceRoot, '.skopos', 'index', 'diagnosis.json'),
-  resolve(workspaceRoot, '.skopos', 'index', 'memory.json'),
-  resolve(workspaceRoot, '.skopos', 'index', 'scopes.json'),
-  resolve(workspaceRoot, '.skopos', 'index', 'architecture.json'),
-  resolve(workspaceRoot, '.skopos', 'index', 'enforcement.json'),
-  resolve(workspaceRoot, '.skopos', 'evidence', 'proof', 'latest-report.json'),
-  resolve(workspaceRoot, 'docs', 'work', 'plans', '**', '*.md'),
-  resolve(workspaceRoot, '.skopos', 'tasks', 'tasks', '*.json'),
-  resolve(workspaceRoot, '.skopos', 'graph', '*.json'),
-  resolve(workspaceRoot, '.skopos', 'runs', '*.json'),
-  resolve(workspaceRoot, '.skopos', 'runs', 'operations.jsonl'),
+export const resolveSkoposUiDevWatchTargets = (workspaceRoot: string): string[] => [
+  resolve(workspaceRoot, 'docs'),
+  resolve(workspaceRoot, '.skopos'),
   resolve(workspaceRoot, 'AGENTS.md'),
   resolve(workspaceRoot, 'skopos.config.yaml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.yaml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.yml'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.json'),
-  resolve(workspaceRoot, 'tools', 'skopos', 'actions', '**', '*.md'),
+  resolve(workspaceRoot, 'tools', 'skopos', 'actions'),
 ];
 
 const watchIgnoredTargets = (workspaceRoot: string): string[] => [

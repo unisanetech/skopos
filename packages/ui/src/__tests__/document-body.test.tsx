@@ -10,7 +10,7 @@ describe('DocumentBody', () => {
       <DocumentBody
         body={[
           'A paragraph with `inline code` and an [external link](https://example.com).',
-          'Also see [linked doc](./linked-doc.md).',
+          'Also see [this section](#linked-section).',
           '',
           '1. First item',
           '2. Second item',
@@ -25,7 +25,6 @@ describe('DocumentBody', () => {
           '| --- | --- |',
           '| foo | bar |',
         ].join('\n')}
-        resolveHref={(href) => (href === './linked-doc.md' ? '#/docs/linked-doc' : href)}
       />,
     );
 
@@ -38,7 +37,7 @@ describe('DocumentBody', () => {
     expect(markup).toContain('Copy');
     expect(markup).toContain('<table');
     expect(markup).toContain('target="_blank"');
-    expect(markup).toContain('href="#/docs/linked-doc"');
+    expect(markup).toContain('href="#linked-section"');
   });
 
   it('renders fenced mermaid blocks as diagrams instead of generic code shells', () => {

@@ -16,7 +16,7 @@ relatedDocs:
   - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
   - ../scopes/skopos-ui/overview.md
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
-  - 011-system-ui-navigation-and-knowledge-routing.md
+  - ../../scopes/skopos-ui/decisions/archive/011-system-ui-navigation-and-knowledge-routing.md
   - 021-discussion-memory-checkpoints-and-handoff-contract.md
   - 023-supervision-cost-and-workflow-weight-discipline.md
 ---

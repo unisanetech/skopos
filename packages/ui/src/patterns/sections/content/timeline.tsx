@@ -14,13 +14,13 @@ export function OperationTimeline({
   limit: number;
 }): React.JSX.Element {
   return state.activity.operationalEvents.length > 0 ? (
-    <ol className="border-y border-[var(--line)]">
+    <ol className="border-y border-outline-weak">
       {state.activity.operationalEvents.slice(0, limit).map((event, index) => (
         <li
           key={event.id}
           className={cn(
             'px-0 py-3.5',
-            index > 0 ? 'border-t border-[var(--line)]' : undefined,
+            index > 0 ? 'border-t border-outline-weak' : undefined,
           )}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -37,10 +37,10 @@ export function OperationTimeline({
                 }
               />
             </div>
-            <p className="skopos-mono-caption">{formatDateTime(event.timestamp)}</p>
+            <p className="font-mono text-body-small text-on-surface-variant">{formatDateTime(event.timestamp)}</p>
           </div>
-          <p className="skopos-caption mt-1.5">{event.summary}</p>
-          <p className="skopos-mono-caption mt-1">{event.actorId ?? 'no actor recorded'}</p>
+          <p className="text-body-small text-on-surface mt-1.5">{event.summary}</p>
+          <p className="font-mono text-body-small text-on-surface-variant mt-1">{event.actorId ?? 'no actor recorded'}</p>
         </li>
       ))}
     </ol>

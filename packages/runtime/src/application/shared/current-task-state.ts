@@ -1,3 +1,4 @@
+import type { Dirent } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
@@ -31,10 +32,12 @@ export interface SkoposCurrentTaskState {
 export const resolveCurrentTaskState = async ({
   workspaceRoot,
   actorId,
+  taskId,
   taskIdentity,
 }: {
   workspaceRoot: string;
   actorId?: string;
+  taskId?: string;
   taskIdentity?: SkoposTaskIdentity;
 }): Promise<SkoposCurrentTaskState | undefined> => {
   await reconstructTrackedSkoposTasksRuntime({ cwd: workspaceRoot });
@@ -52,6 +55,8 @@ export const resolveCurrentTaskState = async ({
     .filter((task) =>
       taskIdentity
         ? sameTaskIdentity(task.taskIdentity, taskIdentity)
+        : taskId
+          ? isCurrentTask(task) && task.id === taskId
         : actorId
           ? isCurrentTask(task) && task.coordination.claimedBy?.actorId === actorId
           : isCurrentTask(task),
@@ -114,7 +119,7 @@ const loadTaskArtifacts = async (workspaceRoot: string): Promise<SkoposTaskArtif
 };
 
 const findTaskFiles = async (directory: string): Promise<string[]> => {
-  let entries: Awaited<ReturnType<typeof readdir>>;
+  let entries: Dirent[];
   try {
     entries = await readdir(directory, { withFileTypes: true });
   } catch (error) {

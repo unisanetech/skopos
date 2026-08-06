@@ -333,6 +333,7 @@ export const recordSkoposObservationEvidenceRuntime = async ({
     changeScope: task.changeScope,
     currentTaskId: task.id,
     mutationAttributions: await loadTaskMutationAttributions(workspaceRoot),
+    generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
   const sourcePathStates = await captureSkoposTaskPathStates({
     workspaceRoot,

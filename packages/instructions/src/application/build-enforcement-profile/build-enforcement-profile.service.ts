@@ -2,6 +2,7 @@ import type {
   SkoposEnforcementProfileArtifact,
   SkoposEnforcementRule,
   SkoposHostProjectionModel,
+  SkoposHostProjection,
   SkoposToolAdapterLifecycleCoverage,
   SkoposToolAdapterSummary,
   SkoposActionManifest,
@@ -98,7 +99,7 @@ export const buildSkoposEnforcementProfile = ({
     {
       id: 'enforcement.before-context-compact',
       trigger: 'before-context-compact',
-      command: 'skopos discuss handoff <project-root> --json',
+      command: 'skopos discuss handoff refresh <project-root> --task <task-id> --json',
       blocking: false,
       summary: 'Refresh the compact Task handoff before Claude Code compacts Session context.',
     },
@@ -225,6 +226,7 @@ const buildHostProjectionModel = ({
     instructionProjection: 'canonical' | 'mirror' | 'adapter-guide',
     adapterId: string,
     support: 'native' | 'wrapper' | 'manual',
+    freshContinuation: SkoposHostProjection['freshContinuation'],
   ) => {
     const adapter = adapterById.get(adapterId);
     return {
@@ -236,6 +238,7 @@ const buildHostProjectionModel = ({
       generatedFiles: adapter?.generatedFiles ?? [],
       support,
       enforcementRuleIds: ruleIds,
+      freshContinuation,
     };
   };
   const mirroredHost = (
@@ -244,6 +247,7 @@ const buildHostProjectionModel = ({
     mirrorPath: string | undefined,
     adapterId: string,
     support: 'native' | 'wrapper' | 'manual',
+    freshContinuation: SkoposHostProjection['freshContinuation'],
   ) =>
     host(
       hostId,
@@ -252,6 +256,7 @@ const buildHostProjectionModel = ({
       mirrorPath ? 'mirror' : 'adapter-guide',
       adapterId,
       support,
+      freshContinuation,
     );
 
   return {
@@ -267,6 +272,15 @@ const buildHostProjectionModel = ({
         'canonical',
         'codex',
         'wrapper',
+        {
+          createFreshSession: true,
+          injectInitialPrompt: true,
+          identifyOriginSession: true,
+          messageOriginSession: true,
+          detectPreCompaction: true,
+          reportCompletion: true,
+          deliveryMode: 'host-api',
+        },
       ),
       mirroredHost(
         'claude-code',
@@ -274,6 +288,15 @@ const buildHostProjectionModel = ({
         claudeMirrorPath,
         'claude-code',
         'native',
+        {
+          createFreshSession: false,
+          injectInitialPrompt: false,
+          identifyOriginSession: true,
+          messageOriginSession: false,
+          detectPreCompaction: true,
+          reportCompletion: true,
+          deliveryMode: 'interactive-launch',
+        },
       ),
       mirroredHost(
         'cursor',
@@ -281,6 +304,7 @@ const buildHostProjectionModel = ({
         cursorMirrorPath,
         'manual-hosts',
         'manual',
+        manualFreshContinuationCapabilities,
       ),
       mirroredHost(
         'github-copilot',
@@ -288,6 +312,7 @@ const buildHostProjectionModel = ({
         copilotMirrorPath,
         'manual-hosts',
         'manual',
+        manualFreshContinuationCapabilities,
       ),
       host(
         'manual-hosts',
@@ -296,6 +321,7 @@ const buildHostProjectionModel = ({
         'adapter-guide',
         'manual-hosts',
         'manual',
+        manualFreshContinuationCapabilities,
       ),
       ...remainingMirrorPaths.map((instructionPath, index) =>
         host(
@@ -305,10 +331,21 @@ const buildHostProjectionModel = ({
           'mirror',
           'manual-hosts',
           'manual',
+          manualFreshContinuationCapabilities,
         ),
       ),
     ],
   };
+};
+
+const manualFreshContinuationCapabilities: SkoposHostProjection['freshContinuation'] = {
+  createFreshSession: false,
+  injectInitialPrompt: false,
+  identifyOriginSession: false,
+  messageOriginSession: false,
+  detectPreCompaction: false,
+  reportCompletion: false,
+  deliveryMode: 'manual-copy',
 };
 
 export const skoposClaudeCodeGeneratedFiles = [...CLAUDE_CODE_GENERATED_FILES];

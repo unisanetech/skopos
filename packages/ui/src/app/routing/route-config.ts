@@ -3,13 +3,18 @@ export interface RouteMeta {
   description: string;
 }
 
+export interface RouteBreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
 export type TaskListView = 'open' | 'blocked' | 'claimed' | 'complete';
 export type PlanListView = 'current' | 'library' | 'all';
 export type KnowledgeListView = 'entries' | 'reference' | 'all';
 
 const appRouteMeta = {
   overview: {
-    title: 'Current Work',
+    title: 'Now',
     description: 'What is happening now, what needs attention, and the next useful action.',
   },
   tasks: {
@@ -66,7 +71,7 @@ const appRouteMeta = {
 export const navSections = [
   {
     label: 'Now',
-    items: [{ to: '/overview', label: 'Current Work' }],
+    items: [{ to: '/overview', label: 'Now' }],
   },
   {
     label: 'Work',
@@ -74,29 +79,29 @@ export const navSections = [
       { to: '/tasks', label: 'Tasks' },
       { to: '/plans', label: 'Plans' },
       { to: '/discussion', label: 'Discussion' },
-      { to: '/activity', label: 'Activity' },
-    ],
-  },
-  {
-    label: 'Quality',
-    items: [
-      { to: '/readiness', label: 'Readiness' },
-      { to: '/rules', label: 'Rules' },
-      { to: '/proof', label: 'Evidence' },
     ],
   },
   {
     label: 'Knowledge',
     items: [
       { to: '/memory', label: 'Project Knowledge' },
+      { to: '/scopes', label: 'Project Map' },
       { to: '/docs', label: 'Docs' },
       { to: '/decisions', label: 'Decisions' },
       { to: '/findings', label: 'Issues' },
+      { to: '/rules', label: 'Rules' },
     ],
   },
   {
-    label: 'Project',
-    items: [{ to: '/scopes', label: 'Project Map' }],
+    label: 'Readiness',
+    items: [
+      { to: '/readiness', label: 'Readiness' },
+      { to: '/proof', label: 'Evidence' },
+    ],
+  },
+  {
+    label: 'Activity',
+    items: [{ to: '/activity', label: 'Activity' }],
   },
 ] as const;
 
@@ -138,6 +143,62 @@ export const resolveRouteMeta = (pathname: string): RouteMeta => {
     return appRouteMeta.activity;
   }
   return appRouteMeta.overview;
+};
+
+export const resolveRouteBreadcrumbs = (
+  pathname: string,
+  detailTitle?: string,
+): RouteBreadcrumbItem[] => {
+  const routeMeta = resolveRouteMeta(pathname);
+  const family = resolveRouteFamily(pathname);
+  const items: RouteBreadcrumbItem[] = [];
+
+  if (family && family.label !== routeMeta.title) {
+    items.push(family);
+  }
+
+  items.push({
+    label: routeMeta.title,
+    href: detailTitle ? routeFamilyHref(pathname) : undefined,
+  });
+
+  if (detailTitle && detailTitle !== routeMeta.title) {
+    items.push({ label: detailTitle });
+  }
+
+  return items;
+};
+
+const resolveRouteFamily = (pathname: string): RouteBreadcrumbItem | undefined => {
+  if (
+    pathname.startsWith('/tasks') ||
+    pathname.startsWith('/plans') ||
+    pathname.startsWith('/discussion')
+  ) {
+    return { label: 'Work', href: '/tasks' };
+  }
+
+  if (
+    pathname.startsWith('/memory') ||
+    pathname.startsWith('/scopes') ||
+    pathname.startsWith('/docs') ||
+    pathname.startsWith('/decisions') ||
+    pathname.startsWith('/findings') ||
+    pathname.startsWith('/rules')
+  ) {
+    return { label: 'Project knowledge', href: '/memory' };
+  }
+
+  if (pathname.startsWith('/readiness') || pathname.startsWith('/proof')) {
+    return { label: 'Confidence', href: '/readiness' };
+  }
+
+  return undefined;
+};
+
+const routeFamilyHref = (pathname: string): string => {
+  const [family] = pathname.split('/').filter(Boolean);
+  return family ? `/${family}` : '/overview';
 };
 
 export const normalizeTaskListView = (value: unknown): TaskListView => {

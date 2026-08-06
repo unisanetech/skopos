@@ -53,6 +53,16 @@ export type SkoposHostProjectionSupport =
   | 'wrapper'
   | 'manual';
 
+export interface SkoposFreshContinuationCapabilities {
+  createFreshSession: boolean;
+  injectInitialPrompt: boolean;
+  identifyOriginSession: boolean;
+  messageOriginSession: boolean;
+  detectPreCompaction: boolean;
+  reportCompletion: boolean;
+  deliveryMode: 'host-api' | 'interactive-launch' | 'manual-copy';
+}
+
 export interface SkoposHostProjection {
   hostId: string;
   displayName: string;
@@ -62,6 +72,7 @@ export interface SkoposHostProjection {
   generatedFiles: string[];
   support: SkoposHostProjectionSupport;
   enforcementRuleIds: string[];
+  freshContinuation: SkoposFreshContinuationCapabilities;
 }
 
 export interface SkoposHostProjectionModel {

@@ -26,6 +26,7 @@ import {
   assessSkoposTaskReadinessRuntime,
   finishSkoposTaskRuntime,
   recordSkoposObservationEvidenceRuntime,
+  verifySkoposTaskRuntime,
 } from '../../../runtime/src/application/verification/verification.service.js';
 import {
   captureSkoposTaskPathStates,
@@ -286,6 +287,112 @@ describe('tracked Task portability', () => {
     });
     expect(completed.state).toBe('complete');
     expect(completed.steps.every((step) => step.status === 'complete')).toBe(true);
+  });
+
+  it('keeps observation Evidence valid when selected Actions own generated outputs', async () => {
+    const workspaceRoot = await createWorkspace();
+    await Promise.all([
+      mkdir(join(workspaceRoot, 'tools', 'skopos', 'actions'), { recursive: true }),
+      mkdir(join(workspaceRoot, 'tools', 'skopos', 'guards'), { recursive: true }),
+    ]);
+    await Promise.all([
+      writeFile(
+        join(workspaceRoot, 'tools', 'skopos', 'actions', 'fixture-generate.yaml'),
+        [
+          'id: fixture.generate',
+          'title: Generate fixture output',
+          'description: Generate a derived fixture file.',
+          'category: maintenance',
+          'scope: [workspace]',
+          'command: node -e "process.exit(0)"',
+          'cwd: .',
+          'inputs: [src/index.ts]',
+          'outputs: [generated.txt]',
+          'affects: [generated.txt]',
+          'capabilities:',
+          '  process: required',
+          '  network: none',
+          '  browser: none',
+          '  tools: [node]',
+          '  secrets: []',
+          '  services: []',
+          'effects:',
+          '  workspace: declared',
+          '  artifacts: none',
+          '  external: none',
+          'concurrency: exclusive',
+          'workspaceMode: overlay-safe',
+          'safety: mutating',
+          'requiresApproval: false',
+          'whenToUse: Run after changing the fixture source.',
+          'phases: [closure]',
+          'risks: [standard]',
+          'owner: fixture',
+          '',
+        ].join('\n'),
+        'utf8',
+      ),
+      writeFile(
+        join(workspaceRoot, 'tools', 'skopos', 'guards', 'fixture-generate.yaml'),
+        [
+          'id: fixture.generate-required',
+          'title: Fixture source changes require generated output',
+          'description: Keep the derived fixture output current.',
+          'owner: fixture',
+          'scope: [workspace]',
+          'strength: required',
+          'appliesTo:',
+          '  paths: [src/index.ts]',
+          '  phases: [closure]',
+          '  risks: [standard]',
+          'requires:',
+          '  actionIds: [fixture.generate]',
+          '  evidence: source-bound-action',
+          '',
+        ].join('\n'),
+        'utf8',
+      ),
+    ]);
+    await execFileAsync('git', ['add', '.'], { cwd: workspaceRoot });
+    await execFileAsync('git', ['commit', '-m', 'register generated output fixture'], {
+      cwd: workspaceRoot,
+    });
+
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Keep observation proof aligned with generated outputs',
+      actor: 'agent-a',
+      risk: 'standard',
+      acceptanceCriteria: ['The observation covers the complete Task change set.'],
+      ownedPaths: ['src/index.ts'],
+    });
+    expect(started.task.selectedActions).toEqual([
+      expect.objectContaining({
+        id: 'fixture.generate',
+        outputPaths: ['generated.txt'],
+      }),
+    ]);
+    await Promise.all([
+      writeFile(join(workspaceRoot, 'src/index.ts'), 'export const value = 2;\n', 'utf8'),
+      writeFile(join(workspaceRoot, 'generated.txt'), 'generated\n', 'utf8'),
+    ]);
+    await recordSkoposObservationEvidenceRuntime({
+      cwd: workspaceRoot,
+      taskId: started.task.id,
+      requirementId: 'acceptance-1',
+      statement: 'The source and its generated output were reviewed together.',
+      actor: 'agent-a',
+    });
+
+    const verification = await verifySkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: started.task.id,
+    });
+    expect(
+      verification.acceptanceCoverage.find(
+        (entry) => entry.requirementId === 'acceptance-1',
+      ),
+    ).toMatchObject({ status: 'covered' });
   });
 
   it('does not advance an active Task while implementation steps remain unfinished', async () => {

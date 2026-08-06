@@ -6,10 +6,11 @@ import type { SkoposPolicySeverity } from '@skopos/model';
 import type {
   PolicyPackDetail,
   PolicyPackSummary,
+  PolicyRuleDetailContext,
   PolicyViewContext,
 } from '../../platform/console-state/validation-selectors.js';
 import {
-  Card,
+  ContentSection,
   MetricGrid,
   getSkoposListRowClass,
   skoposListSurfaceClass,
@@ -76,7 +77,7 @@ export function RulesInspectorAside({
             renderItem={(taskRisk) => (
               <>
                 <div className="flex items-center justify-between gap-2.5">
-                  <p className="text-[12.5px] font-medium tracking-[-0.01em]">
+                  <p className="text-body-small font-medium">
                     {humanize(taskRisk.risk)}
                   </p>
                   <StatusPill
@@ -84,7 +85,7 @@ export function RulesInspectorAside({
                     tone={context.resolvedPolicy?.defaultTaskRisk === taskRisk.risk ? 'positive' : 'neutral'}
                   />
                 </div>
-                <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+                <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                   {taskRisk.summary}
                 </p>
               </>
@@ -107,7 +108,7 @@ export function RulesGuidanceCard({
   const hasPolicy = Boolean(context.resolvedPolicy);
 
   return (
-    <Card
+    <ContentSection
       title="How to use this page"
       description="Rules explain what Skopos expects agents to follow when they build, refactor, or close work."
     >
@@ -133,7 +134,7 @@ export function RulesGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -145,7 +146,7 @@ export function RulesSummaryCard({
   const counts = context.driftReport?.counts;
 
   return (
-    <Card
+    <ContentSection
       title="Current rule state"
       description="A quick view of the accepted rules, current drift, and local exceptions."
     >
@@ -178,7 +179,7 @@ export function RulesSummaryCard({
           },
         ]}
       />
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -188,7 +189,7 @@ export function AcceptedPacksCard({
   packs: PolicyPackSummary[];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Accepted rule packs"
       description="These packs define the project guidance Skopos expects agents to follow."
     >
@@ -201,15 +202,15 @@ export function AcceptedPacksCard({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-section-title">{pack.displayName}</p>
-                  <p className="skopos-helper-copy mt-1">{pack.summary}</p>
+                  <h3 className="text-title-medium text-on-surface">{pack.displayName}</h3>
+                  <p className="text-body-medium text-on-surface-variant mt-1">{pack.summary}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <StatusPill value={pack.source} tone="info" />
                   <Link
                     to="/rules/packs/$packId"
                     params={{ packId: pack.packId }}
-                    className="rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-3 py-1 text-[11.5px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--accent-soft)]"
+                    className="rounded-full border border-outline-weak bg-surface-container-low px-3 py-1 text-label-small text-on-surface transition-colors hover:bg-primary-container"
                   >
                     Open details
                   </Link>
@@ -229,8 +230,8 @@ export function AcceptedPacksCard({
                 {pack.family ? <SmallFact label="Family" value={pack.family} /> : null}
                 {pack.variant ? <SmallFact label="Variant" value={pack.variant} /> : null}
               </div>
-              <p className="mt-3 text-[12.5px] leading-5 text-[var(--muted-strong)]">
-                <span className="font-semibold text-[var(--ink)]">Why accepted:</span> {pack.reason}
+              <p className="mt-3 text-body-small leading-5 text-on-surface">
+                <span className="font-medium text-on-surface">Why accepted:</span> {pack.reason}
               </p>
             </article>
           ))}
@@ -241,7 +242,7 @@ export function AcceptedPacksCard({
           description="Apply a rule pack before expecting Skopos to guide architecture, stack, or validation choices."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -251,7 +252,7 @@ export function PackDetailsCard({
   packs: PolicyPackDetail[];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Pack details"
       description="Use these details to understand what each pack means and verify whether it matches the real codebase."
     >
@@ -264,8 +265,8 @@ export function PackDetailsCard({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-section-title">{pack.displayName}</p>
-                  <p className="skopos-helper-copy mt-1">{pack.description}</p>
+                  <h3 className="text-title-medium text-on-surface">{pack.displayName}</h3>
+                  <p className="text-body-medium text-on-surface-variant mt-1">{pack.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {pack.family ? <StatusPill value={pack.family} tone="info" /> : null}
@@ -322,7 +323,7 @@ export function PackDetailsCard({
           description="Accepted pack details will appear here after Skopos can read the pack manifests."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -392,11 +393,11 @@ export function PackOverviewCard({
   pack: PolicyPackDetail;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="What this pack means"
       description="A plain-English explanation of when this guidance should shape project work."
     >
-      <p className="text-[13px] leading-6 text-[var(--muted-strong)]">{pack.description}</p>
+      <p className="text-body-medium leading-6 text-on-surface">{pack.description}</p>
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <PackDetailList
           title="Good fit when"
@@ -421,7 +422,7 @@ export function PackOverviewCard({
           empty="No quality bar is recorded for this pack yet."
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -436,26 +437,26 @@ export function PackStructureTreeCard({
   const missingRequiredCount = structureNodes.filter((node) => node.status === 'missing').length;
 
   return (
-    <Card
+    <ContentSection
       title="Structure tree and role mapping"
       description="Skopos treats pack structure as architecture roles, not required folder names."
     >
       {tree ? (
         <div className="grid gap-4">
-          <div className="border-y border-[var(--line)] py-3">
-            <p className="skopos-section-title">{tree.title}</p>
-            <p className="skopos-helper-copy mt-1">{tree.summary}</p>
-            <p className="mt-2 font-mono text-[12px] text-[var(--muted)]">{tree.rootLabel}/</p>
+          <div className="border-y border-outline-weak py-3">
+            <h3 className="text-title-medium text-on-surface">{tree.title}</h3>
+            <p className="text-body-medium text-on-surface-variant mt-1">{tree.summary}</p>
+            <p className="mt-2 font-mono text-body-small text-on-surface-variant">{tree.rootLabel}/</p>
             {pack.roleMappingArtifactPath ? (
-              <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
+              <p className="mt-2 text-body-small leading-5 text-on-surface-variant">
                 Saved local mapping:{' '}
-                <span className="font-mono text-[var(--muted-strong)]">
+                <span className="font-mono text-on-surface">
                   {pack.roleMappingArtifactPath}
                 </span>
               </p>
             ) : null}
           </div>
-          <div className="grid gap-3 rounded-md border border-[var(--line)] bg-[var(--panel-soft)] p-3 md:grid-cols-3">
+          <div className="grid gap-3 rounded-md border border-outline-weak bg-surface-container p-3 md:grid-cols-3">
             <GuidancePoint
               label="Brownfield rule"
               text="A different folder structure is fine when the roles are clear and consistent."
@@ -485,7 +486,7 @@ export function PackStructureTreeCard({
           description="This pack has not recorded role-mapping guidance yet."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -503,13 +504,13 @@ export function PackRoleMappingReviewCard({
   const needsReviewCount = mappings.filter((mapping) => mapping.status === 'needs-review').length;
 
   return (
-    <Card
+    <ContentSection
       title="Saved local role mapping"
       description="This is the project-specific evidence Skopos saved after matching pack roles to real folders."
     >
       {mappings.length > 0 ? (
         <div className="grid gap-4">
-          <div className="grid gap-3 rounded-md border border-[var(--line)] bg-[var(--panel-soft)] p-3 md:grid-cols-3">
+          <div className="grid gap-3 rounded-md border border-outline-weak bg-surface-container p-3 md:grid-cols-3">
             <GuidancePoint
               label="Mapped roles"
               text={`${mappedCount} ${mappedCount === 1 ? 'role has' : 'roles have'} local folder evidence.`}
@@ -549,20 +550,20 @@ export function PackRoleMappingReviewCard({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-mono text-[12.5px] font-semibold text-[var(--ink)]">
+                      <p className="font-mono text-body-small font-medium text-on-surface">
                         {mapping.role}
                       </p>
                       <StatusPill value={mapping.status} tone={roleMappingStatusTone(mapping.status)} />
                       <StatusPill value={mapping.required ? 'required' : 'optional'} tone={mapping.required ? 'warning' : 'neutral'} />
                     </div>
-                    <p className="mt-1 text-[13px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
+                    <p className="mt-1 text-title-small text-on-surface">
                       {mapping.label}
                     </p>
-                    <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted-strong)]">
+                    <p className="mt-1 text-body-small leading-5 text-on-surface">
                       {mapping.reason}
                     </p>
-                    <p className="mt-2 text-[12.5px] leading-5 text-[var(--muted)]">
-                      <span className="font-semibold text-[var(--ink)]">Decision state:</span>{' '}
+                    <p className="mt-2 text-body-small leading-5 text-on-surface-variant">
+                      <span className="font-medium text-on-surface">Decision state:</span>{' '}
                       {roleMappingDecisionCopy(mapping)}
                     </p>
                   </div>
@@ -571,22 +572,22 @@ export function PackRoleMappingReviewCard({
 
                 {mapping.matchedPaths.length > 0 ? (
                   <div className="mt-3">
-                    <p className="skopos-caption-muted">Matched local paths</p>
+                    <p className="text-body-small text-on-surface-variant">Matched local paths</p>
                     <ul className="mt-1 grid gap-1">
                       {mapping.matchedPaths.slice(0, 6).map((path) => (
-                        <li key={path} className="font-mono text-[12px] leading-5 text-[var(--muted-strong)]">
+                        <li key={path} className="font-mono text-body-small leading-5 text-on-surface">
                           {path}
                         </li>
                       ))}
                     </ul>
                     {mapping.matchedPaths.length > 6 ? (
-                      <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+                      <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                         +{mapping.matchedPaths.length - 6} more local paths are saved in the role-mapping artifact.
                       </p>
                     ) : null}
                   </div>
                 ) : (
-                  <p className="mt-3 text-[12.5px] leading-5 text-[var(--muted)]">
+                  <p className="mt-3 text-body-small leading-5 text-on-surface-variant">
                     {mapping.required
                       ? 'Next step: map this required role to the local folder name, or record a decision explaining why the project intentionally does not use it.'
                       : 'Next step: no action needed unless this optional role exists under a different local name.'}
@@ -594,7 +595,7 @@ export function PackRoleMappingReviewCard({
                 )}
 
                 {mapping.matchedAliases.length > 0 ? (
-                  <p className="mt-2 text-[11.5px] leading-5 text-[var(--muted)]">
+                  <p className="mt-2 text-label-small leading-5 text-on-surface-variant">
                     Matched aliases: {mapping.matchedAliases.slice(0, 4).join(', ')}
                     {mapping.matchedAliases.length > 4 ? `, +${mapping.matchedAliases.length - 4} more` : ''}
                   </p>
@@ -611,7 +612,7 @@ export function PackRoleMappingReviewCard({
           description="Run or refresh accepted policy so Skopos can save local folder evidence for this pack."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -631,11 +632,11 @@ function RoleMappingDecisionSummary({
   const attentionCount = needsReviewCount + missingRequiredCount;
 
   return (
-    <section className="rounded-md border border-[var(--line)] bg-[var(--panel)] p-3">
+    <section className="rounded-md border border-outline-weak bg-surface p-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="skopos-section-title">Role mapping decisions</p>
-          <p className="skopos-helper-copy mt-1">
+          <h3 className="text-title-medium text-on-surface">Role mapping decisions</h3>
+          <p className="text-body-medium text-on-surface-variant mt-1">
             Confirmed and ignored rows are saved project decisions. Inferred rows are Skopos suggestions that should be confirmed when they are correct.
           </p>
         </div>
@@ -650,7 +651,7 @@ function RoleMappingDecisionSummary({
         <SmallFact label="Ignored" value={`${ignoredCount} saved`} />
         <SmallFact label="Needs attention" value={`${attentionCount} roles`} />
       </div>
-      <p className="mt-3 text-[12.5px] leading-5 text-[var(--muted)]">
+      <p className="mt-3 text-body-small leading-5 text-on-surface-variant">
         The UI is read-only today. Copy a command below and run it in the project root to update the saved decision file.
       </p>
     </section>
@@ -679,7 +680,7 @@ function RoleMappingCommandHints({
 
   if (mapping.status === 'confirmed') {
     return (
-      <p className="mt-3 text-[12px] leading-5 text-[var(--muted)]">
+      <p className="mt-3 text-body-small leading-5 text-on-surface-variant">
         This role is already confirmed as local project truth. No command is needed unless the structure changed.
       </p>
     );
@@ -687,15 +688,15 @@ function RoleMappingCommandHints({
 
   if (mapping.status === 'ignored') {
     return (
-      <p className="mt-3 text-[12px] leading-5 text-[var(--muted)]">
+      <p className="mt-3 text-body-small leading-5 text-on-surface-variant">
         This role is intentionally ignored for this project. Remove the decision if the structure changes later.
       </p>
     );
   }
 
   return (
-    <div className="mt-3 rounded-md border border-[var(--line)] bg-[var(--panel-soft)] p-3">
-      <p className="skopos-caption-muted">Make this explicit</p>
+    <div className="mt-3 rounded-md border border-outline-weak bg-surface-container p-3">
+      <p className="text-body-small text-on-surface-variant">Make this explicit</p>
       <div className="mt-2 grid gap-2">
         <CommandHint label="Confirm mapping" command={confirmCommand} />
         <CommandHint label="Ignore role" command={ignoreCommand} />
@@ -722,9 +723,9 @@ function CommandHint({
   };
 
   return (
-    <div className="border-t border-[var(--line)] pt-2 first:border-t-0 first:pt-0">
+    <div className="border-t border-outline-weak pt-2 first:border-t-0 first:pt-0">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+        <p className="text-label-small uppercase text-on-surface-variant">
           {label}
         </p>
         <button
@@ -732,13 +733,13 @@ function CommandHint({
           onClick={() => {
             void copyCommand();
           }}
-          className="rounded-full border border-[var(--line)] bg-[var(--panel-strong)] px-2.5 py-1 text-[11px] font-semibold text-[var(--ink)] transition-colors hover:bg-[var(--accent-soft)]"
+          className="rounded-full border border-outline-weak bg-surface-container-low px-2.5 py-1 text-label-small text-on-surface transition-colors hover:bg-primary-container"
           aria-label={`Copy ${label.toLowerCase()} command`}
         >
           {copyStatus === 'copied' ? 'Copied' : copyStatus === 'failed' ? 'Copy failed' : 'Copy'}
         </button>
       </div>
-      <p className="mt-1 break-words font-mono text-[11.5px] leading-5 text-[var(--muted-strong)] [overflow-wrap:anywhere]">
+      <p className="mt-1 break-words font-mono text-label-small leading-5 text-on-surface [overflow-wrap:anywhere]">
         {command}
       </p>
     </div>
@@ -792,7 +793,7 @@ export function PackArchitectureContractCard({
     Boolean(pack.agentPrompts);
 
   return (
-    <Card
+    <ContentSection
       title="Architecture contract"
       description="The pack's YAML-style contract rendered as readable guidance for humans and agents."
     >
@@ -806,17 +807,17 @@ export function PackArchitectureContractCard({
           />
           {pack.dependencyDirection.length > 0 ? (
             <div>
-              <p className="skopos-caption-muted">Dependency direction</p>
-              <div className="mt-2 border-y border-[var(--line)]">
+              <p className="text-body-small text-on-surface-variant">Dependency direction</p>
+              <div className="mt-2 border-y border-outline-weak">
                 {pack.dependencyDirection.map((direction, index) => (
                   <div
                     key={direction.layer}
-                    className={cn('py-2.5', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+                    className={cn('py-2.5', index > 0 ? 'border-t border-outline-weak' : undefined)}
                   >
-                    <p className="font-mono text-[12.5px] font-semibold text-[var(--ink)]">
+                    <p className="font-mono text-body-small font-medium text-on-surface">
                       {direction.layer}
                     </p>
-                    <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted-strong)]">
+                    <p className="mt-1 text-body-small leading-5 text-on-surface">
                       May import: {direction.mayImport.length > 0 ? direction.mayImport.join(', ') : 'nothing'}
                     </p>
                   </div>
@@ -826,17 +827,17 @@ export function PackArchitectureContractCard({
           ) : null}
           {pack.forbiddenImports.length > 0 ? (
             <div>
-              <p className="skopos-caption-muted">Forbidden imports</p>
-              <div className="mt-2 border-y border-[var(--line)]">
+              <p className="text-body-small text-on-surface-variant">Forbidden imports</p>
+              <div className="mt-2 border-y border-outline-weak">
                 {pack.forbiddenImports.map((entry, index) => (
                   <div
                     key={`${entry.from}-${entry.to.join('-')}`}
-                    className={cn('py-2.5', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+                    className={cn('py-2.5', index > 0 ? 'border-t border-outline-weak' : undefined)}
                   >
-                    <p className="font-mono text-[12.5px] font-semibold text-[var(--ink)]">
+                    <p className="font-mono text-body-small font-medium text-on-surface">
                       {entry.from}
                     </p>
-                    <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted-strong)]">
+                    <p className="mt-1 text-body-small leading-5 text-on-surface">
                       Must not import: {entry.to.join(', ')}
                     </p>
                   </div>
@@ -863,7 +864,7 @@ export function PackArchitectureContractCard({
           description="This pack has not recorded layer, dependency, guard, or agent-prompt details yet."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -873,7 +874,7 @@ export function PackGuardStatusCard({
   pack: PolicyPackDetail;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Guard status"
       description="Shows which verification guards Skopos resolved, which need observation Evidence, and which Actions are missing."
     >
@@ -908,8 +909,8 @@ export function PackGuardStatusCard({
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="skopos-section-title">{guard.label}</p>
-                    <p className="skopos-helper-copy mt-1">{guard.summary}</p>
+                    <h3 className="text-title-medium text-on-surface">{guard.label}</h3>
+                    <p className="text-body-medium text-on-surface-variant mt-1">{guard.summary}</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     <StatusPill value={humanize(guard.status)} tone={guardStatusTone(guard)} />
@@ -930,7 +931,7 @@ export function PackGuardStatusCard({
           description="Apply this pack, then refresh Skopos so project Guards can be resolved."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -940,34 +941,31 @@ export function PackRulesCard({
   pack: PolicyPackDetail;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Rules inside this pack"
       description="The active rules this accepted pack contributes to planning, implementation, and closure."
     >
       {pack.rules.length > 0 ? (
         <div className={skoposListSurfaceClass}>
           {pack.rules.map((rule, index) => (
-            <article
+            <Link
               key={rule.id}
-              className={getSkoposListRowClass({ bordered: index > 0, interactive: false })}
+              to="/rules/packs/$packId/rules/$ruleId"
+              params={{ packId: pack.packId, ruleId: rule.id }}
+              className={getSkoposListRowClass({ bordered: index > 0, interactive: true })}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-section-title">{rule.title}</p>
-                  <p className="skopos-helper-copy mt-1">{rule.summary}</p>
+                  <h3 className="text-title-medium text-on-surface">{rule.title}</h3>
+                  <p className="text-body-medium text-on-surface-variant mt-1">{rule.summary}</p>
                 </div>
                 <StatusPill value={rule.severity} tone={severityTone(rule.severity)} />
               </div>
-              {rule.rationale ? (
-                <p className="mt-2 text-[12.5px] leading-5 text-[var(--muted-strong)]">
-                  <span className="font-semibold text-[var(--ink)]">Why:</span> {rule.rationale}
-                </p>
-              ) : null}
-              <div className="mt-3 grid gap-4 xl:grid-cols-2">
-                <PackDetailList title="Examples" items={rule.examples ?? []} empty="No examples recorded." />
-                <PackDetailList title="Avoid" items={rule.antiPatterns ?? []} empty="No anti-patterns recorded." />
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-body-small text-primary">
+                <span>Open complete rule</span>
+                <span aria-hidden="true">→</span>
               </div>
-            </article>
+            </Link>
           ))}
         </div>
       ) : (
@@ -976,7 +974,7 @@ export function PackRulesCard({
           description="This accepted pack is not contributing active rules in the current resolved policy."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -986,15 +984,15 @@ export function ActiveRulesCard({
   context: PolicyViewContext;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Active rules"
       description="The concrete rules agents should consider during planning, implementation, and closure."
     >
       {totalRuleCount(context) > 0 ? (
         <div className="grid gap-5">
-          <RuleGroup title="Must follow" severity="must" rules={context.mustRules} />
-          <RuleGroup title="Should follow" severity="should" rules={context.shouldRules} />
-          <RuleGroup title="Advisory guidance" severity="advisory" rules={context.advisoryRules} />
+          <RuleGroup title="Must follow" severity="must" rules={context.mustRules} context={context} />
+          <RuleGroup title="Should follow" severity="should" rules={context.shouldRules} context={context} />
+          <RuleGroup title="Advisory guidance" severity="advisory" rules={context.advisoryRules} context={context} />
         </div>
       ) : (
         <EmptyMessage
@@ -1002,7 +1000,195 @@ export function ActiveRulesCard({
           description="Accepted packs are required before Skopos can show active project rules."
         />
       )}
-    </Card>
+    </ContentSection>
+  );
+}
+
+export function PolicyRuleInspectorAside({
+  detail,
+}: {
+  detail: PolicyRuleDetailContext;
+}): React.JSX.Element {
+  const openDriftCount = detail.driftFindings.filter((finding) => finding.status === 'open').length;
+
+  return (
+    <>
+      <SidebarCard title="At a glance">
+        <KeyValueList
+          layout="stacked"
+          items={[
+            { label: 'Severity', value: humanize(detail.rule.severity) },
+            { label: 'Rule pack', value: detail.pack.displayName },
+            { label: 'Applies to', value: `${detail.rule.appliesTo.length} areas` },
+            { label: 'Rule checks', value: String(detail.rule.checkIds?.length ?? 0) },
+            { label: 'Open drift', value: String(openDriftCount) },
+            { label: 'Exceptions', value: String(detail.overrides.length) },
+          ]}
+        />
+      </SidebarCard>
+      <SidebarCard title="Source" collapsible defaultOpen={false}>
+        <KeyValueList
+          layout="stacked"
+          items={[
+            { label: 'Rule ID', value: detail.rule.id, monospace: true },
+            { label: 'Pack ID', value: detail.pack.packId, monospace: true },
+            ...(detail.pack.manifestPath
+              ? [{ label: 'Manifest', value: detail.pack.manifestPath, monospace: true }]
+              : []),
+          ]}
+        />
+      </SidebarCard>
+    </>
+  );
+}
+
+export function PolicyRuleMeaningCard({
+  detail,
+}: {
+  detail: PolicyRuleDetailContext;
+}): React.JSX.Element {
+  return (
+    <ContentSection title="What this rule asks" description={detail.rule.summary}>
+      <div className="border-y border-outline-weak py-4">
+        <p className="text-label-small uppercase text-on-surface-variant">
+          Why it matters
+        </p>
+        <p className="mt-1.5 text-body-medium leading-6 text-on-surface">
+          {detail.rule.rationale ??
+            'This accepted rule contributes to the project guidance agents should preserve.'}
+        </p>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        {detail.rule.appliesTo.map((area) => (
+          <StatusPill key={area} value={area} tone="neutral" />
+        ))}
+      </div>
+    </ContentSection>
+  );
+}
+
+export function PolicyRuleExamplesCard({
+  detail,
+}: {
+  detail: PolicyRuleDetailContext;
+}): React.JSX.Element {
+  return (
+    <ContentSection
+      title="What good implementation looks like"
+      description="Concrete examples and warning signs from the accepted policy source."
+    >
+      <div className="grid gap-5 md:grid-cols-2">
+        <RuleExampleList
+          title="Good examples"
+          items={detail.rule.examples ?? []}
+          empty="This rule does not record a concrete example yet."
+        />
+        <RuleExampleList
+          title="Avoid"
+          items={detail.rule.antiPatterns ?? []}
+          empty="This rule does not record an anti-pattern yet."
+        />
+      </div>
+    </ContentSection>
+  );
+}
+
+export function PolicyRuleProjectStatusCard({
+  detail,
+}: {
+  detail: PolicyRuleDetailContext;
+}): React.JSX.Element {
+  const hasRecordedState = detail.driftFindings.length > 0 || detail.overrides.length > 0;
+
+  return (
+    <ContentSection
+      title="Current project status"
+      description="Recorded drift and accepted exceptions for this exact rule. No drift is not the same as independent proof of compliance."
+    >
+      {hasRecordedState ? (
+        <div className={skoposListSurfaceClass}>
+          {detail.driftFindings.map((finding, index) => (
+            <article
+              key={finding.id}
+              className={getSkoposListRowClass({ bordered: index > 0, interactive: false })}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-title-small text-on-surface">{finding.summary}</p>
+                  <p className="mt-1 text-body-small text-on-surface-variant">
+                    {finding.remediation[0] ?? 'Review the recorded Evidence before changing this rule.'}
+                  </p>
+                </div>
+                <StatusPill value={finding.status} tone={finding.status === 'open' ? severityTone(finding.severity) : 'positive'} />
+              </div>
+            </article>
+          ))}
+          {detail.overrides.map((override, index) => (
+            <article
+              key={override.id}
+              className={getSkoposListRowClass({ bordered: detail.driftFindings.length + index > 0, interactive: false })}
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-title-small text-on-surface">Accepted exception</p>
+                  <p className="mt-1 text-body-small text-on-surface-variant">{override.reason}</p>
+                </div>
+                <StatusPill value={override.severity ? `downgrade to ${override.severity}` : 'suppressed'} tone="warning" />
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <EmptyMessage
+          title="No recorded drift or exception"
+          description="Skopos has not recorded a mismatch or local exception for this rule. Use the listed checks and Task Evidence when you need fresh proof."
+        />
+      )}
+    </ContentSection>
+  );
+}
+
+export function PolicyRuleEnforcementCard({
+  detail,
+}: {
+  detail: PolicyRuleDetailContext;
+}): React.JSX.Element {
+  return (
+    <ContentSection
+      title="How Skopos checks it"
+      description="Rule-specific drift checks and the broader Guards contributed by its pack. Pack Guards may protect several rules."
+    >
+      <div className="grid gap-5 md:grid-cols-2">
+        <RuleExampleList
+          title="Rule checks"
+          items={detail.rule.checkIds ?? []}
+          empty="No automated drift check is attached to this rule yet."
+          monospace
+        />
+        <div>
+          <p className="text-label-small uppercase text-on-surface-variant">
+            Pack Guards
+          </p>
+          {detail.packGuards.length > 0 ? (
+            <ul className="mt-2 border-y border-outline-weak">
+              {detail.packGuards.map((guard, index) => (
+                <li key={guard.id} className={index > 0 ? 'border-t border-outline-weak py-3' : 'py-3'}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-body-small font-medium text-on-surface">{guard.label}</p>
+                    <StatusPill value={humanize(guard.status)} tone={guardStatusTone(guard)} />
+                  </div>
+                  <p className="mt-1 text-body-small text-on-surface-variant">{guard.summary}</p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-2 text-body-small text-on-surface-variant">
+              This pack has no resolved project Guards yet.
+            </p>
+          )}
+        </div>
+      </div>
+    </ContentSection>
   );
 }
 
@@ -1017,7 +1203,7 @@ export function RuleDriftCard({
   ];
 
   return (
-    <Card
+    <ContentSection
       title="Rule drift"
       description="Drift means accepted rules and current project state no longer line up."
     >
@@ -1030,8 +1216,8 @@ export function RuleDriftCard({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-section-title">{finding.summary}</p>
-                  <p className="skopos-helper-copy mt-1">
+                  <h3 className="text-title-medium text-on-surface">{finding.summary}</h3>
+                  <p className="text-body-medium text-on-surface-variant mt-1">
                     {finding.sourcePath ?? finding.ruleId ?? finding.packId ?? finding.family}
                   </p>
                 </div>
@@ -1043,7 +1229,7 @@ export function RuleDriftCard({
               {finding.remediation.length > 0 ? (
                 <ul className="mt-3 grid gap-1.5">
                   {finding.remediation.slice(0, 3).map((item) => (
-                    <li key={item} className="text-[12.5px] leading-5 text-[var(--muted-strong)]">
+                    <li key={item} className="text-body-small leading-5 text-on-surface">
                       {item}
                     </li>
                   ))}
@@ -1058,7 +1244,7 @@ export function RuleDriftCard({
           description="Skopos is not reporting accepted-rule drift that needs attention right now."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -1068,7 +1254,7 @@ export function LocalExceptionsCard({
   context: PolicyViewContext;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Local exceptions"
       description="Exceptions explain why a rule finding is suppressed or downgraded for this project."
     >
@@ -1081,8 +1267,8 @@ export function LocalExceptionsCard({
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-section-title">{override.reason}</p>
-                  <p className="skopos-helper-copy mt-1">
+                  <h3 className="text-title-medium text-on-surface">{override.reason}</h3>
+                  <p className="text-body-medium text-on-surface-variant mt-1">
                     {[override.ruleId, override.packId, override.sourcePath].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -1104,7 +1290,7 @@ export function LocalExceptionsCard({
           description="No accepted policy findings are currently suppressed or downgraded."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -1118,43 +1304,43 @@ function StructureTreeNodeView({
   return (
     <div
       className={cn(
-        'border-t border-[var(--line)] py-3',
+        'border-t border-outline-weak py-3',
         depth > 0 ? 'ml-5 pl-4' : undefined,
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="font-mono text-[12.5px] font-semibold text-[var(--ink)]">{node.path}</p>
+            <p className="font-mono text-body-small font-medium text-on-surface">{node.path}</p>
             <StatusPill value={node.status} tone={structureStatusTone(node.status)} />
           </div>
-          <p className="mt-1 text-[13px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
+          <p className="mt-1 text-title-small text-on-surface">
             {node.label}
           </p>
-          <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted-strong)]">
+          <p className="mt-1 text-body-small leading-5 text-on-surface">
             {node.responsibility}
           </p>
         </div>
       </div>
       {node.matchedPaths.length > 0 ? (
         <div className="mt-2">
-          <p className="skopos-caption-muted">Found in this project</p>
+          <p className="text-body-small text-on-surface-variant">Found in this project</p>
           <ul className="mt-1 grid gap-1">
             {node.matchedPaths.slice(0, 6).map((path) => (
-              <li key={path} className="font-mono text-[12px] leading-5 text-[var(--muted-strong)]">
+              <li key={path} className="font-mono text-body-small leading-5 text-on-surface">
                 {path}
               </li>
             ))}
           </ul>
           {node.matchedPatterns.length > 0 ? (
-            <p className="mt-1 text-[11.5px] leading-5 text-[var(--muted)]">
+            <p className="mt-1 text-label-small leading-5 text-on-surface-variant">
               Matched aliases: {node.matchedPatterns.slice(0, 4).join(', ')}
               {node.matchedPatterns.length > 4 ? `, +${node.matchedPatterns.length - 4} more` : ''}
             </p>
           ) : null}
         </div>
       ) : (
-        <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
+        <p className="mt-2 text-body-small leading-5 text-on-surface-variant">
           {node.required
             ? 'Skopos did not find this required role yet. Map the local folder name or record a project decision before changing structure.'
             : 'Optional: this role is useful when the project needs it. Different local names are fine when they are mapped.'}
@@ -1192,11 +1378,11 @@ function CodebaseVerificationPanel({
   );
 
   return (
-    <div className="mt-4 border-y border-[var(--line)] py-3">
+    <div className="mt-4 border-y border-outline-weak py-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="skopos-section-title">Verify against the codebase</p>
-          <p className="skopos-helper-copy mt-1">
+          <h3 className="text-title-medium text-on-surface">Verify against the codebase</h3>
+          <p className="text-body-medium text-on-surface-variant mt-1">
             Check these signs in the actual folder tree, docs, commands, and source code before readinessing the pack blindly.
           </p>
         </div>
@@ -1250,26 +1436,26 @@ function RulePreviewList({
 
   return (
     <div className="mt-4">
-      <p className="skopos-caption-muted">Rules to review inside this pack</p>
+      <p className="text-body-small text-on-surface-variant">Rules to review inside this pack</p>
       <div className="mt-2 grid gap-2">
         {pack.rules.slice(0, 4).map((rule) => (
-          <div key={rule.id} className="border-t border-[var(--line)] pt-2">
+          <div key={rule.id} className="border-t border-outline-weak pt-2">
             <div className="flex flex-wrap items-start justify-between gap-2">
-              <p className="text-[12.5px] font-semibold tracking-[-0.01em] text-[var(--ink)]">
+              <p className="text-label-medium text-on-surface">
                 {rule.title}
               </p>
               <StatusPill value={rule.severity} tone={severityTone(rule.severity)} />
             </div>
-            <p className="mt-1 text-[12.5px] leading-5 text-[var(--muted-strong)]">
+            <p className="mt-1 text-body-small leading-5 text-on-surface">
               {rule.summary}
             </p>
             {rule.examples && rule.examples.length > 0 ? (
-              <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+              <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                 Example: {rule.examples[0]}
               </p>
             ) : null}
             {rule.antiPatterns && rule.antiPatterns.length > 0 ? (
-              <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+              <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                 Avoid: {rule.antiPatterns[0]}
               </p>
             ) : null}
@@ -1277,7 +1463,7 @@ function RulePreviewList({
         ))}
       </div>
       {pack.rules.length > 4 ? (
-        <p className="mt-2 text-[12px] leading-5 text-[var(--muted)]">
+        <p className="mt-2 text-body-small leading-5 text-on-surface-variant">
           {pack.rules.length - 4} more {pack.rules.length - 4 === 1 ? 'rule' : 'rules'} are shown in the Active rules section.
         </p>
       ) : null}
@@ -1296,18 +1482,18 @@ function SignalEvidenceList({
 }): React.JSX.Element {
   return (
     <div>
-      <p className="skopos-caption-muted">{title}</p>
+      <p className="text-body-small text-on-surface-variant">{title}</p>
       {items.length > 0 ? (
         <ul className="mt-2 grid gap-2">
           {items.slice(0, 5).map((item) => (
-            <li key={`${item.signal}-${item.evidence}`} className="text-[12.5px] leading-5 text-[var(--muted-strong)]">
-              <span className="font-semibold text-[var(--ink)]">{item.evidence}</span>
-              <span className="text-[var(--muted)]"> - {item.signal} ({item.confidence})</span>
+            <li key={`${item.signal}-${item.evidence}`} className="text-body-small leading-5 text-on-surface">
+              <span className="font-medium text-on-surface">{item.evidence}</span>
+              <span className="text-on-surface-variant"> - {item.signal} ({item.confidence})</span>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-[12.5px] leading-5 text-[var(--muted)]">{empty}</p>
+        <p className="mt-2 text-body-small leading-5 text-on-surface-variant">{empty}</p>
       )}
     </div>
   );
@@ -1326,14 +1512,14 @@ function PackDetailList({
 }): React.JSX.Element {
   return (
     <div>
-      <p className="skopos-caption-muted">{title}</p>
+      <p className="text-body-small text-on-surface-variant">{title}</p>
       {items.length > 0 ? (
         <ul className="mt-2 grid gap-1.5">
           {items.slice(0, 5).map((item) => (
             <li
               key={item}
               className={cn(
-                'text-[12.5px] leading-5 text-[var(--muted-strong)] [overflow-wrap:anywhere]',
+                'text-body-small leading-5 text-on-surface [overflow-wrap:anywhere]',
                 monospace ? 'font-mono' : undefined,
               )}
             >
@@ -1342,7 +1528,7 @@ function PackDetailList({
           ))}
         </ul>
       ) : (
-        <p className="mt-2 text-[12.5px] leading-5 text-[var(--muted)]">{empty}</p>
+        <p className="mt-2 text-body-small leading-5 text-on-surface-variant">{empty}</p>
       )}
     </div>
   );
@@ -1352,10 +1538,12 @@ function RuleGroup({
   title,
   severity,
   rules,
+  context,
 }: {
   title: string;
   severity: SkoposPolicySeverity;
   rules: PolicyViewContext['mustRules'];
+  context: PolicyViewContext;
 }): React.JSX.Element | null {
   if (rules.length === 0) {
     return null;
@@ -1364,26 +1552,101 @@ function RuleGroup({
   return (
     <section className="grid gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="skopos-section-title">{title}</p>
+        <h3 className="text-title-medium text-on-surface">{title}</h3>
         <StatusPill value={`${rules.length}`} tone={severityTone(severity)} />
       </div>
       <div className={skoposListSurfaceClass}>
         {rules.map((rule, index) => (
-          <article
+          <RuleSummaryLink
             key={rule.id}
-            className={getSkoposListRowClass({ compact: true, bordered: index > 0, interactive: false })}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[13px] font-semibold tracking-[-0.02em]">{rule.title}</p>
-                <p className="skopos-helper-copy mt-1">{rule.summary}</p>
-              </div>
-              <StatusPill value={rule.severity} tone={severityTone(rule.severity)} />
-            </div>
-          </article>
+            rule={rule}
+            packId={context.packDetails.find((pack) =>
+              pack.rules.some((packRule) => packRule.id === rule.id),
+            )?.packId}
+            bordered={index > 0}
+          />
         ))}
       </div>
     </section>
+  );
+}
+
+function RuleSummaryLink({
+  rule,
+  packId,
+  bordered,
+}: {
+  rule: PolicyViewContext['mustRules'][number];
+  packId?: string;
+  bordered: boolean;
+}): React.JSX.Element {
+  const content = (
+    <>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-title-small">{rule.title}</p>
+                <p className="text-body-medium text-on-surface-variant mt-1">{rule.summary}</p>
+              </div>
+              <StatusPill value={rule.severity} tone={severityTone(rule.severity)} />
+            </div>
+            {packId ? (
+              <p className="mt-1.5 text-body-small font-medium text-primary">Open complete rule →</p>
+            ) : null}
+    </>
+  );
+
+  if (!packId) {
+    return (
+      <article className={getSkoposListRowClass({ compact: true, bordered, interactive: false })}>
+        {content}
+      </article>
+    );
+  }
+
+  return (
+    <Link
+      to="/rules/packs/$packId/rules/$ruleId"
+      params={{ packId, ruleId: rule.id }}
+      className={getSkoposListRowClass({ compact: true, bordered, interactive: true })}
+    >
+      {content}
+    </Link>
+  );
+}
+
+function RuleExampleList({
+  title,
+  items,
+  empty,
+  monospace = false,
+}: {
+  title: string;
+  items: string[];
+  empty: string;
+  monospace?: boolean;
+}): React.JSX.Element {
+  return (
+    <div>
+      <p className="text-label-small uppercase text-on-surface-variant">{title}</p>
+      {items.length > 0 ? (
+        <ul className="mt-2 border-y border-outline-weak">
+          {items.map((item, index) => (
+            <li
+              key={item}
+              className={cn(
+                index > 0 ? 'border-t border-outline-weak py-3' : 'py-3',
+                'text-body-small leading-5 text-on-surface',
+                monospace ? 'font-mono' : undefined,
+              )}
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-body-small leading-5 text-on-surface-variant">{empty}</p>
+      )}
+    </div>
   );
 }
 
@@ -1395,11 +1658,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>
@@ -1416,11 +1679,11 @@ function SmallFact({
   monospace?: boolean;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-2">
-      <p className="skopos-caption-muted">{label}</p>
+    <div className="border-t border-outline-weak pt-2">
+      <p className="text-body-small text-on-surface-variant">{label}</p>
       <p
         className={cn(
-          'mt-1 break-words text-[12.5px] leading-5 text-[var(--muted-strong)] [overflow-wrap:anywhere]',
+          'mt-1 break-words text-body-small leading-5 text-on-surface [overflow-wrap:anywhere]',
           monospace ? 'font-mono' : undefined,
         )}
       >

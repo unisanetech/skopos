@@ -1,7 +1,6 @@
 export {
   PlanDecisionPressureCard,
   PlanDetailInspectorAside,
-  PlanFrameCard,
   PlanListCard,
   PlanWorkPlanCard,
   PlansInspectorAside,

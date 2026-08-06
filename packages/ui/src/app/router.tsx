@@ -1,8 +1,7 @@
 import * as React from 'react';
 import {
-  Link,
   Outlet,
-  createHashHistory,
+  createBrowserHistory,
   createRootRoute,
   createRoute,
   createRouter,
@@ -10,28 +9,35 @@ import {
   useRouterState,
 } from '@tanstack/react-router';
 
+import { Card } from '@/components/ui/card';
+import { Icon } from '@/components/ui/icon';
+import { IconButton } from '@/components/ui/icon-button';
+import { PageSection } from '@/components/ui/page-section';
+import { SearchBar } from '@/components/ui/search-bar';
 import {
-  EmptyMessage,
-  StatusPill,
-} from '../patterns/sections/inspector-primitives.js';
-import { SkoposConsoleChromeProvider } from '../patterns/shells/console-chrome.js';
+  Sidebar,
+  SidebarDrawer,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import { TopAppBar } from '@/components/ui/top-app-bar';
+import { Typography } from '@/components/ui/typography';
+import type { NavigationItem } from '@/types/navigation';
+
+import { ProjectSearchDialog } from '../patterns/shells/search-dock.js';
 import {
-  SearchDock,
-  getSkoposSearchShortcutLabel,
-} from '../patterns/shells/search-dock.js';
-import { toneForReadiness } from '../support/ui/tone-helpers.js';
-import { SKOPOS_APP_SHELL_GRID_CLASS } from './layout-tokens.js';
-import {
-  navSections,
   normalizeKnowledgeListView,
   normalizeTaskListView,
   normalizePlanListView,
+  resolveRouteBreadcrumbs,
   resolveRouteMeta,
   type KnowledgeListView,
   type TaskListView,
   type PlanListView,
   type RouteMeta,
 } from './routing/route-config.js';
+import type { RouteBreadcrumbItem } from './routing/route-config.js';
 import {
   ExecutionDiscussionView,
   ExecutionTaskDetailView,
@@ -49,9 +55,10 @@ import {
   PlanDetailView,
   PlansView,
 } from '../screens/knowledge/knowledge-screens.js';
-import { ActivityView, PackDetailView, ProofView, RulesView, ReadinessView } from '../screens/validation/review-screens.js';
+import { ActivityView, PackDetailView, PolicyRuleDetailView, ProofView, RulesView, ReadinessView } from '../screens/validation/review-screens.js';
 import { ScopeDetailView, ScopesView } from '../screens/structure/structure-screens.js';
 import { getSkoposUiConsoleState } from './state.js';
+import { ApplicationLink } from '../support/ui/application-link.js';
 
 const rootRoute = createRootRoute({
   component: RootShell,
@@ -123,6 +130,12 @@ const rulePackDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/rules/packs/$packId',
   component: RulePackDetailRouteView,
+});
+
+const policyRuleDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/rules/packs/$packId/rules/$ruleId',
+  component: PolicyRuleDetailRouteView,
 });
 
 const proofRoute = createRoute({
@@ -208,6 +221,7 @@ const routeTree = rootRoute.addChildren([
   readinessRoute,
   rulesRoute,
   rulePackDetailRoute,
+  policyRuleDetailRoute,
   proofRoute,
   scopesRoute,
   scopeDetailRoute,
@@ -223,7 +237,7 @@ const routeTree = rootRoute.addChildren([
 
 export const router = createRouter({
   routeTree,
-  history: createHashHistory(),
+  history: createBrowserHistory(),
 });
 
 declare module '@tanstack/react-router' {
@@ -238,126 +252,282 @@ function RootShell(): React.JSX.Element {
     select: (routerState) => routerState.location.pathname,
   });
   const routeMeta = resolveRouteMeta(locationPath);
-  const activeTaskCount = state?.tasks.filter(
-    (task) => task.task.state !== 'complete',
-  ).length;
+  const routeBreadcrumbs = resolveRouteBreadcrumbs(
+    locationPath,
+    resolveRouteDetailTitle(locationPath, state),
+  );
   const [searchOpenSignal, setSearchOpenSignal] = React.useState(0);
-  const searchShortcutLabel = React.useMemo(() => getSkoposSearchShortcutLabel(), []);
+  const navigationItems = React.useMemo(() => createNavigationItems(state), [state]);
+  const activeNavigationId = resolveActiveNavigationId(locationPath, navigationItems);
 
   return (
-    <div className="skopos-console min-h-screen bg-[var(--bg)] text-[var(--ink)] xl:h-screen xl:overflow-hidden">
-      <div className={['grid min-h-screen grid-cols-1 xl:h-screen', SKOPOS_APP_SHELL_GRID_CLASS].join(' ')}>
-        <aside className="skopos-scroll overflow-x-hidden border-b border-[var(--line)] bg-[var(--sidebar)] xl:h-screen xl:overflow-y-auto xl:overflow-x-hidden xl:border-b-0 xl:border-r">
-          <div className="skopos-sidebar-shell flex min-h-full flex-col">
-            <div className="skopos-sidebar-brand">
-              <div className="skopos-sidebar-brand-mark">
-                S
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="skopos-sidebar-brand-title">
-                  {state?.workspaceLabel ?? 'Skopos'}
-                </p>
-                <p className="skopos-sidebar-brand-subtitle">project guide</p>
-                <p className="skopos-sidebar-workspace-note">
-                  {state?.uiMode === 'live' ? 'live workspace' : 'snapshot workspace'}
-                </p>
-              </div>
-            </div>
-            <div className="skopos-sidebar-search-slot">
-              <button
-                type="button"
-                className="skopos-sidebar-search-trigger"
-                onClick={() => setSearchOpenSignal((currentValue) => currentValue + 1)}
-              >
-                <span className="skopos-sidebar-search-trigger-copy">
-                  <span className="skopos-sidebar-search-trigger-label">Search or jump</span>
-                  <span className="skopos-sidebar-search-trigger-note">
-                    Exact-first workspace resolver
-                  </span>
-                </span>
-                <span className="skopos-sidebar-search-trigger-shortcut">{searchShortcutLabel}</span>
-              </button>
-            </div>
-            <div className="skopos-sidebar-groups">
-              {navSections.map((section) => (
-                <section key={section.label} className="skopos-sidebar-group">
-                  <p className="skopos-sidebar-group-label">{section.label}</p>
-                  <div className="skopos-sidebar-nav">
-                    {section.items.map((item) => (
-                      <Link
-                        key={item.to}
-                        to={item.to}
-                        activeProps={{
-                          className: 'skopos-sidebar-link-active',
-                        }}
-                        className="skopos-sidebar-link"
-                      >
-                        <p className="skopos-sidebar-link-label">{item.label}</p>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
-            <div className="skopos-sidebar-status-dock">
-              <div className="skopos-sidebar-status-panel">
-                <div className="skopos-sidebar-status-list">
-                  <div className="skopos-sidebar-status-row">
-                    <span className="skopos-sidebar-status-label">Readiness</span>
-                    <StatusPill
-                      value={state?.readinessReport.readiness ?? 'build-needed'}
-                      tone={toneForReadiness(state?.readinessReport.readiness)}
-                      className="skopos-sidebar-status-pill"
-                    />
-                  </div>
-                  <div className="skopos-sidebar-status-row">
-                    <span className="skopos-sidebar-status-label">Confidence</span>
-                    <StatusPill
-                      value={state?.readinessReport.readiness ?? 'unknown'}
-                      tone={toneForReadiness(state?.readinessReport.readiness)}
-                      className="skopos-sidebar-status-pill"
-                    />
-                  </div>
-                  <div className="skopos-sidebar-status-row">
-                    <span className="skopos-sidebar-status-label">Tasks</span>
-                    <span className="skopos-sidebar-status-value">
-                      {activeTaskCount ?? 0} active
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </aside>
-        <div className="min-w-0 bg-[var(--canvas)] xl:flex xl:h-screen xl:min-h-0 xl:flex-col xl:overflow-hidden">
-          <main className="skopos-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden xl:overflow-hidden">
-            <div className="h-full min-h-full w-full pb-4 xl:pb-0">
-              {state ? (
-                <SkoposConsoleChromeProvider
-                  value={{
-                    workspaceLabel: state.workspaceLabel,
-                    routeTitle: routeMeta.title,
-                  }}
-                >
-                  <Outlet />
-                </SkoposConsoleChromeProvider>
-              ) : (
-                <NoStateView />
-              )}
-            </div>
-          </main>
-        </div>
-      </div>
-      {state ? (
-        <SearchDock
-          state={state}
-          currentPath={locationPath}
-          openSignal={searchOpenSignal}
+    <SidebarProvider
+      items={navigationItems}
+      value={activeNavigationId}
+      mode="collapsible-drawer"
+      behavior={{ mobile: 'overlay', tablet: 'inset', desktop: 'inset' }}
+      defaultExpanded
+      persist
+      storageKey="skopos-sidebar"
+      drawerWidth={248}
+      railWidth={80}
+      mobileInsetOffset={0}
+      onItemSelect={(item) => {
+        if (item.href) void router.navigate({ href: item.href });
+      }}
+      renderLink={(item, props) => (
+        <a
+          {...props}
+          href={item.href}
+          onClick={(event) => {
+            props.onClick?.(event);
+            if (event.defaultPrevented || item.external) return;
+            event.preventDefault();
+            if (item.href) void router.navigate({ href: item.href });
+          }}
         />
-      ) : null}
+      )}
+    >
+      <div className="skopos-console h-screen w-screen overflow-hidden bg-surface-container-low text-on-surface">
+        <a
+          href="#skopos-main-content"
+          className="focus:bg-surface focus:text-primary focus:ring-focus-ring sr-only z-[var(--z-modal)] rounded-button px-4 py-2 focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:ring-2"
+        >
+          Skip to project content
+        </a>
+        <Sidebar className="relative h-full overflow-hidden">
+          <SidebarDrawer
+            aria-label="Project navigation"
+            header={<ProjectIdentity state={state} />}
+            collapsedHeader={<ProjectMark />}
+            overlayHeadline="Explore Skopos"
+          />
+          <SidebarInset className="bg-surface-container-low p-0 md:pb-3 md:pr-3">
+            <div className="hidden h-12 shrink-0 items-center px-3 md:flex">
+              <SearchBar
+                aria-label="Search project"
+                placeholder="Search"
+                readOnly
+                size="sm"
+                className="border-outline-weak w-full max-w-xl bg-surface"
+                onClick={() => setSearchOpenSignal((value) => value + 1)}
+                onKeyDown={(event) => {
+                  if (event.key !== 'Enter' && event.key !== ' ') return;
+                  event.preventDefault();
+                  setSearchOpenSignal((value) => value + 1);
+                }}
+              />
+            </div>
+            <section className="flex min-h-0 flex-1 flex-col overflow-hidden border-outline-weak bg-surface md:rounded-md md:border">
+              <TopAppBar
+                variant="small"
+                className="h-14"
+                title={<RouteBreadcrumbs items={routeBreadcrumbs} />}
+                titleVariant="bodyMedium"
+                aria-label={`${routeMeta.title} location`}
+                navigationIcon={<SidebarTrigger aria-label="Toggle project navigation" />}
+                actions={
+                  <>
+                    <IconButton
+                      aria-label="Search"
+                      icon={<Icon symbol="search" />}
+                      variant="standard"
+                      size="sm"
+                      className="md:hidden"
+                      onClick={() => setSearchOpenSignal((value) => value + 1)}
+                    />
+                  </>
+                }
+              />
+              <div
+                id="skopos-main-content"
+                tabIndex={-1}
+                className="skopos-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto"
+              >
+                {state ? <Outlet /> : <NoStateView />}
+              </div>
+            </section>
+          </SidebarInset>
+        </Sidebar>
+        {state ? (
+          <ProjectSearchDialog
+            state={state}
+            currentPath={locationPath}
+            openSignal={searchOpenSignal}
+          />
+        ) : null}
+      </div>
+    </SidebarProvider>
+  );
+}
+
+function RouteBreadcrumbs({
+  items,
+}: {
+  items: RouteBreadcrumbItem[];
+}): React.JSX.Element {
+  return (
+    <span className="flex min-w-0 items-center gap-1.5">
+      {items.map((item, index) => {
+        const current = index === items.length - 1;
+
+        return (
+          <React.Fragment key={`${item.label}-${index}`}>
+            {index > 0 ? <Icon symbol="chevron_right" size="xs" /> : null}
+            {item.href && !current ? (
+              <ApplicationLink
+                href={item.href}
+                className="shrink-0 text-on-surface-variant transition-colors hover:text-on-surface"
+              >
+                {item.label}
+              </ApplicationLink>
+            ) : (
+              <span
+                aria-current={current ? 'page' : undefined}
+                className={current ? 'truncate text-on-surface' : 'shrink-0 text-on-surface-variant'}
+              >
+                {item.label}
+              </span>
+            )}
+          </React.Fragment>
+        );
+      })}
+    </span>
+  );
+}
+
+const resolveRouteDetailTitle = (
+  pathname: string,
+  state: ReturnType<typeof getSkoposUiConsoleState>,
+): string | undefined => {
+  if (!state) return undefined;
+
+  const segments = pathname.split('/').filter(Boolean).map(safeDecodeRouteSegment);
+  const [family, id] = segments;
+  if (!family || !id) return undefined;
+
+  if (family === 'tasks') {
+    return state.tasks.find((candidate) => candidate.task.id === id)?.task.title;
+  }
+  if (family === 'plans') {
+    return state.plans.find((candidate) => candidate.plan.id === id)?.plan.title;
+  }
+  if (family === 'scopes') {
+    return state.scopes.find((candidate) => candidate.scope.id === id)?.scope.title;
+  }
+  if (family === 'docs' || family === 'decisions' || family === 'findings') {
+    return state.documents.find((candidate) => candidate.id === id)?.title;
+  }
+  if (family === 'rules' && segments[1] === 'packs') {
+    const packId = segments[2];
+    const ruleId = segments[3] === 'rules' ? segments[4] : undefined;
+    const pack = state.policyReview?.packManifests.find(
+      (candidate) => candidate.manifest.packId === packId,
+    )?.manifest;
+    if (ruleId) {
+      return pack?.rules.find(
+        (candidate) => candidate.id === ruleId || candidate.id === `${packId}.${ruleId}`,
+      )?.title;
+    }
+    return pack?.displayName;
+  }
+
+  return undefined;
+};
+
+const safeDecodeRouteSegment = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+function ProjectIdentity({
+  state,
+}: {
+  state: ReturnType<typeof getSkoposUiConsoleState>;
+}): React.JSX.Element {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <ProjectMark />
+      <div className="min-w-0 flex-1">
+        <Typography variant="titleSmall" className="truncate">
+          {state?.workspaceLabel ?? 'Skopos'}
+        </Typography>
+        <Typography variant="bodySmall" className="truncate text-on-surface-variant">
+          {state?.uiMode === 'live' ? 'Live project guide' : 'Project snapshot'}
+        </Typography>
+      </div>
     </div>
   );
 }
+
+function ProjectMark(): React.JSX.Element {
+  return (
+    <span className="grid size-10 shrink-0 place-items-center rounded-sm bg-primary-container text-on-primary-container">
+      <Icon symbol="assistant_navigation" />
+    </span>
+  );
+}
+
+const createNavigationItems = (
+  state: ReturnType<typeof getSkoposUiConsoleState>,
+): NavigationItem[] => {
+  const activeTaskCount =
+    state?.tasks.filter(
+      (task) => !['complete', 'cancelled', 'superseded'].includes(task.task.state),
+    ).length ?? 0;
+
+  return [
+    { id: 'overview', label: 'Now', href: '/overview', icon: 'home' },
+    {
+      id: 'work',
+      label: 'Work',
+      icon: 'assignment',
+      badge: activeTaskCount || undefined,
+      items: [
+        { id: 'tasks', label: 'Tasks', href: '/tasks' },
+        { id: 'plans', label: 'Plans', href: '/plans' },
+        { id: 'discussion', label: 'Discussion', href: '/discussion' },
+      ],
+    },
+    {
+      id: 'knowledge',
+      label: 'Project knowledge',
+      icon: 'menu_book',
+      items: [
+        { id: 'memory', label: 'What Skopos knows', href: '/memory' },
+        { id: 'scopes', label: 'Project map', href: '/scopes' },
+        { id: 'docs', label: 'Docs', href: '/docs' },
+        { id: 'decisions', label: 'Decisions', href: '/decisions' },
+        { id: 'findings', label: 'Issues', href: '/findings' },
+        { id: 'rules', label: 'Rules', href: '/rules' },
+      ],
+    },
+    {
+      id: 'confidence',
+      label: 'Confidence',
+      icon: 'verified',
+      items: [
+        { id: 'readiness', label: 'Readiness', href: '/readiness' },
+        { id: 'proof', label: 'Evidence', href: '/proof' },
+      ],
+    },
+    { id: 'activity', label: 'Activity', href: '/activity', icon: 'history' },
+  ];
+};
+
+const resolveActiveNavigationId = (
+  pathname: string,
+  items: NavigationItem[],
+): string | null => {
+  const leaves = items.flatMap((item) => item.items ?? [item]);
+  const match = leaves
+    .filter((item) => item.href && (pathname === item.href || pathname.startsWith(`${item.href}/`)))
+    .sort((left, right) => (right.href?.length ?? 0) - (left.href?.length ?? 0))[0];
+  return match?.id ?? 'overview';
+};
 
 function OverviewView(): React.JSX.Element {
   return <ExecutionOverviewView />;
@@ -386,6 +556,12 @@ function RulePackDetailRouteView(): React.JSX.Element {
   const { packId } = rulePackDetailRoute.useParams();
 
   return <PackDetailView packId={packId} />;
+}
+
+function PolicyRuleDetailRouteView(): React.JSX.Element {
+  const { packId, ruleId } = policyRuleDetailRoute.useParams();
+
+  return <PolicyRuleDetailView packId={packId} ruleId={ruleId} />;
 }
 
 function PlanDetailRouteView(): React.JSX.Element {
@@ -429,14 +605,19 @@ function FindingDetailRouteView(): React.JSX.Element {
 
 function NoStateView(): React.JSX.Element {
   return (
-    <div className="px-2 py-2">
-      <p className="skopos-eyebrow">Routed app foundation</p>
-      <h2 className="skopos-page-title mt-3 max-w-[42rem]">No compiled console state injected</h2>
-      <p className="skopos-helper-copy mt-2 max-w-[42rem]">
-        This routed app is ready for local development, but it needs compiled Skopos UI state to
-        render a real workspace. Run <code>skopos ui build</code> against a workspace to inject the
-        app-ready state payload and emit a pilot-ready console snapshot.
-      </p>
-    </div>
+    <PageSection rhythm="hero" width="standard">
+      <Card variant="low" padding="lg" className="max-w-2xl">
+        <Typography variant="eyebrow" className="text-on-surface-variant">
+          Skopos is ready
+        </Typography>
+        <Typography variant="headlineMedium" className="mt-3">
+          Connect this view to a project
+        </Typography>
+        <Typography variant="bodyLarge" className="mt-3 text-on-surface-variant">
+          Run <code className="font-mono">skopos ui build</code> in a workspace to compile the
+          project state this console needs.
+        </Typography>
+      </Card>
+    </PageSection>
   );
 }

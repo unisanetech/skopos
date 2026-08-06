@@ -64,6 +64,9 @@ export function KnowledgeDocumentDetailInspectorAside({
                   format: document.format,
                   exists: document.exists,
                   sectionCount: outlineEntries.length,
+                  lifecycle: document.lifecycle,
+                  scope: document.scope,
+                  isDecision: document.role === 'decision',
                 })
           }
         />
@@ -85,13 +88,13 @@ export function KnowledgeDocumentDetailInspectorAside({
           collapsible
           defaultOpen={false}
         >
-          <ul className="border-y border-[var(--line)]">
+          <ul className="border-y border-outline-weak">
             {changelogEntries.map((entry, index) => (
               <li
                 key={`${entry}-${index}`}
-                className={cn('py-3.5', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+                className={cn('py-3.5', index > 0 ? 'border-t border-outline-weak' : undefined)}
               >
-                <p className="skopos-helper-copy">{entry}</p>
+                <p className="text-body-medium text-on-surface-variant">{entry}</p>
               </li>
             ))}
           </ul>
@@ -104,17 +107,17 @@ export function KnowledgeDocumentDetailInspectorAside({
           collapsible
           defaultOpen
         >
-          <ul className="border-y border-[var(--line)]">
+          <ul className="border-y border-outline-weak">
             {outlineEntries.map(({ section, domId }, index) => (
               <li
                 key={domId}
-                className={cn('py-2.5', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+                className={cn('py-2.5', index > 0 ? 'border-t border-outline-weak' : undefined)}
               >
                 <button
                   type="button"
                   onClick={() => scrollToDocumentReaderEntry(domId)}
                   className={cn(
-                    'skopos-outline-link w-full text-left transition-colors hover:text-[var(--ink)]',
+                    'skopos-outline-link w-full text-left transition-colors hover:text-on-surface',
                     activeDomId === domId ? 'skopos-outline-link-active' : undefined,
                     section.level <= 1
                       ? 'pl-0'
@@ -123,7 +126,7 @@ export function KnowledgeDocumentDetailInspectorAside({
                         : 'pl-6',
                   )}
                 >
-                  <span className="skopos-caption font-medium tracking-[-0.01em]">
+                  <span className="text-body-small text-on-surface font-medium">
                     {section.title}
                   </span>
                 </button>
@@ -196,17 +199,30 @@ const buildReaderAtAGlanceItems = ({
   format,
   exists,
   sectionCount,
+  lifecycle,
+  scope,
+  isDecision,
 }: {
   updatedAt?: string;
   format: SkoposUiConsoleDocumentView['format'];
   exists: boolean;
   sectionCount: number;
-}): Array<{ label: string; value: string; monospace?: boolean }> => [
-  { label: 'Format', value: format.toUpperCase() },
-  { label: 'Availability', value: exists ? 'Available' : 'Missing' },
-  ...(sectionCount > 0 ? [{ label: 'Reader sections', value: String(sectionCount) }] : []),
-  { label: 'Updated', value: formatDateTime(updatedAt) },
-];
+  lifecycle: SkoposUiConsoleDocumentView['lifecycle'];
+  scope?: string;
+  isDecision: boolean;
+}): Array<{ label: string; value: string; monospace?: boolean }> =>
+  isDecision
+    ? [
+        { label: 'Status', value: lifecycle === 'durable' ? 'Accepted and durable' : lifecycle },
+        ...(scope ? [{ label: 'Affected area', value: scope }] : []),
+        ...(updatedAt ? [{ label: 'Updated', value: formatDateTime(updatedAt) }] : []),
+      ]
+    : [
+        { label: 'Format', value: format.toUpperCase() },
+        { label: 'Availability', value: exists ? 'Available' : 'Missing' },
+        ...(sectionCount > 0 ? [{ label: 'Reader sections', value: String(sectionCount) }] : []),
+        { label: 'Updated', value: formatDateTime(updatedAt) },
+      ];
 
 const buildArtifactAtAGlanceItems = (
   {

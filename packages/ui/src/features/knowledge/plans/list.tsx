@@ -6,7 +6,7 @@ import type {
   SkoposUiConsolePlanView,
 } from '../../../contracts/skopos-ui-console-state.js';
 import {
-  Card,
+  ContentSection,
   getSkoposListRowClass,
   skoposListSurfaceClass,
 } from '../../../patterns/sections/content-primitives.js';
@@ -52,7 +52,7 @@ export function PlanListGuidanceCard({
   libraryCount: number;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="How to use this page"
       description="Plans are saved paths for work that is too large, risky, or important to keep only in chat."
     >
@@ -80,7 +80,7 @@ export function PlanListGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -102,7 +102,7 @@ export function PlanListCard({
   emptyDescription: string;
 }): React.JSX.Element {
   return (
-    <Card title={title} description={description}>
+    <ContentSection title={title} description={description}>
       {plans.length > 0 ? (
         <div className={skoposListSurfaceClass}>
           {plans.map((planView, index) => (
@@ -118,7 +118,7 @@ export function PlanListCard({
       ) : (
         <EmptyMessage title={emptyTitle} description={emptyDescription} />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -130,11 +130,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>
@@ -170,8 +170,8 @@ function PlanListRow({
         <p
           className={cn(
             compact
-              ? 'mt-1.5 text-[13px] font-medium tracking-[-0.02em]'
-              : 'mt-2 text-[14px] font-semibold tracking-[-0.03em]',
+              ? 'mt-1.5 text-body-medium font-medium'
+              : 'mt-2 text-title-small',
           )}
         >
           {planView.plan.title}
@@ -179,18 +179,18 @@ function PlanListRow({
         <p
           className={cn(
             compact
-              ? 'mt-1 text-[12px] leading-[1.45rem] text-[var(--muted)]'
-              : 'mt-1 text-[12.75px] leading-[1.5rem] text-[var(--muted)]',
+              ? 'mt-1 text-body-small text-on-surface-variant'
+              : 'mt-1 text-body-small text-on-surface-variant',
           )}
         >
           {planView.plan.summary}
         </p>
         {linkedTask ? (
-          <p className="mt-2 text-[12.25px] leading-[1.4rem] text-[var(--muted)]">
+          <p className="mt-2 text-body-small text-on-surface-variant">
             Linked task · {linkedTask.task.title}
           </p>
         ) : null}
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.25px] text-[var(--muted)]">
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-body-small text-on-surface-variant">
           <span>
             {planView.plan.implementationSteps.length} implementation step
             {planView.plan.implementationSteps.length === 1 ? '' : 's'}

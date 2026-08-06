@@ -31,6 +31,7 @@ import type {
 } from '@skopos/model';
 import {
   assessSkoposProjectReadinessRuntime,
+  buildSkoposSessionContextRuntime,
   resolveCurrentTaskState,
 } from '@skopos/runtime';
 
@@ -43,6 +44,7 @@ import type {
   SkoposUiConsoleTaskView,
   SkoposUiConsolePlanView,
   SkoposUiConsoleDiscussionCheckpointView,
+  SkoposUiConsoleDocumentView,
   SkoposUiConsolePolicyStructureMatchNode,
   SkoposUiConsoleScopeView,
   SkoposUiConsoleState,
@@ -81,6 +83,7 @@ export const buildSkoposUiConsoleState = async ({
   const [
     activity,
     graphs,
+    sessionContext,
     readinessReport,
     artifactCounts,
     indexArtifact,
@@ -98,6 +101,7 @@ export const buildSkoposUiConsoleState = async ({
     await Promise.all([
       loadSkoposUiActivityViews({ cwd: workspaceRoot }),
       loadSkoposUiGraphViews({ cwd: workspaceRoot }),
+      buildSkoposUiSessionContext(workspaceRoot, selectedActorId),
       assessSkoposProjectReadinessRuntime({ cwd: workspaceRoot }),
       collectArtifactCounts(workspaceRoot),
       loadJsonArtifact<SkoposContentIndexArtifact>(join(workspaceRoot, '.skopos', 'index', 'memory.json')),
@@ -137,7 +141,6 @@ export const buildSkoposUiConsoleState = async ({
   const tasks = activityArtifacts.tasks
     .map((task) => buildTaskView(workspaceRoot, task, planById.get(task.planIds[0] ?? '')))
     .sort((left, right) => sortByTimestamp(left.task.updatedAt, right.task.updatedAt));
-  const scopes = buildScopeViews(scopesArtifact, plans, tasks);
   const docsLinks = await buildDocsLinks({
     workspaceRoot,
     outputDirectory: resolvedOutputDirectory,
@@ -146,6 +149,7 @@ export const buildSkoposUiConsoleState = async ({
     fileHrefBasePath,
   });
   const documents = await buildDocuments(docsLinks);
+  const scopes = buildScopeViews(scopesArtifact, plans, tasks, documents);
 
   const stateWithoutSearch = {
     workspaceRoot,
@@ -154,6 +158,7 @@ export const buildSkoposUiConsoleState = async ({
     outputDirectory: resolvedOutputDirectory,
     generatedAt,
     artifactCounts,
+    sessionContext,
     readinessReport,
     taskQuestions,
     indexArtifact,
@@ -179,6 +184,16 @@ export const buildSkoposUiConsoleState = async ({
     searchIndex: buildSkoposConsoleSearchIndex(stateWithoutSearch),
   };
 };
+
+export const buildSkoposUiSessionContext = (
+  workspaceRoot: string,
+  actorId?: string,
+) =>
+  buildSkoposSessionContextRuntime({
+    cwd: workspaceRoot,
+    actor: actorId,
+    dryRun: true,
+  });
 
 export const resolveSkoposUiCurrentTaskRouting = async (
   workspaceRoot: string,
@@ -613,27 +628,141 @@ const buildTaskView = (
   plan,
 });
 
-const buildScopeViews = (
+export const buildScopeViews = (
   scopesArtifact: SkoposScopesLiteArtifact | undefined,
   plans: SkoposUiConsolePlanView[],
   tasks: SkoposUiConsoleTaskView[],
+  documents: SkoposUiConsoleDocumentView[],
 ): SkoposUiConsoleScopeView[] =>
   (scopesArtifact?.scopes ?? []).map((scope) => {
+    const overviewDocument = documents.find(
+      (document) =>
+        document.scope === scope.id &&
+        document.role === 'overview' &&
+        document.lifecycle !== 'historical',
+    );
+    const relatedDocumentIds = documents
+      .filter(
+        (document) =>
+          document.scope === scope.id &&
+          document.lifecycle !== 'historical' &&
+          document.role !== 'task' &&
+          document.role !== 'plan',
+      )
+      .sort((left, right) => scopeDocumentPriority(left) - scopeDocumentPriority(right))
+      .map((document) => document.id);
     const relatedPlanIds = plans
-      .filter((plan) => plan.plan.scope.scope.id === scope.id)
+      .filter(
+        (plan) =>
+          plan.plan.scope.scope.id === scope.id &&
+          ['active', 'draft'].includes(plan.plan.status),
+      )
       .map((plan) => plan.plan.id);
     const relatedTaskIds = tasks
-      .filter((task) => task.task.scope.scope.id === scope.id)
+      .filter(
+        (task) =>
+          task.task.scope.scope.id === scope.id &&
+          !['complete', 'cancelled', 'superseded'].includes(task.task.state),
+      )
       .map((task) => task.task.id);
+    const dependentScopeIds = (scopesArtifact?.scopes ?? [])
+      .filter((candidate) => candidate.dependsOn?.includes(scope.id))
+      .map((candidate) => candidate.id);
 
     return {
       scope,
+      purpose: toPlainScopeText(overviewDocument?.summary ?? scope.summary),
+      overviewDocumentId: overviewDocument?.id,
+      orientationSections: buildScopeOrientationSections(overviewDocument),
+      relatedDocumentIds,
+      dependentScopeIds,
       relatedPlanIds,
       relatedTaskIds,
       relatedPlanCount: relatedPlanIds.length,
       relatedTaskCount: relatedTaskIds.length,
     };
   });
+
+const scopeDocumentPriority = (document: SkoposUiConsoleDocumentView): number => {
+  switch (document.role) {
+    case 'overview':
+      return 0;
+    case 'architecture':
+      return 1;
+    case 'standard':
+      return 2;
+    case 'guide':
+      return 3;
+    case 'decision':
+      return 4;
+    case 'finding':
+      return 5;
+    default:
+      return 6;
+  }
+};
+
+const buildScopeOrientationSections = (
+  overviewDocument?: SkoposUiConsoleDocumentView,
+): SkoposUiConsoleScopeView['orientationSections'] => {
+  if (!overviewDocument) {
+    return [];
+  }
+
+  return overviewDocument.sections
+    .filter(
+      (section) =>
+        section.kind === 'narrative' &&
+        !['overview', 'changelog'].includes(section.title.trim().toLowerCase()) &&
+        !section.title.trim().toLowerCase().startsWith('scope:'),
+    )
+    .map((section) => ({
+      title: section.title,
+      items: parseScopeSectionItems(section.body),
+    }))
+    .filter((section) => section.items.length > 0)
+    .slice(0, 4);
+};
+
+const parseScopeSectionItems = (body: string): string[] => {
+  const items: string[] = [];
+  let current = '';
+
+  const flush = (): void => {
+    const value = current.trim();
+    if (value) {
+      items.push(value);
+    }
+    current = '';
+  };
+
+  for (const rawLine of body.split('\n')) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('```')) {
+      flush();
+      continue;
+    }
+
+    const listItem = /^(?:[-*+]\s+|\d+[.)]\s+)(.+)$/.exec(line);
+    if (listItem) {
+      flush();
+      current = listItem[1];
+      continue;
+    }
+
+    current = current ? `${current} ${line}` : line;
+  }
+
+  flush();
+  return items.slice(0, 12);
+};
+
+const toPlainScopeText = (value: string): string =>
+  value
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_]{1,2}([^*_]+)[*_]{1,2}/g, '$1')
+    .trim();
 
 const loadDiscussionHandoffView = async (
   artifactPath?: string,
@@ -709,12 +838,7 @@ const collectArtifactCounts = async (workspaceRoot: string): Promise<SkoposUiArt
 });
 
 const countJsonArtifacts = async (directoryPath: string): Promise<number> => {
-  try {
-    const entries = await readdir(directoryPath, { withFileTypes: true });
-    return entries.filter((entry) => entry.isFile() && entry.name.endsWith('.json')).length;
-  } catch {
-    return 0;
-  }
+  return countFiles(directoryPath, '.json');
 };
 
 const countFiles = async (directoryPath: string, extension: string): Promise<number> => {

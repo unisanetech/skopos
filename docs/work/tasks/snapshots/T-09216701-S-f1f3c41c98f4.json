@@ -1,0 +1,20 @@
+{
+  "snapshotId": "S-f1f3c41c98f4",
+  "taskId": "T-09216701",
+  "sessionId": "ui-craft-full-gate-correction-closure",
+  "actorId": "codex-ui-craft-full-gate-correction",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "3ba08fb7cd3b4432e6dae48450e9fabdf0a9efdd89625826f8f3759e8ca26eba"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-ui-craft-efficacy.ts",
+      "digest": "7296d4ef102c7aa35c63d2f2223251282e3406c0f13edf7196e62aa59d466498"
+    }
+  ],
+  "digest": "f1f3c41c98f47471b3f0ed743dbcc3a77a64f93115ab0f79f7296af08f7c695d",
+  "createdAt": "2026-08-05T20:24:13.537Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-09216701-S-f1f3c41c98f4.json"
+}

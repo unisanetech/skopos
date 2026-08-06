@@ -1,16 +1,20 @@
 # Responsive Behavior And Complete States
 
-1. Start with the narrowest useful content container and expand until content requires
-   a layout change; do not choose breakpoints only from named devices.
-2. Adapt information priority, navigation, dense data, and actions instead of merely
-   stacking the desktop layout.
-3. Preserve critical content and recovery actions on narrow screens.
-4. Prove applicable loading, empty, partial, error, permission, success, disabled, and
+1. Start with the narrowest useful container; add breakpoints when content requires
+   change, not only at named devices.
+2. Record what stays, moves, reorders, collapses, becomes an overlay, changes
+   interaction, or needs an alternative.
+3. For a modal drawer or dialog, transfer focus, expose modal semantics, make the
+   background inert, support Escape, and return focus to the trigger.
+4. Adapt information priority, navigation, dense data, and actions instead of shrinking
+   desktop. Preserve critical content and recovery.
+5. Prove applicable loading, empty, partial, error, permission, success, disabled, and
    retry states.
-5. Check keyboard flow, zoom, long content, localization stress, touch targets,
-   horizontal overflow, and reduced motion.
-6. Capture representative narrow, intermediate, and wide states plus the actual
-   content boundary where the layout changes.
+6. Check keyboard flow, zoom, long content, touch targets, reduced motion, overflow,
+   and scroll ownership. Local scrolling must not leave clipped controls or scrollbar
+   residue in the primary view.
+7. Capture narrow, intermediate, and wide states at the actual change boundary.
+8. If a desktop interaction becomes unusable when narrow, provide a supported
+   alternative or state the limitation; never certify a compressed or inert surface.
 
-Automated checks are supporting evidence. A rendered interaction review remains
-necessary for behavior that cannot be proved mechanically.
+Automated checks support but do not replace rendered interaction judgment.

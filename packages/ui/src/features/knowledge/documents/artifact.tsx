@@ -7,7 +7,7 @@ import type {
 } from '../../../contracts/skopos-ui-console-state.js';
 import { HighlightedCodeBlock } from '../../../support/ui/code-highlighting.js';
 import { cn } from '../../../support/ui/classnames.js';
-import { Card } from '../../../patterns/sections/content-primitives.js';
+import { ContentSection } from '../../../patterns/sections/content-primitives.js';
 import { EmptyMessage, StatusPill } from '../../../patterns/sections/inspector-primitives.js';
 
 export function KnowledgeDocumentArtifactCard({
@@ -29,13 +29,13 @@ export function KnowledgeDocumentArtifactCard({
   return (
     <div className="skopos-artifact-canvas">
       {artifactView.sections.map((section) => (
-        <Card
+        <ContentSection
           key={section.id}
           title={section.title}
           description={section.description ?? 'Structured artifact section.'}
         >
           <ArtifactSectionBody section={section} />
-        </Card>
+        </ContentSection>
       ))}
     </div>
   );
@@ -55,13 +55,13 @@ function ArtifactSectionBody({
               key={item.label}
               className={cn(
                 'skopos-artifact-kv-row',
-                index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                index > 0 ? 'border-t border-outline-weak' : undefined,
               )}
             >
               <dt className="skopos-artifact-kv-label">{item.label}</dt>
               <dd
                 className={cn(
-                  item.monospace ? 'skopos-mono-caption' : 'skopos-artifact-kv-value',
+                  item.monospace ? 'font-mono text-body-small text-on-surface-variant' : 'skopos-artifact-kv-value',
                 )}
               >
                 {item.value}
@@ -72,13 +72,13 @@ function ArtifactSectionBody({
       ) : null;
     case 'entries':
       return section.entries && section.entries.length > 0 ? (
-        <ul className="border-y border-[var(--line)]">
+        <ul className="border-y border-outline-weak">
           {section.entries.map((entry, index) => (
             <li
               key={`${section.id}-${entry.title}-${index}`}
               className={cn(
                 'py-3.5',
-                index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                index > 0 ? 'border-t border-outline-weak' : undefined,
               )}
             >
               <ArtifactEntryRow entry={entry} />
@@ -90,7 +90,7 @@ function ArtifactSectionBody({
       return section.listItems && section.listItems.length > 0 ? (
         <ul className="skopos-artifact-list">
           {section.listItems.map((item, index) => (
-            <li key={`${section.id}-${index}`} className="skopos-helper-copy">
+            <li key={`${section.id}-${index}`} className="text-body-medium text-on-surface-variant">
               {item}
             </li>
           ))}
@@ -141,13 +141,13 @@ function ArtifactEntryRow({
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <p className="text-[14px] font-semibold tracking-[-0.02em] text-[var(--ink)]">
+        <p className="text-title-small text-on-surface">
           {entry.title}
         </p>
         {entry.badge ? <StatusPill value={entry.badge} tone={entry.tone ?? 'neutral'} /> : null}
       </div>
-      {entry.summary ? <p className="skopos-helper-copy mt-1.5">{entry.summary}</p> : null}
-      {entry.meta ? <p className="skopos-caption-muted mt-1.5">{entry.meta}</p> : null}
+      {entry.summary ? <p className="text-body-medium text-on-surface-variant mt-1.5">{entry.summary}</p> : null}
+      {entry.meta ? <p className="text-body-small text-on-surface-variant mt-1.5">{entry.meta}</p> : null}
     </div>
   );
 }

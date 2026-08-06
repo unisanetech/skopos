@@ -1,11 +1,10 @@
 import * as React from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 import {
   PlanDecisionPressureCard,
   PlanDetailGuidanceCard,
   PlanDetailInspectorAside,
-  PlanFrameCard,
   PlanListGuidanceCard,
   PlanListCard,
   PlansInspectorAside,
@@ -17,9 +16,9 @@ import { DetailPage } from '../../patterns/pages/detail-page.js';
 import { PageSectionStack } from '../../patterns/pages/shared.js';
 import { RouteFilterBar } from '../../patterns/sections/content-primitives.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
+import { SegmentedButton } from '../../components/ui/segmented-button.js';
 import { getPlanCollections, getPlanDetailContext } from '../../platform/console-state/knowledge-selectors.js';
 import { requireConsoleState } from '../../platform/console-state/access.js';
-import { filterChipClass } from '../../support/ui/filter-chip.js';
 
 export function PlansView({
   search,
@@ -27,6 +26,7 @@ export function PlansView({
   search: { view: 'current' | 'library' | 'all' };
 }): React.JSX.Element {
   const state = requireConsoleState();
+  const navigate = useNavigate();
   const { activePlans, taskLinkedPlans, libraryPlans, latestPlan, linkedTaskByPlanId } =
     getPlanCollections(state);
   const showCurrentPlans = search.view !== 'library';
@@ -34,7 +34,6 @@ export function PlansView({
 
   return (
     <ListPage
-      kicker="Plans"
       title="Plans"
       description="Plans are saved when work is large, risky, or needs a clear path before editing."
       aside={
@@ -47,20 +46,17 @@ export function PlansView({
       }
       filters={
         <RouteFilterBar label="Plan view">
-          {([
-            ['current', 'Current'],
-            ['library', 'Library'],
-            ['all', 'All'],
-          ] as const).map(([value, label]) => (
-            <Link
-              key={value}
-              to="/plans"
-              search={{ view: value }}
-              className={filterChipClass(search.view === value)}
-            >
-              {label}
-            </Link>
-          ))}
+          <SegmentedButton
+            aria-label="Plan view"
+            size="sm"
+            value={search.view}
+            options={[
+              { value: 'current', label: 'Current' },
+              { value: 'library', label: 'Library' },
+              { value: 'all', label: 'All' },
+            ]}
+            onValueChange={(view) => void navigate({ to: '/plans', search: { view } })}
+          />
         </RouteFilterBar>
       }
     >
@@ -101,7 +97,6 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
   if (!planView) {
     return (
       <DetailPage
-        kicker="Plan detail"
         title="Plan not found"
         description="The requested plan is not present in this snapshot."
       >
@@ -115,9 +110,8 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
 
   return (
     <DetailPage
-      kicker="Plan detail"
       title={planView.plan.title}
-      description={planView.plan.summary}
+      description={planView.plan.goal}
       badges={[
         <StatusPill
           key="confidence"
@@ -130,17 +124,18 @@ export function PlanDetailView({ planId }: { planId: string }): React.JSX.Elemen
       ]}
       aside={<PlanDetailInspectorAside planView={planView} relatedTask={relatedTask} />}
     >
-      <PlanDetailGuidanceCard planView={planView} relatedTask={relatedTask} />
-      <PlanActionRecordingCard planView={planView} />
-      <PlanFrameCard planView={planView} />
-      <PlanWorkPlanCard
-        implementationSteps={planView.plan.implementationSteps}
-        nextSteps={planView.plan.nextSteps}
-      />
-      <PlanDecisionPressureCard
-        decisionQuestions={planView.plan.decisionQuestions}
-        risks={planView.plan.risks}
-      />
+      <PageSectionStack>
+        <PlanDetailGuidanceCard planView={planView} relatedTask={relatedTask} />
+        <PlanWorkPlanCard
+          implementationSteps={planView.plan.implementationSteps}
+          nextSteps={planView.plan.nextSteps}
+        />
+        <PlanDecisionPressureCard
+          decisionQuestions={planView.plan.decisionQuestions}
+          risks={planView.plan.risks}
+        />
+        <PlanActionRecordingCard planView={planView} />
+      </PageSectionStack>
     </DetailPage>
   );
 }

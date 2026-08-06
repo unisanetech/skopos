@@ -1,0 +1,1371 @@
+/* Unisane UI local runtime baseline. App overrides belong below this block. */
+@import "tailwindcss";
+@source "../**/*.{ts,tsx,mdx}";
+
+/* unisane:theme:start */
+/* Generated theme: Neutral. Replace this managed region with the CLI. */
+:root {
+  --color-primary: #48758b;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #deeef7;
+  --color-on-primary-container: #011e2a;
+  --color-secondary: #61717d;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #e6ecf1;
+  --color-on-secondary-container: #131c23;
+  --color-tertiary: #6e6b86;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #ebeaf5;
+  --color-on-tertiary-container: #1a1827;
+  --color-surface: #ffffff;
+  --color-on-surface: #181b1d;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f8f9;
+  --color-surface-container: #f2f4f5;
+  --color-surface-container-high: #eef0f1;
+  --color-surface-container-highest: #e9ebed;
+  --color-surface-variant: #e8eced;
+  --color-on-surface-variant: #4c5458;
+  --color-background: #ffffff;
+  --color-on-background: #181b1d;
+  --color-outline: #a4acb0;
+  --color-outline-variant: #bec5c9;
+  --color-control-outline: #889195;
+  --color-error: #b04945;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffe0db;
+  --color-on-error-container: #3c0002;
+  --color-success: #318238;
+  --color-on-success: #ffffff;
+  --color-success-container: #d8f4d8;
+  --color-on-success-container: #002400;
+  --color-warning: #8e6800;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #f8eacc;
+  --color-on-warning-container: #2c1500;
+  --color-info: #2274af;
+  --color-on-info: #ffffff;
+  --color-info-container: #d5efff;
+  --color-on-info-container: #001b3e;
+  --color-inverse-surface: #323638;
+  --color-inverse-on-surface: #f4f5f6;
+  --color-inverse-primary: #c2dce9;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --color-primary: #c2dce9;
+    --color-on-primary: #153a4b;
+    --color-primary-container: #2e586c;
+    --color-on-primary-container: #deeef7;
+    --color-secondary: #cfd9e1;
+    --color-on-secondary: #2b3740;
+    --color-secondary-container: #465560;
+    --color-on-secondary-container: #e6ecf1;
+    --color-tertiary: #d7d5e6;
+    --color-on-tertiary: #353247;
+    --color-tertiary-container: #524f67;
+    --color-on-tertiary-container: #ebeaf5;
+    --color-surface: #0d1011;
+    --color-on-surface: #e9ebed;
+    --color-surface-container-lowest: #0d1011;
+    --color-surface-container-low: #181b1d;
+    --color-surface-container: #2b2e30;
+    --color-surface-container-high: #3a3e40;
+    --color-surface-container-highest: #3f4345;
+    --color-surface-variant: #4c5458;
+    --color-on-surface-variant: #d3d8db;
+    --color-background: #0d1011;
+    --color-on-background: #e9ebed;
+    --color-outline: #889195;
+    --color-outline-variant: #687074;
+    --color-control-outline: #687074;
+    --color-error: #ffc5bf;
+    --color-on-error: #641214;
+    --color-error-container: #8c2e2c;
+    --color-on-error-container: #ffe0db;
+    --color-success: #bae5ba;
+    --color-on-success: #004303;
+    --color-success-container: #12641e;
+    --color-on-success-container: #d8f4d8;
+    --color-warning: #ecd5a6;
+    --color-on-warning: #4d2f00;
+    --color-warning-container: #6f4b00;
+    --color-on-warning-container: #f8eacc;
+    --color-info: #b4ddff;
+    --color-on-info: #003865;
+    --color-info-container: #00578c;
+    --color-on-info-container: #d5efff;
+    --color-inverse-surface: #e9ebed;
+    --color-inverse-on-surface: #323638;
+    --color-inverse-primary: #48758b;
+  }
+}
+
+.dark {
+  --color-primary: #c2dce9;
+  --color-on-primary: #153a4b;
+  --color-primary-container: #2e586c;
+  --color-on-primary-container: #deeef7;
+  --color-secondary: #cfd9e1;
+  --color-on-secondary: #2b3740;
+  --color-secondary-container: #465560;
+  --color-on-secondary-container: #e6ecf1;
+  --color-tertiary: #d7d5e6;
+  --color-on-tertiary: #353247;
+  --color-tertiary-container: #524f67;
+  --color-on-tertiary-container: #ebeaf5;
+  --color-surface: #0d1011;
+  --color-on-surface: #e9ebed;
+  --color-surface-container-lowest: #0d1011;
+  --color-surface-container-low: #181b1d;
+  --color-surface-container: #2b2e30;
+  --color-surface-container-high: #3a3e40;
+  --color-surface-container-highest: #3f4345;
+  --color-surface-variant: #4c5458;
+  --color-on-surface-variant: #d3d8db;
+  --color-background: #0d1011;
+  --color-on-background: #e9ebed;
+  --color-outline: #889195;
+  --color-outline-variant: #687074;
+  --color-control-outline: #687074;
+  --color-error: #ffc5bf;
+  --color-on-error: #641214;
+  --color-error-container: #8c2e2c;
+  --color-on-error-container: #ffe0db;
+  --color-success: #bae5ba;
+  --color-on-success: #004303;
+  --color-success-container: #12641e;
+  --color-on-success-container: #d8f4d8;
+  --color-warning: #ecd5a6;
+  --color-on-warning: #4d2f00;
+  --color-warning-container: #6f4b00;
+  --color-on-warning-container: #f8eacc;
+  --color-info: #b4ddff;
+  --color-on-info: #003865;
+  --color-info-container: #00578c;
+  --color-on-info-container: #d5efff;
+  --color-inverse-surface: #e9ebed;
+  --color-inverse-on-surface: #323638;
+  --color-inverse-primary: #48758b;
+}
+
+[data-contrast="medium"] {
+  --color-primary: #2e586c;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ebf7fd;
+  --color-on-primary-container: #011e2a;
+  --color-secondary: #465560;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #f1f6f9;
+  --color-on-secondary-container: #131c23;
+  --color-tertiary: #524f67;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #f5f4fc;
+  --color-on-tertiary-container: #1a1827;
+  --color-surface: #ffffff;
+  --color-on-surface: #181b1d;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f8f9;
+  --color-surface-container: #f2f4f5;
+  --color-surface-container-high: #eef0f1;
+  --color-surface-container-highest: #e9ebed;
+  --color-surface-variant: #eef1f2;
+  --color-on-surface-variant: #3d4447;
+  --color-background: #ffffff;
+  --color-on-background: #181b1d;
+  --color-outline: #4c5458;
+  --color-outline-variant: #687074;
+  --color-control-outline: #889195;
+  --color-error: #b04945;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffe0db;
+  --color-on-error-container: #3c0002;
+  --color-success: #12641e;
+  --color-on-success: #ffffff;
+  --color-success-container: #e8fce8;
+  --color-on-success-container: #002400;
+  --color-warning: #6f4b00;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #fef4df;
+  --color-on-warning-container: #2c1500;
+  --color-info: #00578c;
+  --color-on-info: #ffffff;
+  --color-info-container: #e5f8ff;
+  --color-on-info-container: #001b3e;
+  --color-inverse-surface: #323638;
+  --color-inverse-on-surface: #f4f5f6;
+  --color-inverse-primary: #c2dce9;
+}
+
+.dark[data-contrast="medium"],
+[data-contrast="medium"].dark {
+  --color-primary: #c2dce9;
+  --color-on-primary: #153a4b;
+  --color-primary-container: #2e586c;
+  --color-on-primary-container: #ebf7fd;
+  --color-secondary: #cfd9e1;
+  --color-on-secondary: #2b3740;
+  --color-secondary-container: #465560;
+  --color-on-secondary-container: #f1f6f9;
+  --color-tertiary: #d7d5e6;
+  --color-on-tertiary: #353247;
+  --color-tertiary-container: #524f67;
+  --color-on-tertiary-container: #f5f4fc;
+  --color-surface: #0d1011;
+  --color-on-surface: #f4f5f6;
+  --color-surface-container-lowest: #0d1011;
+  --color-surface-container-low: #181b1d;
+  --color-surface-container: #2b2e30;
+  --color-surface-container-high: #3a3e40;
+  --color-surface-container-highest: #3f4345;
+  --color-surface-variant: #3d4447;
+  --color-on-surface-variant: #e8eced;
+  --color-background: #0d1011;
+  --color-on-background: #e9ebed;
+  --color-outline: #a4acb0;
+  --color-outline-variant: #889195;
+  --color-control-outline: #889195;
+  --color-error: #ffc5bf;
+  --color-on-error: #641214;
+  --color-error-container: #8c2e2c;
+  --color-on-error-container: #ffe0db;
+  --color-success: #bae5ba;
+  --color-on-success: #004303;
+  --color-success-container: #12641e;
+  --color-on-success-container: #d8f4d8;
+  --color-warning: #ecd5a6;
+  --color-on-warning: #4d2f00;
+  --color-warning-container: #6f4b00;
+  --color-on-warning-container: #f8eacc;
+  --color-info: #b4ddff;
+  --color-on-info: #003865;
+  --color-info-container: #00578c;
+  --color-on-info-container: #d5efff;
+  --color-inverse-surface: #e9ebed;
+  --color-inverse-on-surface: #323638;
+  --color-inverse-primary: #48758b;
+}
+
+[data-contrast="high"] {
+  --color-primary: #153a4b;
+  --color-on-primary: #ffffff;
+  --color-primary-container: #ebf7fd;
+  --color-on-primary-container: #000000;
+  --color-secondary: #2b3740;
+  --color-on-secondary: #ffffff;
+  --color-secondary-container: #f1f6f9;
+  --color-on-secondary-container: #000000;
+  --color-tertiary: #353247;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-container: #f5f4fc;
+  --color-on-tertiary-container: #000000;
+  --color-surface: #ffffff;
+  --color-on-surface: #000000;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f8f9;
+  --color-surface-container: #f2f4f5;
+  --color-surface-container-high: #eef0f1;
+  --color-surface-container-highest: #e9ebed;
+  --color-surface-variant: #f3f5f7;
+  --color-on-surface-variant: #30363a;
+  --color-background: #ffffff;
+  --color-on-background: #000000;
+  --color-outline: #30363a;
+  --color-outline-variant: #687074;
+  --color-control-outline: #687074;
+  --color-error: #641214;
+  --color-on-error: #ffffff;
+  --color-error-container: #ffe0db;
+  --color-on-error-container: #3c0002;
+  --color-success: #004303;
+  --color-on-success: #ffffff;
+  --color-success-container: #e8fce8;
+  --color-on-success-container: #000000;
+  --color-warning: #4d2f00;
+  --color-on-warning: #ffffff;
+  --color-warning-container: #fef4df;
+  --color-on-warning-container: #000000;
+  --color-info: #003865;
+  --color-on-info: #ffffff;
+  --color-info-container: #e5f8ff;
+  --color-on-info-container: #000000;
+  --color-inverse-surface: #323638;
+  --color-inverse-on-surface: #f4f5f6;
+  --color-inverse-primary: #c2dce9;
+}
+
+.dark[data-contrast="high"],
+[data-contrast="high"].dark {
+  --color-primary: #ebf7fd;
+  --color-on-primary: #000000;
+  --color-primary-container: #011e2a;
+  --color-on-primary-container: #ffffff;
+  --color-secondary: #f1f6f9;
+  --color-on-secondary: #000000;
+  --color-secondary-container: #131c23;
+  --color-on-secondary-container: #ffffff;
+  --color-tertiary: #f5f4fc;
+  --color-on-tertiary: #000000;
+  --color-tertiary-container: #1a1827;
+  --color-on-tertiary-container: #ffffff;
+  --color-surface: #0d1011;
+  --color-on-surface: #ffffff;
+  --color-surface-container-lowest: #0d1011;
+  --color-surface-container-low: #181b1d;
+  --color-surface-container: #2b2e30;
+  --color-surface-container-high: #3a3e40;
+  --color-surface-container-highest: #3f4345;
+  --color-surface-variant: #30363a;
+  --color-on-surface-variant: #f3f5f7;
+  --color-background: #0d1011;
+  --color-on-background: #ffffff;
+  --color-outline: #d3d8db;
+  --color-outline-variant: #a4acb0;
+  --color-control-outline: #a4acb0;
+  --color-error: #ffedea;
+  --color-on-error: #000000;
+  --color-error-container: #8c2e2c;
+  --color-on-error-container: #ffe0db;
+  --color-success: #e8fce8;
+  --color-on-success: #000000;
+  --color-success-container: #002400;
+  --color-on-success-container: #ffffff;
+  --color-warning: #fef4df;
+  --color-on-warning: #000000;
+  --color-warning-container: #2c1500;
+  --color-on-warning-container: #ffffff;
+  --color-info: #e5f8ff;
+  --color-on-info: #000000;
+  --color-info-container: #001b3e;
+  --color-on-info-container: #ffffff;
+  --color-inverse-surface: #e9ebed;
+  --color-inverse-on-surface: #323638;
+  --color-inverse-primary: #48758b;
+}
+/* unisane:theme:end */
+/* ============================================================
+   Unisane UI Design Tokens
+   Generated from "Blue" theme using OKLCH color science
+   ============================================================ */
+
+:root {
+  /* === FOUNDATION SCALING === */
+  --scale-space-density: 1;
+  --scale-space-viewport: 1;
+  --scale-space: calc(var(--scale-space-density) * var(--scale-space-viewport));
+  --scale-type-density: 1;
+  --scale-type-user: 1;
+  --scale-type-viewport: 1;
+  --scale-type: calc(var(--scale-type-density) * var(--scale-type-user) * var(--scale-type-viewport));
+  /* Radius uses combined multiplier: density-radius × theme-radius */
+  --scale-radius-density: 1;   /* Modified by data-density */
+  --scale-radius-theme: 1;     /* Modified by data-radius */
+  --scale-radius: calc(var(--scale-radius-density) * var(--scale-radius-theme));
+  --unit: calc(4px * var(--scale-space));
+
+  /* Pane Widths */
+  --width-pane-list: 360px;
+  --width-pane-fixed: 412px;
+  --width-pane-supporting: 400px;
+  --width-rail-collapsed: 80px;
+  --width-drawer-compact: 360px;
+  --width-navigation-drawer: 300px;
+
+  --color-scrim: rgba(0, 0, 0, 0.32);
+  --color-scrim-soft: color-mix(in oklab, var(--color-scrim) 30%, transparent);
+
+  /* Outline role aliases (replaces ad-hoc /nn opacity usage)
+     Roles are anchored to outline/outline-variant so they remain readable
+     across light/dark and contrast presets. */
+  --color-outline-weak: color-mix(in oklab, var(--color-outline-variant) 30%, var(--color-surface) 70%);
+  --color-outline-soft: color-mix(in oklab, var(--color-outline-variant) 45%, var(--color-surface) 55%);
+  --color-outline-muted: color-mix(in oklab, var(--color-outline-variant) 52%, var(--color-surface) 48%);
+  --color-outline-subtle: color-mix(in oklab, var(--color-outline-variant) 60%, var(--color-surface) 40%);
+  --color-outline-medium: color-mix(in oklab, var(--color-outline) 45%, var(--color-outline-variant) 55%);
+  --color-outline-strong: var(--color-outline);
+
+  /* Surface interaction state aliases */
+  --color-state-hover: color-mix(in oklab, var(--color-on-surface) 8%, transparent);
+  --color-state-focus: color-mix(in oklab, var(--color-on-surface) 10%, transparent);
+  --color-state-pressed: color-mix(in oklab, var(--color-on-surface) 12%, transparent);
+  --color-state-selected: color-mix(in oklab, var(--color-primary) 10%, transparent);
+  --color-state-error: color-mix(in oklab, var(--color-error) 8%, transparent);
+  --color-focus-ring: var(--color-primary);
+  --color-focus-ring-error: var(--color-error);
+
+  /* Typography */
+  --font-sans: var(--font-inter, system-ui), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* === TYPOGRAPHY === */
+  --type-display-large-font: var(--font-sans);
+  --type-display-large-weight: 400;
+  --type-display-large-size: calc(57px * var(--scale-type));
+  --type-display-large-line: calc(64px * var(--scale-type));
+  --type-display-large-tracking: -0.25px;
+  --type-display-medium-font: var(--font-sans);
+  --type-display-medium-weight: 400;
+  --type-display-medium-size: calc(45px * var(--scale-type));
+  --type-display-medium-line: calc(52px * var(--scale-type));
+  --type-display-medium-tracking: 0;
+  --type-display-small-font: var(--font-sans);
+  --type-display-small-weight: 400;
+  --type-display-small-size: calc(36px * var(--scale-type));
+  --type-display-small-line: calc(44px * var(--scale-type));
+  --type-display-small-tracking: 0;
+  --type-headline-large-font: var(--font-sans);
+  --type-headline-large-weight: 400;
+  --type-headline-large-size: calc(32px * var(--scale-type));
+  --type-headline-large-line: calc(40px * var(--scale-type));
+  --type-headline-large-tracking: 0;
+  --type-headline-medium-font: var(--font-sans);
+  --type-headline-medium-weight: 400;
+  --type-headline-medium-size: calc(28px * var(--scale-type));
+  --type-headline-medium-line: calc(36px * var(--scale-type));
+  --type-headline-medium-tracking: 0;
+  --type-headline-small-font: var(--font-sans);
+  --type-headline-small-weight: 400;
+  --type-headline-small-size: calc(24px * var(--scale-type));
+  --type-headline-small-line: calc(32px * var(--scale-type));
+  --type-headline-small-tracking: 0;
+  --type-title-large-font: var(--font-sans);
+  --type-title-large-weight: 400;
+  --type-title-large-size: calc(22px * var(--scale-type));
+  --type-title-large-line: calc(28px * var(--scale-type));
+  --type-title-large-tracking: 0;
+  --type-title-medium-font: var(--font-sans);
+  --type-title-medium-weight: 500;
+  --type-title-medium-size: calc(16px * var(--scale-type));
+  --type-title-medium-line: calc(24px * var(--scale-type));
+  --type-title-medium-tracking: 0.15px;
+  --type-title-small-font: var(--font-sans);
+  --type-title-small-weight: 500;
+  --type-title-small-size: calc(14px * var(--scale-type));
+  --type-title-small-line: calc(20px * var(--scale-type));
+  --type-title-small-tracking: 0.1px;
+  --type-body-large-font: var(--font-sans);
+  --type-body-large-weight: 400;
+  --type-body-large-size: calc(16px * var(--scale-type));
+  --type-body-large-line: calc(24px * var(--scale-type));
+  --type-body-large-tracking: 0.5px;
+  --type-body-medium-font: var(--font-sans);
+  --type-body-medium-weight: 400;
+  --type-body-medium-size: calc(14px * var(--scale-type));
+  --type-body-medium-line: calc(20px * var(--scale-type));
+  --type-body-medium-tracking: 0.25px;
+  --type-body-small-font: var(--font-sans);
+  --type-body-small-weight: 400;
+  --type-body-small-size: calc(12px * var(--scale-type));
+  --type-body-small-line: calc(16px * var(--scale-type));
+  --type-body-small-tracking: 0.4px;
+  --type-label-large-font: var(--font-sans);
+  --type-label-large-weight: 500;
+  --type-label-large-size: calc(14px * var(--scale-type));
+  --type-label-large-line: calc(20px * var(--scale-type));
+  --type-label-large-tracking: 0.1px;
+  --type-label-medium-font: var(--font-sans);
+  --type-label-medium-weight: 500;
+  --type-label-medium-size: calc(12px * var(--scale-type));
+  --type-label-medium-line: calc(16px * var(--scale-type));
+  --type-label-medium-tracking: 0.5px;
+  --type-label-small-font: var(--font-sans);
+  --type-label-small-weight: 500;
+  --type-label-small-size: calc(11px * var(--scale-type));
+  --type-label-small-line: calc(16px * var(--scale-type));
+  --type-label-small-tracking: 0.5px;
+
+  /* === RESPONSIVE TYPOGRAPHY ROLES === */
+  --type-role-hero-title-font: var(--font-sans);
+  --type-role-hero-title-weight: 400;
+  --type-role-hero-title-size: clamp(calc(36px * var(--scale-type)), 8vw, calc(57px * var(--scale-type)));
+  --type-role-hero-title-line: clamp(calc(44px * var(--scale-type)), calc(8vw * 1.1228070175438596), calc(64px * var(--scale-type)));
+  --type-role-hero-title-tracking: 0;
+  --type-role-page-title-font: var(--font-sans);
+  --type-role-page-title-weight: 400;
+  --type-role-page-title-size: clamp(calc(30px * var(--scale-type)), 5.5vw, calc(45px * var(--scale-type)));
+  --type-role-page-title-line: clamp(calc(36px * var(--scale-type)), calc(5.5vw * 1.1555555555555554), calc(52px * var(--scale-type)));
+  --type-role-page-title-tracking: 0;
+  --type-role-section-title-font: var(--font-sans);
+  --type-role-section-title-weight: 400;
+  --type-role-section-title-size: clamp(calc(24px * var(--scale-type)), 4vw, calc(36px * var(--scale-type)));
+  --type-role-section-title-line: clamp(calc(32px * var(--scale-type)), calc(4vw * 1.2222222222222223), calc(44px * var(--scale-type)));
+  --type-role-section-title-tracking: 0;
+  --type-role-section-lead-font: var(--font-sans);
+  --type-role-section-lead-weight: 400;
+  --type-role-section-lead-size: clamp(calc(16px * var(--scale-type)), 2.2vw, calc(16px * var(--scale-type)));
+  --type-role-section-lead-line: clamp(calc(24px * var(--scale-type)), calc(2.2vw * 1.5), calc(24px * var(--scale-type)));
+  --type-role-section-lead-tracking: 0;
+  --type-role-panel-title-font: var(--font-sans);
+  --type-role-panel-title-weight: 400;
+  --type-role-panel-title-size: clamp(calc(18px * var(--scale-type)), 2.5vw, calc(24px * var(--scale-type)));
+  --type-role-panel-title-line: clamp(calc(24px * var(--scale-type)), calc(2.5vw * 1.3333333333333333), calc(32px * var(--scale-type)));
+  --type-role-panel-title-tracking: 0;
+  --type-role-card-title-font: var(--font-sans);
+  --type-role-card-title-weight: 500;
+  --type-role-card-title-size: clamp(calc(14px * var(--scale-type)), 2vw, calc(16px * var(--scale-type)));
+  --type-role-card-title-line: clamp(calc(20px * var(--scale-type)), calc(2vw * 1.5), calc(24px * var(--scale-type)));
+  --type-role-card-title-tracking: 0;
+  --type-role-eyebrow-font: var(--font-sans);
+  --type-role-eyebrow-weight: 500;
+  --type-role-eyebrow-size: clamp(calc(11px * var(--scale-type)), 1.2vw, calc(11px * var(--scale-type)));
+  --type-role-eyebrow-line: clamp(calc(16px * var(--scale-type)), calc(1.2vw * 1.4545454545454546), calc(16px * var(--scale-type)));
+  --type-role-eyebrow-tracking: 0;
+
+  /* === SHAPE (Radius) === */
+  --radius-none: 0px;
+  --radius-xs: calc(4px * var(--scale-radius));
+  --radius-sm: calc(8px * var(--scale-radius));
+  --radius-md: calc(12px * var(--scale-radius));
+  --radius-lg: calc(20px * var(--scale-radius));
+  --radius-xl: calc(32px * var(--scale-radius));
+  --radius-2xl: calc(48px * var(--scale-radius));
+  --radius-full: 9999px;
+  --radius-button-default: var(--radius-sm);
+  --radius-button-full: var(--radius-full);
+  --radius-button-family: var(--radius-button-default);
+  --radius-button: var(--radius-button-family);
+  --radius-icon-button: var(--radius-button-family);
+  --radius-fab: calc(16px * var(--scale-radius));
+
+  /* === ELEVATION === */
+  /* Shadow opacity scale (controlled by data-elevation attribute) */
+  --shadow-opacity: 1;
+  --shadow-0: none;
+  --shadow-1: 0px 1px 3px 1px rgba(0, 0, 0, calc(0.15 * var(--shadow-opacity))), 0px 1px 2px 0px rgba(0, 0, 0, calc(0.30 * var(--shadow-opacity)));
+  --shadow-2: 0px 2px 6px 2px rgba(0, 0, 0, calc(0.15 * var(--shadow-opacity))), 0px 1px 2px 0px rgba(0, 0, 0, calc(0.30 * var(--shadow-opacity)));
+  --shadow-3: 0px 4px 8px 3px rgba(0, 0, 0, calc(0.15 * var(--shadow-opacity))), 0px 1px 3px 0px rgba(0, 0, 0, calc(0.30 * var(--shadow-opacity)));
+  --shadow-4: 0px 6px 10px 4px rgba(0, 0, 0, calc(0.15 * var(--shadow-opacity))), 0px 2px 3px 0px rgba(0, 0, 0, calc(0.30 * var(--shadow-opacity)));
+  --shadow-5: 0px 8px 12px 6px rgba(0, 0, 0, calc(0.15 * var(--shadow-opacity))), 0px 4px 4px 0px rgba(0, 0, 0, calc(0.30 * var(--shadow-opacity)));
+
+  /* === MOTION === */
+  --duration-short: 100ms;
+  --duration-snappy: 150ms;
+  --duration-medium: 250ms;
+  --duration-emphasized: 300ms;
+  --duration-long: 500ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* === OPACITY === */
+  --opacity-hover: 0.08;
+  --opacity-focus: 0.10;
+  --opacity-pressed: 0.10;
+  --opacity-dragged: 0.16;
+  --opacity-disabled: 0.38;
+  --opacity-muted: 0.60;
+
+  /* === ICON SIZES === */
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 24px;
+  --icon-lg: 32px;
+  --icon-xl: 48px;
+
+  /* === COMPONENT SIZES === */
+  --size-action-sm: calc(32px * var(--scale-space));
+  --size-action-md: calc(40px * var(--scale-space));
+  --size-action-lg: calc(48px * var(--scale-space));
+  --space-action-padding-x-sm: calc(16px * var(--scale-space));
+  --space-action-padding-x-md: calc(24px * var(--scale-space));
+  --space-action-padding-x-lg: calc(32px * var(--scale-space));
+
+  --size-icon-button-sm: var(--size-action-sm);
+  --size-icon-button-md: var(--size-action-md);
+  --size-icon-button-lg: var(--size-action-lg);
+
+  --size-fab-sm: calc(40px * var(--scale-space));
+  --size-fab-md: calc(56px * var(--scale-space));
+  --size-fab-lg: calc(96px * var(--scale-space));
+  --size-fab-extended-min: calc(80px * var(--scale-space));
+  --space-fab-extended-x: calc(24px * var(--scale-space));
+
+  --size-avatar-sm: calc(32px * var(--scale-space));
+  --size-avatar-md: calc(40px * var(--scale-space));
+  --size-avatar-lg: calc(48px * var(--scale-space));
+  --size-avatar-xl: calc(56px * var(--scale-space));
+
+  --size-pagination-button: calc(48px * var(--scale-space));
+
+  /* === LAYOUT === */
+  --layout-margin: calc(16px * var(--scale-space));
+  --layout-gutter: calc(16px * var(--scale-space));
+  --layout-pane-gap: calc(20px * var(--scale-space));
+  --layout-pane-list: calc(360px * var(--scale-space));
+  --layout-pane-fixed: calc(412px * var(--scale-space));
+  --layout-pane-supporting: calc(400px * var(--scale-space));
+  --layout-rail: calc(72px * var(--scale-space));
+  --layout-drawer: calc(360px * var(--scale-space));
+  --layout-navigation-drawer: calc(300px * var(--scale-space));
+  --layout-command-list-max-height: calc(300px * var(--scale-space));
+  --layout-page-x: clamp(calc(var(--unit) * 4), 4vw, calc(var(--unit) * 10));
+  --layout-section-y: clamp(calc(var(--unit) * 12), 8vw, calc(var(--unit) * 28));
+  --layout-section-y-compact: clamp(calc(var(--unit) * 8), 5vw, calc(var(--unit) * 18));
+  --layout-hero-y: clamp(calc(var(--unit) * 14), 10vw, calc(var(--unit) * 36));
+  --layout-content-gap: clamp(calc(var(--unit) * 6), 4vw, calc(var(--unit) * 14));
+  --layout-panel-padding: clamp(calc(var(--unit) * 4), 3vw, calc(var(--unit) * 8));
+  --layout-card-padding: clamp(calc(var(--unit) * 4), 2.5vw, calc(var(--unit) * 7));
+  --layout-cluster-gap: clamp(calc(var(--unit) * 3), 2vw, calc(var(--unit) * 5));
+  --layout-grid-gap: clamp(calc(var(--unit) * 4), 3vw, calc(var(--unit) * 8));
+
+  /* === Z-INDEX === */
+  --z-fab: 500;
+  --z-header: 1000;
+  --z-drawer: 1500;
+  --z-popover: 2000;
+  --z-modal: 3000;
+}
+
+/* Optional runtime preference axes. Add attributes only when the application exposes them. */
+[data-density="compact"] {
+  --scale-space-density: 0.875;
+  --scale-type-density: 0.9;
+  --scale-radius-density: 0.9;
+}
+
+[data-density="dense"] {
+  --scale-space-density: 0.75;
+  --scale-type-density: 0.85;
+  --scale-radius-density: 0.85;
+}
+
+[data-density="comfortable"] {
+  --scale-space-density: 1.1;
+  --scale-type-density: 1;
+  --scale-radius-density: 1;
+}
+
+[data-radius="none"] { --scale-radius-theme: 0; }
+[data-radius="minimal"] { --scale-radius-theme: 0.25; }
+[data-radius="sharp"] { --scale-radius-theme: 0.5; }
+[data-radius="standard"] { --scale-radius-theme: 1; }
+[data-radius="soft"] { --scale-radius-theme: 1.25; }
+
+[data-action-shape="standard"] { --radius-button-family: var(--radius-button-default); }
+[data-action-shape="full"] { --radius-button-family: var(--radius-button-full); }
+
+[data-elevation="flat"] { --shadow-opacity: 0; }
+[data-elevation="subtle"] { --shadow-opacity: 0.25; }
+[data-elevation="standard"] { --shadow-opacity: 0.5; }
+[data-elevation="pronounced"] { --shadow-opacity: 1; }
+
+/* ============================================================
+   SCROLLBAR STYLING
+   Consistent scrollbars for all modes
+   ============================================================ */
+
+/* Webkit scrollbar (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-container-low);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) var(--color-surface-container-low);
+}
+
+/* Dark mode scrollbar adjustments */
+.dark ::-webkit-scrollbar-track,
+:root:not(.light) ::-webkit-scrollbar-track {
+  background: var(--color-surface-container);
+}
+
+.dark ::-webkit-scrollbar-thumb,
+:root:not(.light) ::-webkit-scrollbar-thumb {
+  background: var(--color-outline-variant);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover,
+:root:not(.light) ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    scrollbar-color: var(--color-outline-variant) var(--color-surface-container);
+  }
+}
+
+.dark {
+  scrollbar-color: var(--color-outline-variant) var(--color-surface-container);
+}
+
+/* ============================================================
+   TAILWIND v4 THEME MAPPING
+   Maps CSS variables to Tailwind utilities
+   ============================================================ */
+
+@theme inline {
+  /* Breakpoints */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+  --breakpoint-compact: 0px;
+  --breakpoint-medium: 600px;
+  --breakpoint-expanded: 840px;
+
+  /* Colors - Direct reference to CSS vars */
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
+  --color-primary-container: var(--color-primary-container);
+  --color-on-primary-container: var(--color-on-primary-container);
+  --color-secondary: var(--color-secondary);
+  --color-on-secondary: var(--color-on-secondary);
+  --color-secondary-container: var(--color-secondary-container);
+  --color-on-secondary-container: var(--color-on-secondary-container);
+  --color-tertiary: var(--color-tertiary);
+  --color-on-tertiary: var(--color-on-tertiary);
+  --color-tertiary-container: var(--color-tertiary-container);
+  --color-on-tertiary-container: var(--color-on-tertiary-container);
+  --color-surface: var(--color-surface);
+  --color-on-surface: var(--color-on-surface);
+  --color-surface-container-lowest: var(--color-surface-container-lowest);
+  --color-surface-container-low: var(--color-surface-container-low);
+  --color-surface-container: var(--color-surface-container);
+  --color-surface-container-high: var(--color-surface-container-high);
+  --color-surface-container-highest: var(--color-surface-container-highest);
+  --color-surface-variant: var(--color-surface-variant);
+  --color-on-surface-variant: var(--color-on-surface-variant);
+  --color-background: var(--color-background);
+  --color-on-background: var(--color-on-background);
+  --color-outline: var(--color-outline);
+  --color-outline-variant: var(--color-outline-variant);
+  --color-control-outline: var(--color-control-outline);
+  --color-error: var(--color-error);
+  --color-on-error: var(--color-on-error);
+  --color-error-container: var(--color-error-container);
+  --color-on-error-container: var(--color-on-error-container);
+  --color-success: var(--color-success);
+  --color-on-success: var(--color-on-success);
+  --color-success-container: var(--color-success-container);
+  --color-on-success-container: var(--color-on-success-container);
+  --color-warning: var(--color-warning);
+  --color-on-warning: var(--color-on-warning);
+  --color-warning-container: var(--color-warning-container);
+  --color-on-warning-container: var(--color-on-warning-container);
+  --color-info: var(--color-info);
+  --color-on-info: var(--color-on-info);
+  --color-info-container: var(--color-info-container);
+  --color-on-info-container: var(--color-on-info-container);
+  --color-inverse-surface: var(--color-inverse-surface);
+  --color-inverse-on-surface: var(--color-inverse-on-surface);
+  --color-inverse-primary: var(--color-inverse-primary);
+  --color-scrim: var(--color-scrim);
+  --color-scrim-soft: var(--color-scrim-soft);
+  --color-outline-weak: var(--color-outline-weak);
+  --color-outline-soft: var(--color-outline-soft);
+  --color-outline-muted: var(--color-outline-muted);
+  --color-outline-subtle: var(--color-outline-subtle);
+  --color-outline-medium: var(--color-outline-medium);
+  --color-outline-strong: var(--color-outline-strong);
+  --color-state-hover: var(--color-state-hover);
+  --color-state-focus: var(--color-state-focus);
+  --color-state-pressed: var(--color-state-pressed);
+  --color-state-selected: var(--color-state-selected);
+  --color-state-error: var(--color-state-error);
+  --color-focus-ring: var(--color-focus-ring);
+  --color-focus-ring-error: var(--color-focus-ring-error);
+
+  /* Radius */
+  --radius-none: var(--radius-none);
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-full: var(--radius-full);
+  --radius-button-default: var(--radius-button-default);
+  --radius-button-full: var(--radius-button-full);
+  --radius-button-family: var(--radius-button-family);
+  --radius-button: var(--radius-button);
+  --radius-icon-button: var(--radius-icon-button);
+  --radius-fab: var(--radius-fab);
+
+  /* Shadows */
+  --shadow-0: var(--shadow-0);
+  --shadow-1: var(--shadow-1);
+  --shadow-2: var(--shadow-2);
+  --shadow-3: var(--shadow-3);
+  --shadow-4: var(--shadow-4);
+  --shadow-5: var(--shadow-5);
+
+  /* Motion */
+  --duration-short: var(--duration-short);
+  --duration-snappy: var(--duration-snappy);
+  --duration-medium: var(--duration-medium);
+  --duration-emphasized: var(--duration-emphasized);
+  --duration-long: var(--duration-long);
+  --ease-standard: var(--ease-standard);
+  --ease-emphasized: var(--ease-emphasized);
+  --ease-decelerate: var(--ease-decelerate);
+  --ease-accelerate: var(--ease-accelerate);
+
+  /* Typography - using --text-* for Tailwind v4 text-* utilities */
+  --font-sans: var(--font-sans);
+  --text-display-large: var(--type-display-large-size);
+  --text-display-large--line-height: var(--type-display-large-line);
+  --text-display-large--letter-spacing: var(--type-display-large-tracking);
+  --text-display-large--font-weight: var(--type-display-large-weight);
+  --text-display-medium: var(--type-display-medium-size);
+  --text-display-medium--line-height: var(--type-display-medium-line);
+  --text-display-medium--letter-spacing: var(--type-display-medium-tracking);
+  --text-display-medium--font-weight: var(--type-display-medium-weight);
+  --text-display-small: var(--type-display-small-size);
+  --text-display-small--line-height: var(--type-display-small-line);
+  --text-display-small--letter-spacing: var(--type-display-small-tracking);
+  --text-display-small--font-weight: var(--type-display-small-weight);
+  --text-headline-large: var(--type-headline-large-size);
+  --text-headline-large--line-height: var(--type-headline-large-line);
+  --text-headline-large--letter-spacing: var(--type-headline-large-tracking);
+  --text-headline-large--font-weight: var(--type-headline-large-weight);
+  --text-headline-medium: var(--type-headline-medium-size);
+  --text-headline-medium--line-height: var(--type-headline-medium-line);
+  --text-headline-medium--letter-spacing: var(--type-headline-medium-tracking);
+  --text-headline-medium--font-weight: var(--type-headline-medium-weight);
+  --text-headline-small: var(--type-headline-small-size);
+  --text-headline-small--line-height: var(--type-headline-small-line);
+  --text-headline-small--letter-spacing: var(--type-headline-small-tracking);
+  --text-headline-small--font-weight: var(--type-headline-small-weight);
+  --text-title-large: var(--type-title-large-size);
+  --text-title-large--line-height: var(--type-title-large-line);
+  --text-title-large--letter-spacing: var(--type-title-large-tracking);
+  --text-title-large--font-weight: var(--type-title-large-weight);
+  --text-title-medium: var(--type-title-medium-size);
+  --text-title-medium--line-height: var(--type-title-medium-line);
+  --text-title-medium--letter-spacing: var(--type-title-medium-tracking);
+  --text-title-medium--font-weight: var(--type-title-medium-weight);
+  --text-title-small: var(--type-title-small-size);
+  --text-title-small--line-height: var(--type-title-small-line);
+  --text-title-small--letter-spacing: var(--type-title-small-tracking);
+  --text-title-small--font-weight: var(--type-title-small-weight);
+  --text-body-large: var(--type-body-large-size);
+  --text-body-large--line-height: var(--type-body-large-line);
+  --text-body-large--letter-spacing: var(--type-body-large-tracking);
+  --text-body-large--font-weight: var(--type-body-large-weight);
+  --text-body-medium: var(--type-body-medium-size);
+  --text-body-medium--line-height: var(--type-body-medium-line);
+  --text-body-medium--letter-spacing: var(--type-body-medium-tracking);
+  --text-body-medium--font-weight: var(--type-body-medium-weight);
+  --text-body-small: var(--type-body-small-size);
+  --text-body-small--line-height: var(--type-body-small-line);
+  --text-body-small--letter-spacing: var(--type-body-small-tracking);
+  --text-body-small--font-weight: var(--type-body-small-weight);
+  --text-label-large: var(--type-label-large-size);
+  --text-label-large--line-height: var(--type-label-large-line);
+  --text-label-large--letter-spacing: var(--type-label-large-tracking);
+  --text-label-large--font-weight: var(--type-label-large-weight);
+  --text-label-medium: var(--type-label-medium-size);
+  --text-label-medium--line-height: var(--type-label-medium-line);
+  --text-label-medium--letter-spacing: var(--type-label-medium-tracking);
+  --text-label-medium--font-weight: var(--type-label-medium-weight);
+  --text-label-small: var(--type-label-small-size);
+  --text-label-small--line-height: var(--type-label-small-line);
+  --text-label-small--letter-spacing: var(--type-label-small-tracking);
+  --text-label-small--font-weight: var(--type-label-small-weight);
+  --text-role-hero-title: var(--type-role-hero-title-size);
+  --text-role-hero-title--line-height: var(--type-role-hero-title-line);
+  --text-role-hero-title--letter-spacing: var(--type-role-hero-title-tracking);
+  --text-role-hero-title--font-weight: var(--type-role-hero-title-weight);
+  --text-role-page-title: var(--type-role-page-title-size);
+  --text-role-page-title--line-height: var(--type-role-page-title-line);
+  --text-role-page-title--letter-spacing: var(--type-role-page-title-tracking);
+  --text-role-page-title--font-weight: var(--type-role-page-title-weight);
+  --text-role-section-title: var(--type-role-section-title-size);
+  --text-role-section-title--line-height: var(--type-role-section-title-line);
+  --text-role-section-title--letter-spacing: var(--type-role-section-title-tracking);
+  --text-role-section-title--font-weight: var(--type-role-section-title-weight);
+  --text-role-section-lead: var(--type-role-section-lead-size);
+  --text-role-section-lead--line-height: var(--type-role-section-lead-line);
+  --text-role-section-lead--letter-spacing: var(--type-role-section-lead-tracking);
+  --text-role-section-lead--font-weight: var(--type-role-section-lead-weight);
+  --text-role-panel-title: var(--type-role-panel-title-size);
+  --text-role-panel-title--line-height: var(--type-role-panel-title-line);
+  --text-role-panel-title--letter-spacing: var(--type-role-panel-title-tracking);
+  --text-role-panel-title--font-weight: var(--type-role-panel-title-weight);
+  --text-role-card-title: var(--type-role-card-title-size);
+  --text-role-card-title--line-height: var(--type-role-card-title-line);
+  --text-role-card-title--letter-spacing: var(--type-role-card-title-tracking);
+  --text-role-card-title--font-weight: var(--type-role-card-title-weight);
+  --text-role-eyebrow: var(--type-role-eyebrow-size);
+  --text-role-eyebrow--line-height: var(--type-role-eyebrow-line);
+  --text-role-eyebrow--letter-spacing: var(--type-role-eyebrow-tracking);
+  --text-role-eyebrow--font-weight: var(--type-role-eyebrow-weight);
+
+  /* Spacing - Standard Tailwind keys mapped to density-scaled values */
+  /* These override Tailwind defaults so p-4, gap-2, etc. scale with density */
+  --spacing-0: 0px;
+  --spacing-0_5: calc(var(--unit) * 0.5);
+  --spacing-1: calc(var(--unit) * 1);
+  --spacing-1_5: calc(var(--unit) * 1.5);
+  --spacing-2: calc(var(--unit) * 2);
+  --spacing-2_5: calc(var(--unit) * 2.5);
+  --spacing-3: calc(var(--unit) * 3);
+  --spacing-3_5: calc(var(--unit) * 3.5);
+  --spacing-4: calc(var(--unit) * 4);
+  --spacing-5: calc(var(--unit) * 5);
+  --spacing-6: calc(var(--unit) * 6);
+  --spacing-7: calc(var(--unit) * 7);
+  --spacing-8: calc(var(--unit) * 8);
+  --spacing-9: calc(var(--unit) * 9);
+  --spacing-10: calc(var(--unit) * 10);
+  --spacing-11: calc(var(--unit) * 11);
+  --spacing-12: calc(var(--unit) * 12);
+  --spacing-14: calc(var(--unit) * 14);
+  --spacing-16: calc(var(--unit) * 16);
+  --spacing-20: calc(var(--unit) * 20);
+  --spacing-24: calc(var(--unit) * 24);
+  --spacing-25: calc(var(--unit) * 25);
+  --spacing-28: calc(var(--unit) * 28);
+  --spacing-30: calc(var(--unit) * 30);
+  --spacing-32: calc(var(--unit) * 32);
+  --spacing-36: calc(var(--unit) * 36);
+  --spacing-38: calc(var(--unit) * 38);
+  --spacing-40: calc(var(--unit) * 40);
+  --spacing-44: calc(var(--unit) * 44);
+  --spacing-48: calc(var(--unit) * 48);
+  --spacing-50: calc(var(--unit) * 50);
+  --spacing-52: calc(var(--unit) * 52);
+  --spacing-56: calc(var(--unit) * 56);
+  --spacing-60: calc(var(--unit) * 60);
+  --spacing-64: calc(var(--unit) * 64);
+  --spacing-70: calc(var(--unit) * 70);
+  --spacing-72: calc(var(--unit) * 72);
+  --spacing-78: calc(var(--unit) * 78);
+  --spacing-80: calc(var(--unit) * 80);
+  --spacing-86: calc(var(--unit) * 86);
+  --spacing-90: calc(var(--unit) * 90);
+  --spacing-96: calc(var(--unit) * 96);
+  --spacing-100: calc(var(--unit) * 100);
+  --spacing-120: calc(var(--unit) * 120);
+  --spacing-150: calc(var(--unit) * 150);
+  --spacing-170: calc(var(--unit) * 170);
+  --spacing-210: calc(var(--unit) * 210);
+  --spacing-250: calc(var(--unit) * 250);
+  --spacing-280: calc(var(--unit) * 280);
+
+  /* Layout */
+  --spacing-layout-margin: var(--layout-margin);
+  --spacing-layout-gutter: var(--layout-gutter);
+  --spacing-layout-page-x: var(--layout-page-x);
+  --spacing-layout-section-y: var(--layout-section-y);
+  --spacing-layout-section-y-compact: var(--layout-section-y-compact);
+  --spacing-layout-hero-y: var(--layout-hero-y);
+  --spacing-layout-content-gap: var(--layout-content-gap);
+  --spacing-layout-panel-padding: var(--layout-panel-padding);
+  --spacing-layout-card-padding: var(--layout-card-padding);
+  --spacing-layout-cluster-gap: var(--layout-cluster-gap);
+  --spacing-layout-grid-gap: var(--layout-grid-gap);
+  --width-pane-list: var(--layout-pane-list);
+  --width-pane-fixed: var(--layout-pane-fixed);
+  --width-pane-supporting: var(--layout-pane-supporting);
+  --width-rail: var(--layout-rail);
+  --width-drawer: var(--layout-drawer);
+  --width-navigation-drawer: var(--layout-navigation-drawer);
+
+  /* Z-Index */
+  --z-fab: var(--z-fab);
+  --z-header: var(--z-header);
+  --z-drawer: var(--z-drawer);
+  --z-popover: var(--z-popover);
+  --z-modal: var(--z-modal);
+
+  /* Icons - use with w-icon-sm, h-icon-sm */
+  --spacing-icon-xs: var(--icon-xs);
+  --spacing-icon-sm: var(--icon-sm);
+  --spacing-icon-md: var(--icon-md);
+  --spacing-icon-lg: var(--icon-lg);
+  --spacing-icon-xl: var(--icon-xl);
+
+  /* Size utilities for icons - use with size-icon-sm */
+  --size-icon-xs: var(--icon-xs);
+  --size-icon-sm: var(--icon-sm);
+  --size-icon-md: var(--icon-md);
+  --size-icon-lg: var(--icon-lg);
+  --size-icon-xl: var(--icon-xl);
+
+  /* Opacity */
+  --opacity-hover: var(--opacity-hover);
+  --opacity-focus: var(--opacity-focus);
+  --opacity-pressed: var(--opacity-pressed);
+  --opacity-dragged: var(--opacity-dragged);
+  --opacity-disabled: var(--opacity-disabled);
+  --opacity-muted: var(--opacity-muted);
+}
+
+/* ============================================================
+   SHARED RUNTIME UTILITIES
+   Public utility aliases that source-mode and package-mode consumers
+   both rely on at runtime.
+   ============================================================ */
+
+@layer utilities {
+  .duration-short {
+    transition-duration: var(--duration-short);
+  }
+
+  .duration-snappy {
+    transition-duration: var(--duration-snappy);
+  }
+
+  .duration-medium {
+    transition-duration: var(--duration-medium);
+  }
+
+  .duration-emphasized {
+    transition-duration: var(--duration-emphasized);
+  }
+
+  .duration-long {
+    transition-duration: var(--duration-long);
+  }
+}
+
+/* Compile the complete first-party runtime baseline once. Consumers never scan package source. */
+@source "./**/*.{ts,tsx}";
+@source "../../data-table/src/**/*.{ts,tsx}";
+
+/* Dark mode variant */
+@custom-variant dark (&:is(.dark *));
+
+/* Expanded variant - 840px breakpoint for sidebar desktop mode */
+@custom-variant expanded (@media (min-width: 840px));
+
+/* Medium breakpoint for tablet (M3 medium = 600px) */
+@custom-variant medium (@media (min-width: 600px));
+
+/* Ripple animation - moved outside @theme for better performance */
+@keyframes ripple {
+  from {
+    opacity: 0.35;
+    transform: scale(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+@keyframes progress-indeterminate {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(300%);
+  }
+}
+
+/* Stagger animation for list items */
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Content enter animation for drawer content transitions */
+@keyframes content-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fade-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes surface-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes panel-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-x-enter {
+  from {
+    opacity: 0;
+    transform: scaleX(0.82);
+  }
+  to {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+}
+
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawer-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes drawer-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes drawer-slide-from-bottom {
+  from {
+    transform: translate3d(0, var(--initial-transform, 100%), 0);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes drawer-slide-to-bottom {
+  to {
+    transform: translate3d(0, var(--initial-transform, 100%), 0);
+  }
+}
+
+@layer base {
+  /* Remove default focus outline */
+  *:focus {
+    outline: none;
+  }
+
+  /* Apply custom focus ring only for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* Ensure focus is visible on interactive elements */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .unisane-text-field-control:-webkit-autofill,
+  .unisane-text-field-control:-webkit-autofill:hover,
+  .unisane-text-field-control:-webkit-autofill:focus,
+  .unisane-text-field-control:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
+    -webkit-text-fill-color: var(--color-on-surface);
+    caret-color: var(--color-primary);
+    transition: background-color 9999s ease-out;
+  }
+
+  [data-vaul-drawer] {
+    touch-action: none;
+    will-change: transform;
+    transition: transform 500ms cubic-bezier(0.32, 0.72, 0, 1);
+    animation-duration: 500ms;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-vaul-drawer][data-vaul-snap-points='false'][data-vaul-drawer-direction='bottom'][data-state='open'] {
+    animation-name: drawer-slide-from-bottom;
+  }
+
+  [data-vaul-drawer][data-vaul-snap-points='false'][data-vaul-drawer-direction='bottom'][data-state='closed'] {
+    animation-name: drawer-slide-to-bottom;
+  }
+
+  [data-vaul-overlay][data-vaul-snap-points='false'] {
+    animation-duration: 500ms;
+    animation-timing-function: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  [data-vaul-overlay][data-vaul-snap-points='false'][data-state='open'] {
+    animation-name: drawer-fade-in;
+  }
+
+  [data-vaul-overlay][data-state='closed'] {
+    animation-name: drawer-fade-out;
+  }
+
+  [data-vaul-animate='false'] {
+    animation: none !important;
+  }
+
+  [data-vaul-drawer]:not([data-vaul-custom-container='true'])::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0;
+    top: 100%;
+    height: 200%;
+    background: inherit;
+    background-color: inherit;
+  }
+
+  [data-vaul-handle] {
+    display: block;
+    position: relative;
+    opacity: 1;
+    background: var(--color-outline-muted);
+    margin-inline: auto;
+    height: 4px;
+    width: 32px;
+    border-radius: var(--radius-full);
+    touch-action: pan-y;
+  }
+
+  [data-vaul-handle-hitarea] {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: max(100%, 2.75rem);
+    height: max(100%, 2.75rem);
+    touch-action: inherit;
+  }
+}
+
+@layer utilities {
+  /* Sidebar inset - applies margin only on desktop (expanded breakpoint 840px+) */
+  .sidebar-inset {
+    margin-left: 0;
+  }
+
+  @media (min-width: 840px) {
+    .sidebar-inset {
+      margin-left: var(--sidebar-desktop-margin, 96px);
+    }
+  }
+
+  /* Scrollbar utilities */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Ripple container */
+  .ripple-container {
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Animation utilities */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .animate-out {
+    animation-fill-mode: both;
+    animation-direction: reverse;
+  }
+
+  .animate-stagger {
+    animation: stagger-in 300ms ease-out;
+  }
+
+  .animate-ripple {
+    animation: ripple 600ms ease-out;
+  }
+
+  .animate-content-enter {
+    animation: content-enter 200ms ease-out;
+  }
+
+  .animate-fade-enter {
+    animation: fade-enter var(--duration-short, 120ms) var(--ease-standard, ease-out) both;
+  }
+
+  .animate-surface-enter {
+    animation: surface-enter var(--duration-short, 120ms) var(--ease-standard, ease-out) both;
+  }
+
+  .animate-panel-enter {
+    animation: panel-enter var(--duration-medium, 160ms) var(--ease-standard, ease-out) both;
+  }
+
+  .animate-scale-enter {
+    animation: scale-enter var(--duration-medium, 160ms) var(--ease-emphasized, ease-out) both;
+  }
+
+  .animate-scale-x-enter {
+    animation: scale-x-enter var(--duration-medium, 160ms) var(--ease-emphasized, ease-out) both;
+  }
+
+  .animate-toast-enter {
+    animation: toast-enter var(--duration-medium, 160ms) var(--ease-emphasized, ease-out) both;
+  }
+
+  /* Z-index utilities for layering system */
+  .z-modal {
+    z-index: var(--z-modal, 3000);
+  }
+}

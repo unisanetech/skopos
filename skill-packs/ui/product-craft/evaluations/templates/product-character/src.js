@@ -1,0 +1,1 @@
+document.querySelectorAll('.play').forEach(button=>button.addEventListener('click',()=>document.querySelector('#now').textContent=`Playing ${button.dataset.track}`));document.querySelectorAll('.save').forEach(button=>button.addEventListener('click',()=>{button.textContent=button.textContent==='Saved'?'Save':'Saved'}));

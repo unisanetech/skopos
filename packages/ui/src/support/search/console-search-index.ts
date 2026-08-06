@@ -62,7 +62,7 @@ const buildDiscussionSearchEntries = (
         latestDiscussionHandoff.handoff.handoffKind.replaceAll('-', ' '),
         activeTaskView ? 'active task' : 'workspace',
       ].join(' · '),
-      href: '#/discussion',
+      href: '/discussion',
       aliases: [
         'discussion handoff',
         'recent discussion',
@@ -108,7 +108,7 @@ const buildDiscussionSearchEntries = (
           taskView ? 'task' : 'workspace',
           checkpointView.checkpoint.checkpointKind.replaceAll('-', ' '),
         ].join(' · '),
-        href: '#/discussion',
+        href: '/discussion',
         aliases: ['discussion checkpoint', checkpointView.checkpoint.currentDirection],
         keywords: [
           checkpointView.checkpoint.id,
@@ -181,7 +181,7 @@ const buildRouteSearchEntries = (): SkoposUiConsoleSearchEntry[] => {
         title: meta.title,
         summary: meta.description,
         meta: section.label,
-        href: `#${item.to}`,
+        href: item.to,
         aliases: [item.label, ...(aliasesByPath[item.to] ?? [])],
         keywords: [section.label, meta.title, meta.description],
         canonical: true,
@@ -214,7 +214,7 @@ const buildMemorySearchEntries = (
       title: 'What Skopos knows',
       summary: memoryView.memory.summary,
       meta: `project knowledge · ${memoryView.memory.freshness}`,
-      href: '#/memory',
+      href: '/memory',
       aliases: ['project knowledge', 'what skopos knows', 'project truth', 'agent memory'],
       keywords: [
         memoryView.memory.summary,
@@ -236,7 +236,7 @@ const buildMemorySearchEntries = (
       title: role.title,
       summary: role.summary,
       meta: `knowledge area · ${role.status}`,
-      href: '#/memory',
+      href: '/memory',
       aliases: [role.role, role.title],
       keywords: [
         role.role,
@@ -330,7 +330,7 @@ const buildPlanSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSea
       title: planView.plan.title,
       summary: planView.plan.summary || planView.plan.goal || planView.artifactPath,
       meta: [scopeId, isActive ? 'current' : 'library'].filter(Boolean).join(' · '),
-      href: `#/plans/${encodeURIComponent(planView.plan.id)}`,
+      href: `/plans/${encodeURIComponent(planView.plan.id)}`,
       aliases: [planView.plan.goal].filter((value): value is string => Boolean(value)),
       keywords: [
         planView.plan.id,
@@ -362,7 +362,7 @@ const buildTaskSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSea
       title: taskView.task.title,
       summary: taskView.task.summary || taskView.task.goal || taskView.artifactPath,
       meta: [scopeId, stateLabel].filter(Boolean).join(' · '),
-      href: `#/tasks/${encodeURIComponent(taskView.task.id)}`,
+      href: `/tasks/${encodeURIComponent(taskView.task.id)}`,
       aliases: [
         taskView.task.goal,
         ...taskView.task.planIds,
@@ -398,7 +398,7 @@ const buildValidationSearchEntries = (
       title: 'Readiness',
       summary: state.readinessReport.summary ?? 'Project Readiness assessment.',
       meta: `${state.readinessReport.readiness} · ${state.readinessReport.readiness}`,
-      href: '#/readiness',
+      href: '/readiness',
       aliases: ['readiness', 'readiness', 'quality', 'closure'],
       keywords: [
         state.readinessReport.readiness,
@@ -425,7 +425,7 @@ const buildValidationSearchEntries = (
       title: 'Evidence scorecard',
       summary: `Benchmark posture with ${scorecard.passedBenchmarks}/${scorecard.benchmarkCount} passing benchmarks and ${scorecard.failedBenchmarks} failures.`,
       meta: `${scorecard.status} · ${scorecard.weightedPassRate}% pass`,
-      href: '#/proof',
+      href: '/proof',
       aliases: ['proof', 'evidence', 'scorecard', 'benchmark report'],
       keywords: [
         scorecard.status,
@@ -442,6 +442,10 @@ const buildValidationSearchEntries = (
 
   for (const packView of state.policyReview?.packManifests ?? []) {
     const manifest = packView.manifest;
+    const packIsAccepted =
+      state.policyReview?.resolvedPolicy?.policy.acceptedPacks.some(
+        (pack) => pack.packId === manifest.packId,
+      ) ?? false;
     entries.push({
       id: `policy-pack-${manifest.packId}`,
       group: 'validation',
@@ -449,7 +453,7 @@ const buildValidationSearchEntries = (
       title: manifest.displayName,
       summary: manifest.plainLanguageSummary ?? manifest.description,
       meta: [manifest.family, manifest.variant].join(' · '),
-      href: `#/rules/packs/${encodeURIComponent(manifest.packId)}`,
+      href: `/rules/packs/${encodeURIComponent(manifest.packId)}`,
       aliases: [
         'policy pack',
         'rule pack',
@@ -473,23 +477,43 @@ const buildValidationSearchEntries = (
           node.responsibility,
           ...(node.matchPaths ?? []),
         ]) ?? []),
-        ...manifest.rules.flatMap((rule) => [
-          rule.id,
-          rule.title,
-          rule.summary,
-          ...(rule.examples ?? []),
-          ...(rule.antiPatterns ?? []),
-        ]),
       ].filter((value): value is string => Boolean(value)),
       canonical: true,
-      active: state.policyReview?.resolvedPolicy?.policy.acceptedPacks.some(
-        (pack) => pack.packId === manifest.packId,
-      ) ?? false,
+      active: packIsAccepted,
       historical: false,
       stale: false,
       updatedAt: manifest.updatedAt ?? state.generatedAt,
       defaultRank: 183,
     });
+
+    for (const rule of manifest.rules) {
+      entries.push({
+        id: `policy-rule-${rule.id}`,
+        group: 'validation',
+        kind: 'report',
+        title: rule.title,
+        summary: rule.summary,
+        meta: `${rule.severity} · ${manifest.displayName}`,
+        href: `/rules/packs/${encodeURIComponent(manifest.packId)}/rules/${encodeURIComponent(rule.id)}`,
+        aliases: ['policy rule', 'project rule', rule.id, rule.title],
+        keywords: [
+          rule.id,
+          rule.title,
+          rule.summary,
+          rule.rationale,
+          ...rule.appliesTo,
+          ...(rule.examples ?? []),
+          ...(rule.antiPatterns ?? []),
+          ...(rule.checkIds ?? []),
+        ].filter((value): value is string => Boolean(value)),
+        canonical: true,
+        active: packIsAccepted,
+        historical: false,
+        stale: false,
+        updatedAt: manifest.updatedAt ?? state.generatedAt,
+        defaultRank: packIsAccepted ? 184 : 155,
+      });
+    }
   }
 
   return entries;
@@ -511,7 +535,7 @@ const buildScopeSearchEntries = (state: SkoposUiConsoleState): SkoposUiConsoleSe
     ]
       .filter((value): value is string => Boolean(value))
       .join(' · '),
-    href: `#/scopes/${encodeURIComponent(scopeView.scope.id)}`,
+    href: `/scopes/${encodeURIComponent(scopeView.scope.id)}`,
     aliases: scopeView.scope.aliases ?? [],
     keywords: [
       scopeView.scope.id,
@@ -537,7 +561,7 @@ const buildActivitySearchEntries = (state: SkoposUiConsoleState): SkoposUiConsol
     title: actionRun.actionTitle,
     summary: `Action run ${actionRun.runStatus}.`,
     meta: [actionRun.runStatus, actionRun.runByActorId].filter(Boolean).join(' · '),
-    href: '#/activity',
+    href: '/activity',
     aliases: [actionRun.actionId],
     keywords: [
       actionRun.id,
@@ -561,7 +585,7 @@ const buildActivitySearchEntries = (state: SkoposUiConsoleState): SkoposUiConsol
     title: titleCase(event.eventKind.replaceAll('-', ' ')),
     summary: event.summary,
     meta: [event.status, event.actorId].filter(Boolean).join(' · '),
-    href: '#/activity',
+    href: '/activity',
     aliases: [],
     keywords: [event.id, event.eventKind, event.status, event.actorId, event.summary].filter(
       (value): value is string => Boolean(value),

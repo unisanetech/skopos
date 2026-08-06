@@ -5,4 +5,5 @@ export {
   TaskGuidanceCard,
   TaskLinkedWorkCard,
   TaskActionRecordingCard,
+  TaskContractCard,
 } from './content.js';

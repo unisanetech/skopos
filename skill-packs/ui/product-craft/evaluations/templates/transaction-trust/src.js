@@ -1,0 +1,1 @@
+const consent=document.querySelector('#consent');const confirm=document.querySelector('#confirm');consent.addEventListener('change',()=>confirm.disabled=!consent.checked);confirm.addEventListener('click',()=>document.querySelector('#status').textContent='Transfer submitted for processing.');

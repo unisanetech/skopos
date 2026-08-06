@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import { cn } from '../../../support/ui/classnames.js';
 import { HighlightedCodeBlock } from '../../../support/ui/code-highlighting.js';
 import { MermaidDiagram } from '../../../support/ui/mermaid-diagram.js';
+import { ApplicationLink } from '../../../support/ui/application-link.js';
 
 export function DocumentBody({
   body,
@@ -23,7 +24,7 @@ export function DocumentBody({
             const externalHref = isExternalHref(resolvedHref);
 
             return (
-              <a
+              <ApplicationLink
                 href={resolvedHref}
                 className="skopos-markdown-link"
                 target={externalHref ? '_blank' : undefined}
@@ -31,7 +32,7 @@ export function DocumentBody({
                 {...props}
               >
                 {children}
-              </a>
+              </ApplicationLink>
             );
           },
           code: ({ className, children, ...props }) => {

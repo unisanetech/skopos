@@ -82,7 +82,7 @@ export function TaskDetailInspectorAside({
           items={task.selectedActions}
           getKey={(action) => action.id}
           renderItem={(action) => (
-            <p className="font-mono text-[11.25px] leading-[1.25rem] text-[var(--muted-strong)]">
+            <p className="font-mono text-label-small text-on-surface">
               {action.id}
             </p>
           )}
@@ -104,7 +104,7 @@ export function TaskDetailInspectorAside({
           renderItem={(run) => (
             <>
               <div className="flex items-center justify-between gap-2.5">
-                <p className="text-[12.25px] font-medium tracking-[-0.01em]">
+                <p className="text-body-small font-medium">
                   {run.actionTitle}
                 </p>
                 <StatusPill
@@ -118,7 +118,7 @@ export function TaskDetailInspectorAside({
                   }
                 />
               </div>
-              <p className="mt-1 text-[11.25px] leading-5 text-[var(--muted)]">
+              <p className="mt-1 text-label-small leading-5 text-on-surface-variant">
                 {run.runByActorId ?? 'no actor'} · {formatDateTime(run.finishedAt)}
               </p>
             </>
@@ -136,12 +136,12 @@ export function TaskDetailInspectorAside({
               <Link
                 to="/plans/$planId"
                 params={{ planId: planView.plan.id }}
-                className="block transition-colors hover:bg-[color:rgba(255,252,246,0.5)]"
+                className="block transition-colors hover:bg-state-hover"
               >
-                <p className="text-[12.25px] font-medium tracking-[-0.01em]">
+                <p className="text-body-small font-medium">
                   {planView.plan.title}
                 </p>
-                <p className="mt-1 text-[11.5px] leading-5 text-[var(--muted)]">
+                <p className="mt-1 text-label-small leading-5 text-on-surface-variant">
                   {planView.plan.summary}
                 </p>
               </Link>

@@ -80,7 +80,7 @@ export const getSkoposConsoleSearchContext = ({
   state,
   rawQuery,
   currentPath,
-  defaultLimitPerGroup = 4,
+  defaultLimitPerGroup = 2,
   queryLimitPerGroup = 6,
 }: {
   state: SkoposUiConsoleState;
@@ -107,7 +107,8 @@ export const getSkoposConsoleSearchContext = ({
     .sort((left, right) => sortConsoleSearchResults(left, right));
 
   const limitPerGroup = query.isEmpty ? defaultLimitPerGroup : queryLimitPerGroup;
-  const groups = searchGroupOrder
+  const visibleGroupOrder = query.isEmpty ? searchGroupOrder.slice(0, 4) : searchGroupOrder;
+  const groups = visibleGroupOrder
     .map((groupId) => {
       const groupedResults = results.filter((result) => result.group === groupId);
       if (groupedResults.length === 0) {

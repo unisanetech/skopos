@@ -1,5 +1,5 @@
 export {
-  Card,
+  ContentSection,
   getSkoposListRowClass,
   MetricGrid,
   RouteFilterBar,

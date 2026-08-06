@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-craft-negative-backend",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Suppress product UI guidance for a backend-only task.",
+  "fixtureId": "ui-product-craft-negative-backend",
+  "packId": "ui.product-craft",
+  "category": "negative",
+  "task": {
+    "goal": "Refactor the backend rendering adapter without changing a product interface.",
+    "scope": {
+      "id": "fixture-runtime",
+      "title": "Fixture Runtime",
+      "path": "src/runtime",
+      "kind": "service",
+      "ancestorIds": ["fixture-product"],
+      "aliases": ["backend"],
+      "codeRoots": ["src/runtime"]
+    },
+    "acceptanceCriteria": ["The adapter keeps its existing response contract."],
+    "constraints": ["No rendered product surface is in scope; backend infrastructure only."],
+    "nonGoals": ["Do not redesign any product page."],
+    "openDecisions": [],
+    "risk": "standard",
+    "phase": "iteration",
+    "ownedPaths": ["src/runtime/adapter.ts"],
+    "changedPaths": ["src/runtime/adapter.ts"],
+    "affectedCapabilities": [],
+    "selectedActionIds": [],
+    "applicableGuardIds": [],
+    "acceptedFailureEvidence": [],
+    "projectLifecycle": "established-brownfield"
+  },
+  "expectation": {
+    "selectedModuleIds": [],
+    "suppressedModuleReasonCodes": {},
+    "selectedActionIds": [],
+    "selectedGuardIds": [],
+    "maximumSelectedModules": 0,
+    "maximumMeasuredTokens": 0
+  }
+}

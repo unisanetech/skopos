@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-04-09
+lastUpdated: 2026-08-05
 relatedDocs:
   - README.md
   - ../work/archive/P-067e15c4-proof-and-benchmarking.md
@@ -24,6 +24,10 @@ Use this decision to keep Skopos proof work comparable, durable, and resistant t
 
 ## Changelog
 
+- `2026-08-05`: Clarified evaluation-subject locality: this scorecard governs the
+  brownfield proof-phase benchmark set, while the frozen Product UI Craft paired suite
+  retains its own identities, rubric, isolation, blinded adjudication, and promotion
+  threshold.
 - `2026-04-09`: Added the eval harness and scoring contract decision after implementing the shared proof scorecard contract, benchmark categories and priorities, and passing proof-harness coverage.
 
 ## Decision
@@ -57,7 +61,15 @@ Use this decision to keep Skopos proof work comparable, durable, and resistant t
 7. Metric weighting defaults to:
    - `must = 2`
    - `should = 1`
-8. Future before-versus-after comparisons must reuse the same benchmark and scorecard contract rather than inventing a second evaluation format.
+8. Before-versus-after comparisons for this same proof subject must reuse the same
+   benchmark and scorecard contract rather than changing the meaning of a passing
+   brownfield proof run.
+9. A materially different evaluation subject may use a dedicated contract when its
+   required evidence cannot be represented truthfully here. Product UI Craft efficacy
+   is one such subject: it requires isolated no-Skill and Skill arms, exact run
+   identities, blinded independent adjudication, subjective rubric dimensions, cost,
+   supervision, invalid-case accounting, and a declared promotion threshold. It does
+   not replace or silently modify the proof-phase scorecard.
 
 ## Why
 
@@ -70,5 +82,9 @@ Use this decision to keep Skopos proof work comparable, durable, and resistant t
 
 1. Proof harness code should import and reuse the shared scorecard contract and scoring utility.
 2. New proof benchmarks must declare category and priority before they are considered canonical.
-3. Future baseline-comparison work should layer on top of the current scorecard contract instead of replacing it.
+3. Future brownfield proof baseline comparisons should layer on top of the current
+   scorecard contract instead of replacing it.
+4. Other evaluation suites must identify their subject and authority explicitly so
+   their outcomes cannot be merged with proof-phase scores or used as substitute
+   Evidence.
 4. The blocker and proof-decision gate is now fully resolved; remaining proof work is expansion and hardening, not decision ambiguity.

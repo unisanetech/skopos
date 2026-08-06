@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import type { SkoposUiConsoleState } from '../../../contracts/skopos-ui-console-state.js';
-import { Card } from '../../../patterns/sections/content-primitives.js';
+import { ContentSection } from '../../../patterns/sections/content-primitives.js';
 import {
   EmptyMessage,
   ReviewRow,
@@ -19,7 +19,7 @@ export function ProofPostureCard({
   proofReport: NonNullable<SkoposUiConsoleState['proofReport']>;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Evidence summary"
       description="The main pass rate, must-win coverage, and regression status from the latest proof run."
     >
@@ -45,7 +45,7 @@ export function ProofPostureCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -59,7 +59,7 @@ export function ProofGuidanceCard({
     proofReport?.scorecard.status === 'pass' && proofReport.comparison.status === 'pass';
 
   return (
-    <Card
+    <ContentSection
       title="How to use this page"
       description="Evidence shows whether tests, benchmarks, or comparison results are strong enough to close risky work."
     >
@@ -89,7 +89,7 @@ export function ProofGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -101,25 +101,25 @@ export function ProofCategoryWatchCard({
   regressedCategorySet: Set<string>;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="What changed since baseline"
       description="Categories that changed or need review compared with the committed proof baseline."
     >
       {categories.length > 0 ? (
-        <div className="border-y border-[var(--line)]">
+        <div className="border-y border-outline-weak">
           {categories.map((category, index) => (
             <div
               key={category.category}
               className={cn(
                 'flex items-center justify-between gap-4 py-4',
-                index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                index > 0 ? 'border-t border-outline-weak' : undefined,
               )}
             >
               <div>
-                <p className="text-[13px] font-medium tracking-[-0.01em]">
+                <p className="text-body-medium font-medium">
                   {humanize(category.category)}
                 </p>
-                <p className="mt-1 text-[12px] text-[var(--muted)]">
+                <p className="mt-1 text-body-small text-on-surface-variant">
                   {`Baseline ${category.baselineStatus} -> current ${category.currentStatus}`}
                 </p>
               </div>
@@ -127,7 +127,7 @@ export function ProofCategoryWatchCard({
                 {regressedCategorySet.has(category.category) ? (
                   <StatusPill value="regressed" tone="danger" />
                 ) : null}
-                <p className="text-[15px] font-semibold tracking-[-0.03em]">
+                <p className="text-title-small">
                   {formatPercent(category.currentWeightedPassRate)}
                 </p>
               </div>
@@ -140,7 +140,7 @@ export function ProofCategoryWatchCard({
           description="No category drift is currently interrupting proof review."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -150,21 +150,21 @@ export function ProofMustWinCard({
   benchmarks: NonNullable<SkoposUiConsoleState['proofReport']>['scorecard']['benchmarks'];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Must-pass checks"
       description="Benchmarks marked as important enough that they should pass before closure."
     >
       {benchmarks.length > 0 ? (
-        <div className="border-y border-[var(--line)]">
+        <div className="border-y border-outline-weak">
           {benchmarks.map((benchmark, index) => (
             <div
               key={benchmark.id}
-              className={cn('py-4', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+              className={cn('py-4', index > 0 ? 'border-t border-outline-weak' : undefined)}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[13px] font-medium tracking-[-0.01em]">{benchmark.id}</p>
-                  <p className="mt-1 text-[12px] text-[var(--muted)]">
+                  <p className="text-body-medium font-medium">{benchmark.id}</p>
+                  <p className="mt-1 text-body-small text-on-surface-variant">
                     {humanize(benchmark.category)}
                   </p>
                 </div>
@@ -173,7 +173,7 @@ export function ProofMustWinCard({
                   tone={benchmark.status === 'pass' ? 'positive' : 'danger'}
                 />
               </div>
-              <p className="mt-2 text-[13px] leading-6 text-[var(--muted)]">
+              <p className="mt-2 text-body-medium leading-6 text-on-surface-variant">
                 {benchmark.failedMetricIds.length > 0
                   ? `Missing: ${benchmark.failedMetricIds.join(' · ')}`
                   : 'No failed metrics in this must-win benchmark.'}
@@ -187,7 +187,7 @@ export function ProofMustWinCard({
           description="No must-win benchmark entries are present in this report."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -197,21 +197,21 @@ export function ProofRegressedBenchmarksCard({
   benchmarks: NonNullable<SkoposUiConsoleState['proofReport']>['scorecard']['benchmarks'];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Regressed benchmarks"
       description="Any benchmark that fell behind the committed baseline stays visible as direct review pressure."
     >
       {benchmarks.length > 0 ? (
-        <div className="border-y border-[var(--line)]">
+        <div className="border-y border-outline-weak">
           {benchmarks.map((benchmark, index) => (
             <div
               key={benchmark.id}
-              className={cn('py-4', index > 0 ? 'border-t border-[var(--line)]' : undefined)}
+              className={cn('py-4', index > 0 ? 'border-t border-outline-weak' : undefined)}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[13px] font-medium tracking-[-0.01em]">{benchmark.id}</p>
-                  <p className="mt-1 text-[12px] text-[var(--muted)]">
+                  <p className="text-body-medium font-medium">{benchmark.id}</p>
+                  <p className="mt-1 text-body-small text-on-surface-variant">
                     {humanize(benchmark.category)} · {benchmark.fixture}
                   </p>
                 </div>
@@ -220,7 +220,7 @@ export function ProofRegressedBenchmarksCard({
                   <StatusPill value={benchmark.status} tone="danger" />
                 </div>
               </div>
-              <p className="mt-2 text-[13px] leading-6 text-[var(--muted)]">
+              <p className="mt-2 text-body-medium leading-6 text-on-surface-variant">
                 {benchmark.failedMetricIds.length > 0
                   ? `Missing: ${benchmark.failedMetricIds.join(' · ')}`
                   : 'Baseline drift was recorded without failed metric ids in this snapshot.'}
@@ -234,7 +234,7 @@ export function ProofRegressedBenchmarksCard({
           description="The committed baseline is not currently reporting benchmark regressions."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -246,11 +246,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>

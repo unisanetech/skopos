@@ -84,10 +84,16 @@ This is not full automation. It is the minimum safe Session, Task, Work Queue, a
    - Pipe only the assistant's final useful message into stdin.
 4. Important state change:
    - Run \`skopos discuss checkpoint <project-root> --json\` after meaningful decisions, findings, plan changes, or implementation milestones.
-5. Before context compaction:
-   - Run \`skopos discuss handoff <project-root> --json\`.
-   - Use the returned handoff as compact resume context.
-6. Before stopping:
+5. Fresh-session continuation (only after explicit user intent):
+   - Have the originating agent author a bounded classified capsule; do not use a transcript as the capsule.
+   - Run \`skopos discuss handoff create <project-root> --task <task-id> --context <capsule.json> --json\`.
+   - Review \`skopos discuss handoff show <project-root> --task <task-id> --json\`, then require \`skopos discuss handoff verify <project-root> --task <task-id> --json\` to report \`current\`.
+   - Run \`skopos discuss handoff render <project-root> --task <task-id> --json\` and copy the exact prompt into a genuinely fresh host Session.
+   - Open the receiving Skopos Session, then run \`skopos discuss handoff accept <project-root> --task <task-id> --actor <id> --receiving-session <id> --host <host-id> --json\` before editing.
+   - Rendering is not delivery. If the host cannot prove task creation or injection, report manual copy only.
+6. Before context compaction:
+   - Refresh an existing semantic handoff with \`skopos discuss handoff refresh <project-root> --task <task-id> --json\`; if none exists, preserve the normal Task checkpoint and ask the agent to author one.
+7. Before stopping:
    - Run \`skopos session context <project-root> --host <host-id> --json\`.
    - If it returns a concrete next command, complete that step before stopping.
    - For an active Task, run \`skopos readiness <task-id> <project-root> --for close --actor <id> --json\`.
@@ -125,4 +131,5 @@ Avoid dumping raw journals or large JSON into the normal chat unless the user as
 ## What This Does Not Cover
 
 This fallback guide does not provide native lifecycle hooks. It is manual-only until the host integrates the calls above into real lifecycle events.
+It cannot create a Session, inject a prompt, identify or message the origin, detect pre-compaction, or report completion automatically.
 `;

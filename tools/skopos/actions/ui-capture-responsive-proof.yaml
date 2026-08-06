@@ -1,0 +1,44 @@
+id: ui.capture-responsive-proof
+title: Capture responsive and accessibility proof
+description: Build and serve the routed Skopos console locally, render representative routes at desktop and mobile viewports, capture screenshots, detect horizontal overflow, and run WCAG-focused Axe analysis.
+category: quality-check
+scope:
+  - workspace
+  - docs
+command: pnpm skopos:ui:proof
+cwd: .
+inputs:
+  - packages/ui
+  - packages/cli/src/scripts/capture-ui-proof.ts
+  - packages/cli/package.json
+  - package.json
+  - pnpm-lock.yaml
+outputs:
+  - .skopos/evidence/ui
+affects:
+  - .skopos/evidence/ui
+capabilities:
+  process: required
+  network: none
+  browser: required
+  tools: [pnpm]
+  secrets: []
+  services: []
+effects:
+  workspace: declared
+  artifacts: none
+  external: none
+concurrency: exclusive
+workspaceMode: overlay-safe
+safety: mutating
+requiresApproval: false
+whenToUse: Run after materially changing responsive layout, navigation, scroll ownership, user-facing interaction states, or accessibility behavior in the routed console.
+phases:
+  - stabilization
+  - closure
+risks:
+  - standard
+  - high-impact
+recommendedAfter:
+  - ui.build-console-app
+owner: skopos-ui

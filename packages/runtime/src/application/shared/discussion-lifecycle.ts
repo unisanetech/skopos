@@ -3,6 +3,7 @@ import type {
   SkoposDiscussionHandoffRunResult,
   SkoposDiscussionCheckpointPromotionTrigger,
   SkoposTaskIdentity,
+  SkoposConversationCapsule,
 } from '@skopos/model';
 
 import { refreshSkoposDiscussionCheckpoints } from './discussion-checkpoints.js';
@@ -12,18 +13,24 @@ import { refreshSkoposTokenTelemetry } from './token-telemetry.js';
 
 export const refreshSkoposDiscussionResumeArtifacts = async ({
   workspaceRoot,
+  taskId,
   taskIdentity,
+  conversationCapsule,
   dryRun = false,
 }: {
   workspaceRoot: string;
+  taskId?: string;
   taskIdentity?: SkoposTaskIdentity;
+  conversationCapsule?: SkoposConversationCapsule;
   dryRun?: boolean;
 }): Promise<{
   handoff: SkoposDiscussionHandoffRunResult;
 }> => {
   const handoff = await refreshSkoposDiscussionHandoff({
     workspaceRoot,
+    taskId,
     taskIdentity,
+    conversationCapsule,
     dryRun,
   });
 

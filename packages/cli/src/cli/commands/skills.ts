@@ -2,9 +2,12 @@ import { resolve } from 'node:path';
 
 import {
   applySkoposSkillPackRuntime,
+  buildSkoposCompactTaskBriefRuntime,
+  evaluateSkoposSkillFixturesRuntime,
   listSkoposProjectSkillBindingsRuntime,
   listSkoposSkillPacksRuntime,
   recommendSkoposSkillPacksRuntime,
+  showSkoposTaskRuntime,
   showSkoposSkillPackRuntime,
 } from '@skopos/runtime';
 
@@ -107,6 +110,83 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
     return;
   }
 
+  if (subcommand === 'evaluate') {
+    const parsed = parseSkillArgs(rest, true);
+    if (!parsed.pack) throw new Error('Missing skill pack id or manifest path.');
+    if (!parsed.binding) throw new Error('Missing --binding for skill evaluation.');
+    const result = await evaluateSkoposSkillFixturesRuntime({
+      cwd: parsed.cwd,
+      pack: parsed.pack,
+      binding: parsed.binding,
+      dryRun: parsed.dryRun,
+    });
+    if (parsed.json) {
+      writeJsonOutput(result);
+      return;
+    }
+    writeLines([
+      'Skopos skill fixture evaluation',
+      `- pack: ${result.artifact.packId}@${result.artifact.packVersion}`,
+      `- binding: ${result.artifact.bindingId}`,
+      `- result: ${result.artifact.passed} passed, ${result.artifact.failed} failed`,
+      `- generated report: ${result.artifactPath} (${result.artifactWrite})`,
+      ...result.artifact.results.map(
+        (fixture) =>
+          `- ${fixture.status} ${fixture.fixtureId} [${fixture.category}]${
+            fixture.failures.length > 0
+              ? `: ${fixture.failures.map((failure) => failure.field).join(', ')}`
+              : ''
+          }`,
+      ),
+    ]);
+    return;
+  }
+
+  if (subcommand === 'context') {
+    const parsed = parseSkillArgs(rest, true);
+    if (!parsed.pack) throw new Error('Missing Task id for Skill context.');
+    const task = await showSkoposTaskRuntime({
+      cwd: parsed.cwd,
+      taskId: parsed.pack,
+    });
+    const result = await buildSkoposCompactTaskBriefRuntime({
+      cwd: parsed.cwd,
+      task,
+      questions: {
+        schemaVersion: 1,
+        id: `${task.id}.questions`,
+        type: 'task-questions',
+        status: 'generated',
+        authority: 'generated',
+        generatedAt: task.generatedAt,
+        updatedAt: task.updatedAt,
+        workspaceRoot: task.workspaceRoot,
+        taskIdentity: task.taskIdentity,
+        taskId: task.id,
+        entries: task.questions,
+      },
+      phase: 'iteration',
+      risk: task.risk,
+    });
+    if (parsed.json) {
+      writeJsonOutput(result);
+      return;
+    }
+    writeLines([
+      'Skopos Task Skill context',
+      `- Task: ${task.id}`,
+      `- selected packs: ${result.skills.selectedCount}`,
+      ...result.skills.entries.map(
+        (entry) =>
+          `- ${entry.packId}@${entry.version}: ${entry.selectedModuleIds.join(', ')}`,
+      ),
+      `- Skill context entries: ${result.context.entries.filter((entry) => entry.kind === 'skill').length}`,
+      `- bound capabilities: ${result.actions.entries.length} Actions, ${result.guards.entries.length} Guards`,
+      '- This is a read-only projection over the tracked Task; selection remains part of the canonical compact Task brief.',
+    ]);
+    return;
+  }
+
   if (subcommand === 'apply') {
     const parsed = parseSkillArgs(rest, true);
     if (!parsed.pack) throw new Error('Missing skill pack id or manifest path.');
@@ -132,6 +212,7 @@ export const runSkillsCommand = async (args: string[]): Promise<void> => {
       `- binding: ${parsed.binding}`,
       `- tracked binding: ${result.bindingPath} (${result.bindingWrite})`,
       `- accepted skills: ${result.artifact.acceptedSkills.length}`,
+      `- deterministic fixtures: ${result.fixtureEvaluation.passed} passed, ${result.fixtureEvaluation.failed} failed`,
       `- resolved local projection: ${result.artifactPath}`,
       '- Skill context is Task-selected; Skopos remains the only Task and Readiness authority.',
     ]);

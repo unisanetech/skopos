@@ -38,11 +38,11 @@ export const documentHrefForCategory = (
 
   switch (category) {
     case 'decisions':
-      return `#/decisions/${encodedId}`;
+      return `/decisions/${encodedId}`;
     case 'findings':
-      return `#/findings/${encodedId}`;
+      return `/findings/${encodedId}`;
     default:
-      return `#/docs/${encodedId}`;
+      return `/docs/${encodedId}`;
   }
 };
 

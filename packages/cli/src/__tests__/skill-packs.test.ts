@@ -14,7 +14,11 @@ import type {
   SkoposResolvedPolicyArtifact,
   SkoposTaskContract,
 } from '../../../model/src/index.js';
-import { selectSkoposSkillsForTaskRuntime } from '../../../runtime/src/index.js';
+import { SKOPOS_SCOPE_KINDS } from '../../../model/src/index.js';
+import {
+  evaluateSkoposSkillFixturesRuntime,
+  selectSkoposSkillsForTaskRuntime,
+} from '../../../runtime/src/index.js';
 import {
   assertSkoposSkillAcceptanceIdentityRuntime,
   buildSkoposSkillAcceptanceIdentityRuntime,
@@ -55,8 +59,54 @@ describe('product UI craft skill pack', () => {
       }),
     );
     expect(pack?.modules.every((module) => module.positiveSignals.length > 0)).toBe(true);
+    expect(
+      pack?.modules.every((module) =>
+        module.applicability.scopeKinds.every((kind) =>
+          SKOPOS_SCOPE_KINDS.includes(kind),
+        ),
+      ),
+    ).toBe(true);
     expect(pack?.modules.every((module) => module.rubricDimensions.length > 0)).toBe(true);
     expect(pack?.modules.every((module) => module.measuredTokens > 0)).toBe(true);
+    const rubric = JSON.parse(
+      await readFile(
+        `${skoposRoot}/skill-packs/ui/product-craft/rubrics/product-ui-review.json`,
+        'utf8',
+      ),
+    ) as { dimensions: string[]; blockingConditions: string[] };
+    expect(rubric.dimensions).toEqual(
+      expect.arrayContaining([
+        'task-archetype and reference fit',
+        'color-role clarity and product-specific character',
+        'visual quietness and attention economy',
+        'background, layer, and contrast architecture',
+        'responsive transformation and truthful limitations',
+      ]),
+    );
+    expect(pack?.failureSignals.map((signal) => signal.id)).toEqual(
+      expect.arrayContaining([
+        'failure.archetype-mismatch',
+        'failure.reference-mismatch',
+        'failure.color-role-ambiguity',
+        'failure.attention-color-overuse',
+        'failure.background-layer-confusion',
+        'failure.legacy-dashboard-convergence',
+        'failure.generic-ai-convergence',
+      ]),
+    );
+    expect(pack?.fixtures.map((fixture) => fixture.category).sort()).toEqual([
+      'ambiguous',
+      'budget',
+      'capability-locality',
+      'capability-locality',
+      'generated-output',
+      'negative',
+      'positive',
+      'positive',
+    ]);
+    expect(pack?.fixtures.map((fixture) => fixture.fixtureId).sort()).toEqual(
+      [...(pack?.proofFixtureIds ?? [])].sort(),
+    );
 
     const guidance = await readFile(
       `${skoposRoot}/skill-packs/ui/product-craft/guidance/visual-composition-and-polish.md`,
@@ -65,8 +115,31 @@ describe('product UI craft skill pack', () => {
     expect(guidance).toContain('Use semantic type roles');
     expect(guidance).toContain('Establish a small set of alignment lines');
     expect(guidance).toContain('Give a region one primary containment treatment');
+    expect(guidance).toContain('Name the canvas and every persistent layer before styling');
+    expect(guidance).toContain('Make typography, spacing, alignment, and content order carry most hierarchy');
+    expect(guidance).toContain('Never render populated and empty results');
     expect(guidance).toContain('Start from project component defaults');
+    expect(guidance).toContain('Each large region must earn its footprint');
+    expect(guidance).toContain('current, hovered, focused, pressed, selected');
+    expect(guidance).toMatch(/icon size and stroke\s+weight coherent and subordinate/);
     expect(guidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
+
+    const responsiveGuidance = await readFile(
+      `${skoposRoot}/skill-packs/ui/product-craft/guidance/responsive-and-states.md`,
+      'utf8',
+    );
+    expect(responsiveGuidance).toContain('transfer focus');
+    expect(responsiveGuidance).toContain('background inert');
+    expect(responsiveGuidance).toContain('return focus to the trigger');
+    expect(responsiveGuidance).toMatch(/scrollbar\s+residue/);
+
+    expect(rubric.blockingConditions).toEqual(expect.arrayContaining([
+      expect.stringContaining('modal drawer or dialog omits focus transfer'),
+      expect.stringContaining('local scrollbar, clipped control row'),
+      expect.stringContaining('states are visually indistinguishable'),
+      expect.stringContaining('icon size or stroke weight'),
+      expect.stringContaining('task evidence, decision, or action value'),
+    ]));
 
     const writingGuidance = await readFile(
       `${skoposRoot}/skill-packs/ui/product-craft/guidance/human-interface-writing.md`,
@@ -85,8 +158,12 @@ describe('product UI craft skill pack', () => {
       'utf8',
     );
     expect(componentGuidance).toContain('Choose in this order');
+    expect(componentGuidance).toContain('Record a short reuse inventory');
     expect(componentGuidance).toContain('Do not encode prompt adjectives');
     expect(componentGuidance).toContain('why an existing component could not own the change');
+    expect(componentGuidance).toMatch(
+      /Missing conformance capability means unverified, not\s+passed/,
+    );
     expect(componentGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
   });
 
@@ -99,6 +176,121 @@ describe('product UI craft skill pack', () => {
       packVersion: '0.1.0',
       lifecycle: 'accepted',
     });
+  });
+
+  it('executes every declared fixture against the candidate pack and binding', async () => {
+    const result = await evaluateSkoposSkillFixturesRuntime({
+      cwd: skoposRoot,
+      pack: 'ui.product-craft',
+      binding: 'skopos.ui.product-craft',
+      dryRun: true,
+    });
+
+    expect(result.artifact).toMatchObject({
+      authority: 'generated',
+      type: 'skill-fixture-evaluation',
+      passed: 8,
+      failed: 0,
+      identity: {
+        packSourceDigest: expect.stringMatching(/^sha256:/),
+        bindingSourceDigest: expect.stringMatching(/^sha256:/),
+        projectSourceDigest: expect.stringMatching(/^sha256:/),
+        capabilityCatalogDigest: expect.stringMatching(/^sha256:/),
+        evaluationSourceDigest: expect.stringMatching(/^sha256:/),
+        combinedDigest: expect.stringMatching(/^sha256:/),
+      },
+    });
+    expect(result.artifact.results).toHaveLength(8);
+    expect(result.artifact.results.every((fixture) => fixture.status === 'pass')).toBe(true);
+  });
+
+  it('rejects missing and undeclared fixture manifests', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'skopos-skill-fixtures-'));
+    const temporaryPackDirectory = join(
+      temporaryRoot,
+      'skill-packs',
+      'ui',
+      'product-craft',
+    );
+    await cp(
+      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      temporaryPackDirectory,
+      { recursive: true },
+    );
+    const undeclaredFixturePath = join(
+      temporaryPackDirectory,
+      'fixtures/undeclared.fixture.json',
+    );
+    const sourceFixturePath = join(
+      temporaryPackDirectory,
+      'fixtures/positive-hierarchy.fixture.json',
+    );
+    await writeFile(
+      undeclaredFixturePath,
+      `${JSON.stringify({
+        ...(JSON.parse(
+          await readFile(sourceFixturePath, 'utf8'),
+        ) as Record<string, unknown>),
+        id: 'skill-selection-fixture.undeclared-fixture',
+        fixtureId: 'undeclared-fixture',
+      }, null, 2)}\n`,
+      'utf8',
+    );
+
+    await expect(loadSkoposSkillPacks({ cwd: temporaryRoot })).rejects.toThrow(
+      /fixture declarations do not match discovered manifests.*Undeclared: undeclared-fixture/,
+    );
+    await rm(undeclaredFixturePath);
+
+    const packPath = join(temporaryPackDirectory, 'pack.json');
+    const pack = JSON.parse(await readFile(packPath, 'utf8')) as {
+      proofFixtureIds: string[];
+    };
+    pack.proofFixtureIds.push('missing-fixture');
+    await writeFile(packPath, `${JSON.stringify(pack, null, 2)}\n`, 'utf8');
+    await expect(loadSkoposSkillPacks({ cwd: temporaryRoot })).rejects.toThrow(
+      /fixture declarations do not match discovered manifests.*Missing: missing-fixture/,
+    );
+
+    pack.proofFixtureIds = pack.proofFixtureIds.filter(
+      (fixtureId) => fixtureId !== 'missing-fixture',
+    );
+    await writeFile(packPath, `${JSON.stringify(pack, null, 2)}\n`, 'utf8');
+    await cp(
+      sourceFixturePath,
+      join(temporaryPackDirectory, 'fixtures/duplicate.fixture.json'),
+    );
+    await expect(loadSkoposSkillPacks({ cwd: temporaryRoot })).rejects.toThrow(
+      /Duplicate skill fixture id: ui-product-craft-positive-hierarchy/,
+    );
+    await rm(temporaryRoot, { recursive: true, force: true });
+  });
+
+  it('rejects noncanonical pseudo-Scope kinds in packed manifests', async () => {
+    const temporaryRoot = await mkdtemp(join(tmpdir(), 'skopos-skill-scope-kind-'));
+    const temporaryPackDirectory = join(
+      temporaryRoot,
+      'skill-packs',
+      'ui',
+      'product-craft',
+    );
+    await cp(
+      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      temporaryPackDirectory,
+      { recursive: true },
+    );
+    const packPath = join(temporaryPackDirectory, 'pack.json');
+    const pack = JSON.parse(await readFile(packPath, 'utf8')) as {
+      modules: Array<{ applicability: { scopeKinds: string[] } }>;
+    };
+    pack.modules[0]!.applicability.scopeKinds = ['frontend'];
+    await writeFile(packPath, `${JSON.stringify(pack, null, 2)}\n`, 'utf8');
+
+    try {
+      await expect(loadSkoposSkillPacks({ cwd: temporaryRoot })).rejects.toThrow();
+    } finally {
+      await rm(temporaryRoot, { recursive: true, force: true });
+    }
   });
 
   it('resolves capabilities only from the modules selected for the task', async () => {
@@ -172,17 +364,168 @@ describe('product UI craft skill pack', () => {
     );
   });
 
+  it('projects each project design-system binding and reports missing conformance honestly', async () => {
+    const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
+    const bindings = await loadSkoposProjectSkillBindings({ cwd: skoposRoot });
+    const pack = packs.find((candidate) => candidate.packId === 'ui.product-craft');
+    const binding = bindings.find((candidate) => candidate.packId === 'ui.product-craft');
+    if (!pack || !binding) throw new Error('Product UI Craft candidate sources are missing.');
+
+    const task = buildSkillTestTask(
+      'Compose rendered navigation, tabs, buttons, and a data table from the project component catalog and semantic design tokens.',
+    );
+    task.acceptanceCriteria.push(
+      'Reuse matching controls and explain every custom primitive or local visual token.',
+    );
+    const baseOperatingModel = await buildSkillTestOperatingModel();
+    const selectWith = async ({
+      bindingId,
+      catalogPath,
+      tokenPath,
+      inventoryAction,
+      conformanceGuard,
+      adaptationNotes = [],
+    }: {
+      bindingId: string;
+      catalogPath: string;
+      tokenPath: string;
+      inventoryAction?: string;
+      conformanceGuard?: string;
+      adaptationNotes?: string[];
+    }) => {
+      const candidateBinding = {
+        ...binding,
+        bindingId,
+        sourceBindings: {
+          ...binding.sourceBindings,
+          'component-catalog': [catalogPath],
+          'design-tokens': [tokenPath],
+        },
+        actionBindings: {
+          ...binding.actionBindings,
+          ...(inventoryAction ? { 'design-system-inventory': inventoryAction } : {}),
+        },
+        guardBindings: {
+          ...binding.guardBindings,
+          ...(conformanceGuard ? { 'design-system-conformance': conformanceGuard } : {}),
+        },
+        adaptationNotes,
+        acceptance: undefined,
+      };
+      const operatingModel = {
+        ...baseOperatingModel,
+        actions: [
+          ...baseOperatingModel.actions,
+          ...(inventoryAction ? [{ id: inventoryAction }] : []),
+        ],
+        guards: [
+          ...baseOperatingModel.guards,
+          ...(conformanceGuard ? [{ id: conformanceGuard }] : []),
+        ],
+      } as SkoposAgentNativeOperatingModel;
+      return selectSkoposSkillsForTaskRuntime({
+        cwd: skoposRoot,
+        taskId: `T-${bindingId}`,
+        cacheMode: 'bypass',
+        task,
+        taskRisk: 'standard',
+        changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
+        affectedCapabilities: ['component-library', 'design-tokens'],
+        operatingModel,
+        candidateSkill: {
+          pack,
+          binding: candidateBinding,
+          projectLifecycle: 'established-brownfield',
+        },
+      });
+    };
+
+    const alpha = await selectWith({
+      bindingId: 'project.alpha.ui-product-craft',
+      catalogPath: 'packages/ui/src',
+      tokenPath: 'packages/ui/src/app/styles.css',
+      inventoryAction: 'project.alpha.design-system-inventory',
+      conformanceGuard: 'project.alpha.design-system-conformance',
+    });
+    const beta = await selectWith({
+      bindingId: 'project.beta.ui-product-craft',
+      catalogPath: 'docs/00-start-here.md',
+      tokenPath: 'docs/standards/terminology.md',
+      inventoryAction: 'project.beta.design-system-inventory',
+      conformanceGuard: 'project.beta.design-system-conformance',
+    });
+
+    for (const [result, expected] of [
+      [alpha, {
+        catalogPath: 'packages/ui/src',
+        inventoryAction: 'project.alpha.design-system-inventory',
+        conformanceGuard: 'project.alpha.design-system-conformance',
+      }],
+      [beta, {
+        catalogPath: 'docs/00-start-here.md',
+        inventoryAction: 'project.beta.design-system-inventory',
+        conformanceGuard: 'project.beta.design-system-conformance',
+      }],
+    ] as const) {
+      const selected = result.selectedSkills[0];
+      expect(selected?.selectedModuleIds).toContain(
+        'ui-craft.component-architecture-and-naming',
+      );
+      expect(selected?.adaptation.sourceBindings['component-catalog']).toEqual([
+        expected.catalogPath,
+      ]);
+      expect(selected?.adaptation.actionBindings['design-system-inventory']).toBe(
+        expected.inventoryAction,
+      );
+      expect(selected?.adaptation.guardBindings['design-system-conformance']).toBe(
+        expected.conformanceGuard,
+      );
+      expect(selected?.adaptation.gaps).not.toContainEqual(
+        expect.objectContaining({ role: 'design-system-conformance' }),
+      );
+      expect(selected?.selectedContext[0]).toMatchObject({
+        id: 'skill:ui.product-craft:project-adaptation',
+      });
+      expect(selected?.selectedContext[0]?.summary).toContain(expected.catalogPath);
+      expect(selected?.selectedContext[0]?.summary).toContain(expected.inventoryAction);
+      expect(selected?.selectedContext[0]?.summary).toContain(expected.conformanceGuard);
+    }
+
+    const projectWithoutAutomatedConformance = await selectWith({
+      bindingId: 'project.no-automation.ui-product-craft',
+      catalogPath: 'docs/00-start-here.md',
+      tokenPath: 'docs/standards/terminology.md',
+      adaptationNotes: [
+        'This project has no shared component package; this source records its local component authority.',
+      ],
+    });
+    const selected = projectWithoutAutomatedConformance.selectedSkills[0];
+    expect(selected?.adaptation.gaps).toEqual(expect.arrayContaining([
+      expect.objectContaining({ roleKind: 'action', role: 'design-system-inventory' }),
+      expect.objectContaining({ roleKind: 'guard', role: 'design-system-conformance' }),
+    ]));
+    expect(selected?.selectedContext[0]?.summary).toContain(
+      'Missing Actions or Guards are limitations, not proof.',
+    );
+    expect(selected?.adaptation.notes).toContain(
+      'This project has no shared component package; this source records its local component authority.',
+    );
+  });
+
   it('suppresses keyword overlap without relevant UI applicability', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
       taskId: 'T-skill-backend-suppression',
       cacheMode: 'bypass',
-      task: buildSkillTestTask('Refactor the backend rendering adapter.', {
+      task: buildSkillTestTask(
+        'Refactor the backend rendering adapter while preserving product interface hierarchy and layout.',
+        {
         id: 'skopos-runtime',
         title: 'Skopos Runtime',
         path: 'packages/runtime',
         kind: 'service',
-      }),
+        },
+      ),
       taskRisk: 'standard',
       changedPaths: ['packages/runtime/src/adapters/database.ts'],
       operatingModel: await buildSkillTestOperatingModel(),
@@ -214,7 +557,7 @@ describe('product UI craft skill pack', () => {
 
   it('lets an explicit anti-signal block otherwise relevant intent', async () => {
     const task = buildSkillTestTask('Update the product page hierarchy.');
-    task.nonGoals.push(
+    task.constraints.push(
       'No rendered product surface is in scope; backend infrastructure only.',
     );
     const result = await selectSkoposSkillsForTaskRuntime({
@@ -244,7 +587,7 @@ describe('product UI craft skill pack', () => {
       taskId: 'T-skill-standard-budget',
       cacheMode: 'bypass',
       task: buildSkillTestTask(
-        'Rewrite interface labels, errors, empty states, typography, spacing, and responsive recovery.',
+        'Rewrite interface labels, errors, empty states, typography, spacing, alignment, and responsive recovery.',
       ),
       taskRisk: 'standard',
       changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
@@ -278,7 +621,9 @@ describe('product UI craft skill pack', () => {
       cwd: skoposRoot,
       taskId: 'T-skill-light-budget',
       cacheMode: 'bypass',
-      task: buildSkillTestTask('Rewrite the interface labels and action wording.'),
+      task: buildSkillTestTask(
+        'Rewrite the interface labels, action wording, and error guidance.',
+      ),
       taskRisk: 'light',
       changedPaths: ['packages/ui/src/screens/settings-page.tsx'],
       operatingModel: await buildSkillTestOperatingModel(),
@@ -438,7 +783,10 @@ describe('product UI craft skill pack', () => {
       ).rejects.toThrow(/packSourceDigest.*changed/);
       await writeFile(guidancePath, guidance, 'utf8');
 
-      const fixturePath = join(temporaryPackDirectory, 'fixtures/good/README.md');
+      const fixturePath = join(
+        temporaryPackDirectory,
+        'fixtures/positive-hierarchy.fixture.json',
+      );
       const fixture = await readFile(fixturePath, 'utf8');
       await writeFile(fixturePath, `${fixture}\nMaterial evaluation change.\n`, 'utf8');
       await expect(

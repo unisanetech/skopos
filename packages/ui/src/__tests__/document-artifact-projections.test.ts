@@ -80,7 +80,7 @@ describe('document artifact projections', () => {
       {
         id: 'architecture',
         title: 'Architecture artifact',
-        href: '#/docs/architecture',
+        href: '/docs/architecture',
         displayPath: artifactPath,
         exists: true,
         kind: 'artifact',
@@ -128,7 +128,7 @@ describe('document artifact projections', () => {
       {
         id: 'custom',
         title: 'Custom artifact',
-        href: '#/docs/custom',
+        href: '/docs/custom',
         displayPath: artifactPath,
         exists: true,
         kind: 'artifact',
@@ -188,6 +188,82 @@ describe('document artifact projections', () => {
     expect(displayPaths).not.toContain(
       join(workspaceRoot, 'docs', 'decisions', 'archive', '001-old.md'),
     );
+  });
+
+  it('keeps YAML frontmatter out of human document summaries and sections', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-doc-frontmatter-'));
+    tempDirs.push(workspaceRoot);
+
+    const documentPath = join(workspaceRoot, 'guide.md');
+    await writeFile(
+      documentPath,
+      '---\ntitle: Internal metadata\nstatus: active\n---\n\n# Working guide\n\nStart with the current task.\n',
+      'utf8',
+    );
+
+    const [document] = await buildDocuments([
+      {
+        id: 'guide',
+        title: 'Working guide',
+        href: '/docs/guide',
+        displayPath: documentPath,
+        exists: true,
+        kind: 'doc',
+      } satisfies SkoposUiConsoleLink,
+    ]);
+
+    expect(document?.title).toBe('Working guide');
+    expect(document?.summary).toBe('Start with the current task.');
+    expect(document?.excerpt).not.toContain('status: active');
+    expect(document?.sections.some((section) => section.body.includes('title: Internal metadata'))).toBe(false);
+  });
+
+  it('retains human-relevant decision sections beyond the generic document preview', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-doc-decision-'));
+    tempDirs.push(workspaceRoot);
+
+    const documentPath = join(workspaceRoot, 'decision.md');
+    await writeFile(
+      documentPath,
+      [
+        '# Human supervision',
+        '',
+        '## Context',
+        '',
+        'The project needs a calmer supervision surface.',
+        '',
+        '## Decision',
+        '',
+        ...Array.from({ length: 8 }, (_, index) =>
+          `### Commitment ${index + 1}\n\nKeep commitment ${index + 1}.\n`,
+        ),
+        '## Consequences',
+        '',
+        'Raw metadata becomes supporting detail.',
+        '',
+        '## Rejected Alternatives',
+        '',
+        'Do not keep the record-shaped dashboard.',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const [document] = await buildDocuments([
+      {
+        id: 'human-supervision',
+        title: 'Human supervision',
+        href: '/decisions/human-supervision',
+        displayPath: documentPath,
+        exists: true,
+        kind: 'doc',
+        role: 'decision',
+        lifecycle: 'durable',
+      } satisfies SkoposUiConsoleLink,
+    ]);
+
+    expect(document?.summary).toBe('The project needs a calmer supervision surface.');
+    expect(document?.sections.map((section) => section.title)).toContain('Consequences');
+    expect(document?.sections.map((section) => section.title)).toContain('Rejected Alternatives');
   });
 
   it('uses compiled document semantics instead of rediscovering project-shaped paths', async () => {

@@ -1,0 +1,52 @@
+{
+  "snapshotId": "S-5dec35ae25f3",
+  "taskId": "T-6d37da41",
+  "sessionId": "codex-skill-portability-correction",
+  "actorId": "codex-skill-portability",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "4904762be8bde17f6dd8f8ea8da929db8a9834ba41973e4569da52591701542a"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "edfe67e92cae74e95e89272cbbbd08e492f8800f437959e6ee988a00796fcd3c"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "2f797d1309545388c98b457ddeb480d893a1f8fed034f5cfa14f2d63c881ae3c"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "8470f74fc1e49bfd00123136849c2fc90147968fd1758cb1dcb2da4181671cb9"
+    },
+    {
+      "path": "packages/cli/src/__tests__/help-contract.test.ts",
+      "digest": "f5f3bb64b6b0f103582cfa7361ece98f8ef4f7ece3e0f069d0f3ee128b9e7020"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "b06c711c54218e407e0dee17da58f2ff8ddf3f765b8a2bc80b6ec61a1f99a0c6"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-skill-portability.ts",
+      "digest": "a95a3fd2fe32136e3027931bc8344f5aae8b225f5cf024889a84af9933bd4eeb"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/skills.ts",
+      "digest": "db9d73ad43ae13331ba5b5b5649cc00aab6b119b73aa04deaa14c0344f362dc3"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "db0252b11a0cf13515190cfa5e4bb01eec37359e3a6b99bcecd0d54d538e4331"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-craft.json",
+      "digest": "507de2f528b5734c21e8e70a39ef24cb8034b1b36d8e1d1fe33dc2fe4bc0b01e"
+    }
+  ],
+  "digest": "5dec35ae25f31111be6217ba043a981407c123a7c2ea0d8867eb1ce04f8a5ab8",
+  "createdAt": "2026-08-04T22:41:03.257Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-6d37da41-S-5dec35ae25f3.json"
+}

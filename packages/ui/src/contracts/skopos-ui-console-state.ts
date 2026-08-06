@@ -29,6 +29,7 @@ import type {
   SkoposScopeLite,
   SkoposToolAdapterSummary,
   SkoposProjectReadinessArtifact,
+  SkoposSessionContextRunResult,
 } from '@skopos/model';
 
 import type { SkoposUiActivityViewsResult } from './skopos-ui-activity-view.js';
@@ -161,8 +162,18 @@ export interface SkoposUiConsoleTaskView {
   plan?: SkoposUiConsolePlanView;
 }
 
+export interface SkoposUiConsoleScopeSection {
+  title: string;
+  items: string[];
+}
+
 export interface SkoposUiConsoleScopeView {
   scope: SkoposScopeLite;
+  purpose: string;
+  overviewDocumentId?: string;
+  orientationSections: SkoposUiConsoleScopeSection[];
+  relatedDocumentIds: string[];
+  dependentScopeIds: string[];
   relatedPlanIds: string[];
   relatedTaskIds: string[];
   relatedPlanCount: number;
@@ -276,6 +287,7 @@ export interface SkoposUiConsoleState {
   outputDirectory: string;
   generatedAt: string;
   artifactCounts: SkoposUiArtifactCounts;
+  sessionContext?: SkoposSessionContextRunResult;
   readinessReport: SkoposProjectReadinessArtifact;
   taskQuestions?: SkoposTaskQuestionArtifact;
   indexArtifact?: SkoposContentIndexArtifact;

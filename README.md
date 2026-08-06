@@ -177,6 +177,18 @@ These lifecycle commands open or renew the Session, reserve one writing Task, an
 publish declared owned-path claims. They report cooperative enforcement and do not
 claim that direct filesystem or Git writes are prevented.
 
+Task start defaults to the bounded `task-closure` proof subject. Use the explicit
+integration form only when the requested outcome is a named integration or release
+baseline:
+
+```txt
+skopos start "<integration goal>" . --proof-subject project-integration --own <integration-path> --actor <actor>
+```
+
+`project-integration` requires an owned path and creates a detailed high-impact Task.
+It does not turn unrelated dirty-worktree changes into proof. Run
+`skopos start --help` for the exact proof-subject contract.
+
 ## Contributing
 
 Install dependencies:

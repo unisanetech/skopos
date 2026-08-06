@@ -1,0 +1,11 @@
+{
+  "snapshotId": "S-e3b0c44298fc",
+  "taskId": "T-db2a2a6c",
+  "sessionId": "adoption-production-certification-20260805",
+  "actorId": "codex-adoption-production-certification",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [],
+  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "createdAt": "2026-08-05T12:46:47.508Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-db2a2a6c-S-e3b0c44298fc.json"
+}

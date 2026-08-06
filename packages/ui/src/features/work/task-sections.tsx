@@ -5,6 +5,7 @@ export {
   OverviewProjectKnowledgeCard,
   OverviewRecentPlansCard,
   OverviewUnderstandingCard,
+  NowGuidanceCard,
 } from './overview-sections.js';
 export {
   DiscussionGuidanceCard,
@@ -24,4 +25,5 @@ export {
   TaskGuidanceCard,
   TaskLinkedWorkCard,
   TaskActionRecordingCard,
+  TaskContractCard,
 } from './task-detail/index.js';

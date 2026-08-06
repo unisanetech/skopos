@@ -9,6 +9,7 @@ import type {
   SkoposProjectLifecycle,
 } from './skopos-policy-pack.js';
 import type { SkoposTaskRisk } from './skopos-task.js';
+import type { SkoposScopeKind } from './skopos-scope-lite.js';
 
 export type SkoposSkillPackFamily =
   | 'project-intelligence'
@@ -83,7 +84,7 @@ export interface SkoposSkillPackOwnership {
 }
 
 export interface SkoposSkillModuleApplicability {
-  scopeKinds: string[];
+  scopeKinds: SkoposScopeKind[];
   pathKinds: string[];
   capabilities: string[];
 }
@@ -145,6 +146,263 @@ export interface SkoposSkillPackManifest extends SkoposArtifactEnvelope<'skill-p
   rubricPath: string;
   researchSources: SkoposSkillResearchSource[];
   proofFixtureIds: string[];
+  evaluationSuiteIds: string[];
+}
+
+export type SkoposSkillFixtureCategory =
+  | 'positive'
+  | 'negative'
+  | 'ambiguous'
+  | 'generated-output'
+  | 'capability-locality'
+  | 'budget';
+
+export interface SkoposSkillFixtureScope {
+  id: string;
+  title: string;
+  path: string;
+  kind:
+    | 'workspace'
+    | 'product'
+    | 'application'
+    | 'service'
+    | 'package'
+    | 'domain'
+    | 'infrastructure'
+    | 'tool';
+  ancestorIds: string[];
+  aliases: string[];
+  codeRoots: string[];
+}
+
+export interface SkoposSkillFixtureTask {
+  goal: string;
+  scope: SkoposSkillFixtureScope;
+  acceptanceCriteria: string[];
+  constraints: string[];
+  nonGoals: string[];
+  openDecisions: string[];
+  risk: SkoposTaskRisk;
+  phase: SkoposExecutionPhase;
+  ownedPaths: string[];
+  changedPaths: string[];
+  affectedCapabilities: string[];
+  selectedActionIds: string[];
+  applicableGuardIds: string[];
+  acceptedFailureEvidence: SkoposSkillAcceptedFailureEvidence[];
+  projectLifecycle: SkoposProjectLifecycle;
+}
+
+export interface SkoposSkillFixtureExpectation {
+  selectedModuleIds: string[];
+  suppressedModuleReasonCodes: Record<string, SkoposSkillSelectionReasonCode>;
+  selectedActionIds: string[];
+  selectedGuardIds: string[];
+  maximumSelectedModules?: number;
+  maximumMeasuredTokens?: number;
+}
+
+export interface SkoposSkillFixtureManifest
+  extends SkoposArtifactEnvelope<'skill-selection-fixture'> {
+  fixtureId: string;
+  packId: string;
+  category: SkoposSkillFixtureCategory;
+  task: SkoposSkillFixtureTask;
+  expectation: SkoposSkillFixtureExpectation;
+}
+
+export interface SkoposSkillFixtureFailure {
+  field: string;
+  expected: unknown;
+  observed: unknown;
+}
+
+export interface SkoposSkillFixtureResult {
+  fixtureId: string;
+  category: SkoposSkillFixtureCategory;
+  sourcePath: string;
+  status: 'pass' | 'fail';
+  selectedModuleIds: string[];
+  selectedActionIds: string[];
+  selectedGuardIds: string[];
+  measuredTokens: number;
+  failures: SkoposSkillFixtureFailure[];
+}
+
+export interface SkoposSkillFixtureEvaluationIdentity {
+  packSourceDigest: string;
+  bindingSourceDigest: string;
+  projectSourceDigest: string;
+  capabilityCatalogDigest: string;
+  evaluationSourceDigest: string;
+  combinedDigest: string;
+}
+
+export interface SkoposSkillFixtureEvaluationArtifact
+  extends SkoposArtifactEnvelope<'skill-fixture-evaluation'> {
+  workspaceRoot: string;
+  packId: string;
+  packVersion: string;
+  bindingId: string;
+  identity: SkoposSkillFixtureEvaluationIdentity;
+  passed: number;
+  failed: number;
+  results: SkoposSkillFixtureResult[];
+}
+
+export interface SkoposSkillEvaluationCase {
+  caseId: string;
+  title: string;
+  taskPrompt: string;
+  projectTemplatePath: string;
+  candidateModuleIds: string[];
+  rubricDimensions: string[];
+}
+
+export interface SkoposSkillEvaluationSuiteManifest
+  extends SkoposArtifactEnvelope<'skill-evaluation-suite'> {
+  suiteId: string;
+  packId: string;
+  cases: SkoposSkillEvaluationCase[];
+}
+
+export interface SkoposSkillEvaluationWorkerInput {
+  caseId: string;
+  taskPrompt: string;
+  workspaceRoot: string;
+  additionalContext: SkoposContextEntry[];
+}
+
+export interface SkoposSkillEvaluationWorkerOutput {
+  status: 'completed' | 'invalid' | 'aborted';
+  summary: string;
+  artifactPaths: string[];
+  measuredInputTokens: number;
+  measuredCachedInputTokens: number;
+  measuredOutputTokens: number;
+  toolCalls: number;
+  correctionTurns: number;
+  supervisionEvents: number;
+  durationMs: number;
+  authorityViolationIds: string[];
+  failure?: {
+    stage: string;
+    message: string;
+  };
+}
+
+export interface SkoposSkillEvaluationReviewInput {
+  caseId: string;
+  taskPrompt: string;
+  rubricDimensions: string[];
+  alternatives: Array<{
+    label: string;
+    summary: string;
+    artifactPaths: string[];
+  }>;
+}
+
+export interface SkoposSkillEvaluationReviewOutput {
+  status: 'completed' | 'invalid' | 'aborted';
+  winner: string | 'tie';
+  reason: string;
+  dimensionScores: Record<string, Record<string, number>>;
+  measuredInputTokens: number;
+  measuredCachedInputTokens: number;
+  measuredOutputTokens: number;
+  durationMs: number;
+  failure?: {
+    stage: string;
+    message: string;
+  };
+}
+
+export interface SkoposSkillEvaluationCaseResult {
+  caseId: string;
+  outcome: 'candidate-win' | 'control-win' | 'tie' | 'invalid' | 'aborted';
+  reviewReason: string;
+  blindedLabelMapping?: { candidate: string; control: string };
+  candidateInputTokens: number;
+  candidateCachedInputTokens: number;
+  candidateOutputTokens: number;
+  controlInputTokens: number;
+  controlCachedInputTokens: number;
+  controlOutputTokens: number;
+  reviewerInputTokens: number;
+  reviewerCachedInputTokens: number;
+  reviewerOutputTokens: number;
+  candidateToolCalls: number;
+  controlToolCalls: number;
+  candidateCorrectionTurns: number;
+  controlCorrectionTurns: number;
+  candidateSupervisionEvents: number;
+  controlSupervisionEvents: number;
+  candidateDurationMs: number;
+  controlDurationMs: number;
+  reviewerDurationMs: number;
+  candidateAuthorityViolationIds: string[];
+  controlAuthorityViolationIds: string[];
+  failure?: {
+    stage: string;
+    arm?: 'candidate' | 'control' | 'reviewer';
+    message: string;
+  };
+  dimensionScores: Record<string, { candidate: number; control: number }>;
+}
+
+export interface SkoposSkillEvaluationEnvironmentIdentity {
+  modelId: string;
+  reasoningEffort: string;
+  hostId: string;
+  workerAdapterId: string;
+  reviewerId: string;
+  evaluationStage: 'smoke' | 'full';
+  selectedCaseSetDigest: string;
+  workerPromptDigest: string;
+  reviewerPromptDigest: string;
+  budgetDigest: string;
+  projectTemplateDigest: string;
+  packDigest: string;
+  bindingDigest: string;
+  capabilityDigest: string;
+  fixtureDigest: string;
+  rubricDigest: string;
+  suiteDigest: string;
+  toolchainDigest: string;
+  permissionsDigest: string;
+}
+
+export interface SkoposSkillEvaluationArtifact
+  extends SkoposArtifactEnvelope<'skill-paired-evaluation'> {
+  workspaceRoot: string;
+  packId: string;
+  packVersion: string;
+  bindingId: string;
+  suiteId: string;
+  runId: string;
+  identity: SkoposSkillAcceptanceIdentity & { suiteSourceDigest: string };
+  environment: SkoposSkillEvaluationEnvironmentIdentity;
+  environmentDigest: string;
+  candidateWins: number;
+  controlWins: number;
+  ties: number;
+  invalidCases: number;
+  abortedCases: number;
+  authorityRegressions: number;
+  candidateInputTokens: number;
+  controlInputTokens: number;
+  candidateCachedInputTokens: number;
+  controlCachedInputTokens: number;
+  candidateOutputTokens: number;
+  controlOutputTokens: number;
+  reviewerInputTokens: number;
+  reviewerCachedInputTokens: number;
+  reviewerOutputTokens: number;
+  candidateCorrectionTurns: number;
+  controlCorrectionTurns: number;
+  candidateSupervisionEvents: number;
+  controlSupervisionEvents: number;
+  results: SkoposSkillEvaluationCaseResult[];
 }
 
 export interface SkoposProjectSkillBinding
@@ -219,6 +477,22 @@ export interface SkoposResolvedSkillArtifact
   bindingPaths: string[];
 }
 
+export type SkoposSkillAdaptationRoleKind = 'context' | 'action' | 'guard';
+
+export interface SkoposSkillAdaptationGap {
+  roleKind: SkoposSkillAdaptationRoleKind;
+  role: string;
+  summary: string;
+}
+
+export interface SkoposSelectedSkillAdaptation {
+  sourceBindings: Record<string, string[]>;
+  actionBindings: Record<string, string>;
+  guardBindings: Record<string, string>;
+  notes: string[];
+  gaps: SkoposSkillAdaptationGap[];
+}
+
 export interface SkoposSelectedSkill {
   packId: string;
   version: string;
@@ -230,6 +504,7 @@ export interface SkoposSelectedSkill {
   selectedGuardIds: string[];
   selectedRubricDimensions: string[];
   selectedFailureSignalIds: string[];
+  adaptation: SkoposSelectedSkillAdaptation;
   measuredContextTokens: number;
   selectionEvidence: SkoposSkillModuleSelectionEvidence[];
   sourcePaths: string[];
@@ -270,7 +545,7 @@ export interface SkoposSkillTaskSignalEnvelope {
   risk: SkoposTaskRisk;
   phase: SkoposExecutionPhase;
   scopeIds: string[];
-  scopeKinds: string[];
+  scopeKinds: SkoposScopeKind[];
   scopeTerms: string[];
   paths: SkoposSkillTaskPathSignal[];
   affectedCapabilities: string[];

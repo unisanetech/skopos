@@ -1,11 +1,14 @@
 import * as React from 'react';
 
+import { Card as UiCard } from '@/components/ui/card';
+import { CardGrid } from '@/components/ui/card-grid';
+import { Typography } from '@/components/ui/typography';
 import type { SkoposUiConsoleState } from '../../../contracts/skopos-ui-console-state.js';
 import { cn } from '../../../support/ui/classnames.js';
 import { toneForCheck } from '../../../support/ui/tone-helpers.js';
 import { StatusPill } from '../inspector/status-pill.js';
 
-export const skoposListSurfaceClass = 'border-y border-[var(--line)]';
+export const skoposListSurfaceClass = 'overflow-hidden rounded-sm border border-outline-weak bg-surface';
 
 export const getSkoposListRowClass = ({
   compact = false,
@@ -18,9 +21,9 @@ export const getSkoposListRowClass = ({
 } = {}): string =>
   cn(
     'block',
-    interactive ? 'transition-colors hover:bg-[color:rgba(255,252,246,0.42)]' : undefined,
-    compact ? 'px-2 py-3' : 'px-2 py-3.5',
-    bordered ? 'border-t border-[var(--line)]' : undefined,
+    interactive ? 'transition-colors hover:bg-state-hover focus-visible:outline-focus-ring focus-visible:outline-2' : undefined,
+    compact ? 'px-4 py-3' : 'px-4 py-3.5',
+    bordered ? 'border-t border-outline-weak' : undefined,
   );
 
 export function MetricGrid({
@@ -29,27 +32,25 @@ export function MetricGrid({
   items: Array<{ label: string; value: number | string; helper: string }>;
 }): React.JSX.Element {
   return (
-    <div className="overflow-hidden border-y border-[var(--line)] bg-[var(--panel)]">
-      <div className="grid md:grid-cols-2 xl:grid-cols-5">
-        {items.map((item, index) => (
-          <div
-            key={item.label}
-            className={cn(
-              'px-4 py-4',
-              index > 0 ? 'border-t border-[var(--line)] md:border-t-0 md:border-l' : undefined,
-            )}
-          >
-            <p className="skopos-metric-label">{item.label}</p>
-            <p className="skopos-metric-value mt-2">{item.value}</p>
-            <p className="skopos-caption-muted mt-1.5">{item.helper}</p>
-          </div>
+    <CardGrid minItemWidth="sm">
+        {items.map((item) => (
+          <UiCard key={item.label} variant="low" padding="sm">
+            <Typography variant="labelSmall" className="text-on-surface-variant">
+              {item.label}
+            </Typography>
+            <Typography variant="headlineSmall" className="mt-2 tabular-nums">
+              {item.value}
+            </Typography>
+            <Typography variant="bodySmall" className="mt-1.5 text-on-surface-variant">
+              {item.helper}
+            </Typography>
+          </UiCard>
         ))}
-      </div>
-    </div>
+    </CardGrid>
   );
 }
 
-export function Card({
+export function ContentSection({
   title,
   description,
   children,
@@ -61,12 +62,17 @@ export function Card({
   className?: string;
 }): React.JSX.Element {
   return (
-    <section className={cn('border-t border-[var(--line)] px-2 py-[1.125rem]', className)}>
-      <div className="pb-2.5">
-        <p className="skopos-section-title">{title}</p>
-        <p className="skopos-helper-copy mt-1">{description}</p>
-      </div>
-      <div className="pt-1.5">{children}</div>
+    <section className={cn('min-w-0', className)}>
+      <Typography
+        variant="titleLarge"
+        component="h2"
+      >
+        {title}
+      </Typography>
+      <Typography variant="bodyMedium" className="mt-1 text-on-surface-variant">
+        {description}
+      </Typography>
+      <div className="mt-4">{children}</div>
     </section>
   );
 }
@@ -79,10 +85,12 @@ export function RouteFilterBar({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <section className="border-t border-[var(--line)] px-2 py-3.5">
-      <div className="skopos-scroll -mx-1 overflow-x-auto">
-        <div className="flex min-w-max items-center gap-2 px-1">
-          <p className="skopos-eyebrow shrink-0">{label}</p>
+    <section className="min-w-0">
+      <div className="skopos-scroll overflow-x-auto">
+        <div className="flex min-w-max items-center gap-3">
+          <Typography variant="labelSmall" className="shrink-0 text-on-surface-variant">
+            {label}
+          </Typography>
           {children}
         </div>
       </div>
@@ -102,23 +110,23 @@ export function ReadinessCheckGroup({
   return (
     <div className="grid gap-4">
       <div className="flex items-center justify-between gap-3">
-        <p className="skopos-section-title">{title}</p>
+        <h3 className="text-title-medium text-on-surface">{title}</h3>
         <StatusPill value={`${checks.length}`} tone={tone} />
       </div>
-      <div className="border-y border-[var(--line)]">
+      <div className="border-y border-outline-weak">
         {checks.map((check, index) => (
           <div
             key={check.id}
             className={cn(
               'py-3.5',
-              index > 0 ? 'border-t border-[var(--line)]' : undefined,
+              index > 0 ? 'border-t border-outline-weak' : undefined,
             )}
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="skopos-caption font-medium tracking-[-0.01em]">{check.id}</p>
+              <p className="text-body-small text-on-surface font-medium">{check.id}</p>
               <StatusPill value={check.status} tone={toneForCheck(check.status)} />
             </div>
-            <p className="skopos-helper-copy mt-1.5">{check.summary}</p>
+            <p className="text-body-medium text-on-surface-variant mt-1.5">{check.summary}</p>
           </div>
         ))}
       </div>

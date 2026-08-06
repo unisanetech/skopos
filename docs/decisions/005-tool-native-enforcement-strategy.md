@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-08-05
 relatedDocs:
   - README.md
   - ../architecture/runtime-model.md
@@ -25,18 +25,26 @@ Use this decision to keep Skopos enforcement practical in real coding tools with
 
 ## Changelog
 
+- `2026-08-05`: Reconciled the host matrix with implemented Claude Code native hooks,
+  Codex wrapper delivery, and truthful manual fallback while retaining CLI and MCP as
+  the portable runtime authority.
 - `2026-04-09`: Added the tool-native enforcement strategy decision after implementing the compiled enforcement profile, generated Claude Code hook adapter, and proof benchmark coverage.
 
 ## Decision
 
 1. Skopos will keep CLI and MCP as the stable core enforcement surfaces.
 2. Skopos will generate tool-native adapters where a coding tool offers deterministic hooks or equivalent enforcement seams.
-3. The first supported tool-native adapter is Claude Code hooks generated under `.skopos/cache/tooling/claude-code/`.
+3. Implemented host delivery is capability-specific:
+   - Claude Code uses generated native hooks under `.skopos/cache/tooling/claude-code/`
+   - Codex uses the generated wrapper manifest and adapter under
+     `.skopos/cache/tooling/codex/`
+   - hosts without a verified lifecycle seam use the generated manual-host guide and
+     must not be described as automated
 4. Tool-native adapters must be compiled from Skopos knowledge and accepted policy
    rather than hand-authored project scripts.
-5. The first required tool-native enforcement behaviors are:
-   - sync instruction mirrors after `AGENTS.md` edits
-   - block tool stop or completion when close Readiness reports blockers
+5. Host adapters project the shared Session, instruction-sync, discussion-handoff,
+   Action-recovery, and Readiness commands only where the host can deliver them
+   truthfully. Native stop blocking remains specific to a verified lifecycle seam.
 6. When a tool does not support hooks or equivalent enforcement, Skopos falls back to
    CLI and MCP guidance plus explicit Guards and Readiness instead of pretending the
    same automation exists.
@@ -53,7 +61,9 @@ Use this decision to keep Skopos enforcement practical in real coding tools with
 
 1. `.skopos/index/enforcement.json` becomes a first-class compiled artifact describing the active enforcement profile.
 2. `.skopos/cache/tooling/**` becomes the generated home for tool-native adapter outputs.
-3. Proof coverage must exercise generated hook scripts, not only assert that adapter files exist.
+3. Proof coverage must exercise the claimed adapter behavior, not only assert that
+   generated files exist; manual fallback is verified as reviewed delivery, not native
+   automation.
 4. Future tool-native integrations should follow the same rule:
    - generated from the enforcement profile
    - optional over the stable CLI and MCP core

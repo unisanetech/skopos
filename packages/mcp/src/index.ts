@@ -15,6 +15,12 @@ import {
   runSkoposActionRuntime,
   showSkoposTaskRuntime,
   verifySkoposTaskRuntime,
+  buildSkoposDiscussionHandoffRuntime,
+  showSkoposDiscussionHandoffRuntime,
+  verifySkoposDiscussionHandoffRuntime,
+  acceptSkoposDiscussionHandoffRuntime,
+  renderSkoposDiscussionHandoffRuntime,
+  recordSkoposDiscussionHandoffDeliveryRuntime,
 } from '@skopos/runtime';
 
 export const skoposMcpToolIds = [
@@ -31,6 +37,13 @@ export const skoposMcpToolIds = [
   'skopos_readiness',
   'skopos_coordination_status',
   'skopos_coordination_task_recover',
+  'skopos_handoff_create',
+  'skopos_handoff_refresh',
+  'skopos_handoff_show',
+  'skopos_handoff_verify',
+  'skopos_handoff_accept',
+  'skopos_handoff_render',
+  'skopos_handoff_deliver',
   'skopos_integrations_propose',
   'skopos_integrations_approve',
   'skopos_integrations_apply',
@@ -130,6 +143,22 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
     operation: { type: 'string' },
     reason: { type: 'string' },
   }, ['cwd', 'taskId', 'sessionId', 'operation', 'reason']),
+  tool('skopos_handoff_create', 'Create the exact Task fresh-session handoff from an agent-authored semantic capsule and compiled live state.', {
+    cwd: cwdProperty,
+    taskId: { type: 'string' },
+    capsuleJson: { type: 'string', description: 'JSON-encoded SkoposConversationCapsule.' },
+    dryRun: { type: 'boolean' },
+  }, ['cwd', 'taskId', 'capsuleJson']),
+  tool('skopos_handoff_refresh', 'Refresh live Task, source, Evidence, policy, Skill, and coordination identities while preserving semantic context.', { cwd: cwdProperty, taskId: { type: 'string' }, dryRun: { type: 'boolean' } }, ['cwd', 'taskId']),
+  tool('skopos_handoff_show', 'Show the exact current Task handoff.', { cwd: cwdProperty, taskId: { type: 'string' } }, ['cwd', 'taskId']),
+  tool('skopos_handoff_verify', 'Classify exact handoff freshness and transfer safety.', { cwd: cwdProperty, taskId: { type: 'string' } }, ['cwd', 'taskId']),
+  tool('skopos_handoff_accept', 'Accept a current safe handoff for one receiving Session through the shared runtime owner.', {
+    cwd: cwdProperty, taskId: { type: 'string' }, actor: { type: 'string' }, receivingSessionId: { type: 'string' }, destinationHost: { type: 'string' }, dryRun: { type: 'boolean' },
+  }, ['cwd', 'taskId', 'actor', 'receivingSessionId', 'destinationHost']),
+  tool('skopos_handoff_render', 'Render the stable reviewed host-neutral continuation prompt.', { cwd: cwdProperty, taskId: { type: 'string' } }, ['cwd', 'taskId']),
+  tool('skopos_handoff_deliver', 'Record a real host delivery result and origin-message outcome after acceptance; rendering alone is not delivery.', {
+    cwd: cwdProperty, taskId: { type: 'string' }, actor: { type: 'string' }, result: { type: 'string' }, destinationRef: { type: 'string' }, originMessageOutcome: { type: 'string' }, detail: { type: 'string' }, dryRun: { type: 'boolean' },
+  }, ['cwd', 'taskId', 'actor', 'result', 'originMessageOutcome', 'detail']),
   tool('skopos_integrations_propose', 'Detect project capability candidates and emit a non-authoritative proposal without writing tracked Action or Guard declarations.', {
     cwd: cwdProperty,
   }, ['cwd']),
@@ -249,6 +278,20 @@ export const callSkoposMcpTool = async (
         operation: requiredString(input, 'operation') as 'resume' | 'release',
         reason: requiredString(input, 'reason'),
       });
+    case 'skopos_handoff_create':
+      return buildSkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId'), conversationCapsule: JSON.parse(requiredString(input, 'capsuleJson')), dryRun: input.dryRun === true });
+    case 'skopos_handoff_refresh':
+      return buildSkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId'), dryRun: input.dryRun === true });
+    case 'skopos_handoff_show':
+      return showSkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId') });
+    case 'skopos_handoff_verify':
+      return verifySkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId') });
+    case 'skopos_handoff_accept':
+      return acceptSkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId'), actor: requiredString(input, 'actor'), receivingSessionId: requiredString(input, 'receivingSessionId'), destinationHost: requiredString(input, 'destinationHost'), dryRun: input.dryRun === true });
+    case 'skopos_handoff_render':
+      return renderSkoposDiscussionHandoffRuntime({ cwd, taskId: requiredString(input, 'taskId') });
+    case 'skopos_handoff_deliver':
+      return recordSkoposDiscussionHandoffDeliveryRuntime({ cwd, taskId: requiredString(input, 'taskId'), actor: requiredString(input, 'actor'), result: requiredString(input, 'result') as 'pass' | 'fail', destinationRef: optionalString(input, 'destinationRef'), originMessageOutcome: requiredString(input, 'originMessageOutcome') as 'succeeded' | 'failed' | 'unsupported', detail: requiredString(input, 'detail'), dryRun: input.dryRun === true });
     case 'skopos_integrations_propose':
       return proposeSkoposCapabilityIntegrationsRuntime({ cwd });
     case 'skopos_integrations_approve':

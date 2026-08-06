@@ -1,7 +1,6 @@
 import * as React from 'react';
 
-import { cn } from '../../../support/ui/classnames.js';
-import { pillToneClass } from '../../../support/ui/tone-helpers.js';
+import { Badge } from '@/components/ui/badge';
 
 export function StatusPill({
   value,
@@ -13,14 +12,29 @@ export function StatusPill({
   className?: string;
 }): React.JSX.Element {
   return (
-    <span
-      className={cn(
-        'skopos-status-pill inline-flex items-center border whitespace-nowrap',
-        pillToneClass(tone),
-        className,
-      )}
+    <Badge
+      variant="tonal"
+      color={badgeColorForTone(tone)}
+      className={className}
     >
       {value}
-    </span>
+    </Badge>
   );
 }
+
+const badgeColorForTone = (
+  tone: 'neutral' | 'positive' | 'warning' | 'danger' | 'info',
+): 'secondary' | 'success' | 'warning' | 'error' | 'info' => {
+  switch (tone) {
+    case 'positive':
+      return 'success';
+    case 'warning':
+      return 'warning';
+    case 'danger':
+      return 'error';
+    case 'info':
+      return 'info';
+    default:
+      return 'secondary';
+  }
+};

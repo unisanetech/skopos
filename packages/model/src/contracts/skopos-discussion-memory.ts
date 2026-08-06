@@ -105,8 +105,12 @@ export interface SkoposDiscussionIndexArtifact
 export interface SkoposDiscussionHandoffArtifact
   extends SkoposArtifactEnvelope<'discussion-handoff'> {
   workspaceRoot: string;
-  handoffKind: 'task-resume';
-  activeTaskId?: string;
+  handoffKind: 'fresh-session-continuation';
+  activeTaskId: string;
+  conversationCapsule: SkoposConversationCapsule;
+  compiledState: SkoposDiscussionHandoffCompiledState;
+  validation: SkoposDiscussionHandoffValidation;
+  delivery: SkoposDiscussionHandoffDelivery;
   currentDirection: string;
   acceptedDecisions: SkoposDiscussionHandoffDecision[];
   openQuestions: SkoposDiscussionHandoffQuestion[];
@@ -117,4 +121,111 @@ export interface SkoposDiscussionHandoffArtifact
   estimatedTokens: number;
   budgetTokens: number;
   overBudget: boolean;
+}
+
+export const SKOPOS_CONVERSATION_STATEMENT_CLASSES = [
+  'user-direction',
+  'accepted-decision',
+  'verified-fact',
+  'working-assumption',
+  'agent-recommendation',
+  'rejected-option',
+  'open-question',
+] as const;
+
+export type SkoposConversationStatementClass =
+  (typeof SKOPOS_CONVERSATION_STATEMENT_CLASSES)[number];
+
+export const SKOPOS_CONVERSATION_SECTIONS = [
+  'objective',
+  'user-intent',
+  'constraint',
+  'completed-work',
+  'stopping-point',
+  'attempt',
+  'rejected-approach',
+  'uncertainty',
+  'recommended-first-action',
+  'do-not-repeat',
+  'exclusion',
+] as const;
+
+export type SkoposConversationSection =
+  (typeof SKOPOS_CONVERSATION_SECTIONS)[number];
+
+export interface SkoposConversationStatement {
+  id: string;
+  section: SkoposConversationSection;
+  classification: SkoposConversationStatementClass;
+  text: string;
+  sourceRefs: string[];
+}
+
+export interface SkoposConversationCapsule {
+  authoredBy: string;
+  authoredAt: string;
+  origin: {
+    host: string;
+    sessionId: string;
+    threadId?: string;
+  };
+  statements: SkoposConversationStatement[];
+}
+
+export interface SkoposDiscussionHandoffCompiledState {
+  workspaceIdentity: {
+    repositoryId: string;
+    worktreeId: string;
+    workspaceRootDigest: string;
+  };
+  taskIdentity: {
+    taskId: string;
+    revisionDigest: string;
+    state: string;
+  };
+  sourceIdentity: {
+    branch?: string;
+    commit?: string;
+    ownedPathDigest: string;
+  };
+  coordinationIdentity: {
+    digest: string;
+    reservationSessionId?: string;
+    claimCount: number;
+    openMutationCount: number;
+    contaminationCount: number;
+    runningActionIds: string[];
+  };
+  policyIdentity: string;
+  skillSelectionIdentity?: string;
+  evidenceIdentities: string[];
+  compiledAt: string;
+}
+
+export type SkoposDiscussionHandoffFreshness =
+  | 'current'
+  | 'refreshable'
+  | 'stale'
+  | 'conflicted'
+  | 'invalid';
+
+export interface SkoposDiscussionHandoffValidation {
+  freshness: SkoposDiscussionHandoffFreshness;
+  valid: boolean;
+  safeToTransfer: boolean;
+  sensitive: boolean;
+  overBudget: boolean;
+  reasons: string[];
+  checkedAt: string;
+}
+
+export interface SkoposDiscussionHandoffDelivery {
+  state: 'generated' | 'reviewed' | 'accepted' | 'delivered' | 'failed';
+  destinationHost?: string;
+  receivingSessionId?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  acceptedBy?: string;
+  acceptedAt?: string;
+  outcome?: string;
 }

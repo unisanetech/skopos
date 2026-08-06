@@ -1,0 +1,40 @@
+{
+  "snapshotId": "S-163cbf7d6097",
+  "taskId": "T-3966f1c4",
+  "sessionId": "codex-skill-portability-closure",
+  "actorId": "codex-skill-portability",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "c27030d8c8e690fa22cf7485e3f1662a9f223cc2868b84cc58ca356d12e5772d"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "5f15d7769984c43ae028566b8740d49686283b5c9822b1f527b9e1fdc7f3a255"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "546b908e757e246682b2ba0e0d8510732155e53f8ba6b4609759d97f1f69191d"
+    },
+    {
+      "path": "package.json",
+      "digest": "93b0c57d0b65fa2f814a8095564a62f7633a6c647c52cb5cc2aaf1b9ae99a05a"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "8470f74fc1e49bfd00123136849c2fc90147968fd1758cb1dcb2da4181671cb9"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "df81e0cf03bc9d4a7f8dfc4ed24d6e1d6b23765b3360f87b2567e2f57b03cfd4"
+    },
+    {
+      "path": "packages/cli/src/benchmarks",
+      "digest": "c0534d9f236df057a4f437f317ba7fdf85f4fd15aab80e1f008192302fcee4cf"
+    }
+  ],
+  "digest": "163cbf7d60978492b67a9bb9bb6c17c48cc45064b00d4e9dfe67cc806957ce87",
+  "createdAt": "2026-08-04T21:29:59.052Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-3966f1c4-S-163cbf7d6097.json"
+}

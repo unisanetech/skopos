@@ -56,19 +56,20 @@ Use `skopos --help` for the full CLI surface and `skopos <command> --help` where
 3. Build project Understanding when adoption needs it: `skopos understand . --actor <id> --json`
 4. Assess adoption when Session context reports an adoption gap: `skopos adopt assess . --actor <id> --json`
 5. Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
-6. Continue tracked work: `skopos work next . --actor <id> --json`
-7. Inspect the current Task: `skopos task show <task-id> . --json`
-8. List Actions: `skopos actions list .`
-9. Run a Task Action: `skopos actions run <action-id> . --task <task-id> --actor <id> --json`
-10. Record observation Evidence: `skopos evidence record-observation <task-id> . --requirement <id> --statement "<fact>" --actor <id> --json`
-11. Diagnose closure Evidence: `skopos verify <task-id> . --phase closure --json`
-12. Finish after Evidence passes: `skopos finish <task-id> . --actor <id> --json`
-13. Sync agent instructions: `skopos instructions sync . --actor <id>`
-14. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
-15. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
-16. Render static UI artifact: `skopos ui render .`
-17. Review project skill packs: `skopos skills recommend .`
-18. Accept a project-bound skill: `skopos skills apply <pack-id> . --binding <binding-id> --actor <id> --reason <text>`
+6. Start explicit integration proof: `skopos start "<integration goal>" . --proof-subject project-integration --own <integration-path> --actor <id>`
+7. Continue tracked work: `skopos work next . --actor <id> --json`
+8. Inspect the current Task: `skopos task show <task-id> . --json`
+9. List Actions: `skopos actions list .`
+10. Run a Task Action: `skopos actions run <action-id> . --task <task-id> --actor <id> --json`
+11. Record observation Evidence: `skopos evidence record-observation <task-id> . --requirement <id> --statement "<fact>" --actor <id> --json`
+12. Diagnose closure Evidence: `skopos verify <task-id> . --phase closure --json`
+13. Finish after Evidence passes: `skopos finish <task-id> . --actor <id> --json`
+14. Sync agent instructions: `skopos instructions sync . --actor <id>`
+15. Open live UI: `skopos ui dev . --host 127.0.0.1 --port <port>`
+16. Open snapshot UI: `skopos ui serve . --host 127.0.0.1 --port <port>`
+17. Render static UI artifact: `skopos ui render .`
+18. Review project skill packs: `skopos skills recommend .`
+19. Accept a project-bound skill: `skopos skills apply <pack-id> . --binding <binding-id> --actor <id> --reason <text>`
 
 <!-- skopos:policy:start -->
 ## Skopos Accepted Policy (Derived Projection)
@@ -102,6 +103,7 @@ When Skopos is installed, agents should treat it as the default operating memory
 - Light risk: use for narrow local edits. Inspect relevant files, edit, capture focused Evidence, and update Memory only if project truth changed.
 - Standard risk: use for bounded multi-file feature, docs, policy, or maintenance work. Start or continue a Task, keep decisions current, and capture proportional Evidence.
 - High-impact risk: use for architecture, public API, data migration, security, stack, release, multi-Scope, or long-running work. Use a detailed Task or child Tasks, staged Guards and Evidence, findings, Memory sync, and explicit Readiness.
+- Proof subject: keep the default `task-closure` subject for bounded work. Use `--proof-subject project-integration` only to certify an explicit integration or release baseline; it requires owned paths, is always detailed/high-impact, and never absorbs unrelated dirty-worktree changes.
 ### Memory And Docs
 - Update durable docs, decisions, findings, or policy only when project truth changes.
 - Do not duplicate truth. Tasks track execution; durable rules belong in docs, policy, decisions, findings, Patterns, or Memory.
@@ -125,6 +127,7 @@ When Skopos is installed, agents should treat it as the default operating memory
 - Work Queue: `skopos work queue . --json`
 - Next work: `skopos work next . --json`
 - Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
+- Start explicit integration proof: `skopos start "<integration goal>" . --proof-subject project-integration --own <integration-path> --actor <id>`
 - Current Task: `skopos task show <task-id> . --json`
 - Sync instructions: `skopos instructions sync .`
 - Verify diagnostic: `skopos verify <task-id> . --phase closure --json`

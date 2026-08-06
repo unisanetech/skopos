@@ -18,7 +18,7 @@ relatedDocs:
   - ../../archive/missing-decisions-checklist.md
   - ../../scopes/skopos-ui/overview.md
   - P-11229565-system-ui.md
-  - ../../decisions/011-system-ui-navigation-and-knowledge-routing.md
+  - ../../scopes/skopos-ui/decisions/archive/011-system-ui-navigation-and-knowledge-routing.md
   - ../../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../../decisions/025-system-ui-discussion-context-and-sidebar-information-architecture.md
   - ../../findings/archive/F-20260412-discussion-memory-compaction-gap.md

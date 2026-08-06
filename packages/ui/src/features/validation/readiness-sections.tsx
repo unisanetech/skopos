@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import type { SkoposUiConsoleState } from '../../contracts/skopos-ui-console-state.js';
 import {
-  Card,
+  ContentSection,
   ReadinessCheckGroup,
 } from '../../patterns/sections/content-primitives.js';
 import {
@@ -83,7 +83,7 @@ export function ReadinessInspectorAside({
             renderItem={(check) => (
               <>
                 <div className="flex items-center justify-between gap-2.5">
-                  <p className="text-[12.5px] font-medium tracking-[-0.01em]">{check.id}</p>
+                  <p className="text-body-small font-medium">{check.id}</p>
                   <StatusPill
                     value={check.status}
                     tone={
@@ -95,7 +95,7 @@ export function ReadinessInspectorAside({
                     }
                   />
                 </div>
-                <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+                <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                   {check.summary}
                 </p>
               </>
@@ -135,9 +135,9 @@ export function ReadinessGuidanceCard({
   const hasAttention = failureCount > 0 || warningCount > 0 || findingCount > 0;
 
   return (
-    <Card
-      title="How to use this page"
-      description="Readiness tells you whether Skopos sees anything that should block or slow down the current work."
+    <ContentSection
+      title="What to do next"
+      description="Readiness shows whether Skopos sees anything that should block or slow down the current work."
     >
       <div className="grid gap-3 md:grid-cols-3">
         <GuidancePoint
@@ -161,7 +161,7 @@ export function ReadinessGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -177,7 +177,7 @@ export function ReadinessAttentionCard({
   unresolvedAssumptions: string[];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Items that need attention"
       description="Fix failures first, then review warnings, tracked issues, and unresolved assumptions."
     >
@@ -190,14 +190,14 @@ export function ReadinessAttentionCard({
         ) : null}
         {findings.length > 0 ? (
           <section className="grid gap-3">
-            <p className="text-[13px] font-semibold tracking-[-0.02em]">Issues</p>
-            <ul className="border-y border-[var(--line)]">
+            <p className="text-title-small">Issues</p>
+            <ul className="border-y border-outline-weak">
               {findings.map((finding, index) => (
                 <li
                   key={finding}
                   className={cn(
-                    'py-4 text-[13px] leading-6 text-[var(--muted-strong)]',
-                    index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                    'py-4 text-body-medium leading-6 text-on-surface',
+                    index > 0 ? 'border-t border-outline-weak' : undefined,
                   )}
                 >
                   {finding}
@@ -208,16 +208,16 @@ export function ReadinessAttentionCard({
         ) : null}
         {unresolvedAssumptions.length > 0 ? (
           <section className="grid gap-3">
-            <p className="text-[13px] font-semibold tracking-[-0.02em]">
+            <p className="text-title-small">
               Unresolved assumptions
             </p>
-            <ul className="border-y border-[var(--line)]">
+            <ul className="border-y border-outline-weak">
               {unresolvedAssumptions.map((assumption, index) => (
                 <li
                   key={assumption}
                   className={cn(
-                    'py-4 text-[13px] leading-6 text-[var(--muted-strong)]',
-                    index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                    'py-4 text-body-medium leading-6 text-on-surface',
+                    index > 0 ? 'border-t border-outline-weak' : undefined,
                   )}
                 >
                   {assumption}
@@ -236,7 +236,7 @@ export function ReadinessAttentionCard({
           />
         ) : null}
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -248,11 +248,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>

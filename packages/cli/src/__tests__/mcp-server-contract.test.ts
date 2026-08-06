@@ -34,6 +34,13 @@ describe('MCP recovery and disposition contract', () => {
       'skopos_action_recover',
       'skopos_task_disposition',
       'skopos_coordination_task_recover',
+      'skopos_handoff_create',
+      'skopos_handoff_refresh',
+      'skopos_handoff_show',
+      'skopos_handoff_verify',
+      'skopos_handoff_accept',
+      'skopos_handoff_render',
+      'skopos_handoff_deliver',
     ]));
     const definitions = Object.fromEntries(skoposMcpTools.map((tool) => [tool.name, tool]));
     expect(definitions.skopos_action_recover?.inputSchema.required).toEqual([

@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-baa17a745170",
+  "taskId": "T-d64f23b2",
+  "sessionId": "ab700884-6168-437e-b5e5-699cd2fcacc1",
+  "actorId": "codex-ui-craft-efficacy",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "d0b1c68eb8859203eca2a893e7d46df6aa9a57ac40c352dae7e795411970602e"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "03d252962b8e6753b797f8a0193a552d1339d63df93ca9f0e9742139c251082d"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "8f4fd4be2d4da15436a30accc4ba427912be1165811b82843c87950ca8dc059d"
+    },
+    {
+      "path": "package.json",
+      "digest": "2183b93dbe46387374605440c06c3985b7c1a34006e920bfdb3d77a82b04e1fd"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "1f3003242e7fd66e21940ff620aec366488c3cf6f888857ee0523e815cbfd730"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "f832370b2d6677bcddb57e7f54a97ff7829b00fd6da049e4c8d52fd474e874ee"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-ui-craft-efficacy.ts",
+      "digest": "1db8b7996b4d97989866746d3747ec786b8c89ff6fa675d870649138a2fdff5f"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-pack.ts",
+      "digest": "ac0b01eb4eecf9fdd7984e748dc74e71fa872cd19349df31adc910c845ebc0dc"
+    },
+    {
+      "path": "packages/runtime/src/application/skills/skill-evaluations.service.ts",
+      "digest": "1283b6e7b192ac8e9d54628141505680c40c7e8b17fa5f06d03c97a0fdd7a127"
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "digest": "0eef9e36e9e9ddb5e4f4fd73137b0c41b4502b7d452a30b7d957cb4cfd49ea2f"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-ui-craft-efficacy.yaml",
+      "digest": "138dbd24aa77337d458c273ff67f6acad50f5cfb0c5e4224f58f79497ba95162"
+    }
+  ],
+  "digest": "baa17a745170ed6d690ff0c5a541707d29af6ce002f45404be0edd860eded97a",
+  "createdAt": "2026-08-05T19:14:20.742Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-d64f23b2-S-baa17a745170.json"
+}

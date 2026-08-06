@@ -69,6 +69,22 @@ describe('host projection model', () => {
     for (const ruleId of expectedRuleIds) {
       expect(manualGuide).toContain(ruleId);
     }
+    expect(projectionModel.hosts.find((host) => host.hostId === 'codex')?.freshContinuation).toEqual({
+      createFreshSession: true, injectInitialPrompt: true, identifyOriginSession: true,
+      messageOriginSession: true, detectPreCompaction: true, reportCompletion: true,
+      deliveryMode: 'host-api',
+    });
+    expect(projectionModel.hosts.find((host) => host.hostId === 'claude-code')?.freshContinuation).toMatchObject({
+      createFreshSession: false, injectInitialPrompt: false, identifyOriginSession: true,
+      messageOriginSession: false, detectPreCompaction: true, reportCompletion: true,
+      deliveryMode: 'interactive-launch',
+    });
+    expect(projectionModel.hosts.find((host) => host.hostId === 'manual-hosts')?.freshContinuation).toMatchObject({
+      createFreshSession: false, injectInitialPrompt: false, identifyOriginSession: false,
+      messageOriginSession: false, detectPreCompaction: false, reportCompletion: false,
+      deliveryMode: 'manual-copy',
+    });
+    expect(manualGuide).toContain('Rendering is not delivery');
   });
 
   it('rejects a host projection that drops a Skopos enforcement rule', () => {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Local docs and trust UI for the Skopos SDK",
+  "description": "Read-only local supervision UI for Skopos project memory and readiness",
   "skopos": {
     "surface": "internal-product",
     "releaseTarget": "internal-only",
@@ -22,12 +22,14 @@
     "app:dev": "vite --config vite.config.ts",
     "app:preview": "vite preview --config vite.config.ts",
     "check-types": "tsc --noEmit",
-    "test": "vitest run src/__tests__/document-artifact-projections.test.ts src/__tests__/document-reader.test.ts src/__tests__/knowledge-document-views.test.ts src/__tests__/current-task-routing.test.ts"
+    "test": "vitest run src/__tests__/content-section.test.tsx src/__tests__/dev-console-live-refresh.test.ts src/__tests__/document-artifact-projections.test.ts src/__tests__/document-reader.test.ts src/__tests__/human-supervision-projections.test.tsx src/__tests__/knowledge-document-views.test.ts src/__tests__/current-task-routing.test.ts src/__tests__/now-guidance.test.tsx src/__tests__/policy-rule-pages.test.tsx src/__tests__/search-dock-accessibility.test.tsx src/__tests__/sidebar-navigation.test.tsx src/__tests__/url-routing-contract.test.ts"
   },
   "dependencies": {
+    "@material-symbols/font-400": "^0.40.2",
     "@skopos/model": "workspace:*",
     "@skopos/runtime": "workspace:*",
     "@tanstack/react-router": "^1.168.10",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "mermaid": "^11.14.0",
     "react": "^19.2.3",

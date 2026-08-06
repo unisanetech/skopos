@@ -1,0 +1,44 @@
+{
+  "snapshotId": "S-b0e1273cd3a5",
+  "taskId": "T-a48db834",
+  "sessionId": "d279146a-827e-4a18-bc22-8038b1ed6c51",
+  "actorId": "codex-ui-craft-efficacy-v2",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "50f9d317b5b967abd71566a29ff6a59b622b59fa5a047f91cc14f45fd9bd5620"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "bd7c12009f9f915d7eb84b5a692f3c0f66c68c5feb8e6e6c0bd9f443b0bc2c1a"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "31e4aa41f4f5f35554ac299d486cbdc8cf20a1651a6e06094ab0952739c0c281"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "7d02cf9f6b360e59fbe163c7656ec758fba023922c3f89bab4e79ef2bddcdbee"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-ui-craft-efficacy.ts",
+      "digest": "62c7ed2a1837fba11499b6c38eea8f2980a3e0529dbf581735b2d72da752c353"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/evaluations/core.suite.json",
+      "digest": "a18352ae12830ae673a9cbe260e09bf36abbf1c41d8ac647c76e0aaeb54f23ca"
+    },
+    {
+      "path": "skill-packs/ui/product-craft/evaluations/templates",
+      "digest": "30879de8b72e845e76cdcd94756faa6e2c585b466479c146d7e5c92df12e0f60"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-craft.json",
+      "digest": "4065a26ecdeee0f296c4b7944d8ff424546316fbde8979b89183947efe3e83e4"
+    }
+  ],
+  "digest": "b0e1273cd3a577a0babfbd3f78a7f4b2533e66323fbe61f31a7a1ffecb6f41e4",
+  "createdAt": "2026-08-05T19:28:07.753Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-a48db834-S-b0e1273cd3a5.json"
+}

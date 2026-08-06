@@ -1,5 +1,8 @@
 import * as React from 'react';
 
+import { Card } from '@/components/ui/card';
+import { Typography } from '@/components/ui/typography';
+
 export function EmptyMessage({
   title,
   description,
@@ -8,9 +11,11 @@ export function EmptyMessage({
   description: string;
 }): React.JSX.Element {
   return (
-    <div className="border-y border-dashed border-[var(--line)] py-3.5">
-      <p className="skopos-caption font-medium tracking-[-0.01em]">{title}</p>
-      <p className="skopos-helper-copy mt-1">{description}</p>
-    </div>
+    <Card variant="outlined" padding="sm">
+      <Typography variant="titleSmall">{title}</Typography>
+      <Typography variant="bodySmall" className="mt-1 text-on-surface-variant">
+        {description}
+      </Typography>
+    </Card>
   );
 }

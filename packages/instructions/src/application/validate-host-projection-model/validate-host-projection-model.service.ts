@@ -54,6 +54,9 @@ export const validateSkoposHostProjectionModel = (
     if (!sameIds(host.enforcementRuleIds, ruleIds)) {
       diagnostics.push(`Host projection ${hostId} does not carry the full enforcement contract.`);
     }
+    const capabilities = host.freshContinuation;
+    if (!capabilities) diagnostics.push(`Host projection ${hostId} does not declare fresh-continuation capabilities.`);
+    if (capabilities?.deliveryMode === 'manual-copy' && Object.entries(capabilities).some(([key, value]) => key !== 'deliveryMode' && value === true)) diagnostics.push(`Manual host projection ${hostId} overstates automated continuation capabilities.`);
   }
 
   const adaptersById = new Map(profile.toolAdapters.map((adapter) => [adapter.toolId, adapter]));

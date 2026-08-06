@@ -27,6 +27,13 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-08-05`: Certified the complete adoption boundary with one canonical four-lane
+  matrix. Assessment-only intake remains below `agent-ready`; healthy greenfield and
+  brownfield projects complete reviewed proposal, execution, strict verification, and
+  activation; messy brownfield ambiguity blocks without source mutation until it is
+  resolved. The approved execution contract now explicitly activates strict metadata
+  and link enforcement before standard verification.
+
 - `2026-08-02`: Bound tracked Task projections to their declared Scope Memory roots
   and made cross-root catalog discovery the reconstruction authority.
 - `2026-07-31`: Kept verified adoption active during routine `skopos init` knowledge
@@ -427,6 +434,7 @@ assessment, while greenfield projects receive the minimum standard router and de
 Scope registry. Generic proposal, exact approval, coding-agent execution brief and
 Evidence template, standard verification, explicit activation, and adoption-aware
 Readiness checks are implemented. Skopos does not autonomously rewrite human documents:
-the coding agent performs only the approved operations. Complete Profile enforcement,
-promotion validation, verified host/UI delivery, and pre-launch adopter proof remain
-owned by the active convergence Plan.
+the coding agent performs only the approved operations. Task T-db2a2a6c certifies the
+greenfield, healthy brownfield, and blocked-then-reviewed messy brownfield lifecycle,
+including shared Session truth and overview-UI orientation. Complete Profile
+enforcement and promotion validation remain owned by the active convergence Plan.

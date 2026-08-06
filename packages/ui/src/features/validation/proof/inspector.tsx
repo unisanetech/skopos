@@ -102,10 +102,10 @@ export function ProofInspectorAside({
             <>
               <div className="flex items-center justify-between gap-2.5">
                 <div className="min-w-0">
-                  <p className="text-[12.5px] font-medium tracking-[-0.01em]">
+                  <p className="text-body-small font-medium">
                     {humanize(category.category)}
                   </p>
-                  <p className="mt-1 text-[12px] leading-5 text-[var(--muted)]">
+                  <p className="mt-1 text-body-small leading-5 text-on-surface-variant">
                     {category.passedBenchmarks}/{category.benchmarkCount} passing
                   </p>
                 </div>
@@ -118,7 +118,7 @@ export function ProofInspectorAside({
                   ) : null}
                   <span
                     className={cn(
-                      'text-[12.5px] font-semibold tracking-[-0.02em] text-[var(--muted-strong)]',
+                      'text-label-medium text-on-surface',
                     )}
                   >
                     {formatPercent(category.weightedPassRate)}

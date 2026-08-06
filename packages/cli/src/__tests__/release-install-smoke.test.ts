@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { runExternalSkillPortability } from '../benchmarks/external-skill-portability.js';
+
 const workspaceRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 const cliPackageRoot = fileURLToPath(new URL('../..', import.meta.url));
 
@@ -28,7 +30,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       await writeFile(join(projectDirectory, 'src', 'index.ts'), 'export {};\n', 'utf8');
 
       const tarballPath = packCli(packDirectory);
-      execFileSync('pnpm', ['add', '--offline', tarballPath], {
+      execFileSync('pnpm', ['add', '--prefer-offline', tarballPath], {
         cwd: projectDirectory,
         stdio: 'pipe',
       });
@@ -37,6 +39,9 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(help).toContain('skopos start <goal>');
       expect(help).toContain('skopos finish <task-id>');
       expect(help).toContain('skopos readiness <task-id>');
+      expect(help).toContain('skopos skills context <task-id>');
+      expect(help).toContain('skopos discuss handoff create');
+      expect(help).toContain('skopos discuss handoff deliver');
       expect(help).not.toContain('skopos mission');
       expect(help).not.toContain('skopos trust');
       expect(help).not.toContain('skopos done');
@@ -264,6 +269,73 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }
+  });
+
+  it('proves Product UI Craft behavior from the packed CLI without source resolution', async () => {
+    const report = await runExternalSkillPortability();
+
+    expect(report.result).toBe('pass');
+    expect(report.projects).toHaveLength(1);
+    expect(report.projects[0]).toMatchObject({
+      label: 'minimal',
+      fixtureResult: { passed: 8, failed: 0 },
+      relevantTask: {
+        selectedPackIds: ['ui.product-craft'],
+        selectedModuleIds: ['ui-craft.react-boundaries'],
+        skillContextEntryCount: 2,
+      },
+      irrelevantTask: {
+        selectedPackIds: [],
+        skillContextEntryCount: 0,
+      },
+      cache: {
+        exactReuse: true,
+        invalidatedAfterCapabilityChange: true,
+      },
+      containment: {
+        claim: 'observed-generated-artifacts-contained',
+        outsideProjectPaths: [],
+        forbiddenSymlinkTargets: [],
+        installedSourceCheckoutReferences: [],
+        nodePathAbsent: true,
+        workspaceProtocolAbsent: true,
+      },
+      executedCapabilityActions: [],
+      adaptationGaps: [],
+    });
+    expect(report.cleanup).toMatchObject({
+      attempted: true,
+      succeeded: true,
+      harnessRootExistsAfterCleanup: false,
+    });
+  });
+
+  it('emits a classified machine-readable failure report with partial proof and cleanup', async () => {
+    const missingBillquest = join(tmpdir(), 'skopos-portability-missing-billquest');
+    const report = await runExternalSkillPortability({ canaryRoot: missingBillquest });
+
+    expect(report).toMatchObject({
+      result: 'fail',
+      failure: {
+        category: 'external-project',
+        stage: 'read-live-canary-status-before',
+        project: 'billquest',
+        command: 'git status --short',
+      },
+      cleanup: {
+        attempted: true,
+        succeeded: true,
+        harnessRootExistsAfterCleanup: false,
+      },
+    });
+    expect(report.projects).toHaveLength(1);
+    expect(report.projects[0]).toMatchObject({
+      label: 'minimal',
+      fixtureResult: { passed: 8, failed: 0 },
+    });
+    expect(report.classification.externalProjectFailures).toHaveLength(1);
+    expect(report.classification.skoposPortabilityFailures).toEqual([]);
+    expect(report.classification.projectAdaptationFailures).toEqual([]);
   });
 });
 

@@ -4,7 +4,7 @@ import { Link } from '@tanstack/react-router';
 import type { SkoposUiConsoleDocumentView } from '../../../contracts/skopos-ui-console-state.js';
 import type { KnowledgeCategory } from '../../../support/knowledge/document-routing.js';
 import {
-  Card,
+  ContentSection,
   getSkoposListRowClass,
   skoposListSurfaceClass,
 } from '../../../patterns/sections/content-primitives.js';
@@ -34,7 +34,7 @@ export function KnowledgeDocumentListCard({
   emptyDescription: string;
 }): React.JSX.Element {
   return (
-    <Card title={title} description={description}>
+    <ContentSection title={title} description={description}>
       {documents.length > 0 ? (
         <div className={skoposListSurfaceClass}>
           {documents.map((document, index) => (
@@ -59,8 +59,8 @@ export function KnowledgeDocumentListCard({
                 <p
                   className={cn(
                     compact
-                      ? 'mt-1.5 text-[13px] font-medium tracking-[-0.02em]'
-                      : 'mt-2 text-[14px] font-semibold tracking-[-0.03em]',
+                      ? 'mt-1.5 text-body-medium font-medium'
+                      : 'mt-2 text-title-small',
                   )}
                 >
                   {document.title}
@@ -68,13 +68,13 @@ export function KnowledgeDocumentListCard({
                 <p
                   className={cn(
                     compact
-                      ? 'mt-1 text-[12px] leading-[1.45rem] text-[var(--muted)]'
-                      : 'mt-1 text-[12.75px] leading-[1.5rem] text-[var(--muted)]',
+                      ? 'mt-1 text-body-small text-on-surface-variant'
+                      : 'mt-1 text-body-small text-on-surface-variant',
                   )}
                 >
                   {document.summary}
                 </p>
-                <div className="mt-2.5 flex flex-wrap items-center gap-2 text-[12.25px] text-[var(--muted)]">
+                <div className="mt-2.5 flex flex-wrap items-center gap-2 text-body-small text-on-surface-variant">
                   <span>{formatDateTime(document.updatedAt)}</span>
                 </div>
               </div>
@@ -84,6 +84,6 @@ export function KnowledgeDocumentListCard({
       ) : (
         <EmptyMessage title={emptyTitle} description={emptyDescription} />
       )}
-    </Card>
+    </ContentSection>
   );
 }

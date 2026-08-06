@@ -20,7 +20,10 @@ Usage:
   skopos decide <question-id> <option-id> [target] [--actor <id>] [--full] [--dry-run] [--json]
   skopos discuss append-turn [target] [--thread <id>] [--session-id <id>] [--role <user|assistant|system>] [--source-event <event>] [--transcript-path <path>] [--message <text>|--message-stdin] [--dry-run] [--json]
   skopos discuss checkpoint [target] [--dry-run] [--json]
-  skopos discuss handoff [target] [--dry-run] [--json]
+  skopos discuss handoff create [target] --task <task-id> --context <capsule.json> [--dry-run] [--json]
+  skopos discuss handoff refresh|show|verify|render [target] --task <task-id> [--dry-run] [--json]
+  skopos discuss handoff accept [target] --task <task-id> --actor <id> --receiving-session <id> --host <name> [--dry-run] [--json]
+  skopos discuss handoff deliver [target] --task <task-id> --actor <id> --result <pass|fail> --origin-message <succeeded|failed|unsupported> --detail <text> [--destination-ref <id>] [--dry-run] [--json]
   skopos discuss recent [target] [--json]
   skopos verify <task-id> [target] [--phase <admission|iteration|stabilization|closure>] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--dry-run] [--json]
   skopos finish <task-id> [target] --actor <id> [--dry-run] [--json]
@@ -49,6 +52,8 @@ Usage:
   skopos skills list [target] [--json]
   skopos skills show <pack> [target] [--json]
   skopos skills recommend [target] [--dry-run] [--json]
+  skopos skills evaluate <pack> [target] --binding <id> [--dry-run] [--json]
+  skopos skills context <task-id> [target] [--json]
   skopos skills apply <pack> [target] --binding <id> --actor <id> --reason <text> [--dry-run] [--json]
   skopos actions list [target] [--cursor <token>] [--limit <1-100>] [--json]
   skopos actions show <action> [target] [--json]
@@ -73,6 +78,118 @@ Usage:
   skopos ui serve [target] [--output-dir <path>] [--host <host>] [--port <port>] [--json]  # snapshot preview; restart after state changes
 `;
 
+const SKOPOS_START_HELP = `Skopos start
+
+Usage:
+  skopos start <goal> [target] [--scope <scope>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
+
+Proof subjects:
+  task-closure         Default. Prove only the admitted Task-owned change boundary.
+  project-integration  Explicitly prove a named integration boundary. Requires at least
+                       one owned path and creates a detailed high-impact Task.
+
+Unrelated pre-existing or other-Task changes stay visible but do not silently enter
+either proof subject. Use project-integration only when the requested outcome is an
+integration or release baseline, not as a workaround for a dirty worktree.
+`;
+
+const SKOPOS_ACTIONS_HELP = `Skopos actions
+
+Usage:
+  skopos actions list [target] [--cursor <token>] [--limit <1-100>] [--json]
+  skopos actions show <action> [target] [--json]
+  skopos actions run <action> [target] [--task <id>] [--dry-run] [--approve] [--force] [--actor <id>] [--full] [--json]
+  skopos actions recover <run-id> [target] --actor <id> --reason <text> [--json]
+
+Every live-worktree Action manifest must explicitly declare
+\`workspaceMode: overlay-safe\`. A successful project-level run becomes Task proof
+only when it is linked with \`--task <id>\` or reused through the Evidence command.
+`;
+
+const SKOPOS_SKILLS_HELP = `Skopos skills
+
+Usage:
+  skopos skills list [target] [--json]
+  skopos skills show <pack> [target] [--json]
+  skopos skills recommend [target] [--dry-run] [--json]
+  skopos skills evaluate <pack> [target] --binding <id> [--dry-run] [--json]
+  skopos skills context <task-id> [target] [--json]
+  skopos skills apply <pack> [target] --binding <id> --actor <id> --reason <text> [--dry-run] [--json]
+
+Evaluate runs the pack's exact deterministic fixtures against one project binding.
+Context is a read-only projection of the canonical compact Task brief; it does not
+create a second selector or Task authority.
+`;
+
+const SKOPOS_SKILLS_CONTEXT_HELP = `Skopos skills context
+
+Usage:
+  skopos skills context <task-id> [target] [--json]
+
+Returns the Task-selected, module-local Skill guidance and bound capabilities from
+the canonical compact Task brief. Irrelevant Tasks return zero Skill context.
+`;
+
+const SKOPOS_ACTIONS_RUN_HELP = `Skopos actions run
+
+Usage:
+  skopos actions run <action> [target] [--task <id>] [--dry-run] [--approve] [--force] [--actor <id>] [--full] [--json]
+
+Runs one registered project Action with its declared capabilities, effects,
+concurrency, inputs, outputs, and overlay-safe workspace contract. Pass \`--task\`
+when the result must satisfy that Task's selected Evidence requirements.
+`;
+
+const SKOPOS_VERIFY_HELP = `Skopos verify
+
+Usage:
+  skopos verify <task-id> [target] [--phase <admission|iteration|stabilization|closure>] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--dry-run] [--json]
+
+Evaluates the Task's named proof subject, stable admission baseline, acceptance
+coverage, Guards, Evidence, Memory obligations, and Readiness. Verify is diagnostic:
+it does not run Actions or advance Task state.
+`;
+
+const SKOPOS_FINISH_HELP = `Skopos finish
+
+Usage:
+  skopos finish <task-id> [target] --actor <id> [--dry-run] [--json]
+
+Performs atomic closure: verifies the current named proof subject, advances only when
+ready, archives the tracked Task projection, and rechecks final Readiness. Finish does
+not widen the proof subject or run missing Actions implicitly.
+`;
+
+const COMMAND_HELP = new Map<string, string>([
+  ['start', SKOPOS_START_HELP],
+  ['skills', SKOPOS_SKILLS_HELP],
+  ['skills context', SKOPOS_SKILLS_CONTEXT_HELP],
+  ['actions', SKOPOS_ACTIONS_HELP],
+  ['actions run', SKOPOS_ACTIONS_RUN_HELP],
+  ['verify', SKOPOS_VERIFY_HELP],
+  ['finish', SKOPOS_FINISH_HELP],
+]);
+
+const HELP_FLAGS = new Set(['--help', '-h']);
+
+export const resolveCommandHelp = (
+  command: string,
+  args: string[] = [],
+): string | undefined => {
+  const subcommand = args.find(
+    (argument) => !HELP_FLAGS.has(argument) && !argument.startsWith('-'),
+  );
+  const key = subcommand ? `${command} ${subcommand}` : command;
+  return COMMAND_HELP.get(key) ?? COMMAND_HELP.get(command);
+};
+
 export const printHelp = (): void => {
   process.stdout.write(SKOPOS_CLI_HELP);
+};
+
+export const printCommandHelp = (command: string, args: string[] = []): boolean => {
+  const help = resolveCommandHelp(command, args);
+  if (!help) return false;
+  process.stdout.write(help);
+  return true;
 };

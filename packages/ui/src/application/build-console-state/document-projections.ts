@@ -290,7 +290,7 @@ const buildMarkdownDocumentView = (
   raw: string,
   updatedAt?: string,
 ): SkoposUiConsoleDocumentView => {
-  const normalized = raw.replace(/\r\n/g, '\n');
+  const normalized = stripMarkdownFrontmatter(raw.replace(/\r\n/g, '\n'));
   const lines = normalized.split('\n');
   const sections: SkoposUiConsoleDocumentView['sections'] = [];
   let currentTitle = 'Overview';
@@ -331,14 +331,18 @@ const buildMarkdownDocumentView = (
     flush();
   }
 
+  const sectionLimit = link.role === 'decision' ? 18 : link.role === 'finding' ? 12 : 8;
   const sanitizedSections = sections
     .map((section) => ({
       ...section,
       body: section.body.slice(0, 1200),
     }))
-    .slice(0, 8);
+    .slice(0, sectionLimit);
   const headings = sanitizedSections.map((section) => section.title);
-  const summarySource = sanitizedSections[0]?.body ?? compactWhitespace(normalized);
+  const summarySource =
+    sanitizedSections.find(
+      (section) => section.body !== 'No additional detail provided in this section.',
+    )?.body ?? compactWhitespace(normalized);
 
   return {
     id: link.id,
@@ -355,6 +359,19 @@ const buildMarkdownDocumentView = (
     sections: sanitizedSections,
     updatedAt,
   };
+};
+
+const stripMarkdownFrontmatter = (source: string): string => {
+  if (!source.startsWith('---\n')) {
+    return source;
+  }
+
+  const closingBoundary = source.indexOf('\n---\n', 4);
+  if (closingBoundary === -1) {
+    return source;
+  }
+
+  return source.slice(closingBoundary + 5).replace(/^\n+/, '');
 };
 
 const buildCatalogDocumentLinkSpec = (

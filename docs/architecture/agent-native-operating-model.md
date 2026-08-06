@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-03
+lastUpdated: 2026-08-05
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
@@ -18,6 +18,9 @@ relatedDocs:
   - ../decisions/D-20260803-audited-stale-session-task-recovery.md
   - ../decisions/D-20260803-explicit-task-work-disposition-state-machine.md
   - ../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
+  - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
+  - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
+  - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
 reviewCycle: when agent lifecycle changes
 ---
 
@@ -28,6 +31,10 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-05`: Added conversation-aware fresh-session continuation to the existing
+  Task handoff lifecycle. The originating agent supplies bounded semantic context,
+  Skopos supplies and validates authoritative live state, and host adapters optionally
+  deliver the result without acquiring host-specific workflow authority.
 - `2026-08-03`: Completed recovery and disposition parity. Expired Action runs have an
   auditable interruption command, Task recovery blocks unreconciled runs, CLI and MCP
   share recovery/disposition authorities, and the read-only UI reports disposition.
@@ -80,6 +87,31 @@ session context
 brief, actor and Session identity, current Task when unambiguous, open material
 questions, next safe command, selected Scope context, and warnings. It does not replay
 the full Project on every turn.
+
+### Fresh-session continuation
+
+Fresh continuation intentionally starts a new, small-context coding Session instead
+of resuming or compressing the old host conversation. Its input is the existing exact
+Task handoff enriched by the originating agent's bounded conversation capsule. The
+capsule carries objective, user intent, accumulated constraints, completed Session
+work, stopping position, rejected approaches, uncertainty, exclusions, and the next
+recommended action. It never becomes a parallel Task or Memory authority.
+
+```text
+current Session
+  -> refresh checkpoint and enriched Task handoff
+  -> validate budget, provenance, redaction, source identity, and coordination state
+  -> transfer or release writing ownership through existing Task/Session authorities
+  -> create a receiving host Session or render the manual prompt fallback
+  -> reload live Session context and validate handoff freshness
+  -> resume the same Task
+```
+
+A handoff that no longer matches owned source, Task revision, claims, mutation state,
+policy, or Evidence is refreshable, stale, conflicted, or invalid rather than silently
+trusted. Direct origin messaging is optional delivery. Task state, Evidence,
+Readiness, the latest handoff, and any immutable closure snapshot remain the durable
+way to discover the outcome.
 
 ### Stale Session recovery
 
@@ -201,6 +233,11 @@ Claude Code, Codex, and manual adapters project the same lifecycle. They may:
 
 An adapter never invents a host-specific work model or silently claims preventive
 safety.
+
+Adapters also declare whether they can create a fresh Session, inject an initial
+prompt, identify or message the originating Session, detect pre-compaction, and report
+completion. Unsupported capabilities fall back to a reviewed copy-and-paste prompt;
+generation is never reported as delivery.
 
 CLI and MCP expose the same runtime authorities for expired Action recovery, audited
 Session Task recovery, and explicit Task disposition. The bundled UI is a read-only

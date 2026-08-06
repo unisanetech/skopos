@@ -4,10 +4,10 @@ import { cn } from '../../support/ui/classnames.js';
 import { RouteHero } from '../shells/page-frame.js';
 
 export interface SkoposPageHeaderProps {
-  kicker: string;
   title: string;
   description: string;
   badges?: Array<React.ReactNode | null>;
+  titleScale?: 'page' | 'compact';
 }
 
 export function renderSkoposPageHeader(
@@ -15,10 +15,10 @@ export function renderSkoposPageHeader(
 ): React.JSX.Element {
   return (
     <RouteHero
-      kicker={props.kicker}
       title={props.title}
       description={props.description}
       badges={props.badges}
+      titleScale={props.titleScale}
     />
   );
 }
@@ -30,5 +30,5 @@ export function PageSectionStack({
   children: React.ReactNode;
   className?: string;
 }): React.JSX.Element {
-  return <div className={cn('grid gap-5 md:gap-6', className)}>{children}</div>;
+  return <div className={cn('grid gap-8 md:gap-10', className)}>{children}</div>;
 }

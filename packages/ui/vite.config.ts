@@ -17,7 +17,6 @@ const skoposPackageAliases = [
   'planner',
   'query',
   'runtime',
-  'trust',
   'ui',
 ].map((packageName) => ({
   find: `@skopos/${packageName}`,
@@ -26,11 +25,14 @@ const skoposPackageAliases = [
 
 export default defineConfig({
   root: packageRoot,
-  base: './',
+  base: '/',
   publicDir: false,
   plugins: [react()],
   resolve: {
-    alias: skoposPackageAliases,
+    alias: [
+      { find: '@', replacement: resolve(packageRoot, 'src') },
+      ...skoposPackageAliases,
+    ],
   },
   test: {
     root: packageRoot,

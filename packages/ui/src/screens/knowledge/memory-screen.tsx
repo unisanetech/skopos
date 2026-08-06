@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { ListPage } from '../../patterns/pages/list-page.js';
-import { Card, MetricGrid, getSkoposListRowClass } from '../../patterns/sections/content-primitives.js';
+import { ContentSection, MetricGrid, getSkoposListRowClass } from '../../patterns/sections/content-primitives.js';
 import {
   EmptyMessage,
   KeyValueList,
@@ -26,7 +26,6 @@ export function MemoryView(): React.JSX.Element {
   if (!memoryView) {
     return (
       <ListPage
-        kicker="Project Knowledge"
         title="What Skopos knows"
         description="The project truth Skopos found before agents start work."
         aside={<MemoryMissingAside />}
@@ -47,12 +46,11 @@ export function MemoryView(): React.JSX.Element {
 
   return (
     <ListPage
-      kicker="Project Knowledge"
-      title="What Skopos knows"
-      description="The sources Skopos uses as project truth, what is ready, and what still needs review."
+      title="Understand this Project"
+      description="Human project understanding first; Memory mappings and index health follow as diagnostics."
       aside={<MemoryInspectorAside memoryView={memoryView} />}
     >
-      <MemoryIntroCard memoryView={memoryView} />
+      <ProjectUnderstandingCard state={state} />
       <MetricGrid
         items={[
           {
@@ -85,19 +83,65 @@ export function MemoryView(): React.JSX.Element {
       {needsAttention.length > 0 ? (
         <MemoryAttentionCard roles={needsAttention} suggestions={memoryView.memory.suggestions} />
       ) : (
-        <Card
+        <ContentSection
           title="No knowledge gaps"
           description="All tracked project knowledge areas are mapped. Keep this current when project truth changes."
         >
-          <p className="skopos-helper-copy">
+          <p className="text-body-medium text-on-surface-variant">
             Skopos can now give agents a compact guide to the project without making them read every
             doc first.
           </p>
-        </Card>
+        </ContentSection>
       )}
       <MemoryRolesCard roles={memoryView.memory.roles} />
+      <MemoryIntroCard memoryView={memoryView} />
       <MemoryAgentCommunicationCard memoryView={memoryView} />
     </ListPage>
+  );
+}
+
+function ProjectUnderstandingCard({
+  state,
+}: {
+  state: SkoposUiConsoleState;
+}): React.JSX.Element {
+  const understanding = state.understanding;
+
+  return (
+    <ContentSection
+      title="What this Project is"
+      description="A human orientation to the product and its main architectural areas."
+    >
+      {understanding ? (
+        <div className="space-y-4">
+          <p className="text-body-medium leading-6 text-on-surface">
+            {understanding.summary.purpose}
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {understanding.summary.mainAreas.slice(0, 6).map((area) => (
+              <div key={`${area.title}-${area.path}`} className="border-t border-outline-weak pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-title-small text-on-surface">{area.title}</p>
+                  <StatusPill value={area.confidence} tone="neutral" />
+                </div>
+                <p className="mt-1 text-body-small text-on-surface-variant">
+                  {area.summary}
+                </p>
+              </div>
+            ))}
+          </div>
+          <p className="text-body-small text-on-surface-variant">
+            {understanding.summary.repoMode} · {understanding.summary.archetype} ·{' '}
+            {understanding.featureInventory.features.length} identified product areas
+          </p>
+        </div>
+      ) : (
+        <EmptyMessage
+          title="Project understanding is not available"
+          description="Generate and review Project understanding before broad or high-impact work."
+        />
+      )}
+    </ContentSection>
   );
 }
 
@@ -107,11 +151,11 @@ function MemoryIntroCard({
   memoryView: SkoposUiConsoleMemoryView;
 }): React.JSX.Element {
   return (
-    <Card
-      title="What this page means"
-      description="This is Skopos checking whether future agents can find the right project truth quickly."
+    <ContentSection
+      title="How Memory maps project truth"
+      description="Diagnostic coverage for whether agents can retrieve the right durable source quickly."
     >
-      <div className="grid gap-3 md:grid-cols-3">
+      <div className="border-y border-outline-weak">
         {[
           {
             label: 'Known',
@@ -126,20 +170,20 @@ function MemoryIntroCard({
             text: 'Skopos did not find a clear source. This is a good candidate for a docs or AGENTS update.',
           },
         ].map((item) => (
-          <div key={item.label} className="border-t border-[var(--line)] pt-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+          <div key={item.label} className="border-t border-outline-weak py-3 first:border-t-0">
+            <p className="text-label-small uppercase text-on-surface-variant">
               {item.label}
             </p>
-            <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+            <p className="mt-1 text-body-small text-on-surface">
               {item.text}
             </p>
           </div>
         ))}
       </div>
-      <p className="skopos-caption-muted mt-4">
-        Generated file: <span className="skopos-mono-caption">{memoryView.memoryPath}</span>
+      <p className="text-body-small text-on-surface-variant mt-4">
+        Generated file: <span className="font-mono text-body-small text-on-surface-variant">{memoryView.memoryPath}</span>
       </p>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -153,11 +197,11 @@ function MemoryAttentionCard({
   const suggestionsById = new Map(suggestions.map((suggestion) => [suggestion.id, suggestion]));
 
   return (
-    <Card
+    <ContentSection
       title="What needs attention"
       description="These project knowledge areas may confuse future agents unless the project clarifies them."
     >
-      <div className="border-y border-[var(--line)]">
+      <div className="border-y border-outline-weak">
         {roles.map((role, index) => {
           const roleSuggestions = role.suggestionIds
             .map((suggestionId) => suggestionsById.get(suggestionId))
@@ -168,22 +212,22 @@ function MemoryAttentionCard({
               key={role.role}
               className={cn(
                 getSkoposListRowClass({ interactive: false }),
-                index > 0 ? 'border-t border-[var(--line)]' : undefined,
+                index > 0 ? 'border-t border-outline-weak' : undefined,
               )}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="skopos-caption font-medium">{role.title}</p>
-                  <p className="skopos-helper-copy mt-1">{role.summary}</p>
+                  <p className="text-body-small text-on-surface font-medium">{role.title}</p>
+                  <p className="text-body-medium text-on-surface-variant mt-1">{role.summary}</p>
                 </div>
                 <StatusPill value={role.status} tone={toneForMemoryStatus(role.status)} />
               </div>
               {roleSuggestions.length > 0 ? (
                 <div className="mt-3 grid gap-2">
                   {roleSuggestions.map((suggestion) => (
-                    <div key={suggestion.id} className="bg-[var(--panel)] px-3 py-2.5">
-                      <p className="skopos-caption font-medium">{suggestion.summary}</p>
-                      <p className="skopos-helper-copy mt-1">{suggestion.nextAction}</p>
+                    <div key={suggestion.id} className="bg-surface px-3 py-2.5">
+                      <p className="text-body-small text-on-surface font-medium">{suggestion.summary}</p>
+                      <p className="text-body-medium text-on-surface-variant mt-1">{suggestion.nextAction}</p>
                     </div>
                   ))}
                 </div>
@@ -192,29 +236,29 @@ function MemoryAttentionCard({
           );
         })}
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
 function MemoryRolesCard({ roles }: { roles: MemoryRole[] }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Project truth areas"
       description="Each row shows what Skopos uses as the source of truth for a project area."
     >
-      <div className="border-y border-[var(--line)]">
+      <div className="border-y border-outline-weak">
         {roles.map((role, index) => (
           <div
             key={role.role}
             className={cn(
               getSkoposListRowClass({ interactive: false }),
-              index > 0 ? 'border-t border-[var(--line)]' : undefined,
+              index > 0 ? 'border-t border-outline-weak' : undefined,
             )}
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="skopos-caption font-medium">{role.title}</p>
-                <p className="skopos-helper-copy mt-1">{role.summary}</p>
+                <p className="text-body-small text-on-surface font-medium">{role.title}</p>
+                <p className="text-body-medium text-on-surface-variant mt-1">{role.summary}</p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <StatusPill value={role.status} tone={toneForMemoryStatus(role.status)} />
@@ -224,22 +268,22 @@ function MemoryRolesCard({ roles }: { roles: MemoryRole[] }): React.JSX.Element 
             {role.sources.length > 0 ? (
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 {role.sources.slice(0, 6).map((source) => (
-                  <div key={`${role.role}-${source.path}`} className="bg-[var(--panel)] px-3 py-2.5">
-                    <p className="skopos-mono-caption break-words">{source.path}</p>
-                    <p className="skopos-caption-muted mt-1">
+                  <div key={`${role.role}-${source.path}`} className="bg-surface px-3 py-2.5">
+                    <p className="font-mono text-body-small text-on-surface-variant break-words">{source.path}</p>
+                    <p className="text-body-small text-on-surface-variant mt-1">
                       {source.kind} · {source.authority}
                     </p>
-                    <p className="skopos-helper-copy mt-1">{source.summary}</p>
+                    <p className="text-body-medium text-on-surface-variant mt-1">{source.summary}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="skopos-caption-muted mt-3">No source found yet.</p>
+              <p className="text-body-small text-on-surface-variant mt-3">No source found yet.</p>
             )}
           </div>
         ))}
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -252,7 +296,7 @@ function MemoryAgentCommunicationCard({
 
   if (!brief) {
     return (
-      <Card
+      <ContentSection
         title="Agent communication guide"
         description="This guide tells coding agents how to explain work to the developer."
       >
@@ -260,53 +304,53 @@ function MemoryAgentCommunicationCard({
           title="Agent communication guide is missing"
           description="Run skopos init or skopos readiness to refresh generated agent guidance."
         />
-      </Card>
+      </ContentSection>
     );
   }
 
   return (
-    <Card
+    <ContentSection
       title="Agent communication guide"
       description="This is the short guide agents should follow when they explain, ask, validate, and close work."
     >
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-5 lg:grid-cols-2">
         <div>
-          <p className="skopos-section-title">Session start</p>
+          <h3 className="text-title-medium text-on-surface">Session start</h3>
           <ul className="mt-2 grid gap-2">
             {(brief.startupRules ?? []).map((item) => (
-              <li key={item} className="skopos-helper-copy border-t border-[var(--line)] pt-2">
+              <li key={item} className="text-body-medium text-on-surface-variant border-t border-outline-weak pt-2">
                 {item}
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <p className="skopos-section-title">Default answer shape</p>
+          <h3 className="text-title-medium text-on-surface">Default answer shape</h3>
           <ul className="mt-2 grid gap-2">
             {brief.defaultResponseShape.map((item) => (
-              <li key={item} className="skopos-helper-copy border-t border-[var(--line)] pt-2">
+              <li key={item} className="text-body-medium text-on-surface-variant border-t border-outline-weak pt-2">
                 {item}
               </li>
             ))}
           </ul>
         </div>
         <div>
-          <p className="skopos-section-title">When work gets heavier</p>
+          <h3 className="text-title-medium text-on-surface">When work gets heavier</h3>
           <div className="mt-2 grid gap-2">
             {brief.escalationRules.map((rule) => (
-              <div key={rule.id} className="border-t border-[var(--line)] pt-2">
-                <p className="skopos-caption font-medium">{rule.situation}</p>
-                <p className="skopos-helper-copy mt-1">{rule.agentShouldDo}</p>
+              <div key={rule.id} className="border-t border-outline-weak pt-2">
+                <p className="text-body-small text-on-surface font-medium">{rule.situation}</p>
+                <p className="text-body-medium text-on-surface-variant mt-1">{rule.agentShouldDo}</p>
               </div>
             ))}
           </div>
         </div>
       </div>
-      <p className="skopos-caption-muted mt-4">
+      <p className="text-body-small text-on-surface-variant mt-4">
         Generated file:{' '}
-        <span className="skopos-mono-caption">{memoryView.communicationBriefPath}</span>
+        <span className="font-mono text-body-small text-on-surface-variant">{memoryView.communicationBriefPath}</span>
       </p>
-    </Card>
+    </ContentSection>
   );
 }
 

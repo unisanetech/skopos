@@ -20,13 +20,21 @@ export interface TaskDiscussionContext {
 export const getOverviewDiscussionContext = (
   state: SkoposUiConsoleState,
 ): OverviewDiscussionContext => {
-  const latestDiscussionHandoff = state.latestDiscussionHandoff;
-  const activeTaskView = latestDiscussionHandoff?.handoff.activeTaskId
+  const currentTaskId = state.sessionContext?.currentTaskId;
+  const latestDiscussionHandoff =
+    currentTaskId && state.latestDiscussionHandoff?.handoff.activeTaskId === currentTaskId
+      ? state.latestDiscussionHandoff
+      : undefined;
+  const activeTaskView = currentTaskId
     ? state.tasks.find(
-        (taskView) => taskView.task.id === latestDiscussionHandoff.handoff.activeTaskId,
+        (taskView) => taskView.task.id === currentTaskId,
       )
     : undefined;
-  const recentDiscussionCheckpoints = state.discussionCheckpoints.slice(0, 4);
+  const recentDiscussionCheckpoints = currentTaskId
+    ? state.discussionCheckpoints
+        .filter((checkpointView) => checkpointView.checkpoint.activeTaskId === currentTaskId)
+        .slice(0, 1)
+    : [];
 
   return {
     latestDiscussionHandoff,

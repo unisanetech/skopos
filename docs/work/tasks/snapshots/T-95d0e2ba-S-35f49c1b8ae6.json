@@ -1,0 +1,84 @@
+{
+  "snapshotId": "S-35f49c1b8ae6",
+  "taskId": "T-95d0e2ba",
+  "sessionId": "continuation-closure-20260805-r2",
+  "actorId": "codex-continuation-implementation",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "85027a9af95d2b735c02b06a548ab2a60b3437a3e3b27ed7f8a49fe2ec1f6ae0"
+    },
+    {
+      "path": "docs/architecture/artifact-model.md",
+      "digest": "6cc4e7c6ee4a1871602f5b69cec9f24a2fc3bff51eeeab6cdb67f69541135d0c"
+    },
+    {
+      "path": "docs/decisions/021-discussion-memory-checkpoints-and-handoff-contract.md",
+      "digest": "3e2851962771eaa9db404ded031da15d06d0241648742e0844098c535fd19174"
+    },
+    {
+      "path": "docs/decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md",
+      "digest": "06d646ce3e86575379b9c85cdcef3840a35752011ab8792062e69bd64a357c20"
+    },
+    {
+      "path": "docs/findings/F-20260805-conversation-aware-fresh-session-continuation-gap.md",
+      "digest": "74efa7b8f90ad50f4b80aa1fa357e9b6ba09b30b54718ae7694cdd1dc040bcf5"
+    },
+    {
+      "path": "docs/guides/developer-workflows.md",
+      "digest": "d609367df6d2ab6f7d19ae387db9ecc1245e952835e3ebe88db8cd38a8356e2e"
+    },
+    {
+      "path": "docs/work/plans/P-20260805-conversation-aware-session-continuation-plan.md",
+      "digest": "17fa5845f22b5ab33450542bceebda356aacd849e9cd8c4e6cb70b1d5b4c452c"
+    },
+    {
+      "path": "package.json",
+      "digest": "c411cade7a60ba73297f4fdc80e1e02e75cf355f2fe8a63bc776a856e0937a5c"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "ff444577708df91c2e3c86beefa8615a1fee616df33a84ef08ec8fbf441e4ce5"
+    },
+    {
+      "path": "packages/cli/src/__tests__/discussion-continuation.test.ts",
+      "digest": "80097a790a85ff04d45ef070532d2a917ce33c44f88c4fc3d9c473f1e935181b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/mcp-server-contract.test.ts",
+      "digest": "f0ac6797217e3aa83650029b1f4431f12bb6ca9d295c025bdcc16ebab88844ef"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "63fcc64f98710314859ec6f6427753bdcdebab792ff92991f35a64304e62a9f8"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-skill-portability.ts",
+      "digest": "45fa243b33710d98f17134164782ad7f6565f49cec8368d5f0daf72cdbe46381"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/discussion.ts",
+      "digest": "482cf3ca139280668d26f91167b807a35258e951910a9db72b001d2c0c4c4290"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "5b5f159fd247c8e8fbc6d0762f66bf4dccd1f41bdd9dd7e8c9f27cfc03edf7db"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "digest": "e8b4c3b3a6abccc417cc1139ace3a9115306726a29c50c152d7ba767f3d10673"
+    },
+    {
+      "path": "packages/runtime/src/application/discussion/discussion.service.ts",
+      "digest": "4c415172237c5066ca28cab77dd1274df76e6bc557d09219fc901b79265a8a54"
+    },
+    {
+      "path": "packages/runtime/src/application/shared/discussion-handoff.ts",
+      "digest": "448623e40916733959ee9ed654107d31edd647b66aaf400d6d122776ffd86761"
+    }
+  ],
+  "digest": "35f49c1b8ae6ecccc5f4f45015ebe40c70dd3f075342df846aa54a7e0dbb4234",
+  "createdAt": "2026-08-05T00:39:50.973Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-95d0e2ba-S-35f49c1b8ae6.json"
+}

@@ -3,9 +3,12 @@ import { fileURLToPath } from 'node:url';
 
 import type {
   SkoposProjectSkillBinding,
+  SkoposSkillEvaluationSuiteManifest,
+  SkoposSkillFixtureManifest,
   SkoposSkillModuleManifest,
   SkoposSkillPackManifest,
 } from '@skopos/model';
+import { SKOPOS_SCOPE_KINDS } from '@skopos/model';
 import { z } from 'zod';
 
 import { listFilesUnder, readTextFile } from '../../adapters/workspace-filesystem.adapter.js';
@@ -38,7 +41,7 @@ const roleRequirementsSchema = z
   .strict();
 const moduleApplicabilitySchema = z
   .object({
-    scopeKinds: z.array(nonEmptyString),
+    scopeKinds: z.array(z.enum(SKOPOS_SCOPE_KINDS)),
     pathKinds: z.array(nonEmptyString),
     capabilities: z.array(nonEmptyString),
   })
@@ -154,12 +157,15 @@ const skillPackManifestSchema = z
     rubricPath: nonEmptyString,
     researchSources: z.array(researchSourceSchema).min(1),
     proofFixtureIds: z.array(nonEmptyString).min(1),
+    evaluationSuiteIds: z.array(nonEmptyString).min(1),
   })
   .strict()
   .superRefine((pack, context) => {
     collectDuplicateValues(pack.modules.map((entry) => entry.id), 'skill module', context);
     collectDuplicateValues(pack.researchSources.map((entry) => entry.id), 'research source', context);
     collectDuplicateValues(pack.failureSignals.map((entry) => entry.id), 'failure signal', context);
+    collectDuplicateValues(pack.proofFixtureIds, 'proof fixture', context);
+    collectDuplicateValues(pack.evaluationSuiteIds, 'evaluation suite', context);
     for (const module of pack.modules) {
       collectDuplicateValues(module.positiveSignals.map((entry) => entry.id), `${module.id} positive signal`, context);
       collectDuplicateValues(module.negativeSignals.map((entry) => entry.id), `${module.id} negative signal`, context);
@@ -245,6 +251,148 @@ const projectSkillBindingSchema = z
     }
   });
 
+const skillSelectionReasonCodeSchema = z.enum([
+  'selected',
+  'risk-mismatch',
+  'lifecycle-mismatch',
+  'binding-invalid',
+  'positive-signal-missing',
+  'applicability-missing',
+  'blocking-anti-signal',
+  'review-phase-mismatch',
+  'duplicate-judgment',
+  'pack-budget-exhausted',
+  'module-budget-exhausted',
+  'token-budget-exhausted',
+]);
+const skillFixtureSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    id: nonEmptyString,
+    type: z.literal('skill-selection-fixture'),
+    status: z.literal('active'),
+    authority: z.literal('supporting'),
+    summary: nonEmptyString,
+    updatedAt: nonEmptyString.optional(),
+    fixtureId: nonEmptyString,
+    packId: nonEmptyString,
+    category: z.enum([
+      'positive',
+      'negative',
+      'ambiguous',
+      'generated-output',
+      'capability-locality',
+      'budget',
+    ]),
+    task: z
+      .object({
+        goal: nonEmptyString,
+        scope: z
+          .object({
+            id: nonEmptyString,
+            title: nonEmptyString,
+            path: nonEmptyString,
+            kind: z.enum([
+              'workspace',
+              'product',
+              'application',
+              'service',
+              'package',
+              'domain',
+              'infrastructure',
+              'tool',
+            ]),
+            ancestorIds: z.array(nonEmptyString),
+            aliases: z.array(nonEmptyString),
+            codeRoots: z.array(nonEmptyString).min(1),
+          })
+          .strict(),
+        acceptanceCriteria: z.array(nonEmptyString),
+        constraints: z.array(nonEmptyString),
+        nonGoals: z.array(nonEmptyString),
+        openDecisions: z.array(nonEmptyString),
+        risk: z.enum(['light', 'standard', 'high-impact']),
+        phase: z.enum(['admission', 'iteration', 'stabilization', 'closure']),
+        ownedPaths: z.array(nonEmptyString),
+        changedPaths: z.array(nonEmptyString),
+        affectedCapabilities: z.array(nonEmptyString),
+        selectedActionIds: z.array(nonEmptyString),
+        applicableGuardIds: z.array(nonEmptyString),
+        acceptedFailureEvidence: z.array(
+          z.object({ id: nonEmptyString, summary: nonEmptyString }).strict(),
+        ),
+        projectLifecycle: z.enum([
+          'greenfield',
+          'early-product',
+          'established-brownfield',
+          'legacy-stabilization',
+        ]),
+      })
+      .strict(),
+    expectation: z
+      .object({
+        selectedModuleIds: z.array(nonEmptyString),
+        suppressedModuleReasonCodes: z.record(
+          nonEmptyString,
+          skillSelectionReasonCodeSchema,
+        ),
+        selectedActionIds: z.array(nonEmptyString),
+        selectedGuardIds: z.array(nonEmptyString),
+        maximumSelectedModules: z.number().int().nonnegative().optional(),
+        maximumMeasuredTokens: z.number().int().nonnegative().optional(),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine((fixture, context) => {
+    if (fixture.id !== `skill-selection-fixture.${fixture.fixtureId}`) {
+      context.addIssue({
+        code: 'custom',
+        message: `Fixture ${fixture.fixtureId} id must be skill-selection-fixture.${fixture.fixtureId}.`,
+      });
+    }
+    collectDuplicateValues(fixture.expectation.selectedModuleIds, `${fixture.fixtureId} selected module`, context);
+    collectDuplicateValues(fixture.expectation.selectedActionIds, `${fixture.fixtureId} selected action`, context);
+    collectDuplicateValues(fixture.expectation.selectedGuardIds, `${fixture.fixtureId} selected guard`, context);
+  });
+
+const skillEvaluationSuiteSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    id: nonEmptyString,
+    type: z.literal('skill-evaluation-suite'),
+    status: z.literal('active'),
+    authority: z.literal('supporting'),
+    summary: nonEmptyString,
+    updatedAt: nonEmptyString.optional(),
+    suiteId: nonEmptyString,
+    packId: nonEmptyString,
+    cases: z
+      .array(
+        z
+          .object({
+            caseId: nonEmptyString,
+            title: nonEmptyString,
+            taskPrompt: nonEmptyString,
+            projectTemplatePath: nonEmptyString,
+            candidateModuleIds: z.array(nonEmptyString).min(1),
+            rubricDimensions: z.array(nonEmptyString).min(1),
+          })
+          .strict(),
+      )
+      .min(1),
+  })
+  .strict()
+  .superRefine((suite, context) => {
+    if (suite.id !== `skill-evaluation-suite.${suite.suiteId}`) {
+      context.addIssue({
+        code: 'custom',
+        message: `Evaluation suite ${suite.suiteId} id must be skill-evaluation-suite.${suite.suiteId}.`,
+      });
+    }
+    collectDuplicateValues(suite.cases.map((entry) => entry.caseId), `${suite.suiteId} case`, context);
+  });
+
 export interface SkoposLoadedSkillModule extends SkoposSkillModuleManifest {
   measuredTokens: number;
 }
@@ -252,6 +400,17 @@ export interface SkoposLoadedSkillModule extends SkoposSkillModuleManifest {
 export interface SkoposLoadedSkillPack
   extends Omit<SkoposSkillPackManifest, 'modules'> {
   modules: SkoposLoadedSkillModule[];
+  fixtures: SkoposLoadedSkillFixture[];
+  evaluationSuites: SkoposLoadedSkillEvaluationSuite[];
+  sourcePath: string;
+}
+
+export interface SkoposLoadedSkillFixture extends SkoposSkillFixtureManifest {
+  sourcePath: string;
+}
+
+export interface SkoposLoadedSkillEvaluationSuite
+  extends SkoposSkillEvaluationSuiteManifest {
   sourcePath: string;
 }
 
@@ -306,14 +465,136 @@ export const loadSkoposSkillPacks = async ({
         }),
       );
       await validateSkillRubricDimensions({ pack, packDirectory });
+      const fixtures = await loadSkillFixtures({
+        cwd,
+        pack,
+        packDirectory,
+      });
+      const evaluationSuites = await loadSkillEvaluationSuites({
+        cwd,
+        pack,
+        packDirectory,
+      });
       packs.push({
         ...pack,
         modules,
+        fixtures,
+        evaluationSuites,
         sourcePath: relative(cwd, manifestPath) || manifestPath,
       });
     }
   }
   return packs.sort((left, right) => left.packId.localeCompare(right.packId));
+};
+
+const loadSkillEvaluationSuites = async ({
+  cwd,
+  pack,
+  packDirectory,
+}: {
+  cwd: string;
+  pack: SkoposSkillPackManifest;
+  packDirectory: string;
+}): Promise<SkoposLoadedSkillEvaluationSuite[]> => {
+  const suiteDirectory = join(packDirectory, 'evaluations');
+  const suites: SkoposLoadedSkillEvaluationSuite[] = [];
+  const knownModuleIds = new Set(pack.modules.map((module) => module.id));
+  const rubricContents = await readTextFile(join(packDirectory, pack.rubricPath));
+  const rubric = z
+    .object({ dimensions: z.array(nonEmptyString).min(1) })
+    .passthrough()
+    .parse(JSON.parse(rubricContents ?? '{}'));
+  const knownRubricDimensions = new Set(rubric.dimensions);
+  for (const suitePath of (await listFilesUnder(suiteDirectory, ['.json']))
+    .filter((path) => path.endsWith('.suite.json'))
+    .sort()) {
+    const contents = await readTextFile(suitePath);
+    if (!contents) continue;
+    const suite = skillEvaluationSuiteSchema.parse(JSON.parse(contents));
+    if (suite.packId !== pack.packId) {
+      throw new Error(
+        `Skill evaluation suite ${suite.suiteId} belongs to ${suite.packId}, not ${pack.packId}.`,
+      );
+    }
+    for (const evaluationCase of suite.cases) {
+      for (const moduleId of evaluationCase.candidateModuleIds) {
+        if (!knownModuleIds.has(moduleId)) {
+          throw new Error(
+            `Skill evaluation case ${evaluationCase.caseId} references unknown module ${moduleId}.`,
+          );
+        }
+      }
+      for (const dimension of evaluationCase.rubricDimensions) {
+        if (!knownRubricDimensions.has(dimension)) {
+          throw new Error(
+            `Skill evaluation case ${evaluationCase.caseId} references unknown rubric dimension ${dimension}.`,
+          );
+        }
+      }
+      const templateFiles = await listFilesUnder(
+        join(packDirectory, evaluationCase.projectTemplatePath),
+      );
+      if (templateFiles.length === 0) {
+        throw new Error(
+          `Skill evaluation case ${evaluationCase.caseId} has no project template at ${evaluationCase.projectTemplatePath}.`,
+        );
+      }
+    }
+    suites.push({ ...suite, sourcePath: relative(cwd, suitePath) || suitePath });
+  }
+  rejectDuplicateIds(suites.map((suite) => suite.suiteId), 'skill evaluation suite');
+  const declared = [...pack.evaluationSuiteIds].sort();
+  const discovered = suites.map((suite) => suite.suiteId).sort();
+  const undeclared = discovered.filter((suiteId) => !declared.includes(suiteId));
+  const missing = declared.filter((suiteId) => !discovered.includes(suiteId));
+  if (undeclared.length > 0 || missing.length > 0) {
+    throw new Error(
+      `Skill pack ${pack.packId} evaluation suite declarations do not match discovered manifests.` +
+        `${missing.length > 0 ? ` Missing: ${missing.join(', ')}.` : ''}` +
+        `${undeclared.length > 0 ? ` Undeclared: ${undeclared.join(', ')}.` : ''}`,
+    );
+  }
+  return suites;
+};
+
+const loadSkillFixtures = async ({
+  cwd,
+  pack,
+  packDirectory,
+}: {
+  cwd: string;
+  pack: SkoposSkillPackManifest;
+  packDirectory: string;
+}): Promise<SkoposLoadedSkillFixture[]> => {
+  const fixtureDirectory = join(packDirectory, 'fixtures');
+  const fixtures: SkoposLoadedSkillFixture[] = [];
+  for (const fixturePath of (await listFilesUnder(fixtureDirectory, ['.json'])).sort()) {
+    const contents = await readTextFile(fixturePath);
+    if (!contents) continue;
+    const fixture = skillFixtureSchema.parse(JSON.parse(contents));
+    if (fixture.packId !== pack.packId) {
+      throw new Error(
+        `Skill fixture ${fixture.fixtureId} belongs to ${fixture.packId}, not ${pack.packId}.`,
+      );
+    }
+    fixtures.push({
+      ...fixture,
+      sourcePath: relative(cwd, fixturePath) || fixturePath,
+    });
+  }
+  rejectDuplicateIds(fixtures.map((fixture) => fixture.fixtureId), 'skill fixture');
+  const declared = [...pack.proofFixtureIds].sort();
+  const discovered = fixtures.map((fixture) => fixture.fixtureId).sort();
+  const undeclared = discovered.filter((fixtureId) => !declared.includes(fixtureId));
+  const missing = declared.filter((fixtureId) => !discovered.includes(fixtureId));
+  if (undeclared.length > 0 || missing.length > 0) {
+    throw new Error(
+      `Skill pack ${pack.packId} fixture declarations do not match discovered manifests.` +
+        `${missing.length > 0 ? ` Missing: ${missing.join(', ')}.` : ''}` +
+        `${undeclared.length > 0 ? ` Undeclared: ${undeclared.join(', ')}.` : ''}`,
+    );
+  }
+  return fixtures;
 };
 
 export const loadSkoposSkillPackCatalog = async ({

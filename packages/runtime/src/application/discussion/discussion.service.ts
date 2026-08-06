@@ -8,6 +8,8 @@ import type {
   SkoposDiscussionSyncCodexRunResult,
   SkoposDiscussionHandoffArtifact,
   SkoposDiscussionIndexArtifact,
+  SkoposConversationCapsule,
+  SkoposDiscussionHandoffInspectRunResult,
 } from '@skopos/model';
 
 import { refreshSkoposDiscussionCheckpoints } from '../shared/discussion-checkpoints.js';
@@ -19,6 +21,13 @@ import { readJsonIfExists } from '../shared/token-control-state.js';
 import {
   DISCUSSION_INDEX_ARTIFACT_PATH,
 } from '../shared/token-control-constants.js';
+import {
+  acceptSkoposDiscussionHandoff,
+  loadSkoposDiscussionHandoff,
+  renderSkoposDiscussionContinuationPrompt,
+  verifySkoposDiscussionHandoff,
+  recordSkoposDiscussionHandoffDelivery,
+} from '../shared/discussion-handoff.js';
 
 export interface BuildSkoposDiscussionAppendTurnRuntimeOptions {
   cwd: string;
@@ -46,6 +55,8 @@ export interface BuildSkoposDiscussionCheckpointRuntimeOptions {
 
 export interface BuildSkoposDiscussionHandoffRuntimeOptions {
   cwd: string;
+  taskId?: string;
+  conversationCapsule?: SkoposConversationCapsule;
   dryRun?: boolean;
 }
 
@@ -116,15 +127,48 @@ export const buildSkoposDiscussionCheckpointRuntime = async ({
 
 export const buildSkoposDiscussionHandoffRuntime = async ({
   cwd,
+  taskId,
+  conversationCapsule,
   dryRun = false,
 }: BuildSkoposDiscussionHandoffRuntimeOptions): Promise<SkoposDiscussionHandoffRunResult> => {
   const workspaceRoot = resolve(cwd);
   const lifecycle = await refreshSkoposDiscussionResumeArtifacts({
     workspaceRoot,
+    taskId,
+    conversationCapsule,
     dryRun,
   });
 
   return lifecycle.handoff;
+};
+
+export const showSkoposDiscussionHandoffRuntime = async ({ cwd, taskId }: { cwd: string; taskId?: string }): Promise<SkoposDiscussionHandoffInspectRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const loaded = await loadSkoposDiscussionHandoff(workspaceRoot, taskId);
+  return { workspaceRoot, summary: loaded.artifact.summary ?? `Handoff for ${loaded.artifact.activeTaskId}.`, handoffPath: loaded.path, handoff: loaded.artifact };
+};
+
+export const verifySkoposDiscussionHandoffRuntime = async ({ cwd, taskId }: { cwd: string; taskId?: string }): Promise<SkoposDiscussionHandoffInspectRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const verified = await verifySkoposDiscussionHandoff({ workspaceRoot, taskId });
+  return { workspaceRoot, summary: `Handoff freshness is ${verified.validation.freshness}.`, handoffPath: verified.path, handoff: verified.artifact };
+};
+
+export const renderSkoposDiscussionHandoffRuntime = async ({ cwd, taskId }: { cwd: string; taskId?: string }): Promise<SkoposDiscussionHandoffInspectRunResult> => {
+  const shown = await showSkoposDiscussionHandoffRuntime({ cwd, taskId });
+  return { ...shown, summary: 'Rendered reviewed host-neutral continuation prompt.', prompt: renderSkoposDiscussionContinuationPrompt(shown.handoff) };
+};
+
+export const acceptSkoposDiscussionHandoffRuntime = async ({ cwd, taskId, actor, receivingSessionId, destinationHost, dryRun = false }: { cwd: string; taskId?: string; actor: string; receivingSessionId: string; destinationHost: string; dryRun?: boolean }): Promise<SkoposDiscussionHandoffRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const accepted = await acceptSkoposDiscussionHandoff({ workspaceRoot, taskId, actor, receivingSessionId, destinationHost, dryRun });
+  return { workspaceRoot, summary: `Accepted current handoff for ${accepted.artifact.activeTaskId}.`, checkpointPath: accepted.path, checkpointWrite: 'unchanged', handoffPath: accepted.path, handoffWrite: accepted.write, handoff: accepted.artifact };
+};
+
+export const recordSkoposDiscussionHandoffDeliveryRuntime = async ({ cwd, taskId, actor, result, destinationRef, originMessageOutcome, detail, dryRun = false }: { cwd: string; taskId?: string; actor: string; result: 'pass' | 'fail'; destinationRef?: string; originMessageOutcome: 'succeeded' | 'failed' | 'unsupported'; detail: string; dryRun?: boolean }): Promise<SkoposDiscussionHandoffRunResult> => {
+  const workspaceRoot = resolve(cwd);
+  const recorded = await recordSkoposDiscussionHandoffDelivery({ workspaceRoot, taskId, actor, result, destinationRef, originMessageOutcome, detail, dryRun });
+  return { workspaceRoot, summary: `Recorded ${result === 'pass' ? 'successful' : 'failed'} host delivery for ${recorded.artifact.activeTaskId}.`, checkpointPath: recorded.path, checkpointWrite: 'unchanged', handoffPath: recorded.path, handoffWrite: recorded.write, handoff: recorded.artifact };
 };
 
 export const buildSkoposDiscussionRecentRuntime = async ({

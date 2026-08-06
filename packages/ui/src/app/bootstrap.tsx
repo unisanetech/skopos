@@ -3,6 +3,9 @@ import { StrictMode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 
+import { Alert } from '@/components/ui/alert';
+import { Card } from '@/components/ui/card';
+import { Typography } from '@/components/ui/typography';
 import { skoposUiDevStateUpdatedEvent } from '../contracts/skopos-ui-dev-channel.js';
 import { router } from './router.js';
 import {
@@ -18,7 +21,7 @@ export const bootstrapSkoposUiApp = async (container: Element): Promise<Root> =>
   const root = createRoot(container);
 
   try {
-    await ensureInitialHashRoute();
+    await ensureInitialPathRoute();
     const state = await loadSkoposUiConsoleState();
     if (!state) {
       throw new Error('Skopos UI console state is missing.');
@@ -85,13 +88,12 @@ function SkoposUiAppShell(): React.JSX.Element {
   return <RouterProvider router={router} />;
 }
 
-const ensureInitialHashRoute = async (): Promise<void> => {
+const ensureInitialPathRoute = async (): Promise<void> => {
   if (typeof window === 'undefined') {
     return;
   }
 
-  const currentHash = window.location.hash.trim();
-  if (currentHash.length === 0 || currentHash === '#') {
+  if (window.location.pathname === '/') {
     await router.navigate({
       to: '/overview',
       replace: true,
@@ -101,21 +103,22 @@ const ensureInitialHashRoute = async (): Promise<void> => {
 
 function BootError({ message }: { message: string }): React.JSX.Element {
   return (
-    <div className="grid min-h-screen place-items-center bg-transparent px-6 py-10 text-[var(--ink)]">
-      <div className="w-full max-w-2xl rounded-[30px] border border-[var(--line)] bg-[var(--panel)] px-6 py-6 shadow-[var(--shadow)]">
-        <p className="skopos-eyebrow">Skopos UI</p>
-        <h1 className="skopos-page-title mt-4 max-w-[32rem]">The console failed to load</h1>
-        <p className="skopos-helper-copy mt-3 max-w-[32rem]">
+    <div className="grid min-h-screen place-items-center bg-surface-container-low px-6 py-10 text-on-surface">
+      <Card variant="elevated" padding="lg" className="w-full max-w-2xl">
+        <Typography variant="eyebrow" className="text-on-surface-variant">
+          Skopos UI
+        </Typography>
+        <Typography variant="pageTitle" className="mt-4 max-w-[32rem]">
+          The console failed to load
+        </Typography>
+        <Typography variant="bodyLarge" className="mt-3 max-w-[32rem] text-on-surface-variant">
           The routed app hit a client-side bootstrap error before the main workspace shell could
           render.
-        </p>
-        <div className="mt-5 rounded-[22px] border border-[var(--line)] bg-[var(--panel-strong)] px-4 py-4">
-          <p className="skopos-eyebrow">Boot error</p>
-          <p className="skopos-mono-caption mt-3 break-words text-[var(--muted-strong)]">
-            {message}
-          </p>
-        </div>
-      </div>
+        </Typography>
+        <Alert variant="error" title="Boot error" className="mt-5">
+          <code className="break-words font-mono">{message}</code>
+        </Alert>
+      </Card>
     </div>
   );
 }

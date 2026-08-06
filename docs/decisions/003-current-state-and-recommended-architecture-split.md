@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-04-09
+lastUpdated: 2026-08-05
 relatedDocs:
   - README.md
   - ../architecture/00-architecture.md
@@ -26,6 +26,9 @@ Use this decision to keep brownfield architecture interpretation honest and agen
 
 ## Changelog
 
+- `2026-08-05`: Reconciled the implemented architecture report with current Project
+  Memory, UI, and Readiness vocabulary; removed the obsolete list of still-open proof
+  Decisions.
 - `2026-04-09`: Added the brownfield architecture-interpretation decision so current-state and recommended-state models stay distinct in Skopos artifacts and proof benchmarks.
 
 ## Decision
@@ -54,8 +57,8 @@ Use this decision to keep brownfield architecture interpretation honest and agen
 
 1. Architecture interpretation becomes part of the compiled project knowledge layer, not just a docs idea.
 2. Brownfield bootstrap now produces a clearer stabilization surface for both humans and agents.
-3. Trust, portal, and future CI surfaces can explain whether the repo is aligned or still divergent.
-4. The next proof-phase pressure should move to the remaining open decisions:
-   - large-repo operating mode
-   - eval scoring contract
-   - tool-native enforcement strategy
+3. CLI, MCP, UI, and Readiness projections can explain whether the Project is aligned
+   or still divergent without becoming a second architecture authority.
+4. Changes to architecture interpretation must preserve the typed current-versus-
+   recommended split and source-bound proof rather than reintroducing narrative-only
+   conclusions.

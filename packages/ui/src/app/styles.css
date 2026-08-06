@@ -1,69 +1,9 @@
-@import 'tailwindcss';
-
 :root {
-  --bg: #f6f3ec;
-  --bg-strong: #fbfaf7;
-  --sidebar: #f1ede6;
-  --inspector: rgba(241, 237, 230, 0.62);
-  --canvas: #fffdf9;
-  --panel: rgba(255, 252, 246, 0.92);
-  --panel-strong: rgba(255, 252, 246, 0.72);
-  --panel-muted: rgba(243, 237, 226, 0.72);
-  --line: rgba(86, 73, 56, 0.09);
-  --line-strong: rgba(86, 73, 56, 0.15);
-  --ink: #171714;
-  --muted: #6f675c;
-  --muted-strong: #4d473f;
-  --accent: #1d5c56;
-  --accent-soft: #ddeee9;
-  --info: #2457f5;
-  --info-soft: #e3ebff;
-  --warning: #9a5a11;
-  --warning-soft: #f8e3c4;
-  --danger: #ad2a1e;
-  --danger-soft: #fbded9;
-  --shadow: none;
-  --font-mono:
-    'SFMono-Regular', 'SF Mono', 'Cascadia Code', 'JetBrains Mono', 'Menlo', 'Monaco', 'Consolas',
-    monospace;
-  --surface-radius: 6px;
-  --surface-radius-tight: 4px;
-  --rail-left-width: 14rem;
   --rail-right-width: 22rem;
   --content-max-main: 52rem;
-  --search-dock-width: min(42rem, calc(100vw - 2rem));
-  --search-dock-offset: calc(1rem + env(safe-area-inset-bottom, 0px));
   --shell-gutter-inline: clamp(1rem, 1.4vw + 0.8rem, 2.25rem);
-  --shell-gutter-inline-tight: clamp(0.875rem, 1vw + 0.7rem, 1.5rem);
-  --shell-gutter-block: 1rem;
-  --sidebar-gutter-inline: 0.8rem;
-  --sidebar-gutter-block: 0.82rem;
-  --sidebar-row-height: 1.9rem;
-  --header-height: 3.375rem;
-  --control-height-sm: 1.875rem;
-  --control-height-md: 2rem;
-  --pill-height: 1.5rem;
-  --inspector-value-max: 13.5rem;
-  --type-eyebrow: 12px;
-  --type-label: 12.5px;
-  --type-caption: 13.75px;
-  --type-helper: 14.25px;
-  --type-body: 14px;
-  --type-section-title: 15px;
-  --type-metric: 1.18rem;
-  --type-page-title: clamp(1.8rem, 1.58rem + 0.72vw, 2.15rem);
-  --type-inspector-title: 12.5px;
-  --type-inspector-label: 12px;
-  --type-inspector-value: 13.75px;
-  --type-reader-body: 14.75px;
-  --type-reader-heading-lg: 16px;
-  --type-reader-heading-md: 14.5px;
-  --type-reader-heading-sm: 13.5px;
-  --tracking-eyebrow: 0.16em;
-  --leading-body: 1.62;
-  --leading-copy: 1.6;
-  --leading-helper: 1.5;
-  --leading-caption: 1.45;
+  --shell-gutter-inline-tight: 1rem;
+  --shell-gutter-block: 0.75rem;
 }
 
 * {
@@ -72,20 +12,17 @@
 
 html {
   min-height: 100%;
-  background:
-    radial-gradient(circle at top left, rgba(36, 87, 245, 0.07), transparent 34rem),
-    radial-gradient(circle at bottom right, rgba(29, 92, 86, 0.08), transparent 32rem),
-    linear-gradient(180deg, var(--bg-strong) 0%, var(--bg) 100%);
+  background: var(--color-surface-container-low);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  color: var(--ink);
-  font-size: var(--type-body);
-  line-height: var(--leading-copy);
-  font-family: 'Avenir Next', 'Aptos', 'Segoe UI', sans-serif;
-  background: transparent;
+  color: var(--color-on-surface);
+  font-size: var(--type-body-medium-size);
+  line-height: var(--type-body-medium-line);
+  font-family: var(--font-sans);
+  background: var(--color-surface-container-low);
 }
 
 #root {
@@ -96,22 +33,14 @@ body {
   min-height: 100vh;
 }
 
-.skopos-console :where([class*='rounded-['], [class*='rounded-2xl'], [class*='rounded-xl']) {
-  border-radius: var(--surface-radius) !important;
-}
-
-.skopos-console :where([class*='rounded-full']) {
-  border-radius: 999px !important;
-}
-
 .skopos-console :where(code, pre, kbd, samp) {
-  font-size: 12px;
+  font-family: var(--font-mono);
 }
 
 .skopos-scroll {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
-  scrollbar-color: rgba(86, 73, 56, 0.26) transparent;
+  scrollbar-color: color-mix(in srgb, var(--color-on-surface) 24%, transparent) transparent;
 }
 
 .skopos-scroll::-webkit-scrollbar {
@@ -124,24 +53,33 @@ body {
 }
 
 .skopos-scroll::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(86, 73, 56, 0.22);
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--color-on-surface) 20%, transparent);
 }
 
 .skopos-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(86, 73, 56, 0.34);
+  background: color-mix(in srgb, var(--color-on-surface) 32%, transparent);
+}
+
+.skopos-scroll-hidden {
+  scrollbar-width: none;
+}
+
+.skopos-scroll-hidden::-webkit-scrollbar {
+  display: none;
 }
 
 .skopos-shell-inset {
   padding-inline: var(--shell-gutter-inline);
 }
 
-.skopos-sidebar-shell {
-  padding: var(--sidebar-gutter-block) var(--sidebar-gutter-inline);
+.skopos-inspector-inset {
+  padding-block: var(--shell-gutter-block);
 }
 
-.skopos-inspector-inset {
-  padding: var(--shell-gutter-block) var(--shell-gutter-inline-tight);
+.skopos-inspector-panel {
+  height: calc(100% - 2.5rem);
+  min-height: 0;
 }
 
 .skopos-content-width-main {
@@ -149,639 +87,17 @@ body {
 }
 
 .skopos-page-body {
-  padding-bottom: calc(var(--search-dock-offset) + 8.5rem);
-}
-
-.skopos-header-row {
-  min-height: var(--header-height);
-}
-
-.skopos-eyebrow {
-  color: var(--muted);
-  font-size: var(--type-eyebrow);
-  font-weight: 600;
-  letter-spacing: var(--tracking-eyebrow);
-  text-transform: uppercase;
-}
-
-.skopos-page-title {
-  color: var(--ink);
-  font-size: var(--type-page-title);
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.08;
-}
-
-.skopos-section-title {
-  color: var(--ink);
-  font-size: var(--type-section-title);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.skopos-body-copy {
-  color: var(--muted-strong);
-  font-size: var(--type-body);
-  line-height: var(--leading-copy);
-}
-
-.skopos-body-copy-muted {
-  color: var(--muted);
-  font-size: var(--type-body);
-  line-height: var(--leading-copy);
-}
-
-.skopos-helper-copy {
-  color: var(--muted);
-  font-size: var(--type-helper);
-  line-height: var(--leading-helper);
-}
-
-.skopos-caption {
-  color: var(--muted-strong);
-  font-size: var(--type-caption);
-  line-height: var(--leading-caption);
-}
-
-.skopos-caption-muted {
-  color: var(--muted);
-  font-size: var(--type-caption);
-  line-height: var(--leading-caption);
-}
-
-.skopos-mono-caption {
-  color: var(--muted);
-  font-family: 'SFMono-Regular', 'SF Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 12px;
-  line-height: var(--leading-caption);
-}
-
-.skopos-metric-label {
-  color: var(--muted);
-  font-size: var(--type-label);
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.skopos-metric-value {
-  color: var(--ink);
-  font-size: var(--type-metric);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.1;
-}
-
-.skopos-filter-chip {
-  min-height: var(--control-height-sm);
-  border-radius: var(--surface-radius);
-  padding-inline: 0.625rem;
-}
-
-.skopos-status-pill {
-  min-height: var(--pill-height);
-  border-radius: 999px;
-  padding-inline: 0.6rem;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.skopos-sidebar-badge {
-  min-height: 1.25rem;
-  border-radius: 999px;
-  padding-inline: 0.45rem;
-  font-size: 10.75px;
-  font-weight: 500;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.skopos-sidebar-brand {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.62rem;
-  padding: 0.1rem 0.2rem 0.55rem;
-}
-
-.skopos-sidebar-brand-mark {
-  display: grid;
-  height: 1.9rem;
-  width: 1.9rem;
-  place-items: center;
-  border-radius: 0.45rem;
-  background: var(--ink);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-}
-
-.skopos-sidebar-brand-title {
-  color: var(--ink);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.skopos-sidebar-brand-subtitle {
-  margin-top: 0.1rem;
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.skopos-sidebar-workspace-note {
-  margin-top: 0.24rem;
-  color: var(--muted);
-  font-size: 11.5px;
-  line-height: 1.35;
-}
-
-.skopos-sidebar-groups {
-  display: grid;
-  gap: 0.82rem;
-  margin-top: 0.45rem;
-}
-
-.skopos-sidebar-search-slot {
-  margin-top: 0.14rem;
-}
-
-.skopos-sidebar-search-trigger {
-  display: flex;
-  width: 100%;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  border: 1px solid var(--line);
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--panel) 80%, white 20%);
-  padding: 0.52rem 0.68rem;
-  text-align: left;
-  color: var(--muted-strong);
-  transition:
-    border-color 140ms ease,
-    background-color 140ms ease,
-    color 140ms ease;
-}
-
-.skopos-sidebar-search-trigger:hover {
-  border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--panel) 92%, white 8%);
-  color: var(--ink);
-}
-
-.skopos-sidebar-search-trigger-copy {
-  display: grid;
-  gap: 0.06rem;
-  min-width: 0;
-}
-
-.skopos-sidebar-search-trigger-label {
-  color: inherit;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.skopos-sidebar-search-trigger-note {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-.skopos-sidebar-search-trigger-shortcut {
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--bg-strong);
-  padding: 0.22rem 0.42rem;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  line-height: 1;
-}
-
-.skopos-sidebar-group {
-  display: grid;
-  gap: 0.28rem;
-}
-
-.skopos-sidebar-group-label {
-  color: var(--muted);
-  font-size: 9.75px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  padding-inline: 0.68rem;
-  opacity: 0.82;
-}
-
-.skopos-sidebar-nav {
-  display: grid;
-  gap: 0.08rem;
-}
-
-.skopos-sidebar-link {
-  display: flex;
-  align-items: center;
-  min-height: var(--sidebar-row-height);
-  border-radius: 0.6rem;
-  padding: 0.28rem 0.68rem;
-  color: var(--muted-strong);
-  transition:
-    background-color 140ms ease,
-    color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.skopos-sidebar-link-label {
-  color: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  line-height: 1.35;
-}
-
-.skopos-sidebar-link:hover {
-  background: color-mix(in srgb, var(--panel) 84%, white 16%);
-  color: var(--ink);
-}
-
-.skopos-sidebar-link-active {
-  background: color-mix(in srgb, var(--panel) 88%, white 12%);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px var(--line);
-}
-
-.skopos-sidebar-status-dock {
-  margin-top: auto;
-  padding-top: 0.7rem;
-  border-top: 1px solid var(--line);
-}
-
-.skopos-sidebar-status-panel {
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: 0.75rem;
-  background: color-mix(in srgb, var(--panel) 78%, white 22%);
-}
-
-.skopos-sidebar-status-list {
-  display: grid;
-}
-
-.skopos-sidebar-status-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 1.7rem;
-  padding-inline: 0.68rem;
-  padding-block: 0.38rem;
-}
-
-.skopos-sidebar-status-row + .skopos-sidebar-status-row {
-  border-top: 1px solid var(--line);
-}
-
-.skopos-sidebar-status-label {
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.skopos-sidebar-status-value {
-  color: var(--ink);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.skopos-sidebar-status-pill {
-  min-height: 1.25rem;
-  padding-inline: 0.42rem;
-  font-size: 9.75px;
-  letter-spacing: 0.07em;
-}
-
-.skopos-search-dock-host {
-  position: fixed;
-  inset-inline: 0;
-  bottom: 0;
-  z-index: 40;
-  pointer-events: none;
-}
-
-.skopos-search-dock-shell {
-  position: relative;
-  pointer-events: none;
-  width: var(--search-dock-width);
-  max-width: calc(100vw - 1rem);
-  margin-inline: auto;
-  margin-bottom: calc(var(--search-dock-offset) + 0.1rem);
-}
-
-.skopos-search-results-sheet {
-  position: absolute;
-  inset-inline: 0;
-  bottom: calc(100% + 0.72rem);
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line-strong) 72%, white 28%);
-  border-radius: 1rem;
-  background: linear-gradient(180deg, rgba(255, 253, 249, 0.98) 0%, rgba(252, 248, 241, 0.96) 100%);
-  box-shadow:
-    0 16px 40px rgba(23, 23, 20, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.58);
-  transform-origin: bottom center;
-  transition:
-    opacity 140ms ease,
-    transform 180ms ease;
-  pointer-events: auto;
-}
-
-.skopos-search-results-sheet-open {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.skopos-search-results-sheet-closed {
-  opacity: 0;
-  transform: translateY(12px);
-  pointer-events: none;
-}
-
-.skopos-search-results-head {
-  display: grid;
-  gap: 0.24rem;
-  padding: 0.9rem 1rem 0.78rem;
-  border-bottom: 1px solid var(--line);
-}
-
-.skopos-search-results-title {
-  color: var(--ink);
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-.skopos-search-results-copy {
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.skopos-search-results-copy code {
-  color: var(--muted-strong);
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-}
-
-.skopos-search-results-scroll {
-  max-height: min(27rem, calc(100vh - 12rem));
-  padding: 0.3rem 0.38rem 0.44rem;
-  overflow-y: auto;
-}
-
-.skopos-search-group {
-  padding: 0.34rem 0.08rem 0.2rem;
-}
-
-.skopos-search-group + .skopos-search-group {
-  border-top: 1px solid color-mix(in srgb, var(--line) 86%, white 14%);
-}
-
-.skopos-search-group-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.8rem;
-  padding: 0.22rem 0.46rem 0.36rem;
-}
-
-.skopos-search-group-title {
-  color: var(--muted);
-  font-size: 10.75px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.skopos-search-group-count,
-.skopos-search-group-more {
-  color: var(--muted);
-  font-size: 11.25px;
-  line-height: 1.4;
-}
-
-.skopos-search-group-more {
-  padding: 0.32rem 0.46rem 0.12rem;
-}
-
-.skopos-search-group-results {
-  display: grid;
-  gap: 0.14rem;
-}
-
-.skopos-search-result-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 0.9rem;
-  width: 100%;
-  border: 1px solid transparent;
-  border-radius: 0.8rem;
-  background: transparent;
-  padding: 0.72rem 0.72rem 0.68rem;
-  text-align: left;
-  transition:
-    border-color 140ms ease,
-    background-color 140ms ease;
-}
-
-.skopos-search-result-row:hover,
-.skopos-search-result-row-active {
-  border-color: color-mix(in srgb, var(--line-strong) 78%, white 22%);
-  background: color-mix(in srgb, var(--panel) 80%, white 20%);
-}
-
-.skopos-search-result-title-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.skopos-search-result-title {
-  color: var(--ink);
-  font-size: 13.75px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.35;
-}
-
-.skopos-search-kind-badge {
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--panel-muted) 86%, white 14%);
-  padding: 0.1rem 0.42rem;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.skopos-search-result-summary {
-  margin-top: 0.18rem;
-  color: var(--muted);
-  font-size: 12.75px;
-  line-height: 1.45;
-}
-
-.skopos-search-result-aside {
-  display: flex;
-  align-items: center;
-  gap: 0.42rem;
-  padding-top: 0.06rem;
-  color: var(--muted);
-}
-
-.skopos-search-result-meta {
-  font-size: 11.75px;
-  line-height: 1.35;
-  white-space: nowrap;
-}
-
-.skopos-search-result-external {
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.skopos-search-empty-state {
-  padding: 1rem 1rem 1.06rem;
-}
-
-.skopos-search-empty-title {
-  color: var(--ink);
-  font-size: 13.5px;
-  font-weight: 600;
-}
-
-.skopos-search-empty-copy {
-  margin-top: 0.22rem;
-  color: var(--muted);
-  font-size: 12.75px;
-  line-height: 1.45;
-}
-
-.skopos-search-dock {
-  position: relative;
-  z-index: 1;
-  pointer-events: auto;
-  display: grid;
-  grid-template-columns: 1.125rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.75rem;
-  border: 1px solid color-mix(in srgb, rgba(23, 23, 20, 0.16) 42%, var(--line-strong) 58%);
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 254, 251, 0.99) 0%, rgba(251, 246, 238, 0.97) 100%);
-  box-shadow:
-    0 22px 46px rgba(23, 23, 20, 0.13),
-    0 8px 18px rgba(23, 23, 20, 0.07),
-    0 1px 0 rgba(23, 23, 20, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.72);
-  padding: 0.82rem 0.98rem 0.82rem 0.94rem;
-}
-
-.skopos-search-dock:focus-within {
-  border-color: color-mix(in srgb, rgba(23, 23, 20, 0.26) 48%, var(--line-strong) 52%);
-  box-shadow:
-    0 24px 52px rgba(23, 23, 20, 0.15),
-    0 8px 20px rgba(23, 23, 20, 0.08),
-    0 0 0 1px rgba(23, 23, 20, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.76);
-}
-
-.skopos-search-dock-icon {
-  display: grid;
-  width: 1.125rem;
-  min-width: 1.125rem;
-  height: 1.125rem;
-  min-height: 1.125rem;
-  place-items: center;
-  flex-shrink: 0;
-  color: var(--muted);
-  line-height: 1;
-}
-
-.skopos-search-dock-icon-svg {
-  display: block;
-  width: 1.125rem;
-  height: 1.125rem;
-  flex-shrink: 0;
-}
-
-.skopos-search-dock-input {
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 14.5px;
-  letter-spacing: -0.01em;
-}
-
-.skopos-search-dock-input::placeholder {
-  color: color-mix(in srgb, var(--muted) 88%, white 12%);
-}
-
-.skopos-search-dock-shortcut {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1rem;
-  flex-shrink: 0;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--bg-strong) 84%, white 16%);
-  padding: 0.24rem 0.46rem;
-  color: var(--muted);
-  font-family: var(--font-mono);
-  font-size: 10.75px;
-  line-height: 1;
-}
-
-.skopos-search-dock-shortcut-symbol {
-  display: inline-block;
-  font-family: 'SF Pro Display', 'Segoe UI Symbol', 'Apple Symbols', sans-serif;
-  font-size: 12.2px;
-  font-weight: 600;
-  line-height: 1;
-  transform: translateY(-0.02rem);
-}
-
-.skopos-search-dock-shortcut-key {
-  display: inline-block;
-  font-size: 10.95px;
-  font-weight: 600;
-  line-height: 1;
+  padding-bottom: var(--spacing-10);
 }
 
 @media (max-width: 1023px) {
   :root {
     --shell-gutter-inline: 1.25rem;
-    --shell-gutter-inline-tight: 1rem;
-    --sidebar-gutter-inline: 1rem;
-    --search-dock-width: min(40rem, calc(100vw - 1.5rem));
-    --type-page-title: clamp(1.62rem, 1.42rem + 0.64vw, 1.95rem);
+  }
+
+  .skopos-inspector-panel {
+    height: auto;
+    max-height: 38rem;
   }
 }
 
@@ -789,55 +105,11 @@ body {
   :root {
     --shell-gutter-inline: 0.95rem;
     --shell-gutter-inline-tight: 0.95rem;
-    --sidebar-gutter-inline: 0.95rem;
-    --header-height: auto;
-    --search-dock-width: calc(100vw - 1rem);
-    --type-page-title: clamp(1.48rem, 1.34rem + 0.72vw, 1.72rem);
-    --type-helper: 14px;
-    --type-caption: 13.5px;
   }
 
   .skopos-scroll::-webkit-scrollbar {
     width: 6px;
     height: 6px;
-  }
-
-  .skopos-header-row {
-    padding-block: 0.75rem;
-  }
-
-  .skopos-status-pill {
-    letter-spacing: 0.1em;
-  }
-
-  .skopos-sidebar-shell {
-    padding-block: 0.78rem;
-  }
-
-  .skopos-page-body {
-    padding-bottom: calc(var(--search-dock-offset) + 9rem);
-  }
-
-  .skopos-sidebar-groups {
-    gap: 0.72rem;
-  }
-
-  .skopos-search-results-scroll {
-    max-height: min(22rem, calc(100vh - 10rem));
-  }
-
-  .skopos-search-result-row {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0.34rem;
-  }
-
-  .skopos-search-result-aside {
-    justify-content: space-between;
-  }
-
-  .skopos-search-dock {
-    grid-template-columns: 1.125rem minmax(0, 1fr) auto;
-    padding-inline: 0.9rem;
   }
 
   .skopos-artifact-kv-row {
@@ -853,52 +125,6 @@ body {
   }
 }
 
-.skopos-inspector-title {
-  color: var(--muted-strong);
-  font-size: var(--type-inspector-title);
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.skopos-inspector-label {
-  color: var(--muted);
-  font-size: var(--type-inspector-label);
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.skopos-inspector-value {
-  color: var(--muted-strong);
-  font-size: var(--type-inspector-value);
-  line-height: var(--leading-caption);
-}
-
-.skopos-reader-heading-lg {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-lg);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-}
-
-.skopos-reader-heading-md {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-md);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
-}
-
-.skopos-reader-heading-sm {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-sm);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-}
-
 .skopos-reader-anchor {
   display: inline-flex;
   align-items: center;
@@ -906,9 +132,9 @@ body {
   min-width: 1.5rem;
   min-height: 1.5rem;
   border: 1px solid transparent;
-  border-radius: 999px;
-  color: var(--muted);
-  font-size: 12px;
+  border-radius: var(--radius-full);
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-label-small-size);
   font-weight: 600;
   transition:
     color 140ms ease,
@@ -917,9 +143,9 @@ body {
 }
 
 .skopos-reader-anchor:hover {
-  border-color: var(--line);
-  background: color-mix(in srgb, var(--panel-strong) 72%, white 28%);
-  color: var(--ink);
+  border-color: var(--color-outline-weak);
+  background: color-mix(in srgb, var(--color-surface-container-low) 72%, var(--color-surface-container-lowest) 28%);
+  color: var(--color-on-surface);
 }
 
 .skopos-reader-canvas {
@@ -935,8 +161,8 @@ body {
 .skopos-artifact-kv {
   display: grid;
   gap: 0;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
+  border-top: 1px solid var(--color-outline-weak);
+  border-bottom: 1px solid var(--color-outline-weak);
 }
 
 .skopos-artifact-kv-row {
@@ -946,17 +172,17 @@ body {
 }
 
 .skopos-artifact-kv-label {
-  color: var(--muted);
-  font-size: 11.5px;
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-label-small-size);
   font-weight: 600;
-  letter-spacing: 0.11em;
+  letter-spacing: var(--type-label-small-tracking);
   text-transform: uppercase;
 }
 
 .skopos-artifact-kv-value {
-  color: var(--muted-strong);
-  font-size: 14.1px;
-  line-height: 1.55;
+  color: var(--color-on-surface);
+  font-size: var(--type-body-medium-size);
+  line-height: var(--type-body-medium-line);
 }
 
 .skopos-artifact-list {
@@ -968,9 +194,9 @@ body {
 
 .skopos-artifact-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--panel) 76%, white 24%);
+  border: 1px solid var(--color-outline-weak);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface) 76%, var(--color-surface-container-lowest) 24%);
 }
 
 .skopos-artifact-table {
@@ -981,11 +207,11 @@ body {
 .skopos-artifact-table th,
 .skopos-artifact-table td {
   padding: 0.78rem 0.9rem;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-outline-weak);
   text-align: left;
   vertical-align: top;
-  font-size: 13.65px;
-  line-height: 1.5;
+  font-size: var(--type-body-medium-size);
+  line-height: var(--type-body-medium-line);
 }
 
 .skopos-artifact-table tr:first-child th,
@@ -994,27 +220,27 @@ body {
 }
 
 .skopos-artifact-table th {
-  color: var(--muted);
-  font-size: 11.5px;
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-label-small-size);
   font-weight: 600;
-  letter-spacing: 0.11em;
+  letter-spacing: var(--type-label-small-tracking);
   text-transform: uppercase;
 }
 
 .skopos-artifact-raw {
-  border: 1px solid var(--line);
-  border-radius: 0.7rem;
-  background: color-mix(in srgb, var(--panel) 74%, white 26%);
+  border: 1px solid var(--color-outline-weak);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface) 74%, var(--color-surface-container-lowest) 26%);
   padding: 0.75rem 0.85rem;
 }
 
 .skopos-artifact-raw-summary {
   cursor: pointer;
   list-style: none;
-  color: var(--muted-strong);
-  font-size: 13.4px;
+  color: var(--color-on-surface);
+  font-size: var(--type-body-medium-size);
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--type-body-medium-tracking);
 }
 
 .skopos-artifact-raw-summary::-webkit-details-marker {
@@ -1025,7 +251,7 @@ body {
   content: '›';
   display: inline-block;
   margin-right: 0.45rem;
-  color: var(--muted);
+  color: var(--color-on-surface-variant);
   transition: transform 140ms ease;
 }
 
@@ -1034,19 +260,19 @@ body {
 }
 
 .skopos-outline-link {
-  border-radius: 0.55rem;
+  border-radius: var(--radius-xs);
   padding: 0.3rem 0.45rem;
 }
 
 .skopos-outline-link-active {
-  background: color-mix(in srgb, var(--panel-strong) 82%, white 18%);
-  color: var(--ink);
+  background: color-mix(in srgb, var(--color-surface-container-low) 82%, var(--color-surface-container-lowest) 18%);
+  color: var(--color-on-surface);
 }
 
 .skopos-markdown-body {
   display: grid;
   gap: 0.875rem;
-  color: var(--muted-strong);
+  color: var(--color-on-surface);
 }
 
 .skopos-markdown-body > * {
@@ -1058,39 +284,39 @@ body {
 .skopos-markdown-body td,
 .skopos-markdown-body th,
 .skopos-markdown-body blockquote {
-  font-size: var(--type-reader-body);
-  line-height: var(--leading-body);
+  font-size: var(--type-body-large-size);
+  line-height: var(--type-body-medium-line);
 }
 
 .skopos-markdown-body p {
-  color: var(--muted-strong);
+  color: var(--color-on-surface);
 }
 
 .skopos-markdown-body h1,
 .skopos-markdown-body h2 {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-lg);
+  color: var(--color-on-surface);
+  font-size: var(--type-headline-small-size);
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
+  letter-spacing: var(--type-headline-small-tracking);
+  line-height: var(--type-headline-small-line);
 }
 
 .skopos-markdown-body h3 {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-md);
+  color: var(--color-on-surface);
+  font-size: var(--type-title-large-size);
   font-weight: 600;
-  letter-spacing: -0.015em;
-  line-height: 1.25;
+  letter-spacing: var(--type-title-large-tracking);
+  line-height: var(--type-title-large-line);
 }
 
 .skopos-markdown-body h4,
 .skopos-markdown-body h5,
 .skopos-markdown-body h6 {
-  color: var(--ink);
-  font-size: var(--type-reader-heading-sm);
+  color: var(--color-on-surface);
+  font-size: var(--type-title-medium-size);
   font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
+  letter-spacing: var(--type-title-medium-tracking);
+  line-height: var(--type-title-medium-line);
 }
 
 .skopos-markdown-body ul,
@@ -1115,22 +341,22 @@ body {
 
 .skopos-markdown-body hr {
   border: 0;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-outline-weak);
 }
 
 .skopos-markdown-link {
-  color: var(--accent);
+  color: var(--color-primary);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  text-decoration-color: color-mix(in srgb, var(--color-primary) 45%, transparent);
   text-underline-offset: 0.18em;
 }
 
 .skopos-markdown-inline-code {
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-strong) 75%, white 25%);
-  border-radius: 0.35rem;
+  border: 1px solid var(--color-outline-weak);
+  background: color-mix(in srgb, var(--color-surface-container-low) 75%, var(--color-surface-container-lowest) 25%);
+  border-radius: var(--radius-xs);
   padding: 0.08rem 0.35rem;
-  color: var(--ink);
+  color: var(--color-on-surface);
   font-family: var(--font-mono);
   font-size: 0.92em;
 }
@@ -1143,17 +369,17 @@ body {
 
 .skopos-markdown-code-shell {
   overflow: hidden;
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel) 82%, white 18%);
-  border-radius: 0.5rem;
+  border: 1px solid var(--color-outline-weak);
+  background: color-mix(in srgb, var(--color-surface) 82%, var(--color-surface-container-lowest) 18%);
+  border-radius: var(--radius-xs);
 }
 
 .skopos-mermaid-shell {
   overflow: hidden;
   margin: 0;
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--panel) 84%, white 16%);
+  border: 1px solid var(--color-outline-weak);
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-surface-container-lowest) 16%);
 }
 
 .skopos-mermaid-stage {
@@ -1172,9 +398,9 @@ body {
 }
 
 .skopos-mermaid-pending {
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.5;
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-body-small-size);
+  line-height: var(--type-body-small-line);
   text-align: center;
 }
 
@@ -1184,16 +410,16 @@ body {
 }
 
 .skopos-mermaid-error {
-  color: var(--danger);
-  font-size: 12.5px;
+  color: var(--color-error);
+  font-size: var(--type-body-small-size);
   font-weight: 600;
-  line-height: 1.45;
+  line-height: var(--type-body-small-line);
 }
 
 .skopos-mermaid-error-detail {
-  color: var(--muted);
-  font-size: 12.5px;
-  line-height: 1.5;
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-body-small-size);
+  line-height: var(--type-body-small-line);
 }
 
 .skopos-markdown-code-header {
@@ -1201,16 +427,16 @@ body {
   align-items: center;
   justify-content: space-between;
   min-height: 2rem;
-  border-bottom: 1px solid var(--line);
-  background: color-mix(in srgb, var(--panel-muted) 72%, white 28%);
+  border-bottom: 1px solid var(--color-outline-weak);
+  background: color-mix(in srgb, var(--color-surface-container) 72%, var(--color-surface-container-lowest) 28%);
   padding-inline: 0.875rem;
 }
 
 .skopos-markdown-code-language {
-  color: var(--muted);
-  font-size: 11px;
+  color: var(--color-on-surface-variant);
+  font-size: var(--type-label-small-size);
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: var(--type-label-small-tracking);
   text-transform: uppercase;
 }
 
@@ -1219,14 +445,14 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 1.6rem;
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  border: 1px solid var(--color-outline-weak);
+  border-radius: var(--radius-full);
   padding-inline: 0.55rem;
-  background: color-mix(in srgb, var(--panel-strong) 78%, white 22%);
-  color: var(--muted-strong);
-  font-size: 11px;
+  background: color-mix(in srgb, var(--color-surface-container-low) 78%, var(--color-surface-container-lowest) 22%);
+  color: var(--color-on-surface);
+  font-size: var(--type-label-small-size);
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--type-label-small-tracking);
   text-transform: uppercase;
   transition:
     border-color 140ms ease,
@@ -1235,45 +461,45 @@ body {
 }
 
 .skopos-markdown-code-copy:hover {
-  border-color: var(--line-strong);
-  background: color-mix(in srgb, var(--panel-strong) 65%, white 35%);
-  color: var(--ink);
+  border-color: var(--color-outline-soft);
+  background: color-mix(in srgb, var(--color-surface-container-low) 65%, var(--color-surface-container-lowest) 35%);
+  color: var(--color-on-surface);
 }
 
 .skopos-markdown-pre .skopos-markdown-code-block {
   display: block;
-  color: var(--ink);
+  color: var(--color-on-surface);
   font-family: var(--font-mono);
-  font-size: 12.5px;
-  line-height: 1.55;
+  font-size: var(--type-body-small-size);
+  line-height: var(--type-body-small-line);
   white-space: pre;
 }
 
 .skopos-markdown-body blockquote {
-  border-left: 2px solid var(--line-strong);
+  border-left: 2px solid var(--color-outline-soft);
   padding-left: 0.875rem;
-  color: var(--muted);
+  color: var(--color-on-surface-variant);
 }
 
 .skopos-markdown-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
+  border: 1px solid var(--color-outline-weak);
+  border-radius: var(--radius-xs);
 }
 
 .skopos-markdown-table {
   width: 100%;
   border-collapse: collapse;
-  background: var(--panel-strong);
+  background: var(--color-surface-container-low);
 }
 
 .skopos-markdown-table thead {
-  background: color-mix(in srgb, var(--panel) 82%, white 18%);
+  background: color-mix(in srgb, var(--color-surface) 82%, var(--color-surface-container-lowest) 18%);
 }
 
 .skopos-markdown-table th,
 .skopos-markdown-table td {
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--color-outline-weak);
   padding: 0.75rem 0.875rem;
   text-align: left;
   vertical-align: top;
@@ -1282,12 +508,6 @@ body {
 .skopos-markdown-table tr:first-child th,
 .skopos-markdown-table tr:first-child td {
   border-top: 0;
-}
-
-.skopos-icon-button {
-  height: var(--control-height-md);
-  width: var(--control-height-md);
-  border-radius: 999px;
 }
 
 a {
@@ -1303,5 +523,5 @@ textarea {
 }
 
 ::selection {
-  background: rgba(36, 87, 245, 0.18);
+  background: var(--color-primary-container);
 }

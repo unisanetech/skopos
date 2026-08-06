@@ -1,38 +1,40 @@
 # Anti-Slop Visual Review
 
-Review rendered evidence, not source code alone.
+Review equivalent rendered states, not source code or build success alone.
 
-Reject:
+## Reject
 
-1. generic dashboard styling that does not express the bound brand
-2. arbitrary cards, gradients, shadows, icons, pills, or oversized headings
-3. inconsistent spacing, radii, type roles, control heights, or alignment
-4. secondary headings, metadata, or labels that compete with the page title
-5. nested borders, cards, shadows, or surfaces where one boundary or divider is enough
-6. arbitrary centering, broken content edges, or inconsistent optical alignment
-7. repeated headings, descriptions, labels, and empty-state explanations
-8. customer-facing technical identifiers, implementation language, robotic copy,
-   vague actions, speculative warnings, or text without a decision, action, or
-   understanding purpose
-9. missing loading, error, empty, permission, disabled, or recovery states
-10. clipped, overflowing, unscrollable, hidden, or de-prioritized critical content
-11. unstable navigation, ambiguous selected or expanded state, or broken URL state
-12. a broad client-rendered tree created for one local interaction
-13. dead-end empty or error states, destructive actions without consequences, or
-    interruptions whose urgency does not justify blocking the task
-14. visual polish without keyboard, accessibility, responsive, and focused-test evidence
-15. a new component that duplicates an existing semantic role, behavior, or markup
-16. component, prop, or variant names copied from prompt adjectives, animations, visual
-    treatment, or one temporary feature sentence
-17. shell title, breadcrumb, eyebrow, page title, description, tab, or panel copy
-    repeating the same context without adding a distinct job
+1. unrelated archetype or interchangeable product character
+2. generic dark bar, tinted canvas, bordered cards, pills, or permanent
+   sidebar-list-inspector shell without same-task evidence
+3. gradients, oversized headings, icon-card grids, fake metrics, or familiar color used
+   instead of art direction
+4. badges, dots, links, metadata, statuses, and actions competing through color
+5. atmospheric page tint or nested borders, cards, shadows, radii, and surfaces
+6. inconsistent type, spacing, control height, alignment, radius, or tokens
+7. repeated headings, labels, decorative pills, vague actions, or contradictory states
+8. missing loading, empty, error, permission, disabled, recovery, or keyboard states
+9. unreachable content, accidental local scrollbars, or overflow without a clear owner
+10. mobile that only shrinks, stacks, or removes desktop context
+11. modal UI without focus transfer, semantics, inert background, Escape, and focus return
+12. ambiguous current, hover, focus, pressed, or selected states
+13. persistent icons that compete through size or stroke weight
+14. a dominant region larger than its task, decision, or action value
+15. duplicate or prompt-shaped components, props, or variants
+16. approval without equivalent wide/narrow evidence and subjective judgment
 
-Inspect the rendered interface at full-page and focused-region levels. Compare type
-scale, spacing rhythm, alignment lines, surface hierarchy, density, long content,
-scroll ownership, responsive transitions, and interactive states. Do not approve a
-screen from source review, snapshots without comparison, or build success alone.
+## Inventories
 
-Inspect the component catalog and symbol names as part of the same review. Rendered
-quality does not excuse duplicate ownership or prompt-shaped architecture.
+Before approval, record:
 
-The rubric produces review evidence. It does not declare the task complete.
+1. **attention:** every saturated or high-contrast element and its action, focus,
+   semantic, data, or brand-expression job
+2. **layers:** the canvas and each persistent surface level; reject unexplained tint,
+   nested elevation, or background that dominates the task
+3. **state:** one coherent loading, populated, empty, error, permission, or success truth
+   for each region
+
+Compare full-page and focused regions with same-task references at matching viewport
+and state. Judge archetype, reading order, layers, attention, density, product character,
+responsive transformation, and state coherence. Automation supports but cannot replace
+this review. The rubric supplies evidence; Skopos remains the Readiness authority.

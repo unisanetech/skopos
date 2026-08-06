@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-craft-ambiguous-documentation",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Do not select UI guidance from visual terminology alone when only documentation is owned.",
+  "fixtureId": "ui-product-craft-ambiguous-documentation",
+  "packId": "ui.product-craft",
+  "category": "ambiguous",
+  "task": {
+    "goal": "Document the visual composition and spacing vocabulary used by the product team.",
+    "scope": {
+      "id": "fixture-docs",
+      "title": "Fixture Documentation",
+      "path": "docs",
+      "kind": "tool",
+      "ancestorIds": ["fixture-product"],
+      "aliases": ["documentation"],
+      "codeRoots": ["docs"]
+    },
+    "acceptanceCriteria": ["The terminology reference is accurate."],
+    "constraints": ["Documentation only; no rendered interface changes."],
+    "nonGoals": [],
+    "openDecisions": [],
+    "risk": "light",
+    "phase": "iteration",
+    "ownedPaths": ["docs/visual-language.md"],
+    "changedPaths": ["docs/visual-language.md"],
+    "affectedCapabilities": [],
+    "selectedActionIds": [],
+    "applicableGuardIds": [],
+    "acceptedFailureEvidence": [],
+    "projectLifecycle": "early-product"
+  },
+  "expectation": {
+    "selectedModuleIds": [],
+    "suppressedModuleReasonCodes": {
+      "ui-craft.visual-composition-and-polish": "blocking-anti-signal"
+    },
+    "selectedActionIds": [],
+    "selectedGuardIds": [],
+    "maximumSelectedModules": 0,
+    "maximumMeasuredTokens": 0
+  }
+}

@@ -152,6 +152,14 @@ export interface PolicyViewContext {
   sourceItems: InspectorItem[];
 }
 
+export interface PolicyRuleDetailContext {
+  rule: PolicyPackDetail['rules'][number];
+  pack: PolicyPackDetail;
+  driftFindings: NonNullable<PolicyViewContext['driftReport']>['findings'];
+  overrides: PolicyViewContext['localOverrides'];
+  packGuards: SkoposResolvedGuard[];
+}
+
 export interface ActivityViewContext {
   latestEntry?: ActivityFeedEntry;
   postureItems: InspectorItem[];
@@ -454,6 +462,32 @@ export const getPolicyViewContext = (state: SkoposUiConsoleState): PolicyViewCon
         ? [{ label: 'Local exceptions', value: state.policyReview.overrides.artifactPath }]
         : []),
     ],
+  };
+};
+
+export const getPolicyRuleDetailContext = (
+  state: SkoposUiConsoleState,
+  packId: string,
+  ruleId: string,
+): PolicyRuleDetailContext | undefined => {
+  const context = getPolicyViewContext(state);
+  const pack = context.packDetails.find((entry) => entry.packId === packId);
+  const rule = pack?.rules.find((entry) => entry.id === ruleId);
+
+  if (!pack || !rule) {
+    return undefined;
+  }
+
+  return {
+    rule,
+    pack,
+    driftFindings: (context.driftReport?.findings ?? []).filter(
+      (finding) => finding.ruleId === rule.id,
+    ),
+    overrides: context.localOverrides.filter(
+      (override) => override.ruleId === rule.id || override.packId === pack.packId,
+    ),
+    packGuards: pack.resolvedGuards,
   };
 };
 

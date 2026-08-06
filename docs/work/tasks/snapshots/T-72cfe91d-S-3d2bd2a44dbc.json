@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-3d2bd2a44dbc",
+  "taskId": "T-72cfe91d",
+  "sessionId": "0d75bd49-6863-46ac-a778-24ea99d429ea",
+  "actorId": "codex-ui-craft-efficacy-smoke-v2",
+  "baseRevision": "7bf72b6f27dba3af71f8d587f3ecc87b62348d8b",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "d7259b1364678d0aee103c61056c246143d8fe55f27804c4338f0370ff23743d"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "19d16b183ea9cdc8c68bb07616817dcfe2fa1cc925f48b563ab959ba530aaeef"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "8f743655d82a5deae4db496451939fdebc09c7f23524f7291d01a53a25b2d7d3"
+    }
+  ],
+  "digest": "3d2bd2a44dbcf390b329c1a119fd17454b36720d336b40897c0dfb7ae6457694",
+  "createdAt": "2026-08-05T19:38:06.401Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-72cfe91d-S-3d2bd2a44dbc.json"
+}

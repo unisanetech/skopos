@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
-  "updatedAt": "2026-08-04T17:39:59.371Z",
+  "updatedAt": "2026-08-06T13:26:54.269Z",
   "bindingId": "skopos.ui.product-craft",
   "packId": "ui.product-craft",
   "packVersion": "0.1.0",
@@ -27,19 +27,15 @@
     ],
     "domain-language": [
       "docs/standards/terminology.md"
-    ],
-    "ui-failure-patterns": [
-      "docs/findings",
-      "docs/patterns"
     ]
   },
   "actionBindings": {
-    "responsive-visual-capture": "ui.build-console-app",
+    "responsive-visual-capture": "ui.capture-responsive-proof",
     "focused-frontend-tests": "quality.run-proof-phase"
   },
   "guardBindings": {
     "frontend-type-safety": "quality.typecheck",
-    "accessibility-proof": "quality.focused-behavior-proof"
+    "accessibility-proof": "ui.accessibility-proof"
   },
   "adaptationNotes": [
     "Existing Skopos UI code is supporting precedent, not automatic canonical design truth.",
@@ -50,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-04T17:39:59.371Z",
-    "acceptedBy": "codex-skill-identity",
-    "reason": "Re-accept the exact first-version Skill sources after synchronizing Decision, Finding, Plan, cache, and invalidation proof.",
+    "acceptedAt": "2026-08-06T13:26:54.269Z",
+    "acceptedBy": "codex-stabilization",
+    "reason": "Re-accept the exact Product UI Craft source after the policy-compliant UI utility split and all eight deterministic fixtures pass.",
     "identity": {
-      "packSourceDigest": "sha256:1d60370348e54e60b9263233fc567351bebc1fe55ad5f0ce0dfae46084e3a972",
-      "bindingSourceDigest": "sha256:aec6baa2ef1d52e4741c036fe019b58266f18fe853a9e5e7df9f7e8e5037213b",
-      "projectSourceDigest": "sha256:45d469dca168e41a020ccd8a901c7dbc4ff22a8a20cd90fdd7fe861b054cb6c0",
-      "capabilityCatalogDigest": "sha256:ecbf2eb307efd92306c1dd8994096e227d707fcc28132c3f36961b91c49e865f",
-      "evaluationSourceDigest": "sha256:50a0209773b2404d42623ccf1999d0e44419965992251dea1a55c23e1516d691",
-      "combinedDigest": "sha256:0ebaa113d5c603ee60d1f9ed7a35daf469ceb7de34de0e149540ddb2dc053809"
+      "packSourceDigest": "sha256:409bc91f4eb49aede06c86c2c4e8558ad31fbfeb3575f3783a4794771c61262c",
+      "bindingSourceDigest": "sha256:03d719d5902e0f23a4fd91bf8821d069cc0c609dab06b04971a9750979f406d1",
+      "projectSourceDigest": "sha256:25b5e3de55ea3244f863af9fe0f7384e6ed5d391b71982c7f4522bdaeb1cd601",
+      "capabilityCatalogDigest": "sha256:4853c5fbdaab7856d30fef1036f2e6f446c4b11d32035f05e2bd6c319a51301e",
+      "evaluationSourceDigest": "sha256:51564f51da4976a7402bf8b2f450d92e0f53784a8204f30d567ab60b9915cf89",
+      "combinedDigest": "sha256:e16ceb35eb53abfa7eee6a94a1fef98b5e0bfcaa3423ccddc38e91aea597514b"
     }
   }
 }

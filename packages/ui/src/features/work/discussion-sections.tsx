@@ -6,7 +6,7 @@ import type {
   SkoposUiConsoleDiscussionHandoffView,
   SkoposUiConsoleTaskView,
 } from '../../contracts/skopos-ui-console-state.js';
-import { Card } from '../../patterns/sections/content-primitives.js';
+import { ContentSection } from '../../patterns/sections/content-primitives.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
 
 const formatDiscussionPromotionTrigger = (value?: string): string | undefined => {
@@ -19,6 +19,34 @@ const formatDiscussionPromotionTrigger = (value?: string): string | undefined =>
 
 const formatDiscussionPromotionKind = (value: string): string => value.replaceAll('-', ' ');
 
+function FreshContinuationSummary({ view }: { view: SkoposUiConsoleDiscussionHandoffView }): React.JSX.Element {
+  const handoff = view.handoff;
+  const visibleStatements = handoff.conversationCapsule.statements.filter((statement) =>
+    ['objective', 'user-intent', 'constraint', 'completed-work', 'stopping-point', 'rejected-approach', 'open-question', 'recommended-first-action', 'exclusion'].includes(statement.section),
+  );
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusPill value={handoff.validation.freshness} tone={handoff.validation.safeToTransfer ? 'positive' : 'warning'} />
+        <StatusPill value={handoff.delivery.state} tone={handoff.delivery.state === 'delivered' || handoff.delivery.state === 'accepted' ? 'positive' : 'info'} />
+        <StatusPill value={`${handoff.estimatedTokens}/${handoff.budgetTokens} tokens`} tone={handoff.overBudget ? 'warning' : 'neutral'} />
+      </div>
+      <p className="mt-2 text-body-medium font-medium">{handoff.currentDirection}</p>
+      <div className="mt-2 space-y-2">
+        {visibleStatements.map((statement) => (
+          <div key={statement.id}>
+            <p className="text-label-small uppercase text-on-surface-variant">{statement.section.replaceAll('-', ' ')}</p>
+            <p className="mt-0.5 text-body-small text-on-surface">{statement.text}</p>
+          </div>
+        ))}
+      </div>
+      {handoff.validation.reasons.length > 0 ? (
+        <p className="mt-2 text-body-small text-on-surface-variant">{handoff.validation.reasons.join(' ')}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export function OverviewRecentDiscussionCard({
   latestDiscussionHandoff,
   recentDiscussionCheckpoints,
@@ -28,89 +56,58 @@ export function OverviewRecentDiscussionCard({
   recentDiscussionCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
   activeTaskView?: SkoposUiConsoleTaskView;
 }): React.JSX.Element {
-  const hasDiscussionState = Boolean(latestDiscussionHandoff) || recentDiscussionCheckpoints.length > 0;
+  const currentDirection =
+    latestDiscussionHandoff?.handoff.currentDirection ??
+    recentDiscussionCheckpoints[0]?.checkpoint.currentDirection;
+  const openQuestionCount =
+    latestDiscussionHandoff?.handoff.openQuestions.length ??
+    recentDiscussionCheckpoints[0]?.checkpoint.openQuestions.length ??
+    0;
 
   return (
-    <Card
-      title="Recent discussion"
-      description="The latest action handoff keeps accepted direction visible without replaying the full chat."
+    <ContentSection
+      title="Current discussion context"
+      description="The latest accepted direction attached to this Task."
     >
-      {hasDiscussionState ? (
-        <div className="border-y border-[var(--line)]">
-          {latestDiscussionHandoff ? (
-            <section className="py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <StatusPill
-                  value={latestDiscussionHandoff.handoff.handoffKind.replaceAll('-', ' ')}
-                  tone="info"
-                />
-                {latestDiscussionHandoff.handoff.overBudget ? (
-                  <StatusPill value="over budget" tone="warning" />
-                ) : (
-                  <StatusPill
-                    value={`${latestDiscussionHandoff.handoff.estimatedTokens} tokens`}
-                    tone="neutral"
-                  />
-                )}
-                <StatusPill
-                  value={`${latestDiscussionHandoff.handoff.openQuestions.length} open questions`}
-                  tone={
-                    latestDiscussionHandoff.handoff.openQuestions.length > 0 ? 'warning' : 'positive'
-                  }
-                />
-              </div>
-              <p className="mt-2 text-[13px] font-medium tracking-[-0.02em]">
-                {latestDiscussionHandoff.handoff.currentDirection}
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
-                {latestDiscussionHandoff.handoff.resumeSummary}
-              </p>
-            </section>
-          ) : null}
-          {activeTaskView && latestDiscussionHandoff ? (
+      {currentDirection ? (
+        <div className="border-y border-outline-weak py-3.5">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill value="accepted direction" tone="info" />
+            {openQuestionCount > 0 ? (
+              <StatusPill
+                value={`${openQuestionCount} open question${openQuestionCount === 1 ? '' : 's'}`}
+                tone="warning"
+              />
+            ) : null}
+          </div>
+          <p className="mt-2 text-body-medium leading-6 text-on-surface">
+            {currentDirection}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-4">
+            {activeTaskView ? (
             <Link
               to="/tasks/$taskId"
               params={{ taskId: activeTaskView.task.id }}
-              className="block border-t border-[var(--line)] py-3.5 transition-colors hover:bg-[color:rgba(255,252,246,0.4)]"
+              className="text-label-medium text-primary hover:underline"
             >
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Active task
-              </p>
-              <p className="mt-1.5 text-[12.75px] font-medium tracking-[-0.01em]">
-                {activeTaskView.task.title}
-              </p>
-              <p className="mt-1 text-[12px] leading-[1.35rem] text-[var(--muted)]">
-                {activeTaskView.task.summary}
-              </p>
+              Open current Task
             </Link>
-          ) : null}
-          {recentDiscussionCheckpoints.length > 0 ? (
-            <section className="border-t border-[var(--line)] py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
-                Checkpoint history
-              </p>
-              <div className="mt-2 space-y-2">
-                {recentDiscussionCheckpoints.slice(0, 3).map((checkpointView) => (
-                  <div key={checkpointView.checkpoint.id}>
-                    <p className="text-[12.75px] font-medium tracking-[-0.01em]">
-                      {checkpointView.checkpoint.currentDirection}
-                    </p>
-                    <p className="mt-0.5 text-[12px] leading-[1.35rem] text-[var(--muted)]">
-                      {checkpointView.checkpoint.resumeSummary}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          ) : null}
+            ) : null}
+            <Link
+              to="/discussion"
+              className="text-label-medium text-primary hover:underline"
+            >
+              Open Discussion
+            </Link>
+          </div>
         </div>
       ) : (
         <EmptyMessage
-          title="No recent discussion yet"
-          description="A action handoff will appear here once the runtime has current discussion resume state."
+          title="No current discussion context"
+          description="This Task has no attached discussion handoff or checkpoint."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -122,12 +119,12 @@ export function TaskDiscussionContextCard({
   taskCheckpoints: SkoposUiConsoleDiscussionCheckpointView[];
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Discussion context"
       description="Keep the current task tied to the latest accepted direction and unresolved discussion pressure."
     >
       {Boolean(latestDiscussionHandoff) || taskCheckpoints.length > 0 ? (
-        <div className="border-y border-[var(--line)]">
+        <div className="border-y border-outline-weak">
           {latestDiscussionHandoff ? (
             <section className="py-3.5">
               <div className="flex flex-wrap items-center gap-2">
@@ -144,24 +141,19 @@ export function TaskDiscussionContextCard({
                   }
                 />
               </div>
-              <p className="mt-2 text-[13px] font-medium tracking-[-0.02em]">
-                {latestDiscussionHandoff.handoff.currentDirection}
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
-                {latestDiscussionHandoff.handoff.resumeSummary}
-              </p>
+              <div className="mt-2"><FreshContinuationSummary view={latestDiscussionHandoff} /></div>
             </section>
           ) : null}
           {latestDiscussionHandoff && latestDiscussionHandoff.handoff.acceptedDecisions.length > 0 ? (
-            <section className="border-t border-[var(--line)] py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+            <section className="border-t border-outline-weak py-3.5">
+              <p className="text-label-small uppercase text-on-surface-variant">
                 Accepted direction
               </p>
               <div className="mt-2 space-y-2">
                 {latestDiscussionHandoff.handoff.acceptedDecisions.slice(0, 3).map((decision) => (
                   <div key={decision.id}>
-                    <p className="text-[12.75px] font-medium tracking-[-0.01em]">{decision.title}</p>
-                    <p className="mt-0.5 text-[12px] leading-[1.35rem] text-[var(--muted)]">
+                    <p className="text-body-small font-medium">{decision.title}</p>
+                    <p className="mt-0.5 text-body-small text-on-surface-variant">
                       {decision.resolvedOptionLabel ?? decision.resolvedOptionId}
                     </p>
                   </div>
@@ -170,20 +162,20 @@ export function TaskDiscussionContextCard({
             </section>
           ) : null}
           {latestDiscussionHandoff && latestDiscussionHandoff.handoff.openQuestions.length > 0 ? (
-            <section className="border-t border-[var(--line)] py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+            <section className="border-t border-outline-weak py-3.5">
+              <p className="text-label-small uppercase text-on-surface-variant">
                 Open questions
               </p>
               <div className="mt-2 space-y-2">
                 {latestDiscussionHandoff.handoff.openQuestions.slice(0, 3).map((question) => (
                   <div key={question.id}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[12.75px] font-medium tracking-[-0.01em]">{question.title}</p>
+                      <p className="text-body-small font-medium">{question.title}</p>
                       {question.blocking ? (
                         <StatusPill value="blocking" tone="warning" />
                       ) : null}
                     </div>
-                    <p className="mt-0.5 text-[12px] leading-[1.35rem] text-[var(--muted)]">
+                    <p className="mt-0.5 text-body-small text-on-surface-variant">
                       Recommended option: {question.recommendedOptionId}
                     </p>
                   </div>
@@ -192,25 +184,25 @@ export function TaskDiscussionContextCard({
             </section>
           ) : null}
           {latestDiscussionHandoff?.handoff.recommendedNextCommand ? (
-            <section className="border-t border-[var(--line)] py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+            <section className="border-t border-outline-weak py-3.5">
+              <p className="text-label-small uppercase text-on-surface-variant">
                 Recommended next command
               </p>
-              <p className="mt-1.5 overflow-x-auto text-[12px] leading-[1.35rem] text-[var(--muted-strong)] [font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace)]">
+              <p className="mt-1.5 overflow-x-auto text-body-small text-on-surface [font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace)]">
                 {latestDiscussionHandoff.handoff.recommendedNextCommand}
               </p>
             </section>
           ) : null}
           {taskCheckpoints.length > 0 ? (
-            <section className="border-t border-[var(--line)] py-3.5">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+            <section className="border-t border-outline-weak py-3.5">
+              <p className="text-label-small uppercase text-on-surface-variant">
                 Checkpoint history
               </p>
               <div className="mt-2 space-y-2">
                 {taskCheckpoints.slice(0, 4).map((checkpointView) => (
                   <div key={checkpointView.checkpoint.id}>
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[12.75px] font-medium tracking-[-0.01em]">
+                      <p className="text-body-small font-medium">
                         {checkpointView.checkpoint.currentDirection}
                       </p>
                       {(() => {
@@ -231,7 +223,7 @@ export function TaskDiscussionContextCard({
                         ))}
                       </div>
                     ) : null}
-                    <p className="mt-0.5 text-[12px] leading-[1.35rem] text-[var(--muted)]">
+                    <p className="mt-0.5 text-body-small text-on-surface-variant">
                       {checkpointView.checkpoint.resumeSummary}
                     </p>
                   </div>
@@ -250,7 +242,7 @@ export function TaskDiscussionContextCard({
           }
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -266,7 +258,7 @@ export function DiscussionGuidanceCard({
   const openQuestionCount = latestDiscussionHandoff?.handoff.openQuestions.length ?? 0;
 
   return (
-    <Card
+    <ContentSection
       title="How to use this page"
       description="Discussion keeps the useful parts of agent conversations: accepted direction, open questions, next commands, and checkpoints."
     >
@@ -296,7 +288,7 @@ export function DiscussionGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -310,12 +302,12 @@ export function DiscussionHistoryCard({
   taskTitleById: Record<string, string>;
 }): React.JSX.Element {
   return (
-    <Card
+    <ContentSection
       title="Saved discussion context"
       description="The latest handoff appears first, followed by checkpoints that explain how the work direction changed over time."
     >
       {latestDiscussionHandoff || checkpoints.length > 0 ? (
-        <div className="border-y border-[var(--line)]">
+        <div className="border-y border-outline-weak">
           {latestDiscussionHandoff ? (
             <section className="py-3.5">
               <div className="flex flex-wrap items-center gap-2">
@@ -336,17 +328,12 @@ export function DiscussionHistoryCard({
                   }
                 />
               </div>
-              <p className="mt-2 text-[13px] font-medium tracking-[-0.02em]">
-                {latestDiscussionHandoff.handoff.currentDirection}
-              </p>
-              <p className="mt-1.5 text-[12.5px] leading-[1.4rem] text-[var(--muted)]">
-                {latestDiscussionHandoff.handoff.resumeSummary}
-              </p>
+              <div className="mt-2"><FreshContinuationSummary view={latestDiscussionHandoff} /></div>
             </section>
           ) : null}
           {checkpoints.length > 0 ? (
-            <section className={`${latestDiscussionHandoff ? 'border-t border-[var(--line)] ' : ''}py-3.5`}>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+            <section className={`${latestDiscussionHandoff ? 'border-t border-outline-weak ' : ''}py-3.5`}>
+              <p className="text-label-small uppercase text-on-surface-variant">
                 Checkpoints
               </p>
               <div className="mt-2 space-y-2.5">
@@ -355,7 +342,7 @@ export function DiscussionHistoryCard({
                   const taskTitle = taskId ? taskTitleById[taskId] : undefined;
 
                   return (
-                    <div key={checkpointView.checkpoint.id} className="rounded-[18px] border border-[var(--line)] px-3.5 py-3">
+                    <div key={checkpointView.checkpoint.id} className="rounded-sm border border-outline-weak px-3.5 py-3">
                       <div className="flex flex-wrap items-center gap-2">
                         <StatusPill
                           value={checkpointView.checkpoint.checkpointKind.replaceAll('-', ' ')}
@@ -380,13 +367,13 @@ export function DiscussionHistoryCard({
                           <Link
                             to="/tasks/$taskId"
                             params={{ taskId }}
-                            className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--accent)] hover:underline"
+                            className="text-label-small uppercase text-primary hover:underline"
                           >
                             {taskTitle ?? taskId}
                           </Link>
                         ) : null}
                       </div>
-                      <p className="mt-2 text-[12.75px] font-medium tracking-[-0.01em]">
+                      <p className="mt-2 text-body-small font-medium">
                         {checkpointView.checkpoint.currentDirection}
                       </p>
                       {checkpointView.checkpoint.promotionKinds?.length ? (
@@ -396,11 +383,11 @@ export function DiscussionHistoryCard({
                           ))}
                         </div>
                       ) : null}
-                      <p className="mt-1 text-[12px] leading-[1.35rem] text-[var(--muted)]">
+                      <p className="mt-1 text-body-small text-on-surface-variant">
                         {checkpointView.checkpoint.resumeSummary}
                       </p>
                       {checkpointView.checkpoint.supersedesCheckpointId ? (
-                        <p className="mt-1 text-[11.5px] leading-[1.3rem] text-[var(--muted)]">
+                        <p className="mt-1 text-label-small text-on-surface-variant">
                           Supersedes {checkpointView.checkpoint.supersedesCheckpointId}
                         </p>
                       ) : null}
@@ -417,7 +404,7 @@ export function DiscussionHistoryCard({
           description="Discussion context will appear here after Skopos records a handoff or checkpoint during active work."
         />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -429,11 +416,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>

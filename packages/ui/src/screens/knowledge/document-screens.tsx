@@ -1,18 +1,20 @@
 import * as React from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 
 import {
   DocumentSequenceActions,
+  KnowledgeDecisionSummaryCard,
   KnowledgeDocumentArtifactCard,
   KnowledgeDocumentDetailInspectorAside,
   KnowledgeDocumentListCard,
   KnowledgeDocumentReaderCard,
   KnowledgeListInspectorAside,
 } from '../../features/knowledge/documents/index.js';
+import { SegmentedButton } from '../../components/ui/segmented-button.js';
 import { ListPage } from '../../patterns/pages/list-page.js';
 import { ReaderPage } from '../../patterns/pages/reader-page.js';
 import { EmptyMessage, StatusPill } from '../../patterns/sections/inspector-primitives.js';
-import { Card, RouteFilterBar } from '../../patterns/sections/content-primitives.js';
+import { ContentSection, RouteFilterBar } from '../../patterns/sections/content-primitives.js';
 import {
   filterProjectDocuments,
   getKnowledgeDocumentCollections,
@@ -21,13 +23,11 @@ import {
 } from '../../platform/console-state/knowledge-selectors.js';
 import { requireConsoleState } from '../../platform/console-state/access.js';
 import type { KnowledgeCategory } from '../../support/knowledge/document-routing.js';
-import { filterChipClass } from '../../support/ui/filter-chip.js';
 
 export function DocsView(): React.JSX.Element {
   return (
     <DocumentListView
       category="docs"
-      kicker="Docs"
       title="Project handbook"
       description="The main documents that explain how this project is meant to work."
     />
@@ -39,7 +39,6 @@ export function DocsDetailView({ docId }: { docId: string }): React.JSX.Element 
     <DocumentDetailView
       docId={docId}
       category="docs"
-      kicker="Docs detail"
       emptyTitle="Unknown document"
       emptyDescription="Refresh the app after rebuilding Skopos state if the docs catalog changed."
     />
@@ -51,7 +50,6 @@ export function DecisionDetailView({ decisionId }: { decisionId: string }): Reac
     <DocumentDetailView
       docId={decisionId}
       category="decisions"
-      kicker="Decision detail"
       emptyTitle="Unknown decision"
       emptyDescription="Refresh the app after rebuilding Skopos state if the decision catalog changed."
     />
@@ -67,7 +65,6 @@ export function DecisionsView({
     <DocumentListView
       category="decisions"
       view={search.view}
-      kicker="Decisions"
       title="Why the project works this way"
       description="Important choices the team or agent should keep following."
     />
@@ -83,7 +80,6 @@ export function FindingsView({
     <DocumentListView
       category="findings"
       view={search.view}
-      kicker="Issues"
       title="Tracked project issues"
       description="Problems, risks, and repeated friction that should not be forgotten."
     />
@@ -95,7 +91,6 @@ export function FindingDetailView({ findingId }: { findingId: string }): React.J
     <DocumentDetailView
       docId={findingId}
       category="findings"
-      kicker="Issue detail"
       emptyTitle="Unknown issue"
       emptyDescription="Refresh the app after rebuilding Skopos state if the issues catalog changed."
     />
@@ -105,17 +100,16 @@ export function FindingDetailView({ findingId }: { findingId: string }): React.J
 function DocumentListView({
   category,
   view = 'all',
-  kicker,
   title,
   description,
 }: {
   category: KnowledgeCategory;
   view?: 'entries' | 'reference' | 'all';
-  kicker: string;
   title: string;
   description: string;
 }): React.JSX.Element {
   const state = requireConsoleState();
+  const navigate = useNavigate();
   const { primaryDocuments, referenceDocuments, latestDocument } =
     getKnowledgeDocumentCollections(state, category);
   const [projectView, setProjectView] = React.useState<ProjectDocumentView>('essentials');
@@ -130,7 +124,6 @@ function DocumentListView({
 
   return (
     <ListPage
-      kicker={kicker}
       title={title}
       description={description}
       aside={
@@ -145,38 +138,37 @@ function DocumentListView({
       filters={
         category === 'docs' ? (
           <RouteFilterBar label="Document view">
-            {([
-              ['essentials', 'Essentials'],
-              ['work', 'Plans & tasks'],
-              ['other', 'Other'],
-              ['all', 'All'],
-            ] as const).map(([valueOption, label]) => (
-              <button
-                key={valueOption}
-                type="button"
-                onClick={() => setProjectView(valueOption)}
-                className={filterChipClass(projectView === valueOption)}
-              >
-                {label}
-              </button>
-            ))}
+            <SegmentedButton
+              aria-label="Document view"
+              size="sm"
+              value={projectView}
+              options={[
+                { value: 'essentials', label: 'Essentials' },
+                { value: 'work', label: 'Plans & tasks' },
+                { value: 'other', label: 'Other' },
+                { value: 'all', label: 'All' },
+              ]}
+              onValueChange={setProjectView}
+            />
           </RouteFilterBar>
         ) : (
           <RouteFilterBar label="List view">
-            {([
-              ['entries', 'Entries'],
-              ['reference', 'Reference'],
-              ['all', 'All'],
-            ] as const).map(([valueOption, label]) => (
-              <Link
-                key={valueOption}
-                to={category === 'decisions' ? '/decisions' : '/findings'}
-                search={{ view: valueOption }}
-                className={filterChipClass(view === valueOption)}
-              >
-                {label}
-              </Link>
-            ))}
+            <SegmentedButton
+              aria-label="List view"
+              size="sm"
+              value={view}
+              options={[
+                { value: 'entries', label: 'Entries' },
+                { value: 'reference', label: 'Reference' },
+                { value: 'all', label: 'All' },
+              ]}
+              onValueChange={(nextView) =>
+                void navigate({
+                  to: category === 'decisions' ? '/decisions' : '/findings',
+                  search: { view: nextView },
+                })
+              }
+            />
           </RouteFilterBar>
         )
       }
@@ -211,20 +203,20 @@ function KnowledgeRouteGuidanceCard({
   guidance: KnowledgeRouteGuidance;
 }): React.JSX.Element {
   return (
-    <Card title="How to use this page" description={guidance.useCase}>
+    <ContentSection title="How to use this page" description={guidance.useCase}>
       <div className="grid gap-3 md:grid-cols-3">
         {guidance.points.map((point) => (
-          <div key={point.label} className="border-t border-[var(--line)] pt-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+          <div key={point.label} className="border-t border-outline-weak pt-3">
+            <p className="text-label-small uppercase text-on-surface-variant">
               {point.label}
             </p>
-            <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+            <p className="mt-1 text-body-small text-on-surface">
               {point.text}
             </p>
           </div>
         ))}
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -288,13 +280,11 @@ const getKnowledgeGuidance = (category: KnowledgeCategory): KnowledgeRouteGuidan
 function DocumentDetailView({
   docId,
   category,
-  kicker,
   emptyTitle,
   emptyDescription,
 }: {
   docId: string;
   category: KnowledgeCategory;
-  kicker: string;
   emptyTitle: string;
   emptyDescription: string;
 }): React.JSX.Element {
@@ -302,13 +292,14 @@ function DocumentDetailView({
   const { document, relatedLinks, previousDocument, nextDocument } =
     getKnowledgeDocumentDetailContext(state, category, docId);
   const readerSections = document?.sections.filter(
-    (section) => section.kind === 'narrative' || section.kind === 'reference',
+    (section) =>
+      (section.kind === 'narrative' || section.kind === 'reference') &&
+      !isPlaceholderSectionBody(section.body),
   );
 
   if (!document) {
     return (
       <ReaderPage
-        kicker={kicker}
         title="Document not found"
         description={emptyDescription}
       >
@@ -317,13 +308,21 @@ function DocumentDetailView({
     );
   }
 
+  const isDecision = category === 'decisions';
+  const description = isPlaceholderSummary(document.summary)
+    ? isDecision
+      ? 'The accepted choice, its reasoning, and the constraints future work should preserve.'
+      : document.excerpt
+    : document.summary;
+
   return (
     <ReaderPage
-      kicker={kicker}
       title={document.title}
-      description={document.summary}
+      description={description}
       badges={[
-        <StatusPill key="format" value={document.format} tone="info" />,
+        ...(!isDecision
+          ? [<StatusPill key="format" value={document.format} tone="info" />]
+          : []),
         ...(document.role
           ? [<StatusPill key="role" value={document.role} tone="neutral" />]
           : []),
@@ -332,11 +331,15 @@ function DocumentDetailView({
           value={document.lifecycle}
           tone={document.lifecycle === 'active' ? 'positive' : 'neutral'}
         />,
-        <StatusPill
-          key="availability"
-          value={document.exists ? 'available' : 'missing'}
-          tone={document.exists ? 'positive' : 'danger'}
-        />,
+        ...(!isDecision || !document.exists
+          ? [
+              <StatusPill
+                key="availability"
+                value={document.exists ? 'available' : 'missing'}
+                tone={document.exists ? 'positive' : 'danger'}
+              />,
+            ]
+          : []),
       ]}
       headerActions={
         <DocumentSequenceActions
@@ -356,12 +359,34 @@ function DocumentDetailView({
       {document.artifactView ? (
         <KnowledgeDocumentArtifactCard document={document} />
       ) : (
-        <KnowledgeDocumentReaderCard
-          document={document}
-          documents={state.documents}
-          sections={readerSections}
-        />
+        <>
+          {isDecision ? (
+            <KnowledgeDecisionSummaryCard document={document} documents={state.documents} />
+          ) : null}
+          <ContentSection
+            title={isDecision ? 'Full decision' : 'Document'}
+            description={
+              isDecision
+                ? 'Read the complete source when you need implementation detail, alternatives, or history.'
+                : 'Read the canonical source with its original structure and references.'
+            }
+          >
+            <KnowledgeDocumentReaderCard
+              document={document}
+              documents={state.documents}
+              sections={readerSections}
+            />
+          </ContentSection>
+        </>
       )}
     </ReaderPage>
   );
 }
+
+const isPlaceholderSummary = (summary: string): boolean =>
+  summary.trim().length === 0 ||
+  summary.toLowerCase().includes('no additional detail provided') ||
+  summary.toLowerCase() === 'markdown document.';
+
+const isPlaceholderSectionBody = (body: string): boolean =>
+  body.trim().toLowerCase() === 'no additional detail provided in this section.';

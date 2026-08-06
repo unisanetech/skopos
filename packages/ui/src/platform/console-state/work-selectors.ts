@@ -3,11 +3,13 @@ import type {
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
 
+export const requiresAdoptionOrientation = (state: SkoposUiConsoleState): boolean =>
+  Boolean(state.sessionContext?.adoption && state.sessionContext.adoption.state !== 'agent-ready');
+
 export interface ExecutionOverviewContext {
   activeTasks: SkoposUiConsoleTaskView[];
+  focusTasks: SkoposUiConsoleTaskView[];
   warningChecks: SkoposUiConsoleState['readinessReport']['checks'];
-  proofSummary: SkoposUiConsoleState['proofReport'];
-  recentPlans: SkoposUiConsoleState['plans'];
 }
 
 export interface TaskCollections {
@@ -51,15 +53,21 @@ export interface TaskGuidanceContext {
 
 export const getExecutionOverviewContext = (
   state: SkoposUiConsoleState,
-): ExecutionOverviewContext => ({
-  activeTasks: state.tasks.filter((task) => task.task.state !== 'complete'),
-  warningChecks: state.readinessReport.checks.filter((check) => check.status !== 'pass'),
-  proofSummary: state.proofReport,
-  recentPlans: state.plans.slice(0, 4),
-});
+): ExecutionOverviewContext => {
+  const activeTasks = state.tasks.filter((task) => isOpenTaskState(task.task.state));
+  const selectedTask = state.sessionContext?.currentTaskId
+    ? activeTasks.find((task) => task.task.id === state.sessionContext?.currentTaskId)
+    : undefined;
+
+  return {
+    activeTasks,
+    focusTasks: selectedTask ? [selectedTask] : activeTasks.slice(0, 3),
+    warningChecks: state.readinessReport.checks.filter((check) => check.status !== 'pass'),
+  };
+};
 
 export const getTaskCollections = (state: SkoposUiConsoleState): TaskCollections => {
-  const openTasks = [...state.tasks.filter((task) => task.task.state !== 'complete')].sort(
+  const openTasks = [...state.tasks.filter((task) => isOpenTaskState(task.task.state))].sort(
     (left, right) => {
       if (left.task.state !== right.task.state) {
         return left.task.state === 'active' ? -1 : 1;
@@ -85,6 +93,9 @@ export const getTaskCollections = (state: SkoposUiConsoleState): TaskCollections
     )[0],
   };
 };
+
+const isOpenTaskState = (state: SkoposUiConsoleTaskView['task']['state']): boolean =>
+  !['complete', 'cancelled', 'superseded'].includes(state);
 
 export const getTaskListContext = (
   state: SkoposUiConsoleState,

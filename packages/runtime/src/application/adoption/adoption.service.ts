@@ -475,6 +475,7 @@ const buildAdoptionExecutionBrief = ({
     'Execute only the operations listed in this brief; do not widen document scope.',
     'Use Git-aware moves when an operation changes a path, then repair affected links and coding-agent instructions.',
     'Preserve the retained truth declared by every operation and stop if project evidence contradicts the approved envelope.',
+    'After the approved document operations conform, enable docs.strictMetadata and docs.strictLinking in skopos.config.yaml; standard verification checks this configuration activation before adoption can become agent-ready.',
     'Complete each execution evidence summary only after inspecting the resulting files.',
     'Write the completed executionInputTemplate to .skopos/adoption/execution-input.json, then run the verification command.',
   ],

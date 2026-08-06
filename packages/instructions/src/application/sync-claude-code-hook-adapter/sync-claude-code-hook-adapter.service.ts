@@ -326,7 +326,13 @@ ${renderSharedRunner()}
 const input = await readInput();
 const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 
-runSkopos(projectDir, ['discuss', 'handoff', projectDir, '--json']);
+const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'claude-code', '--json']);
+const context = parseJsonOutput(contextResult);
+if (contextResult.status !== 0 || typeof context.currentTaskId !== 'string') {
+  process.stderr.write(contextResult.stderr || 'Skopos could not resolve one exact current Task for continuation.\\n');
+  process.exit(1);
+}
+runSkopos(projectDir, ['discuss', 'handoff', 'refresh', projectDir, '--task', context.currentTaskId, '--json']);
 `;
 
 const renderStopHookScript = (): string => `#!/usr/bin/env node

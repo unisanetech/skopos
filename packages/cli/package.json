@@ -39,8 +39,12 @@
     "test:e2e": "vitest run src/__tests__/canonical-surface.test.ts src/__tests__/task-portability.test.ts",
     "benchmark:transport": "node --import tsx src/benchmarks/agent-transport-economy.ts --write",
     "benchmark:external-workspace": "node --import tsx src/benchmarks/external-workspace-pilot.ts",
-    "proof": "vitest run src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-verification.test.ts",
-    "release:smoke": "vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts"
+    "proof:external-skill-portability": "node --import tsx src/benchmarks/external-skill-portability.ts",
+    "proof:external-continuation": "node --import tsx src/benchmarks/external-skill-portability.ts",
+    "proof:product-ui-craft-efficacy": "node --import tsx src/benchmarks/product-ui-craft-efficacy.ts",
+    "proof": "vitest run --maxWorkers=1 src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-matrix.test.ts",
+    "release:smoke": "vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts",
+    "ui:proof": "node --import tsx src/scripts/capture-ui-proof.ts"
   },
   "dependencies": {
     "typescript": "^5.9.3",
@@ -48,10 +52,12 @@
     "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@skopos/instructions": "workspace:*",
     "@skopos/model": "workspace:*",
     "@skopos/runtime": "workspace:*",
     "@skopos/ui": "workspace:*",
+    "playwright": "^1.62.1",
     "tsup": "^8.0.0",
     "typescript": "^5.9.2",
     "vitest": "^4.0.17"

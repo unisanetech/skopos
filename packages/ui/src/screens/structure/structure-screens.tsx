@@ -2,8 +2,9 @@ import * as React from 'react';
 
 import {
   ScopeDetailInspectorAside,
+  ScopeConnectionsCard,
   ScopeCurrentWorkCard,
-  ScopeFrameCard,
+  ScopeOrientationCard,
   ScopeListCard,
   ScopesInspectorAside,
 } from '../../features/structure/scope-sections.js';
@@ -20,9 +21,8 @@ export function ScopesView(): React.JSX.Element {
 
   return (
     <ListPage
-      kicker="Project map"
-      title="Project areas"
-      description="Declared project Scope boundaries Skopos can resolve reliably."
+      title="How the project fits together"
+      description="Explore each area's purpose, ownership, dependencies, knowledge, and current work."
       aside={
         <ScopesInspectorAside
           scopeCount={state.scopes.length}
@@ -49,7 +49,6 @@ export function ScopeDetailView({
   if (!scopeView) {
     return (
       <DetailPage
-        kicker="Project map"
         title="Project area not found"
         description="The requested project area is not present in this snapshot."
       >
@@ -65,44 +64,40 @@ export function ScopeDetailView({
   const relatedTasks = state.tasks.filter((task) =>
     scopeView.relatedTaskIds.includes(task.task.id),
   );
-  const relatedGraphs = state.graphs.graphs.filter(
-    (graph) =>
-      graph.focusId === scopeView.scope.id ||
-      graph.nodes.some(
-        (node) =>
-          node.id === scopeView.scope.id ||
-          node.path === scopeView.scope.path ||
-          node.label === scopeView.scope.title,
-      ),
+  const parentScope = scopeView.scope.parent
+    ? state.scopes.find((scope) => scope.scope.id === scopeView.scope.parent)
+    : undefined;
+  const dependencies = state.scopes.filter((scope) =>
+    scopeView.scope.dependsOn?.includes(scope.scope.id),
+  );
+  const dependents = state.scopes.filter((scope) =>
+    scopeView.dependentScopeIds.includes(scope.scope.id),
+  );
+  const relatedDocuments = state.documents.filter((document) =>
+    scopeView.relatedDocumentIds.includes(document.id),
   );
 
   return (
     <DetailPage
-      kicker="Project area"
       title={scopeView.scope.title}
-      description={scopeView.scope.summary}
+      description={scopeView.purpose}
       badges={[
         <StatusPill key="kind" value={scopeView.scope.kind} tone="neutral" />,
-        <StatusPill
-          key="confidence"
-          value={scopeView.scope.confidence}
-          tone={scopeView.scope.confidence === 'high' ? 'positive' : 'warning'}
-        />,
       ]}
       aside={
         <ScopeDetailInspectorAside
           scopeView={scopeView}
-          relatedTasks={relatedTasks}
-          relatedPlans={relatedPlans}
-          relatedGraphs={relatedGraphs}
+          parentScope={parentScope}
+          relatedDocuments={relatedDocuments}
         />
       }
     >
       <PageSectionStack>
-        <ScopeFrameCard
+        <ScopeOrientationCard scopeView={scopeView} />
+        <ScopeConnectionsCard
           scopeView={scopeView}
-          relatedTaskCount={relatedTasks.length}
-          relatedPlanCount={relatedPlans.length}
+          dependencies={dependencies}
+          dependents={dependents}
         />
         <ScopeCurrentWorkCard plans={relatedPlans} tasks={relatedTasks} />
       </PageSectionStack>

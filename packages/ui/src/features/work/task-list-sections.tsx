@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 
 import type { SkoposUiConsoleTaskView } from '../../contracts/skopos-ui-console-state.js';
 import {
-  Card,
+  ContentSection,
   getSkoposListRowClass,
   skoposListSurfaceClass,
 } from '../../patterns/sections/content-primitives.js';
@@ -34,7 +34,7 @@ export function TaskQueueCard({
   compact?: boolean;
 }): React.JSX.Element {
   return (
-    <Card title={title} description={description}>
+    <ContentSection title={title} description={description}>
       {tasks.length > 0 ? (
         <div className={skoposListSurfaceClass}>
           {tasks.map((taskView, index) => (
@@ -49,7 +49,7 @@ export function TaskQueueCard({
       ) : (
         <EmptyMessage title={emptyTitle} description={emptyDescription} />
       )}
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -66,9 +66,9 @@ export function TaskListGuidanceCard({
   const hasClaimedWork = claimedCount > 0;
 
   return (
-    <Card
-      title="How to use this page"
-      description="Tasks are tracked work sessions. Use them when work needs progress, decisions, checks, and closure evidence to stay connected."
+    <ContentSection
+      title="About tracked work"
+      description="Use a Task when progress, decisions, checks, and closure proof need to stay connected across a work session."
     >
       <div className="grid gap-3 md:grid-cols-3">
         <GuidancePoint
@@ -96,7 +96,7 @@ export function TaskListGuidanceCard({
           }
         />
       </div>
-    </Card>
+    </ContentSection>
   );
 }
 
@@ -136,11 +136,11 @@ function GuidancePoint({
   text: string;
 }): React.JSX.Element {
   return (
-    <div className="border-t border-[var(--line)] pt-3">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--muted)]">
+    <div className="border-t border-outline-weak pt-3">
+      <p className="text-label-small uppercase text-on-surface-variant">
         {label}
       </p>
-      <p className="mt-1 text-[12.5px] leading-[1.45rem] text-[var(--muted-strong)]">
+      <p className="mt-1 text-body-small text-on-surface">
         {text}
       </p>
     </div>
@@ -192,8 +192,8 @@ function TaskQueueRow({
         <p
           className={cn(
             compact
-              ? 'mt-1.5 text-[13px] font-medium tracking-[-0.02em]'
-              : 'mt-2 text-[14px] font-semibold tracking-[-0.03em]',
+              ? 'mt-1.5 text-body-medium font-medium'
+              : 'mt-2 text-title-small',
           )}
         >
           {taskView.task.title}
@@ -201,13 +201,13 @@ function TaskQueueRow({
         <p
           className={cn(
             compact
-              ? 'mt-1 text-[12px] leading-[1.45rem] text-[var(--muted)]'
-              : 'mt-1 line-clamp-2 text-[12.75px] leading-[1.5rem] text-[var(--muted)]',
+              ? 'mt-1 text-body-small text-on-surface-variant'
+              : 'mt-1 line-clamp-2 text-body-small text-on-surface-variant',
           )}
         >
           {taskView.task.summary}
         </p>
-        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.25px] text-[var(--muted)]">
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-body-small text-on-surface-variant">
           {metadata.map((item) => (
             <span key={item}>{item}</span>
           ))}

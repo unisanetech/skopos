@@ -4,15 +4,15 @@
   "type": "skill-pack",
   "status": "active",
   "authority": "canonical",
-  "summary": "Task-selective product UI craft guidance backed by project sources, actions, guards, research, and visual proof.",
-  "updatedAt": "2026-08-04",
+  "summary": "Task-selective, archetype-aware product UI judgment backed by project sources, exact-task references, actions, guards, and visual proof.",
+  "updatedAt": "2026-08-06",
   "packId": "ui.product-craft",
   "family": "ui-craft",
   "variant": "product-ui",
   "version": "0.1.0",
   "displayName": "Product UI Craft",
-  "description": "Guides coding agents to produce branded, responsive, accessible, human product interfaces without replacing project tokens, components, Actions, Guards, Evidence, or Readiness.",
-  "plainLanguageSummary": "Use this for customer-facing pages and product screens that need real design judgment, complete states, human copy, responsive behavior, and visual evidence.",
+  "description": "Guides coding agents to diagnose product-surface archetypes and produce specific, responsive, accessible, human interfaces without replacing project tokens, components, Actions, Guards, Evidence, or Readiness.",
+  "plainLanguageSummary": "Use this for product screens that need current exact-task references, deliberate art direction, role-based color, complete states, responsive transformation, and subjective visual evidence.",
   "authorityBoundary": {
     "actionAuthority": "skopos",
     "taskStateAuthority": "skopos",
@@ -50,8 +50,8 @@
   "modules": [
     {
       "id": "ui-craft.hierarchy-and-brand",
-      "title": "Hierarchy and brand",
-      "summary": "Establish user priority, information hierarchy, brand expression, and token-driven composition before decoration.",
+      "title": "Hierarchy, archetype, and brand",
+      "summary": "Diagnose the product-surface archetype, acquire exact-task precedents, and establish user priority, composition, semantic color budgets, and attention hierarchy before decoration.",
       "path": "guidance/hierarchy-and-brand.md",
       "importance": "recommended",
       "positiveSignals": [
@@ -71,7 +71,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "product-ui"],
+        "scopeKinds": ["application", "product"],
         "pathKinds": ["authored-source", "test"],
         "capabilities": ["browser-rendering", "design-tokens"]
       },
@@ -85,21 +85,34 @@
       },
       "rubricDimensions": [
         "user-task clarity",
+        "task-archetype and reference fit",
         "information hierarchy and brand fit",
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
         "cognitive load and progressive disclosure"
       ],
-      "failureSignalIds": ["failure.visual-hierarchy-drift", "failure.container-overuse"]
+      "failureSignalIds": [
+        "failure.archetype-mismatch",
+        "failure.reference-mismatch",
+        "failure.color-role-ambiguity",
+        "failure.attention-color-overuse",
+        "failure.background-layer-confusion",
+        "failure.legacy-dashboard-convergence",
+        "failure.visual-hierarchy-drift",
+        "failure.container-overuse"
+      ]
     },
     {
       "id": "ui-craft.visual-composition-and-polish",
       "title": "Visual composition and polish",
-      "summary": "Apply disciplined type scale, spacing rhythm, alignment, surface hierarchy, density, component defaults, scroll ownership, and rendered visual review.",
+      "summary": "Apply disciplined type scale, spacing rhythm, alignment, background and surface architecture, attention economy, density, component defaults, scroll ownership, and rendered visual review.",
       "path": "guidance/visual-composition-and-polish.md",
       "importance": "recommended",
       "positiveSignals": [
         {
           "id": "signal.visual-composition",
-          "summary": "The task materially changes typography, spacing, alignment, surfaces, density, containment, or scroll ownership.",
+          "summary": "The task materially changes typography, spacing, alignment, surfaces, density, containment, background layers, attention hierarchy, or scroll ownership.",
           "confidence": "high",
           "evidence": ["Owned frontend source changes a rendered page, shell, panel, component composition, or layout token usage"]
         }
@@ -113,7 +126,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "product-ui", "design-system"],
+        "scopeKinds": ["application", "product", "package"],
         "pathKinds": ["authored-source", "style", "test"],
         "capabilities": ["browser-rendering", "design-tokens", "component-library"]
       },
@@ -121,19 +134,27 @@
         "context": ["design-tokens", "component-catalog"],
         "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
         "actions": ["responsive-visual-capture"],
-        "recommendedActions": [],
+        "recommendedActions": ["design-system-inventory"],
         "guards": ["frontend-type-safety"],
-        "recommendedGuards": ["design-token-drift"]
+        "recommendedGuards": ["design-system-conformance", "design-token-drift"]
       },
       "rubricDimensions": [
         "type scale and readable hierarchy",
         "spacing rhythm and alignment",
         "surface, border, elevation, and density discipline",
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
         "token and component consistency",
         "scroll ownership and content reachability"
       ],
       "failureSignalIds": [
         "failure.raw-visual-values",
+        "failure.generic-ai-convergence",
+        "failure.color-role-ambiguity",
+        "failure.attention-color-overuse",
+        "failure.background-layer-confusion",
+        "failure.legacy-dashboard-convergence",
         "failure.visual-hierarchy-drift",
         "failure.container-overuse",
         "failure.interaction-layout-break"
@@ -162,7 +183,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "product-ui"],
+        "scopeKinds": ["application", "product"],
         "pathKinds": ["authored-source", "test"],
         "capabilities": ["responsive-layout", "interactive-state", "browser-rendering"]
       },
@@ -176,6 +197,7 @@
       },
       "rubricDimensions": [
         "responsive adaptation",
+        "responsive transformation and truthful limitations",
         "navigation and interaction state clarity",
         "state and recovery completeness",
         "accessibility and keyboard behavior"
@@ -196,7 +218,7 @@
           "id": "signal.client-rendering-boundary",
           "summary": "The task changes a client/server rendering boundary, hydration behavior, or interactive island.",
           "confidence": "high",
-          "evidence": ["Owned source uses the bound project's client rendering directive, hydration API, or server-rendered component model"]
+          "evidence": ["Acceptance names hydration, a client/server boundary, a rendering directive, or an interactive island"]
         }
       ],
       "negativeSignals": [
@@ -208,7 +230,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend"],
+        "scopeKinds": ["application", "package"],
         "pathKinds": ["authored-source", "test"],
         "capabilities": ["client-rendering", "server-rendering", "hydration"]
       },
@@ -246,7 +268,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "product-ui", "content-design"],
+        "scopeKinds": ["application", "product"],
         "pathKinds": ["authored-source", "localization", "test"],
         "capabilities": ["interface-copy", "user-feedback", "recovery"]
       },
@@ -278,21 +300,21 @@
       "positiveSignals": [
         {
           "id": "signal.component-evolution",
-          "summary": "The task creates, duplicates, renames, extracts, extends, or changes the public API of a reusable UI component.",
+          "summary": "The task creates or changes rendered controls, navigation, overlays, forms, data display, or reusable UI against a project component authority.",
           "confidence": "high",
-          "evidence": ["Owned paths touch a component catalog, reusable primitive, component export, variant, or shared shell"]
+          "evidence": ["Owned rendered source adds or changes interactive or repeated UI composition against a bound component catalog"]
         }
       ],
       "negativeSignals": [
         {
-          "id": "anti.no-component-ownership-change",
-          "summary": "The task composes existing components without changing component ownership, naming, or API shape.",
+          "id": "anti.no-component-surface",
+          "summary": "The task changes no rendered control, navigation, form, data display, or reusable component surface.",
           "confidence": "high",
-          "evidence": ["No reusable component or extension point is created or modified"]
+          "evidence": ["Owned paths and acceptance are non-UI or content-only"]
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "design-system"],
+        "scopeKinds": ["application", "package"],
         "pathKinds": ["authored-source", "public-export", "test"],
         "capabilities": ["component-library", "public-api", "symbol-search"]
       },
@@ -300,9 +322,9 @@
         "context": ["component-catalog"],
         "recommendedContext": ["design-tokens", "ui-failure-patterns"],
         "actions": [],
-        "recommendedActions": ["focused-frontend-tests"],
+        "recommendedActions": ["design-system-inventory", "focused-frontend-tests"],
         "guards": ["frontend-type-safety"],
-        "recommendedGuards": []
+        "recommendedGuards": ["design-system-conformance"]
       },
       "rubricDimensions": [
         "token and component consistency",
@@ -316,7 +338,7 @@
     {
       "id": "ui-craft.anti-slop-review",
       "title": "Anti-slop visual review",
-      "summary": "Review rendered evidence for generic visual treatment, repeated copy, token drift, missing states, overflow, and weak interaction hierarchy.",
+      "summary": "Compare equivalent rendered states for archetype fit, product character, attention economy, background layers, generic or legacy convergence, coherent states, overflow, and interaction hierarchy.",
       "path": "guidance/anti-slop-review.md",
       "importance": "on-demand",
       "positiveSignals": [
@@ -336,7 +358,7 @@
         }
       ],
       "applicability": {
-        "scopeKinds": ["frontend", "product-ui"],
+        "scopeKinds": ["application", "product"],
         "pathKinds": ["authored-source", "test", "evidence"],
         "capabilities": ["browser-rendering", "visual-review", "accessibility"]
       },
@@ -350,13 +372,25 @@
       },
       "rubricDimensions": [
         "rendered proof quality",
+        "task-archetype and reference fit",
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
         "type scale and readable hierarchy",
         "surface, border, elevation, and density discipline",
         "responsive adaptation",
+        "responsive transformation and truthful limitations",
         "accessibility and keyboard behavior"
       ],
       "failureSignalIds": [
         "failure.raw-visual-values",
+        "failure.archetype-mismatch",
+        "failure.reference-mismatch",
+        "failure.color-role-ambiguity",
+        "failure.attention-color-overuse",
+        "failure.background-layer-confusion",
+        "failure.legacy-dashboard-convergence",
+        "failure.generic-ai-convergence",
         "failure.mobile-compression",
         "failure.visual-hierarchy-drift",
         "failure.container-overuse",
@@ -366,6 +400,48 @@
     }
   ],
   "failureSignals": [
+    {
+      "id": "failure.archetype-mismatch",
+      "summary": "Agents repeatedly apply a composition suited to a different product job, density, risk, or interaction model.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.reference-mismatch",
+      "summary": "Visual precedent repeatedly comes from a homepage, unrelated archetype, viewport, or state and does not support the implemented decision.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.color-role-ambiguity",
+      "summary": "Color repeatedly decorates the interface without preserving distinct action, focus, semantic, data, neutral, or brand-expression meaning.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.attention-color-overuse",
+      "summary": "Saturated backgrounds, borders, icons, badges, dots, links, metadata, and status text repeatedly compete instead of preserving one clear attention order.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.background-layer-confusion",
+      "summary": "Page tint, nested surfaces, borders, or elevation repeatedly obscure the canvas and persistent layer hierarchy or make unused background dominate the task.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.legacy-dashboard-convergence",
+      "summary": "Interfaces repeatedly default to a generic dark shell, tinted canvas, bordered cards, pills, and permanent sidebar-list-inspector composition without same-task project evidence.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.generic-ai-convergence",
+      "summary": "Screens repeatedly converge on interchangeable gradient, oversized-heading, icon-card, pill, generic-accent, or fake-metric styling without project evidence.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
     {
       "id": "failure.raw-visual-values",
       "summary": "Raw color, spacing, radius, or shadow values recur where project tokens exist.",
@@ -518,12 +594,37 @@
       "reviewedAt": "2026-08-04",
       "reviewAfter": "2027-02-04",
       "supports": ["concise but human language, essential detail, voice and tone, and component writing"]
+    },
+    {
+      "id": "atlassian.color-roles",
+      "title": "Atlassian Design System: Color",
+      "kind": "official-documentation",
+      "url": "https://atlassian.design/foundations/color",
+      "reviewedAt": "2026-08-06",
+      "reviewAfter": "2027-02-06",
+      "supports": ["semantic color roles, neutral dominance, emphasis levels, interaction states, and avoiding meaningless accent use"]
+    },
+    {
+      "id": "carbon.color-layering",
+      "title": "Carbon Design System: Color usage and layering",
+      "kind": "official-documentation",
+      "url": "https://carbondesignsystem.com/elements/color/usage/",
+      "reviewedAt": "2026-08-06",
+      "reviewAfter": "2027-02-06",
+      "supports": ["explicit base and persistent surface layers, contextual layer tokens, and bounded high-contrast theme shifts"]
     }
   ],
   "proofFixtureIds": [
-    "ui-product-craft-good-screen",
-    "ui-product-craft-drift-generic-slop",
-    "ui-product-craft-drift-client-boundary",
-    "ui-product-craft-drift-mobile-overflow"
+    "ui-product-craft-positive-hierarchy",
+    "ui-product-craft-visual-restraint-review",
+    "ui-product-craft-negative-backend",
+    "ui-product-craft-ambiguous-documentation",
+    "ui-product-craft-generated-output",
+    "ui-product-craft-capability-locality",
+    "ui-product-craft-design-system-conformance",
+    "ui-product-craft-budget"
+  ],
+  "evaluationSuiteIds": [
+    "ui-product-craft-core"
   ]
 }

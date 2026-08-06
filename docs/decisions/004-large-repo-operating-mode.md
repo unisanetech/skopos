@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-04-09
+lastUpdated: 2026-08-05
 relatedDocs:
   - README.md
   - ../architecture/00-architecture.md
@@ -26,6 +26,9 @@ Use this decision to keep Skopos practical on large brownfield workspaces withou
 
 ## Changelog
 
+- `2026-08-05`: Removed the obsolete open-Decision queue and clarified that subtree
+  mode is a bounded compilation view, not a substitute for workspace truth when root
+  policy or shared dependencies change.
 - `2026-04-09`: Added the large-repo operating-mode decision so Skopos treats subtree-targeted compilation and sliced artifacts as a first-class brownfield capability.
 
 ## Decision
@@ -58,6 +61,5 @@ Use this decision to keep Skopos practical on large brownfield workspaces withou
    - incremental invalidation
    - index/log compaction
    - richer scope-local context packs
-4. The remaining open proof decisions narrow to:
-   - tool-native enforcement strategy
-   - eval harness and scoring contract
+4. Subtree mode never authorizes a local slice to overrule root policy, shared Scope
+   relationships, or Project-level integration proof.
