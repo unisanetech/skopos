@@ -27,13 +27,14 @@ The first release supports these exact runtime families:
 
 | Runtime | Linux | macOS | Windows |
 | --- | --- | --- | --- |
-| Node 22 LTS, starting at 22.12.0 | Ubuntu 24.04 x64 | macOS 15 arm64 | Windows Server 2025 x64 |
+| Node 22 LTS, starting at 22.13.0 | Ubuntu 24.04 x64 | macOS 15 arm64 | Windows Server 2025 x64 |
 | Node 24 LTS | Ubuntu 24.04 x64 | macOS 15 arm64 | Windows Server 2025 x64 |
 
-The package engine range is `^22.12.0 || ^24.0.0`. Node 20, odd-numbered Node lines,
+The package engine range is `^22.13.0 || ^24.0.0`. Node 20, odd-numbered Node lines,
 and operating-system versions outside this matrix are not certified for `0.1.0`.
-The minimum moved from Node 22.5 to 22.12 because the bundled Vite runtime requires
-Node 22.12 or newer.
+The minimum moved from Node 22.5 to 22.13 because Node 22.12 still requires the
+`--experimental-sqlite` flag for `node:sqlite`; Skopos does not require adopters to
+enable an experimental runtime flag.
 
 The CLI's direct production dependencies are exact versions for the first candidate.
 Changing any of them requires a new lockfile, tarball, audit, clean install, license

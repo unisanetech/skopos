@@ -1,7 +1,7 @@
 ---
 title: "Task: Repair and recertify the remote release-security workflow"
 status: active
-owner: "codex"
+owner: "codex-ci"
 id: T-5fd9401a
 scope: "skopos"
 role: task
@@ -12,14 +12,14 @@ view: current
 risk: high-impact
 proofSubject: project-integration
 proofBaseline: baseline-8c6e76455961cf22
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-07
 ---
 
 # Task: Repair and recertify the remote release-security workflow
 
 ## Changelog
 
-- `2026-08-06`: Synchronized Task state `active` from Skopos.
+- `2026-08-07`: Synchronized Task state `active` from Skopos.
 
 ## Goal
 
@@ -79,7 +79,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "type": "task",
   "status": "active",
   "generatedAt": "2026-08-06T23:31:48.831Z",
-  "updatedAt": "2026-08-06T23:35:13.381Z",
+  "updatedAt": "2026-08-07T14:07:24.813Z",
   "planIds": [],
   "childTasks": [],
   "state": "active",

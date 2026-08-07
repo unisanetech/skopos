@@ -24,15 +24,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-24.04
-            node: '22.12.0'
+            node: '22.13.0'
           - os: ubuntu-24.04
             node: '24'
           - os: macos-15
-            node: '22.12.0'
+            node: '22.13.0'
           - os: macos-15
             node: '24'
           - os: windows-2025
-            node: '22.12.0'
+            node: '22.13.0'
           - os: windows-2025
             node: '24'
     steps:
@@ -100,7 +100,7 @@ jobs:
           pnpm --filter @skopos/cli pack --pack-destination "$GITHUB_WORKSPACE/.release/packed"
           tar -xzf .release/packed/skopos-cli-0.1.0.tgz -C .release/package
           node -e "require('node:fs').writeFileSync('.release/install/package.json', '{\"name\":\"@skopos/release-proof\",\"version\":\"0.0.0\",\"private\":true,\"license\":\"Apache-2.0\",\"type\":\"module\"}\n')"
-          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/skopos-cli-0.1.0.tgz" --omit=dev --ignore-scripts --package-lock=false
+          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/skopos-cli-0.1.0.tgz" --omit=dev --ignore-scripts
 
       - name: Install checksum-pinned Gitleaks
         shell: bash

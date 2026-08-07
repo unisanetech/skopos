@@ -9,8 +9,13 @@ const workspaceRoot = join(packageRoot, '..', '..');
 const uiPackageRoot = join(workspaceRoot, 'packages', 'ui');
 const source = join(uiPackageRoot, 'dist-app');
 const destination = join(packageRoot, 'dist', 'ui-app');
+const packageManagerEntrypoint = process.env.npm_execpath;
 
-execFileSync('pnpm', ['--filter', '@skopos/ui', 'app:build'], {
+if (!packageManagerEntrypoint) {
+  throw new Error('Cannot build the UI app because npm_execpath is not available.');
+}
+
+execFileSync(process.execPath, [packageManagerEntrypoint, '--filter', '@skopos/ui', 'app:build'], {
   cwd: workspaceRoot,
   stdio: 'inherit',
 });

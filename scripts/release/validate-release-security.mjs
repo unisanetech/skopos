@@ -5,6 +5,7 @@ import { evaluateInstalledManifests } from './scan-installed-licenses.mjs';
 const workflowPath = new URL('../../.github/workflows/release-security.yml', import.meta.url);
 const rootPackagePath = new URL('../../package.json', import.meta.url);
 const cliPackagePath = new URL('../../packages/cli/package.json', import.meta.url);
+const copyUiAppPath = new URL('../../packages/cli/scripts/copy-ui-app.mjs', import.meta.url);
 
 const expectedActionPins = [
   'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd',
@@ -17,6 +18,7 @@ const expectedActionPins = [
 const workflow = await readFile(workflowPath, 'utf8');
 const rootPackage = JSON.parse(await readFile(rootPackagePath, 'utf8'));
 const cliPackage = JSON.parse(await readFile(cliPackagePath, 'utf8'));
+const copyUiApp = await readFile(copyUiAppPath, 'utf8');
 
 for (const action of expectedActionPins) {
   assert.match(workflow, new RegExp(action.replaceAll('/', '\\/')));
@@ -38,17 +40,21 @@ assert.match(workflow, /pnpm audit --prod --audit-level high/u);
 assert.match(workflow, /name: Build workspace packages\n\s+run: pnpm build/u);
 assert.match(
   workflow,
-  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/skopos-cli-0\.1\.0\.tgz" --omit=dev --ignore-scripts --package-lock=false/u,
+  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/skopos-cli-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
 );
 assert.doesNotMatch(workflow, /pnpm --dir \.release\/install add/u);
+assert.doesNotMatch(workflow, /--package-lock=false/u);
 
 for (const os of ['ubuntu-24.04', 'macos-15', 'windows-2025']) {
   assert.match(workflow, new RegExp(`os: ${os.replace('.', '\\.')}`));
 }
-for (const node of ["'22.12.0'", "'24'"]) assert.match(workflow, new RegExp(`node: ${node}`));
+for (const node of ["'22.13.0'", "'24'"]) assert.match(workflow, new RegExp(`node: ${node}`));
 
 assert.equal(rootPackage.packageManager, 'pnpm@10.26.0');
-assert.equal(cliPackage.engines?.node, '^22.12.0 || ^24.0.0');
+assert.equal(cliPackage.engines?.node, '^22.13.0 || ^24.0.0');
+assert.match(copyUiApp, /process\.env\.npm_execpath/u);
+assert.match(copyUiApp, /execFileSync\(process\.execPath/u);
+assert.doesNotMatch(copyUiApp, /execFileSync\(['"]pnpm['"]/u);
 assert.deepEqual(cliPackage.dependencies, {
   typescript: '5.9.3',
   vite: '7.3.6',
