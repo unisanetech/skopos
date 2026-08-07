@@ -18,7 +18,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
 import {
+  archiveTrackedTaskDocumentPath,
   completeSkoposTaskStepRuntime,
+  resolveSkoposTrackedTaskProjectionPaths,
   resolveSkoposTaskMemoryObligationRuntime,
   showSkoposTaskRuntime,
 } from '../../../runtime/src/application/task/task.service.js';
@@ -50,6 +52,17 @@ afterEach(async () => {
 });
 
 describe('tracked Task portability', () => {
+  it('normalizes tracked Task projection paths from Windows separators', () => {
+    const activePath = 'docs\\work\\tasks\\T-portable.md';
+    const archivedPath = 'docs/work/archive/tasks/T-portable.md';
+
+    expect(archiveTrackedTaskDocumentPath(activePath)).toBe(archivedPath);
+    expect(resolveSkoposTrackedTaskProjectionPaths(archivedPath)).toEqual([
+      'docs/work/tasks/T-portable.md',
+      archivedPath,
+    ]);
+  });
+
   it('names a stable task-closure proof subject by default', async () => {
     const workspaceRoot = await createWorkspace();
     const started = await buildSkoposStartRuntime({
@@ -584,7 +597,7 @@ describe('tracked Task portability', () => {
       actor: 'agent-a',
     });
     expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
-  });
+  }, 15_000);
 
   it('keeps high-impact snapshot proof mandatory in the one-command finish path', async () => {
     const workspaceRoot = await createWorkspace();

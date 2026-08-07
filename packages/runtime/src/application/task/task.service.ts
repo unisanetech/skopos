@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, relative, resolve } from 'node:path';
+import { basename, dirname, join, posix, relative, resolve } from 'node:path';
 
 import { buildSkoposDocumentCatalog } from '@skopos/indexer';
 import type {
@@ -373,7 +373,7 @@ export const reconstructTrackedSkoposTasksRuntime = async ({
       ...portableTask,
       workspaceRoot,
       taskIdentity,
-      trackedDocumentPath: relative(workspaceRoot, documentPath),
+      trackedDocumentPath: normalizeProjectPath(relative(workspaceRoot, documentPath)),
       authority: 'generated',
       changeScope: await captureSkoposTaskChangeScope({
         workspaceRoot,
@@ -1004,7 +1004,7 @@ const resolveTrackedTaskDocumentPath = ({
       `Tracked Task ${taskId} requires a safe workspace-relative Memory root for its declared Scope.`,
     );
   }
-  const activePath = join(
+  const activePath = posix.join(
     normalizeProjectPath(resolvedMemoryRoot),
     'work',
     'tasks',
@@ -1252,25 +1252,27 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
 };
 
 export const archiveTrackedTaskDocumentPath = (trackedDocumentPath: string): string => {
-  let memoryWorkRoot = dirname(dirname(trackedDocumentPath));
-  while (basename(memoryWorkRoot) === 'archive') {
-    memoryWorkRoot = dirname(memoryWorkRoot);
+  const normalizedPath = normalizeProjectPath(trackedDocumentPath);
+  let memoryWorkRoot = posix.dirname(posix.dirname(normalizedPath));
+  while (posix.basename(memoryWorkRoot) === 'archive') {
+    memoryWorkRoot = posix.dirname(memoryWorkRoot);
   }
-  return join(memoryWorkRoot, 'archive', 'tasks', basename(trackedDocumentPath));
+  return posix.join(memoryWorkRoot, 'archive', 'tasks', posix.basename(normalizedPath));
 };
 
 export const resolveSkoposTrackedTaskProjectionPaths = (
   trackedDocumentPath?: string,
 ): string[] => {
   if (!trackedDocumentPath) return [];
-  const archivedPath = archiveTrackedTaskDocumentPath(trackedDocumentPath);
-  const taskDirectory = dirname(trackedDocumentPath);
-  const archiveDirectory = dirname(taskDirectory);
+  const normalizedPath = normalizeProjectPath(trackedDocumentPath);
+  const archivedPath = archiveTrackedTaskDocumentPath(normalizedPath);
+  const taskDirectory = posix.dirname(normalizedPath);
+  const archiveDirectory = posix.dirname(taskDirectory);
   const activePath =
-    basename(taskDirectory) === 'tasks' && basename(archiveDirectory) === 'archive'
-      ? join(dirname(archiveDirectory), 'tasks', basename(trackedDocumentPath))
-      : trackedDocumentPath;
-  return [...new Set([activePath, archivedPath, trackedDocumentPath])];
+    posix.basename(taskDirectory) === 'tasks' && posix.basename(archiveDirectory) === 'archive'
+      ? posix.join(posix.dirname(archiveDirectory), 'tasks', posix.basename(normalizedPath))
+      : normalizedPath;
+  return [...new Set([activePath, archivedPath, normalizedPath])];
 };
 
 const asBulletList = (values: string[], empty: string): string[] =>
