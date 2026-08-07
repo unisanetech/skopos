@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-02132afcb8b2",
+  "taskId": "T-4c002f39",
+  "sessionId": "release-proof-closure-20260807",
+  "actorId": "codex-release-proof",
+  "baseRevision": "0968b974ad832c1f9d76f3667ae5d28eb6ec7075",
+  "paths": [
+    {
+      "path": "docs/operations/release-security.md",
+      "digest": "336e54de4ad369245407c48155a34d1e58012d4fc34d8bacacdce8420d600e75"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "efde582bcf8d46c1e65a93ccdc8875b53ab8c61da2a10bf2e7c12063b10e3b35"
+    },
+    {
+      "path": "packages/cli/scripts/copy-ui-app.mjs",
+      "digest": "e30d255595a5050d75e555a3beea4da9255336cd7b75de4756869394e521516a"
+    }
+  ],
+  "digest": "02132afcb8b2beb06536c4e7e034ac93608abeb3e9f9874474fe15257ecc9974",
+  "createdAt": "2026-08-07T14:40:52.180Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4c002f39-S-02132afcb8b2.json"
+}

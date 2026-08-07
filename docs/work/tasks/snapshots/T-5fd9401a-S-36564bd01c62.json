@@ -1,0 +1,20 @@
+{
+  "snapshotId": "S-36564bd01c62",
+  "taskId": "T-5fd9401a",
+  "sessionId": "release-proof-closure-20260807",
+  "actorId": "codex-release-proof",
+  "baseRevision": "0968b974ad832c1f9d76f3667ae5d28eb6ec7075",
+  "paths": [
+    {
+      "path": ".github/workflows/release-security.yml",
+      "digest": "2db72f195be4b98b50afedb8565c51642fcd2f98a838827e243fa7b5ce78c352"
+    },
+    {
+      "path": "scripts/release/validate-release-security.mjs",
+      "digest": "f8cf85987e95c75f6591cd8c4fe7dcedec824c1bfeaae447c31ca61b0db01c07"
+    }
+  ],
+  "digest": "36564bd01c62a10cd49929a6a7591cfaa90f47ed3331f482d51e6e086ccb4baf",
+  "createdAt": "2026-08-07T14:40:42.496Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-5fd9401a-S-36564bd01c62.json"
+}

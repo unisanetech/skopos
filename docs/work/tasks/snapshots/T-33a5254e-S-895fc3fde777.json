@@ -1,0 +1,20 @@
+{
+  "snapshotId": "S-895fc3fde777",
+  "taskId": "T-33a5254e",
+  "sessionId": "release-proof-closure-20260807",
+  "actorId": "codex-release-proof",
+  "baseRevision": "0968b974ad832c1f9d76f3667ae5d28eb6ec7075",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "b8447e8fd2aad9cfb7b9258bebc156c269be976198cfb639483e601b4629faea"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "a11feb262fc02cd18fed902f852e933d70dfd53dd4f9573b63f48af142c76e3f"
+    }
+  ],
+  "digest": "895fc3fde777e853220fb82b7ecfcbc069093bd0a2ed6616dfd3a6968f2ee440",
+  "createdAt": "2026-08-07T14:41:03.356Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-33a5254e-S-895fc3fde777.json"
+}

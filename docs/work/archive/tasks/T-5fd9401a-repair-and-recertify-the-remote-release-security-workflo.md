@@ -1,38 +1,39 @@
 ---
-title: "Task: Normalize portable task paths and stabilize Windows lifecycle proof"
-status: active
-owner: "codex-windows"
-id: T-33a5254e
+title: "Task: Repair and recertify the remote release-security workflow"
+status: complete
+owner: "codex-ci"
+id: T-5fd9401a
 scope: "skopos"
 role: task
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: current
+view: exception
 risk: high-impact
 proofSubject: project-integration
-proofBaseline: baseline-5daf45886a6156e4
+proofBaseline: baseline-8c6e76455961cf22
 lastUpdated: 2026-08-07
 ---
 
-# Task: Normalize portable task paths and stabilize Windows lifecycle proof
+# Task: Repair and recertify the remote release-security workflow
 
 ## Changelog
 
-- `2026-08-07`: Synchronized Task state `active` from Skopos.
+- `2026-08-07`: Synchronized Task state `complete` from Skopos.
 
 ## Goal
 
-Normalize portable task paths and stabilize Windows lifecycle proof
+Repair and recertify the remote release-security workflow
 
 ## Acceptance
 
-- Portable trackedDocumentPath values use forward slashes on every operating system.
-- The Windows lifecycle suite completes without timeout-driven cleanup residue.
+- All six clean-runner runtime matrix jobs build the workspace and pass canonical lifecycle and snapshot portability proof.
+- The security-artifact job installs the packed CLI in an isolated production-only project and completes audit, secret, license, and SBOM proof.
+- The complete GitHub Actions release-security run passes on the committed main baseline.
 
 ## Non-Goals
 
-- Change Task document locations or relax lifecycle assertions.
+- Change Product UI Craft requirements or remove its packed release content.
 
 ## Constraints
 
@@ -40,8 +41,8 @@ Normalize portable task paths and stabilize Windows lifecycle proof
 
 ## Owned Paths
 
-- `packages/cli/src/__tests__/task-portability.test.ts`
-- `packages/runtime/src/application/task/task.service.ts`
+- `.github/workflows/release-security.yml`
+- `scripts/release/validate-release-security.mjs`
 
 ## Steps
 
@@ -49,22 +50,18 @@ Normalize portable task paths and stabilize Windows lifecycle proof
 - [x] **Resolve plan decisions** (implementation, complete) — Answer the recommended ask-back questions before implementation so the agent does not guess on high-impact choices.
 - [x] **Record Task risk and detail before editing** (implementation, complete) — Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.
 - [x] **Review the current pattern in Skopos Workspace** (implementation, complete) — Use the compact references to confirm the current scope, command surface, and docs entrypoints before editing code.
-- [x] **Implement the smallest scoped change** (implementation, complete) — Carry out "Normalize portable task paths and stabilize Windows lifecycle proof" inside the resolved scope before widening impact to adjacent areas.
+- [x] **Implement the smallest scoped change** (implementation, complete) — Carry out "Repair and recertify the remote release-security workflow" inside the resolved scope before widening impact to adjacent areas.
 - [x] **Sync docs and instruction surfaces if touched** (docs, complete) — Keep docs, instruction mirrors, and generated project knowledge aligned with the implementation.
-- [x] **Typecheck the Skopos workspace** (action, complete) — Required by Guard quality.typecheck.
 
 ## Actions And Guards
 
-- Action `quality.typecheck`: Required by Guard quality.typecheck.
-- Guard `quality.focused-behavior-proof`
-- Guard `quality.typecheck`
+- No Action or Guard is selected.
 
 ## Evidence And Readiness
 
-- Portable trackedDocumentPath values use forward slashes on every operating system. (closure, agent-observation)
-- The Windows lifecycle suite completes without timeout-driven cleanup residue. (closure, agent-observation)
-- Guard quality.focused-behavior-proof: Behavior changes require focused proof (closure, agent-observation)
-- Guard quality.typecheck: TypeScript changes require typecheck Evidence (closure, source-bound-action)
+- All six clean-runner runtime matrix jobs build the workspace and pass canonical lifecycle and snapshot portability proof. (closure, agent-observation)
+- The security-artifact job installs the packed CLI in an isolated production-only project and completes audit, secret, license, and SBOM proof. (closure, agent-observation)
+- The complete GitHub Actions release-security run passes on the committed main baseline. (closure, agent-observation)
 
 ## Memory Obligations
 
@@ -78,17 +75,17 @@ This machine-readable block is the durable source used to rebuild local Skopos s
 ```json
 {
   "schemaVersion": 1,
-  "id": "T-33a5254e",
+  "id": "T-5fd9401a",
   "type": "task",
-  "status": "active",
-  "generatedAt": "2026-08-07T14:21:51.359Z",
-  "updatedAt": "2026-08-07T14:32:14.932Z",
+  "status": "durable",
+  "generatedAt": "2026-08-06T23:31:48.831Z",
+  "updatedAt": "2026-08-07T14:41:15.859Z",
   "planIds": [],
   "childTasks": [],
-  "state": "active",
+  "state": "complete",
   "detail": "detailed",
-  "title": "Normalize portable task paths and stabilize Windows lifecycle proof",
-  "goal": "Normalize portable task paths and stabilize Windows lifecycle proof",
+  "title": "Repair and recertify the remote release-security workflow",
+  "goal": "Repair and recertify the remote release-security workflow",
   "scope": {
     "query": "workspace",
     "matchedBy": "default-root",
@@ -116,18 +113,19 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   },
   "contract": {
     "acceptanceCriteria": [
-      "Portable trackedDocumentPath values use forward slashes on every operating system.",
-      "The Windows lifecycle suite completes without timeout-driven cleanup residue."
+      "All six clean-runner runtime matrix jobs build the workspace and pass canonical lifecycle and snapshot portability proof.",
+      "The security-artifact job installs the packed CLI in an isolated production-only project and completes audit, secret, license, and SBOM proof.",
+      "The complete GitHub Actions release-security run passes on the committed main baseline."
     ],
     "nonGoals": [
-      "Change Task document locations or relax lifecycle assertions."
+      "Change Product UI Craft requirements or remove its packed release content."
     ],
     "constraints": []
   },
   "risk": "high-impact",
   "proofSubject": {
     "kind": "project-integration",
-    "baselineId": "baseline-5daf45886a6156e4"
+    "baselineId": "baseline-8c6e76455961cf22"
   },
   "priority": 0,
   "dependencyTaskIds": [],
@@ -164,7 +162,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "id": "step-implement-scoped-change",
       "kind": "implementation",
       "title": "Implement the smallest scoped change",
-      "detail": "Carry out \"Normalize portable task paths and stabilize Windows lifecycle proof\" inside the resolved scope before widening impact to adjacent areas.",
+      "detail": "Carry out \"Repair and recertify the remote release-security workflow\" inside the resolved scope before widening impact to adjacent areas.",
       "status": "complete"
     },
     {
@@ -173,39 +171,14 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "title": "Sync docs and instruction surfaces if touched",
       "detail": "Keep docs, instruction mirrors, and generated project knowledge aligned with the implementation.",
       "status": "complete"
-    },
-    {
-      "id": "action-quality.typecheck",
-      "kind": "action",
-      "title": "Typecheck the Skopos workspace",
-      "detail": "Required by Guard quality.typecheck.",
-      "status": "complete"
     }
   ],
-  "selectedActions": [
-    {
-      "id": "quality.typecheck",
-      "title": "Typecheck the Skopos workspace",
-      "category": "quality-check",
-      "safety": "read-only",
-      "sourcePath": "tools/skopos/actions/quality-typecheck.yaml",
-      "reason": "Required by Guard quality.typecheck.",
-      "matchedPaths": [
-        "packages/runtime/src/application/task/task.service.ts",
-        "packages/cli/src/__tests__/task-portability.test.ts"
-      ],
-      "outputPaths": [],
-      "requiresApproval": false
-    }
-  ],
-  "selectedGuardIds": [
-    "quality.focused-behavior-proof",
-    "quality.typecheck"
-  ],
+  "selectedActions": [],
+  "selectedGuardIds": [],
   "evidenceRequirements": [
     {
       "id": "acceptance-1",
-      "acceptanceCriterion": "Portable trackedDocumentPath values use forward slashes on every operating system.",
+      "acceptanceCriterion": "All six clean-runner runtime matrix jobs build the workspace and pass canonical lifecycle and snapshot portability proof.",
       "phase": "closure",
       "actionIds": [],
       "guardIds": [],
@@ -213,33 +186,19 @@ This machine-readable block is the durable source used to rebuild local Skopos s
     },
     {
       "id": "acceptance-2",
-      "acceptanceCriterion": "The Windows lifecycle suite completes without timeout-driven cleanup residue.",
+      "acceptanceCriterion": "The security-artifact job installs the packed CLI in an isolated production-only project and completes audit, secret, license, and SBOM proof.",
       "phase": "closure",
       "actionIds": [],
       "guardIds": [],
       "evidence": "agent-observation"
     },
     {
-      "id": "guard-quality.focused-behavior-proof",
-      "acceptanceCriterion": "Guard quality.focused-behavior-proof: Behavior changes require focused proof",
+      "id": "acceptance-3",
+      "acceptanceCriterion": "The complete GitHub Actions release-security run passes on the committed main baseline.",
       "phase": "closure",
       "actionIds": [],
-      "guardIds": [
-        "quality.focused-behavior-proof"
-      ],
+      "guardIds": [],
       "evidence": "agent-observation"
-    },
-    {
-      "id": "guard-quality.typecheck",
-      "acceptanceCriterion": "Guard quality.typecheck: TypeScript changes require typecheck Evidence",
-      "phase": "closure",
-      "actionIds": [
-        "quality.typecheck"
-      ],
-      "guardIds": [
-        "quality.typecheck"
-      ],
-      "evidence": "source-bound-action"
     }
   ],
   "memoryObligations": [
@@ -250,9 +209,9 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "status": "complete",
       "targetPath": "docs/architecture/00-architecture.md",
       "resolution": "reviewed-no-change",
-      "resolutionReason": "Canonical forward-slash project paths restore the existing portable artifact contract and do not change architecture boundaries; no durable architecture update is required.",
-      "resolvedAt": "2026-08-07T14:24:44.091Z",
-      "resolvedByActorId": "codex-windows"
+      "resolutionReason": "The repair changes CI build ordering and packed-install isolation only; it does not change package layers, runtime authority, operating semantics, or other durable architecture truth.",
+      "resolvedAt": "2026-08-06T23:35:08.383Z",
+      "resolvedByActorId": "codex"
     }
   ],
   "questions": [
@@ -278,8 +237,8 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "blocking": false,
       "status": "resolved",
       "resolvedOptionId": "keep-workspace-scope",
-      "resolvedAt": "2026-08-07T14:22:22.693Z",
-      "resolvedByActorId": "codex-windows"
+      "resolvedAt": "2026-08-06T23:34:46.164Z",
+      "resolvedByActorId": "codex"
     }
   ],
   "recommendations": [
@@ -292,21 +251,11 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "linkedQuestionId": "plan.scope-confirmation",
       "blocking": false,
       "status": "complete"
-    },
-    {
-      "id": "run-quality.typecheck",
-      "title": "Typecheck the Skopos workspace",
-      "summary": "Required by Guard quality.typecheck.",
-      "priority": "medium",
-      "actionKind": "run-action",
-      "actionId": "quality.typecheck",
-      "blocking": false,
-      "status": "complete"
     }
   ],
   "declaredOwnedPaths": [
-    "packages/cli/src/__tests__/task-portability.test.ts",
-    "packages/runtime/src/application/task/task.service.ts"
+    ".github/workflows/release-security.yml",
+    "scripts/release/validate-release-security.mjs"
   ]
 }
 ```

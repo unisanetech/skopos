@@ -1,14 +1,14 @@
 ---
 title: "Task: Correct the public Node floor and Windows UI build portability"
-status: active
+status: complete
 owner: "codex"
 id: T-4c002f39
 scope: "skopos"
 role: task
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: current
+view: exception
 risk: high-impact
 proofSubject: project-integration
 proofBaseline: baseline-f2e5dc5f4b34befa
@@ -19,7 +19,7 @@ lastUpdated: 2026-08-07
 
 ## Changelog
 
-- `2026-08-07`: Synchronized Task state `active` from Skopos.
+- `2026-08-07`: Synchronized Task state `complete` from Skopos.
 
 ## Goal
 
@@ -84,12 +84,12 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "schemaVersion": 1,
   "id": "T-4c002f39",
   "type": "task",
-  "status": "active",
+  "status": "durable",
   "generatedAt": "2026-08-07T14:06:36.916Z",
-  "updatedAt": "2026-08-07T14:15:24.355Z",
+  "updatedAt": "2026-08-07T14:41:18.449Z",
   "planIds": [],
   "childTasks": [],
-  "state": "active",
+  "state": "complete",
   "detail": "detailed",
   "title": "Correct the public Node floor and Windows UI build portability",
   "goal": "Correct the public Node floor and Windows UI build portability",
