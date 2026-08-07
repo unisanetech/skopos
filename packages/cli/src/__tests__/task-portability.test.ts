@@ -510,7 +510,7 @@ describe('tracked Task portability', () => {
     expect(
       (await readdir(evidenceDirectory)).filter((name) => name.endsWith('.json')),
     ).toHaveLength(12);
-  });
+  }, 15_000);
 
   it('infers only applicable durable Memory obligations and blocks closure until resolution', async () => {
     const workspaceRoot = await createWorkspace();

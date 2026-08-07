@@ -82,7 +82,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "type": "task",
   "status": "active",
   "generatedAt": "2026-08-07T14:21:51.359Z",
-  "updatedAt": "2026-08-07T14:24:47.114Z",
+  "updatedAt": "2026-08-07T14:32:14.932Z",
   "planIds": [],
   "childTasks": [],
   "state": "active",
