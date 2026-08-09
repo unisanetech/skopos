@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-interface-design-visual-restraint-review",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Select hierarchy, composition, and anti-slop review together for a rendered visual-restraint correction.",
+  "fixtureId": "ui-product-interface-design-visual-restraint-review",
+  "packId": "ui.product-interface-design",
+  "category": "positive",
+  "task": {
+    "goal": "Review and correct the rendered incident workbench so semantic color, background layers, responsive adaptation, scroll ownership, state distinction, icon weight, content density, and attention hierarchy remain quiet, current, and coherent.",
+    "scope": {
+      "id": "fixture-product-ui",
+      "title": "Fixture Product UI",
+      "path": "src/ui",
+      "kind": "application",
+      "ancestorIds": ["fixture-product"],
+      "aliases": ["product-ui", "frontend"],
+      "codeRoots": ["src/ui"]
+    },
+    "acceptanceCriteria": [
+      "Rendered evidence has an explicit canvas and bounded persistent layers.",
+      "One interactive accent and exceptional semantic states preserve a clear attention order.",
+      "Current, hover, focus, selected, populated, empty, and error states never contradict one another.",
+      "Modal navigation has a complete focus contract and local overflow has an intentional scroll owner.",
+      "Dominant regions and persistent icons remain proportionate to their task value."
+    ],
+    "constraints": [
+      "Preserve project-owned tokens, components, behavior, and task-specific product character."
+    ],
+    "nonGoals": [
+      "Do not impose one generic house style or copy an unrelated trend."
+    ],
+    "openDecisions": [],
+    "risk": "standard",
+    "phase": "stabilization",
+    "ownedPaths": ["src/ui/incidents.css", "src/ui/incidents.tsx"],
+    "changedPaths": ["src/ui/incidents.css", "src/ui/incidents.tsx"],
+    "affectedCapabilities": [
+      "browser-rendering",
+      "visual-review",
+      "design-tokens",
+      "responsive-layout"
+    ],
+    "selectedActionIds": [],
+    "applicableGuardIds": [],
+    "acceptedFailureEvidence": [
+      {
+        "id": "failure.attention-color-overuse",
+        "summary": "Routine metadata and statuses compete through saturated color."
+      },
+      {
+        "id": "failure.background-layer-confusion",
+        "summary": "Tinted canvas and nested surfaces obscure persistent layer roles."
+      },
+      {
+        "id": "failure.legacy-dashboard-convergence",
+        "summary": "The screen defaults to an ungrounded legacy admin composition."
+      },
+      {
+        "id": "failure.archetype-mismatch",
+        "summary": "The workbench composition does not fit the operational task."
+      },
+      {
+        "id": "failure.interaction-layout-break",
+        "summary": "Modal focus, interaction-state distinction, or local scroll ownership is incomplete."
+      },
+      {
+        "id": "failure.generic-ai-convergence",
+        "summary": "Color and generic shell styling substitute for product-specific objects and workflows."
+      }
+    ],
+    "projectLifecycle": "established-brownfield"
+  },
+  "expectation": {
+    "selectedModuleIds": [
+      "interface-design.finish",
+      "interface-design.behavior",
+      "interface-design.structure"
+    ],
+    "suppressedModuleReasonCodes": {},
+    "selectedActionIds": ["quality.run-proof-phase", "ui.capture-responsive-proof"],
+    "selectedGuardIds": ["quality.typecheck", "ui.accessibility-proof"],
+    "maximumSelectedModules": 3,
+    "maximumMeasuredTokens": 2200
+  }
+}

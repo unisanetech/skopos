@@ -353,7 +353,7 @@ const proveMinimalProject = async ({
       goal: 'Narrow the hydration boundary.',
       acceptance: 'Only the existing interactive island keeps client rendering.',
       ownedPath: 'src/ui/workspace.tsx',
-      expectedModuleIds: ['ui-craft.react-boundaries'],
+      expectedModuleIds: ['interface-design.behavior'],
     },
     irrelevant: {
       goal: 'Refactor the backend rendering adapter without changing a product interface.',
@@ -399,9 +399,9 @@ const proveBillquestProject = async ({
       scopeId: 'billquest-ui',
       risk: 'standard',
       expectedModuleIds: [
-        'ui-craft.hierarchy-and-brand',
-        'ui-craft.responsive-and-states',
-        'ui-craft.visual-composition-and-polish',
+        'interface-design.structure',
+        'interface-design.behavior',
+        'interface-design.finish',
       ],
     },
     irrelevant: {
@@ -450,23 +450,23 @@ const proveProjectBehavior = async ({
   const listed = runJson<{
     packs: Array<{ packId: string; sourcePath: string }>;
   }>(cliPath, projectRoot, commands, ['skills', 'list', '.', '--json']);
-  const productUi = listed.packs.find((pack) => pack.packId === 'ui.product-craft');
-  assert(productUi, 'Packed CLI did not discover Product UI Craft.');
+  const productUi = listed.packs.find((pack) => pack.packId === 'ui.product-interface-design');
+  assert(productUi, 'Packed CLI did not discover Product Interface Design.');
   assert(
     normalize(productUi.sourcePath).includes('node_modules/@skopos/cli/dist/skill-packs/'),
-    `Product UI Craft resolved outside the installed package: ${productUi.sourcePath}`,
+    `Product Interface Design resolved outside the installed package: ${productUi.sourcePath}`,
   );
   const recommendation = runJson<{
     recommendations: Array<{ packId: string; recommendation: string }>;
   }>(cliPath, projectRoot, commands, ['skills', 'recommend', '.', '--json']);
   const recommended = recommendation.recommendations.find(
-    (entry) => entry.packId === 'ui.product-craft',
+    (entry) => entry.packId === 'ui.product-interface-design',
   );
-  assert(recommended?.recommendation === 'adopt', 'Product UI Craft was not adoptable.');
+  assert(recommended?.recommendation === 'adopt', 'Product Interface Design was not adoptable.');
   const evaluated = runJson<{
     artifact: { passed: number; failed: number };
   }>(cliPath, projectRoot, commands, [
-    'skills', 'evaluate', 'ui.product-craft', '.', '--binding', `${label}.ui.product-craft`, '--json',
+    'skills', 'evaluate', 'ui.product-interface-design', '.', '--binding', `${label}.ui.product-interface-design`, '--json',
   ]);
   assert(
     evaluated.artifact.passed === 8 && evaluated.artifact.failed === 0,
@@ -478,10 +478,10 @@ const proveProjectBehavior = async ({
     projections: Array<{ id: string }>;
     projectionWrites: Array<{ path: string }>;
   }>(cliPath, projectRoot, commands, [
-    'skills', 'apply', 'ui.product-craft', '.',
-    '--binding', `${label}.ui.product-craft`,
+    'skills', 'apply', 'ui.product-interface-design', '.',
+    '--binding', `${label}.ui.product-interface-design`,
     '--actor', actor,
-    '--reason', 'Certify packed Product UI Craft portability in an isolated external project.',
+    '--reason', 'Certify packed Product Interface Design portability in an isolated external project.',
     '--json',
   ]);
   assert(
@@ -512,7 +512,7 @@ const proveProjectBehavior = async ({
   const skillContextEntryCount = skillContextEntries.length;
   assert(
     skillContextEntries.some(
-      (entry) => entry.id === 'skill:ui.product-craft:project-adaptation',
+      (entry) => entry.id === 'skill:ui.product-interface-design:project-adaptation',
     ),
     'Selected guidance omitted the project-adaptation context.',
   );
@@ -594,7 +594,7 @@ const proveProjectBehavior = async ({
     discoveredPackSource: productUi.sourcePath,
     recommendation: recommended.recommendation,
     fixtureResult: evaluated.artifact,
-    appliedBindingId: `${label}.ui.product-craft`,
+    appliedBindingId: `${label}.ui.product-interface-design`,
     hostProjectionPaths: applied.projectionWrites.map((entry) => entry.path).sort(),
     relevantTask: {
       id: relevantTask.id,
@@ -1059,15 +1059,15 @@ const writeProjectCapabilityBinding = async ({
       };
   const binding = {
     schemaVersion: 1,
-    id: `project-skill-binding.${kind}.ui.product-craft`,
+    id: `project-skill-binding.${kind}.ui.product-interface-design`,
     type: 'project-skill-binding',
     status: 'active',
     authority: 'canonical',
-    summary: `${kind} external portability binding for Product UI Craft.`,
+    summary: `${kind} external portability binding for Product Interface Design.`,
     updatedAt: '2026-08-05',
-    bindingId: `${kind}.ui.product-craft`,
-    packId: 'ui.product-craft',
-    packVersion: '0.1.0',
+    bindingId: `${kind}.ui.product-interface-design`,
+    packId: 'ui.product-interface-design',
+    packVersion: '0.3.0',
     lifecycle: 'candidate',
     sourceBindings,
     actionBindings: {
@@ -1077,7 +1077,6 @@ const writeProjectCapabilityBinding = async ({
     guardBindings: {
       'frontend-type-safety': 'quality.typecheck',
       'accessibility-proof': 'ui.accessibility-proof',
-      'design-token-drift': 'quality.typecheck',
       'client-boundary-review': 'quality.typecheck',
     },
     adaptationNotes: kind === 'billquest'
@@ -1091,7 +1090,7 @@ const writeProjectCapabilityBinding = async ({
   };
   await Promise.all([
     writeFile(
-      join(skillRoot, `${kind}.ui.product-craft.json`),
+      join(skillRoot, `${kind}.ui.product-interface-design.json`),
       `${JSON.stringify(binding, null, 2)}\n`,
       'utf8',
     ),

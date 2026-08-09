@@ -1,0 +1,36 @@
+{
+  "snapshotId": "S-9ce369ad4744",
+  "taskId": "T-ae4e77b7",
+  "sessionId": "interface-design-family-closure-20260809",
+  "actorId": "codex-interface-design",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "196d7c26a8f20756fc9f907dcbba3a887163009634ec64d34fd7e2ec0e50f569"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "c523b8737e4a4e63d38754b8eb0138287e9f23a3a57c7d6e8e3741a89b787c38"
+    },
+    {
+      "path": "packages/indexer/src/application/load-skill-packs/load-skill-packs.service.ts",
+      "digest": "a8612bf7a549095294138b642f1a8cc880a35c3c1d2fde69b2b94e3abffa81bd"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-pack.ts",
+      "digest": "6656d728537c84aab25070c5b74658bf9770b60a2f542a40f6b3678d4c35ac3e"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design/pack.json",
+      "digest": "a06da953aab2753ac19067caced88c6deba93bdc8dad0af6ff5fa35583d63649"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "a80be49ef828bdb99c138759e4384e29b543cc52e76b64f6f0eb8702d9bdf400"
+    }
+  ],
+  "digest": "9ce369ad4744bf77c53bfd1514bc9ca96dfe4efe77d895803688e4dd097a297a",
+  "createdAt": "2026-08-09T10:02:29.723Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-ae4e77b7-S-9ce369ad4744.json"
+}

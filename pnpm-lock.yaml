@@ -30,6 +30,9 @@ importers:
       '@axe-core/playwright':
         specifier: ^4.12.1
         version: 4.12.1(playwright-core@1.62.1)
+      '@skopos/indexer':
+        specifier: workspace:*
+        version: link:../indexer
       '@skopos/instructions':
         specifier: workspace:*
         version: link:../instructions
@@ -1365,6 +1368,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@upsetjs/venn.js@2.0.0':
     resolution: {integrity: sha512-WbBhLrooyePuQ1VZxrJjtLvTc4NVfpOyKx0sKqioq9bX1C1m7Jgykkn8gLrtwumBioXIqam8DLxp88Adbue6Hw==}

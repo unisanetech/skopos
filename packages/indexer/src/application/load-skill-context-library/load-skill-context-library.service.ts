@@ -27,6 +27,8 @@ const suppressionReasonSchema = z.enum([
   'expired',
   'retired',
   'budget-suppressed',
+  'selection-limit',
+  'justification-required',
   'consumer-boundary',
 ]);
 
@@ -35,6 +37,21 @@ const recordTypeSchema = z
     typeId: nonEmptyString,
     kind: recordKindSchema,
     displayName: nonEmptyString,
+    selection: z
+      .object({
+        priority: z.number().int().nonnegative(),
+        defaultMaximumRecords: z.number().int().positive(),
+        maximumRecords: z.number().int().positive(),
+        requireExplicitMultiple: z.boolean(),
+        justificationRequiredFacetValues: z
+          .record(nonEmptyString, z.array(nonEmptyString).min(1))
+          .optional(),
+      })
+      .strict()
+      .refine(
+        (selection) => selection.defaultMaximumRecords <= selection.maximumRecords,
+        'defaultMaximumRecords must not exceed maximumRecords.',
+      ),
     requiredSelectorDimensions: z.array(nonEmptyString),
     requiredConstraintKinds: z.array(nonEmptyString),
     allowedFacetValues: z.record(nonEmptyString, z.array(nonEmptyString).min(1)),
@@ -198,6 +215,14 @@ const briefSchema = z
     libraryId: nonEmptyString,
     libraryVersion: nonEmptyString,
     libraryDigest: digestSchema,
+    identity: z
+      .object({
+        algorithmId: nonEmptyString,
+        selectorDigest: digestSchema,
+        projectAuthorityDigest: digestSchema,
+        combinedDigest: digestSchema,
+      })
+      .strict(),
     projectAuthorities: z.array(
       z
         .object({

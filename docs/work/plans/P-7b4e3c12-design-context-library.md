@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phase-1-implemented
+implementationStatus: phases-1-through-4-foundation-implemented
 lastUpdated: 2026-08-09
 relatedDocs:
   - ../../architecture/design-context-model.md
@@ -48,8 +48,19 @@ owns the architectural choice.
 7. The contract validates namespace, type rules, applicability, provenance,
    relationships, freshness, exact digests, budget shape, and Context Brief
    originality fields without a model or network call.
-8. No reviewed production Library, resolver, active Context Brief generation, or
-   Library-backed paired evaluation exists yet.
+8. The pack now contains a reviewed `0.1.0` production Library with four Domain
+   Guides, six Experience Guides, three Design Signals, and ten Source Notes.
+9. A generic runtime resolver deterministically produces exact Context Briefs with
+   project precedence, expiry, retirement, ambiguity, selection-limit, budget, and
+   consumer-boundary explanations.
+10. Focused deterministic proof covers the complete initial domain and experience
+    matrix, explicit justification for saturated signals, copied-pack loading, and a
+    clean packed CLI installation without source-checkout access.
+11. A six-case Library-backed behavioral matrix and two pilot slots are prepared but
+    explicitly unexecuted. No efficacy or pilot result is claimed.
+12. Live Task projection is intentionally not activated until explicit domain and
+    experience selectors have one canonical Task input path. Goal-text inference is
+    rejected as unsafe and nondeterministic product authority.
 
 The existing result is the baseline. This Plan must not reinterpret it as a pass.
 
@@ -144,11 +155,12 @@ research where available. A Domain or Experience Guide should not depend on one 
 company. Discovery galleries may locate candidates but cannot be the sole evidence for
 active guidance.
 
-### Research Seed, Not Accepted Guidance
+### Reviewed Initial Source Boundary
 
-The following sources were inspected on `2026-08-09` and are candidates for Phase 2
-Source Notes. They are not yet Library records and must not enter a Context Brief until
-their applicability, limitations, freshness, and do-not-copy constraints pass review.
+The following sources were inspected on `2026-08-09` and admitted as dated Source
+Notes after applicability, limitations, freshness, transfer rationale, redistribution,
+and do-not-copy review. Source Notes remain evidence, not templates. Only the original
+pack-owned guidance records they support can enter a Context Brief.
 
 | Candidate source | What it may help establish | Important limitation |
 | --- | --- | --- |
@@ -163,8 +175,8 @@ their applicability, limitations, freshness, and do-not-copy constraints pass re
 | [Material Design 3](https://m3.material.io/) | Adaptive components, expressive motion, typography, shape, and Android conventions | Material expression should not overwrite an established non-Material system. |
 | [GOV.UK accessibility strategy](https://design-system.service.gov.uk/accessibility/accessibility-strategy/) | Universal design, progressive enhancement, tolerance for error, and rigorous accessibility | Public-service visual language is not an aesthetic template for commercial products. |
 
-Phase 2 should add or remove candidates based on coverage quality. Fame, awards, or
-visual novelty are never admission criteria.
+Future maintenance may add, revise, weaken, or retire sources based on coverage and
+semantic review. Fame, awards, or visual novelty are never admission criteria.
 
 ## Delivery Phases
 
@@ -201,6 +213,12 @@ Structure, Behavior, and Finish when no Library is bound.
 Exit when the complete Library remains inspectable, source-grounded, and small enough
 for a human to audit.
 
+Implementation record: Product Interface Design owns the reviewed Library under
+`design-context/library.json`. Its ten official Source Notes contain original
+observations, transfer rationale, do-not-copy lists, limitations, asset restrictions,
+observation dates, review dates, and exact digests. Fast-moving signals and AI sources
+use 90-day review windows; durable guides use 180-day windows.
+
 ### Phase 3 — Resolver and Context Brief
 
 1. extend Task signals only with evidence needed for domain and experience selection
@@ -213,6 +231,14 @@ for a human to audit.
 
 Exit when irrelevant Tasks receive zero Design Context and every selection or
 suppression is explainable.
+
+Implementation record: the generic resolver implements this resolution contract and
+produces one exact in-memory Context Brief. It fails closed on missing or ambiguous
+selectors and charges selected records after existing module context against the same
+Task ceiling. Project-authority overrides, selector inputs, algorithm identity, source
+freshness, Library digest, and budget inputs all affect exact identity. Activation in
+the canonical live Task projection remains pending a single explicit Task-selector
+authority; no keyword inference was introduced.
 
 ### Phase 4 — Deterministic proof
 
@@ -232,6 +258,14 @@ Cover:
 Exit only when all declared fixtures resolve exactly once and no test requires live
 network access.
 
+Implementation record: focused source-bound tests cover all four domains, all six
+experiences, irrelevant and public-page Tasks, ambiguous and explicit multi-domain
+selection, project precedence, expiry, retirement, budget pressure, identity changes,
+consumer ownership, capability locality, saturated-signal justification, and
+copied-pack equivalence. These selector tests use no model or network call. The clean
+tarball install and external portability smoke also passes against the exact packed
+asset boundary.
+
 ### Phase 5 — Behavioral evaluation
 
 1. freeze unseen briefs across the initial domain and experience matrix
@@ -249,6 +283,11 @@ network access.
 Exit only if the exact candidate meets the existing material-improvement threshold and
 introduces no important regression. An inconclusive result triggers diagnosis, not
 automatic expansion.
+
+Preparation record: `design-context/evaluations/candidate.matrix.json` freezes six
+neutral combined-domain/experience briefs, equal-arm rules, capture requirements, and
+pilot placeholders. Its status is `prepared-not-executed`; it is not Evidence of
+quality, efficacy, or release readiness.
 
 ### Phase 6 — Real-project pilots
 

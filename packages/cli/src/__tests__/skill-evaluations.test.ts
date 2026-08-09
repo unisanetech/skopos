@@ -19,15 +19,15 @@ import { describe, expect, it } from 'vitest';
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 describe('paired Skill evaluation', () => {
-  it('loads one strict versioned Product UI Craft evaluation suite', async () => {
+  it('loads one strict versioned Product Interface Design evaluation suite', async () => {
     const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
-    const pack = packs.find((candidate) => candidate.packId === 'ui.product-craft');
+    const pack = packs.find((candidate) => candidate.packId === 'ui.product-interface-design');
 
-    expect(pack?.evaluationSuiteIds).toEqual(['ui-product-craft-core']);
+    expect(pack?.evaluationSuiteIds).toEqual(['ui-product-interface-design-core']);
     expect(pack?.evaluationSuites).toHaveLength(1);
     expect(pack?.evaluationSuites[0]).toMatchObject({
-      suiteId: 'ui-product-craft-core',
-      packId: 'ui.product-craft',
+      suiteId: 'ui-product-interface-design-core',
+      packId: 'ui.product-interface-design',
     });
     expect(pack?.evaluationSuites[0]?.cases).toHaveLength(8);
     const suite = pack?.evaluationSuites[0];
@@ -39,9 +39,8 @@ describe('paired Skill evaluation', () => {
     expect(new Set(suite?.cases.map((evaluationCase) => evaluationCase.projectTemplatePath)).size).toBe(8);
     expect(suite?.cases.find((evaluationCase) => evaluationCase.caseId === 'operations-workbench')).toMatchObject({
       candidateModuleIds: [
-        'ui-craft.hierarchy-and-brand',
-        'ui-craft.visual-composition-and-polish',
-        'ui-craft.anti-slop-review',
+        'interface-design.structure',
+        'interface-design.finish',
       ],
       rubricDimensions: [
         'task-archetype and reference fit',
@@ -53,14 +52,14 @@ describe('paired Skill evaluation', () => {
 
     const rubric = JSON.parse(await readFile(join(
       skoposRoot,
-      'skill-packs/ui/product-craft/rubrics/product-ui-review.json',
+      'skill-packs/ui/product-interface-design/rubrics/product-interface-review.json',
     ), 'utf8')) as { dimensions: string[] };
     for (const evaluationCase of suite?.cases ?? []) {
       expect(evaluationCase.rubricDimensions).toHaveLength(4);
       expect(evaluationCase.rubricDimensions.every((dimension) => rubric.dimensions.includes(dimension))).toBe(true);
       const templateRoot = join(
         skoposRoot,
-        'skill-packs/ui/product-craft',
+        'skill-packs/ui/product-interface-design',
         evaluationCase.projectTemplatePath,
       );
       await Promise.all(['index.html', 'styles.css', 'src.js'].map((file) => stat(join(templateRoot, file))));
@@ -75,9 +74,9 @@ describe('paired Skill evaluation', () => {
     try {
       const result = await runSkoposSkillPairedEvaluationRuntime({
         cwd: skoposRoot,
-        pack: 'ui.product-craft',
-        binding: 'skopos.ui.product-craft',
-        suite: 'ui-product-craft-core',
+        pack: 'ui.product-interface-design',
+        binding: 'skopos.ui.product-interface-design',
+        suite: 'ui-product-interface-design-core',
         runId: 'paired-evaluation-fixture',
         evaluationRoot,
         operatingModel: await buildOperatingModel(),
@@ -159,7 +158,7 @@ describe('paired Skill evaluation', () => {
       expect(result.artifact).toMatchObject({
         type: 'skill-paired-evaluation',
         authority: 'generated',
-        suiteId: 'ui-product-craft-core',
+        suiteId: 'ui-product-interface-design-core',
         candidateWins: 8,
         controlWins: 0,
         ties: 0,
@@ -216,9 +215,9 @@ describe('paired Skill evaluation', () => {
     try {
       const result = await runSkoposSkillPairedEvaluationRuntime({
         cwd: skoposRoot,
-        pack: 'ui.product-craft',
-        binding: 'skopos.ui.product-craft',
-        suite: 'ui-product-craft-core',
+        pack: 'ui.product-interface-design',
+        binding: 'skopos.ui.product-interface-design',
+        suite: 'ui-product-interface-design-core',
         caseIds: ['operations-workbench'],
         runId: 'paired-evaluation-smoke-fixture',
         evaluationRoot,

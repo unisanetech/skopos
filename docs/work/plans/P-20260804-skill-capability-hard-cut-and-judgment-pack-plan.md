@@ -27,6 +27,44 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-09`: Corrected the Product Interface Design smoke/showcase boundary after
+  repeated fixed-case renders were mistakenly presented as evidence of creative range.
+  The existing one-case paired smoke remains a pipeline canary only. A new explicitly
+  authorized candidate-only showcase creates three fresh product pages per run from
+  minimal scaffolds, prevents automatic scenario reuse for the same accepted Skill
+  identity, and emits exact briefs, generated source, desktop/mobile renders, basic
+  render diagnostics, telemetry, and a review gallery. The showcase does not replace
+  frozen paired efficacy or independent human adjudication and cannot promote the pack.
+  Re-acceptance against the new Action catalog produced combined digest
+  `sha256:8c26ec241456c1e2f656ac603baae70c586e4d4d0ae345235e434777c2ec7485`;
+  all eight deterministic fixtures pass.
+- `2026-08-09`: Ran the separately authorized exact-source `0.3.0` efficacy cycle.
+  The smoke passed 1-0, but the full eight-case blinded model review split 4-4 with all
+  cases valid and no authority, correction, supervision, budget, or containment
+  failure. Full usage was 2,842,392 input tokens (716,184 fresh) and 150,264 output.
+  Because the candidate did not meet the declared material-improvement threshold, the
+  report is `inconclusive`; no guidance, fixture, rubric, prompt, or runner input was
+  tuned after outcome. Eight safe A/B bundles and a human-review protocol are ready,
+  independent adjudication is pending, and R2 remains blocked.
+- `2026-08-09`: Enriched Product Interface Design as `0.3.0` while retaining exactly
+  Structure, Behavior, and Finish. The three guides now contain 21 concise Bad-to-Better
+  patterns for interface language, component reuse, responsive behavior, states,
+  accessibility, conditional React boundaries, hierarchy, tokens, density, and
+  rendered proof. Eight fixtures pass; focused selections measure 596 and 612 tokens,
+  and the full selection measures 1,530, below the 1,800 standard-Task ceiling. Exact
+  acceptance produced combined digest
+  `sha256:6a777cc44b8f6b887a187f566813a9cbe1baf6e1e415752bbcd2aa6d91a29464`.
+  R2 remains blocked pending fresh efficacy and independent blind human review.
+- `2026-08-09`: Superseded the unsuccessful Product UI Craft release-gate identity
+  with the user-approved Product Interface Design `0.2.0` identity. The public Skill
+  now uses the `interface-design` family and exposes only Structure, Behavior, and
+  Finish; React guidance is conditional inside Behavior. Eight deterministic fixtures pass, with focused selections at 524
+  or 518 measured tokens and the full three-capability selection at 1,310, below the
+  1,800 standard-Task ceiling. Exact acceptance produced combined digest
+  `sha256:fb32b6c6b841bec9e7c979a9c9547032b33a9f51a3650ab7b5216fc6c3e35eab`.
+  Historical runs remain bound to Product UI Craft and cannot certify the renamed
+  source. R2 stays blocked pending a separately approved paired run and independent
+  blind human review.
 - `2026-08-09`: Completed the authorized current-source R2 machine cycle without
   changing frozen inputs after the outcome. Exact preflight and one-case smoke passed;
   the full eight-case run completed all 24 calls with zero invalid, aborted, authority,
@@ -275,7 +313,7 @@ system intended for launch.
 
 1. Keep one `schemaVersion: 1` for the canonical Skill manifest, binding, selection,
    and projection contract.
-2. Reset `ui.product-craft` to `0.1.0`.
+2. Use `ui.product-interface-design@0.3.0` as the renamed, simplified, and example-rich first pack.
 3. Start every new built-in Skill at `0.1.0`.
 4. Update the model, validation, selector, catalog, bindings, fixtures, host
    projections, tests, documentation, and bundled delivery together.
@@ -517,7 +555,8 @@ adjudication.
 Economical execution:
 
 1. run deterministic fixtures and a no-model environment/browser preflight first
-2. run one fixed three-call smoke case to prove the exact real adapter and reviewer path
+2. run one fixed three-call pipeline smoke to prove the exact real adapter and reviewer
+   path; do not use its repeated page to demonstrate creative range or design quality
 3. start the full 8-12 representative paired Tasks only from an exact passing smoke
    identity and explicit model-budget authorization
 4. stop on the first authority, safety, infrastructure, containment, or budget blocker
@@ -529,6 +568,25 @@ Economical execution:
    useful blinded comparison evidence but not human judgment
 9. rerun all controls only after relevant model, host, fixture, prompt, permission,
    budget, or toolchain change
+
+### Fresh design showcase diagnostics
+
+Use the candidate-only showcase when a person needs to inspect what the accepted Skill
+helps a coding agent create across different product pages. It is intentionally separate
+from Layer 3 promotion proof:
+
+1. begin from a minimal HTML, CSS, and JavaScript scaffold rather than an already styled
+   evaluation template
+2. select multiple scenarios with different products, archetypes, content, brand roles,
+   interactions, and responsive demands
+3. avoid automatic scenario reuse for the same accepted Skill identity; an intentional
+   repeat requires an explicit override
+4. preserve the exact task and brand brief, module guidance, generated source,
+   desktop/mobile renders, telemetry, page errors, and horizontal-overflow observations
+5. render one human-readable gallery that labels the result as qualitative diagnostic
+   material
+6. never treat showcase novelty, attractiveness, or a single person's preference as
+   paired efficacy, independent human adjudication, or release-promotion Evidence
 
 ### Layer 4: project canary
 
@@ -591,24 +649,23 @@ only when:
 If the baseline agent already performs equally well, shrink, reject, or retire the
 candidate. Catalog breadth is not a success metric.
 
-## Product UI Craft Refocus
+## Product Interface Design Refocus
 
-The current content work remains useful but the first canonical pack must own a smaller
-judgment boundary.
+The current content remains useful, but the public capability is intentionally reduced
+to three task-selective modules.
 
-Keep in `ui.product-craft@0.1.0`:
+Keep in `ui.product-interface-design@0.3.0`:
 
-1. information and visual hierarchy
-2. brand and token fidelity
-3. semantic type scale, spacing, alignment, density, and containment
-4. surface, border, radius, and elevation discipline
-5. responsive visual composition
-6. page-wide copy-role economy
-7. rendered anti-slop review
+1. **Structure:** task purpose, hierarchy, reading order, product language, attention,
+   and product-specific character
+2. **Behavior:** responsive transformation, complete states, accessibility behavior,
+   component reuse, and conditional framework boundaries
+3. **Finish:** typography, spacing, alignment, layers, density, design-system fidelity,
+   and rendered review
 
 Move to later focused owners:
 
-1. component reuse, variants, API shape, and durable naming to
+1. deep public component API engineering beyond interface-level reuse and naming to
    `frontend.component-evolution`
 2. server/client and route delivery boundaries to `performance.route-delivery`
 3. multi-step forms, destructive actions, work preservation, transactional errors,
@@ -618,9 +675,9 @@ Move to later focused owners:
 5. public narrative, claims, proof, and conversion language to
    `web.public-page-craft`
 
-Keep only the small amount of writing guidance needed to ensure distinct page roles,
-specific visible actions, and calm user-facing status. Do not turn Product UI Craft
-into a complete writing discipline.
+Keep React advice conditional inside Behavior and only when the bound project uses
+React. Keep writing guidance limited to distinct page roles, specific visible actions,
+calm status, and recovery; this is not a complete writing discipline.
 
 Replace prose-only fixtures with actual Task contracts, small runnable components or
 pages, good and drift sources, responsive rendered evidence, overflow and scroll cases,
@@ -635,7 +692,7 @@ accessibility Evidence remain distinct.
 
 Every initial built-in pack starts at `0.1.0`.
 
-### `ui.product-craft`
+### `ui.product-interface-design`
 
 Use for authenticated application pages, navigation, settings, workspaces, dashboards,
 and visual redesigns.
@@ -665,7 +722,7 @@ without narrative purpose.
 It owns the human narrative side of discoverability. Crawl, canonical, schema, and link
 verification remain Actions and Guards.
 
-`ui.product-craft` and `web.public-page-craft` are normally mutually exclusive primary
+`ui.product-interface-design` and `web.public-page-craft` are normally mutually exclusive primary
 surface packs.
 
 ### `frontend.component-evolution`
@@ -844,7 +901,7 @@ surfaces, generated ownership, public API changes, migrations, and release publi
 Prefer primary and normative sources:
 
 1. Apple Human Interface Guidelines, Samsung One UI writing, and Material content
-   guidance for interface craft and writing
+   guidance for interface design and writing
 2. WCAG, ARIA Authoring Practices, and WAI tutorials for accessibility
 3. GOV.UK Service Standard and user-needs guidance for product and service flows
 4. WHATWG HTML and official framework documentation for browser and rendering
@@ -870,7 +927,7 @@ into pack modules.
 1. fix the self-hosted derived-output Evidence cycle
 2. prove refresh remains valid after Task linking and repeated closure verification
 3. prove genuine source or semantic projection changes still invalidate Evidence
-4. close the active Product UI Craft Task once its existing proof is valid
+4. preserve superseded Product UI Craft proof as historical Evidence
 
 ### Phase 1: record and hard-cut the first canonical model
 
@@ -900,7 +957,7 @@ into pack modules.
 5. bind evaluation Evidence and human acceptance to exact source digests — human
    acceptance complete; evaluation Evidence binding pending
 
-### Phase 4: certify Product UI Craft
+### Phase 4: certify Product Interface Design
 
 1. refocus pack ownership
 2. replace prose fixtures with runnable and rendered artifacts
@@ -940,7 +997,7 @@ paired evaluation, project binding, and external canary before the next pack beg
 ## Exact Implementation Order
 
 1. fix derived-output Evidence freshness
-2. close and integrate current Product UI Craft content work
+2. close and integrate current Product Interface Design content work
 3. commit the Decision, Findings, and this Plan
 4. hard-cut the Skill model and loader in place
 5. hard-cut Task signal collection and selection
@@ -950,13 +1007,15 @@ paired evaluation, project binding, and external canary before the next pack beg
 9. bind acceptance to source and evaluation digests — complete
 10. add deterministic fixture discovery and execution — first baseline complete
 11. add paired forward-test and blind review support
-12. refocus and reset Product UI Craft to `0.1.0`
-13. validate Product UI Craft in Skopos and one external project — automated Skopos
+12. rename and simplify Product Interface Design to `0.2.0` — complete
+13. enrich the same three capabilities with practical Bad-to-Better patterns as `0.3.0`
+    — complete
+14. validate Product Interface Design in Skopos and one external project — automated Skopos
     browser proof and packed Billquest adoption complete; a prior exact identity has a
     6-2 model-reviewed result, while current-source efficacy and independent human blind
     adjudication remain pending
-14. add core packs one at a time in the Phase 5 order
-15. evaluate real cost and correction data before any specialist expansion
+15. add core packs one at a time in the Phase 5 order
+16. evaluate real cost and correction data before any specialist expansion
 
 ## Definition Of Done For Every Pack
 
@@ -989,7 +1048,7 @@ This Plan is complete when:
 2. one canonical first-version Skill model exists with no compatibility residue
 3. irrelevant Tasks receive zero Skill context
 4. Task-wide measured budgets and latency targets hold at representative catalog size
-5. Product UI Craft and every accepted core pack prove material targeted improvement
+5. Product Interface Design and every accepted core pack prove material targeted improvement
 6. project-specific context remains authoritative and compact
 7. selection, suppression, cost, capabilities, and acceptance are fully explainable
 8. packed external adoption works without the source checkout

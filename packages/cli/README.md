@@ -115,7 +115,7 @@ upload, or share that directory wholesale. Use `skopos storage status` and the d
   editing the same files.
 - Skopos selects and records project checks, but the project remains responsible for
   the quality and correctness of those commands.
-- Product UI Craft ships in the package. Its release efficacy gate must pass before
+- Product Interface Design ships in the package. Its release efficacy gate must pass before
   `0.1.0` is approved for publication; inclusion is not a claim that the open gate has
   already passed.
 

@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-09
 relatedDocs:
   - README.md
   - ../work/archive/P-067e15c4-proof-and-benchmarking.md
@@ -24,6 +24,9 @@ Use this decision to keep Skopos proof work comparable, durable, and resistant t
 
 ## Changelog
 
+- `2026-08-09`: Renamed the current paired-evaluation subject to Product Interface
+  Design. Historical Product UI Craft runs retain their frozen identities and results;
+  they cannot certify the renamed `0.2.0` source.
 - `2026-08-05`: Clarified evaluation-subject locality: this scorecard governs the
   brownfield proof-phase benchmark set, while the frozen Product UI Craft paired suite
   retains its own identities, rubric, isolation, blinded adjudication, and promotion
@@ -65,7 +68,7 @@ Use this decision to keep Skopos proof work comparable, durable, and resistant t
    benchmark and scorecard contract rather than changing the meaning of a passing
    brownfield proof run.
 9. A materially different evaluation subject may use a dedicated contract when its
-   required evidence cannot be represented truthfully here. Product UI Craft efficacy
+   required evidence cannot be represented truthfully here. Product Interface Design efficacy
    is one such subject: it requires isolated no-Skill and Skill arms, exact run
    identities, blinded independent adjudication, subjective rubric dimensions, cost,
    supervision, invalid-case accounting, and a declared promotion threshold. It does

@@ -15,7 +15,7 @@ for the parts that should survive beyond one chat.
 
 > **Current status:** Skopos is pre-release and is not yet published for public use.
 > The working source passes important automated packaging and clean-install checks, but
-> there is no immutable release candidate yet. Product UI Craft is required and remains
+> there is no immutable release candidate yet. Product Interface Design is required and remains
 > included; its latest full paired evaluation did not pass the efficacy gate. See
 > [Current status](#current-status) for details.
 
@@ -307,12 +307,14 @@ typecheck, clean packed-install, package-content, storage-lifecycle, responsive 
 accessibility checks. Those results are working-tree evidence, not certification of an
 immutable public candidate.
 
-The latest complete Product UI Craft paired run was safe and contained, but the Skill
-won 3 of 8 cases while the no-Skill control won 5. That is a real release blocker, not
-a launch-quality result. Product UI Craft will not be removed to bypass the gate. A
-new, separately approved improvement and blind-review cycle is required, alongside the
+The latest complete paired run belongs to the superseded Product UI Craft identity: it
+was safe and contained, but the Skill won 3 of 8 cases while the no-Skill control won
+5. Product Interface Design `0.3.0` has deterministic selection proof and 21 concise
+Bad-to-Better patterns, but no efficacy result yet. That is a real release blocker, not a launch-quality result. Product
+Interface Design will not be removed to bypass the gate. A new, separately approved
+efficacy and blind-review cycle is required, alongside the
 remaining [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
-and [Product UI Craft efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
+and [Product Interface Design efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
 
 Before publication, Skopos must also complete the security, package, CI, trusted
 publishing, clean-clone, and immutable-candidate gates in the

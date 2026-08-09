@@ -1,0 +1,43 @@
+id: skill.product-interface-design-efficacy
+title: Run the fixed Product Interface Design pipeline smoke
+description: Runs the fixed one-case Codex control-versus-Skill pipeline canary after explicit authorization. It proves model invocation, isolation, rendering, and review plumbing; it is not design-quality or promotion Evidence.
+category: quality-check
+scope:
+  - workspace
+command: pnpm proof:product-interface-design-efficacy -- --stage=smoke --execute --authorized
+cwd: .
+inputs:
+  - packages/model/src/contracts/skopos-skill-pack.ts
+  - packages/runtime/src/application/skills/skill-evaluations.service.ts
+  - packages/cli/src/benchmarks/product-interface-design-efficacy.ts
+  - skill-packs/ui/product-interface-design/pack.json
+  - skill-packs/ui/product-interface-design/evaluations/core.suite.json
+  - skill-packs/ui/product-interface-design/rubrics/product-interface-review.json
+  - skill-packs/ui/product-interface-design/evaluations/templates/operations-workbench
+  - skill-packs/ui/product-interface-design/fixtures
+outputs:
+  - .skopos/evaluations
+  - .skopos/index/skills/paired-evaluations
+affects: []
+capabilities:
+  process: required
+  network: required
+  browser: required
+  tools: [pnpm, node, codex]
+  secrets: []
+  services: [openai-codex]
+effects:
+  workspace: none
+  artifacts: isolated
+  external: declared
+concurrency: exclusive
+workspaceMode: overlay-safe
+safety: artifact-producing
+requiresApproval: true
+timeoutMs: 7200000
+whenToUse: Run only when the fixed real-adapter pipeline needs a canary before a separately authorized paired efficacy evaluation. Do not present its repeated page as a design showcase.
+phases:
+  - closure
+risks:
+  - high-impact
+owner: skopos-skills

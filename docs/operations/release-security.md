@@ -91,6 +91,6 @@ failed secret scan must be handled without copying a secret into Task docs, logs
 issues, or chat. Revoke or rotate the credential first, preserve redacted evidence,
 then decide whether history rewriting is required.
 
-Product UI Craft is outside this workflow's mutation boundary and remains mandatory.
+Product Interface Design is outside this workflow's mutation boundary and remains mandatory.
 Its current-source paired evaluation and independent blind human adjudication are the
 separate R2 gate.

@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "summary": "Fresh candidate-only Product Interface Design showcase scenarios. Automatic selection never repeats a scenario for the same accepted Skill identity.",
+  "scenarios": [
+    {
+      "id": "veterinary-triage-board",
+      "title": "Veterinary triage board",
+      "archetype": "time-sensitive operations",
+      "taskPrompt": "Create a veterinary urgent-care triage board that helps a small clinical team understand waiting animals, acuity, elapsed time, assigned clinician, and the safest next action.",
+      "brandBrief": "Product: Pawline. Calm clinical confidence without looking like a hospital admin template. Use warm neutrals, deep aubergine, and a restrained coral alert role.",
+      "requiredBehaviors": ["Filter by acuity", "Select a patient and reveal useful context", "Acknowledge or assign the next action", "Transform the workflow for narrow screens"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "rail-refund-eligibility",
+      "title": "Rail refund eligibility",
+      "archetype": "public-service decision flow",
+      "taskPrompt": "Create a disruption-refund page that explains whether a rail passenger qualifies, what evidence is needed, the estimated refund, and what happens after submission.",
+      "brandBrief": "Product: Northline Rail. Direct, reassuring public-service language. Ink blue, mist grey, and one safety yellow role; avoid decorative travel imagery.",
+      "requiredBehaviors": ["Change journey disruption details", "Show an eligibility outcome", "Explain missing evidence and recovery", "Keep the primary action truthful on mobile"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior"]
+    },
+    {
+      "id": "creator-license-checkout",
+      "title": "Creator license checkout",
+      "archetype": "transaction and rights confirmation",
+      "taskPrompt": "Create a checkout review page for licensing an illustration, making usage rights, territory, duration, price, creator attribution, and irreversible purchase terms easy to verify.",
+      "brandBrief": "Product: Edition House. Editorial and creator-led rather than SaaS-like. Bone, charcoal, cobalt, and vermilion accents with confident typography.",
+      "requiredBehaviors": ["Switch license usage", "Update the calculated total", "Require informed confirmation", "Offer a clear edit path"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "lab-sample-intake-recovery",
+      "title": "Lab sample intake recovery",
+      "archetype": "failure diagnosis and recovery",
+      "taskPrompt": "Create a failed laboratory sample-import result that distinguishes accepted records, quarantined records, rejected records, preservation guarantees, and the safest recovery sequence.",
+      "brandBrief": "Product: Helix Intake. Precise and calm, with slate, teal, and restrained amber/red status roles. Avoid generic metric cards when text hierarchy is clearer.",
+      "requiredBehaviors": ["Inspect a failed record", "Download a correction file", "Retry only safe records", "Present tables as reachable content on mobile"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior"]
+    },
+    {
+      "id": "cohort-learning-progress",
+      "title": "Cohort learning progress",
+      "archetype": "education coordination workspace",
+      "taskPrompt": "Create a cohort progress workspace that helps a mentor identify learners who are on track, blocked, inactive, or waiting for feedback without reducing people to decorative analytics.",
+      "brandBrief": "Product: Common Room. Warm, encouraging, and text-led. Forest, clay, cream, and lavender roles with approachable but disciplined typography.",
+      "requiredBehaviors": ["Filter learner states", "Select a learner", "Record a follow-up", "Preserve cohort context on narrow screens"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "municipal-permit-review",
+      "title": "Municipal permit review",
+      "archetype": "case review and evidence",
+      "taskPrompt": "Create a permit-review workspace where a municipal officer can inspect an application, evidence completeness, policy checks, applicant messages, and the next accountable decision.",
+      "brandBrief": "Product: Civic Desk. Plain-language civic authority. Navy, paper white, muted green, and orange exception roles; no glossy dashboard styling.",
+      "requiredBehaviors": ["Navigate evidence sections", "Mark a requirement for clarification", "Explain decision consequences", "Retain an accessible mobile review path"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior"]
+    },
+    {
+      "id": "climate-sensor-onboarding",
+      "title": "Climate sensor onboarding",
+      "archetype": "device setup and verification",
+      "taskPrompt": "Create an onboarding flow for connecting a community climate sensor, verifying location and connectivity, explaining data sharing, and recovering from a failed calibration.",
+      "brandBrief": "Product: Field Signal. Scientific but community-owned. Deep green, fog, mineral blue, and signal lime used sparingly.",
+      "requiredBehaviors": ["Advance and return between setup steps", "Show calibration progress", "Recover from a failed verification", "Keep consent understandable"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "library-collection-discovery",
+      "title": "Library collection discovery",
+      "archetype": "editorial search and discovery",
+      "taskPrompt": "Create a local-library collection discovery page that supports topic filters, availability, saved items, useful selection context, and a distinctive editorial character.",
+      "brandBrief": "Product: Margin Library. Quietly literary and contemporary. Parchment, oxblood, moss, and ink; use supplied text as the visual material instead of stock imagery.",
+      "requiredBehaviors": ["Search and filter the collection", "Save and unsave an item", "Open a useful item detail", "Transform filters for mobile"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "subscription-pause-choice",
+      "title": "Subscription pause choice",
+      "archetype": "retention without coercion",
+      "taskPrompt": "Create a subscription pause-or-cancel flow that makes billing dates, retained access, pause options, cancellation consequences, and reversal paths clear without dark patterns.",
+      "brandBrief": "Product: Tempo Practice. Respectful, compact, and human. Off-white, graphite, muted violet, and green confirmation roles.",
+      "requiredBehaviors": ["Choose pause duration", "Compare pause and cancellation", "Confirm without coercive interruptions", "Provide an obvious return path"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior"]
+    },
+    {
+      "id": "restaurant-stock-reorder",
+      "title": "Restaurant stock reorder",
+      "archetype": "inventory action workspace",
+      "taskPrompt": "Create a restaurant stock-reorder workspace that prioritizes shortages, service risk, supplier timing, substitutions, quantities, and order confirmation for a kitchen manager.",
+      "brandBrief": "Product: Mise Ledger. Dense but composed. Black olive, linen, tomato, and steel with a utilitarian editorial tone.",
+      "requiredBehaviors": ["Filter shortage urgency", "Adjust reorder quantities", "Select a substitute", "Review and confirm an order on mobile"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "travel-disruption-rebooking",
+      "title": "Travel disruption rebooking",
+      "archetype": "high-stress recovery flow",
+      "taskPrompt": "Create a rebooking page for a cancelled overnight journey that compares replacement routes, accessibility needs, hotel eligibility, price difference, and the safest confirmation action.",
+      "brandBrief": "Product: Wayfare Assist. Calm under pressure. Midnight, cloud, cyan, and limited amber; prioritize explicit times and consequences.",
+      "requiredBehaviors": ["Compare replacement routes", "Toggle accessibility needs", "Reveal hotel eligibility", "Preserve the selected route on mobile"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior"]
+    },
+    {
+      "id": "privacy-sharing-controls",
+      "title": "Privacy sharing controls",
+      "archetype": "settings and informed agency",
+      "taskPrompt": "Create privacy-sharing settings that explain audience, retention, personalization, research participation, and account-wide consequences in language people can act on.",
+      "brandBrief": "Product: Kin Journal. Private and reflective rather than security-theater dark. Warm grey, ink, sage, and a restrained rose warning role.",
+      "requiredBehaviors": ["Change sharing scopes", "Expose consequences before saving", "Restore recommended defaults", "Announce saved and failed states accessibly"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "resume-builder-product-landing",
+      "title": "AI resume builder product landing page",
+      "archetype": "premium AI product marketing with interactive proof",
+      "taskPrompt": "Create a complete landing page for an AI-assisted resume builder. The page should help a thoughtful job seeker understand the promise, see the product working, trust how it improves their writing without inventing experience, and start building a resume. Use the shared design language of excellent contemporary AI product sites: unusually clear hierarchy, generous editorial spacing, confident typography, minimal navigation, one restrained accent, quiet controls, and the product interface itself as the primary visual proof. Capture the calm simplicity and premium finish of that category without copying OpenAI, Anthropic, Family, or any other company's branding, copy, composition, or trade dress. Build a specific original identity and an authored page—not a generic SaaS template. Avoid gradients, glowing orbs, glass panels, floating decorations, dashboard-card grids, pill overload, fake customer logos, invented performance statistics, stock photography, and vague claims such as 'revolutionize your career.' The narrative should move from one precise promise into an interactive resume-writing demonstration, believable workflow proof, responsible AI boundaries, refined templates, concise pricing or access expectations, and a focused final action. Use plain human language that sounds composed rather than promotional.",
+      "brandBrief": "Product: Draftline. A precise, quietly ambitious resume studio for people who want to sound like themselves at their best. Warm paper, near-black ink, mineral blue, and one soft apricot emphasis role. Pair a clean grotesk with an editorial serif feel using system fonts only. Let large type, disciplined rules, whitespace, and a beautifully rendered resume document create character. The hero should feel premium and immediate, with a concrete line such as 'Turn your experience into a resume worth reading' and a truthful primary action such as 'Build my resume.'",
+      "requiredBehaviors": ["Let the visitor change a target role and see the resume example respond", "Let the visitor transform a rough experience note into a clearer achievement while preserving the underlying facts", "Switch or preview at least two restrained resume styles", "Explain what the AI will not invent and how the user remains in control", "Transform the product demonstration and navigation intentionally for a narrow mobile viewport", "Provide working primary and secondary calls to action with visible feedback or destination context"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "skopos-developer-product-landing",
+      "title": "Skopos developer product landing page",
+      "archetype": "repo-native developer infrastructure product narrative",
+      "taskPrompt": "Create a complete public-facing product landing page for Skopos, a pre-release repo-native operating Memory and trust layer for coding agents. Ground every statement in this supplied truth: Skopos helps coding agents remember how a project works, preserve Task intent across sessions, coordinate cooperating local sessions, select project-defined checks proportionally, bind Evidence to acceptance criteria, and explain whether work is ready to close. The coding agent still reasons, edits, chooses tools, and talks with the developer; Skopos is not another agent, model provider, generic project manager, wiki, prompt collection, or cloud requirement. Durable truth stays as human-readable tracked repository files; rebuildable runtime state stays local. Coordination is cooperative and must not be described as preventive filesystem safety. Skopos works through Project Memory, Scope, Task, Plan, Session, Work Queue, Action, Guard, Evidence, Proof, and Readiness, but introduce these ideas through a human workflow before presenting terminology. The current product is pre-release and not published for public installation, so calls to action must be truthful: explore the workflow, read documentation, inspect the source workspace, or follow release progress—never claim instant npm installation, production maturity, customer counts, performance improvements, security certification, or compatibility that is not supplied. Use current high-quality developer-product page conventions observed across leading stack companies: a concise confident hero, actual product workflow near the fold, dense but legible product scenes, thin structural rules, restrained high contrast, selective code or terminal output, one dominant action, and a long narrative built from concrete workflow transformations rather than a grid of generic feature cards. Create an original Skopos visual system and composition; do not copy Linear, Vercel, Supabase, Resend, Raycast, OpenAI, or any named company's branding, copy, layouts, effects, or trade dress. Avoid stale startup-site patterns: purple gradients, glowing orbs, floating glass cards, excessive rounded rectangles and pills, fake logos, fake testimonials, invented statistics, generic dashboard analytics, decorative 3D objects, and vague claims about 'supercharging' teams.",
+      "brandBrief": "Product: Skopos. Positioning line: 'Project memory, task continuity, and trustworthy proof for coding agents.' The tone is technically credible, calm, direct, and human. Use a near-black ink foundation, warm chalk or paper surfaces, precise cool-grey rules, and one vivid signal color reserved for current/ready state; blockers use a restrained warm exception role. Use strong contemporary grotesk typography with a subtle mono voice for commands and Evidence. Character should come from a purpose-built workflow visualization: a repository enters as scattered context, a Task carries intent through work, Actions and Guards select proof, and Readiness resolves to a plainly explained state. The hero should communicate a concrete idea such as 'Your repository should remember the work' or 'Give every coding agent the project it walked into,' followed by the canonical positioning line. Keep the Skopos name typographic and original rather than inventing a logo system. Make the product feel like dependable infrastructure, not surveillance, bureaucracy, or another chatbot.",
+      "requiredBehaviors": ["Switch an interactive product demonstration between fresh-session recovery, bounded Task work, proportional proof, and closure Readiness", "Show a believable compact terminal or command surface whose output changes with the selected workflow stage", "Let the visitor inspect why one Action is required and another broad check is skipped", "Demonstrate both a blocked Readiness state and a ready state with plain-language reasons", "Explain the boundary between what the coding agent does and what Skopos preserves", "Reveal the pre-release status and truthful next action without presenting it as a warning banner", "Transform navigation, terminal output, workflow steps, and evidence details intentionally for a narrow mobile viewport", "Provide working in-page navigation and calls to action with visible focus and feedback"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    },
+    {
+      "id": "skopos-dark-product-landing",
+      "title": "Skopos dark-only product landing page",
+      "archetype": "cinematic dark developer infrastructure narrative",
+      "taskPrompt": "Create a second public-facing landing-page direction for Skopos that is completely different from an earlier concept. This version must be dark mode only from header through footer and should feel as polished, spatially disciplined, and product-led as the best current developer-tool sites, while remaining unmistakably original. Do not reuse or lightly recolor the earlier Skopos composition. Specifically reject its headline 'Your repository should remember the work,' cream paper sections, alternating light and black bands, bright lime release block, right-side hero repository diagram, numbered editorial chapters, exact section order, and any of its layout proportions. Start from a new organizing idea such as 'Agents change. The project stays.' or 'Keep the work. Change the agent.' Build a continuous near-black canvas with changes in depth, scale, grid, hairline borders, and product state rather than alternating background colors. Use a compact high-confidence navigation, a concise 54–72px hero rather than an oversized poster headline, and one large interactive product environment near the fold. Prefer six substantial scenes over many small sections. Use a sophisticated asymmetric grid, generous negative space, crisp alignment, and carefully layered product surfaces. Motion should reveal state, continuity, selection, and proof—not add ambient decoration. Allow subtle local radial lighting, fine noise simulated with CSS, or a restrained moving trace, but no multicolor gradients, aurora backgrounds, glowing blobs, glassmorphism stacks, floating feature cards, decorative 3D, excessive pills, fake customer logos, fake testimonials, fake statistics, or copied Linear, Framer, Vercel, Supabase, Resend, Raycast, or OpenAI trade dress. The primary visual should be an authored Skopos workstream: a fresh agent session recovers Project Memory, enters a bounded Task, sees selected versus skipped Actions, attaches source-bound Evidence, and reaches an explained Readiness result. Present this as one continuous product surface that changes state instead of several unrelated mockups. Ground all product claims in truth: Skopos is a pre-release, repo-native operating Memory and trust layer for coding agents; it preserves human-readable tracked project truth, Task intent, cooperative local coordination, project-defined Actions, deterministic Guards, source-bound Evidence, and plain-language Readiness. The coding agent still reasons and edits. Skopos is not another agent, a model, a generic project manager, preventive filesystem isolation, or a currently published package. Calls to action may explore the workflow, read docs, inspect the source workspace, or follow release progress, but must not advertise public installation or production maturity.",
+      "brandBrief": "Product: Skopos. Dark-only palette: carbon black, ink black, graphite surfaces, cool-grey rules, sharp white type, one restrained cold signal accent such as arctic blue or spectral violet, and one muted amber exception role. Do not use the previous lime accent. Use a modern grotesk system stack with mono for commands, file paths, Evidence, and status. Brand expression comes from a precise animated 'continuity trace' that passes through Memory, Task, Action, Evidence, and Readiness states inside one product canvas. Keep corners modest and purposeful; combine flat planes, inset borders, and occasional soft depth rather than card-everything elevation. Copy should be brief, concrete, and confident. Suggested hero: 'Agents change. The project stays.' Supporting line: 'Project memory, task continuity, and trustworthy proof for coding agents.' One primary action: 'Explore the workstream.' One secondary text action: 'Read the product model.' Make the page feel engineered, fast, calm, and premium—not cyberpunk, bureaucratic, or ominous.",
+      "requiredBehaviors": ["Provide one large product workstream whose displayed state changes between Recover, Bound, Prove, and Ready without navigating away", "Animate or step a continuity trace through the selected state while respecting prefers-reduced-motion", "Let the visitor open an Action-selection explanation showing why focused typecheck is required while an unrelated full suite is skipped", "Toggle Readiness between blocked and ready and update the reason, Evidence summary, terminal output, and visual state consistently", "Provide a compact command palette or keyboard-accessible stage switcher", "Keep the entire site dark-only with no light theme or light section", "Transform the large workstream into a legible mobile sequence that prioritizes status, reason, command, and next action over tiny desktop chrome", "Provide working navigation and truthful pre-release calls to action with visible focus and feedback"],
+      "moduleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"]
+    }
+  ]
+}

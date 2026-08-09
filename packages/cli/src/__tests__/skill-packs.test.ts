@@ -27,37 +27,26 @@ import { describe, expect, it } from 'vitest';
 
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
-describe('product UI craft skill pack', () => {
-  it('loads a bounded, component-library-neutral polish module', async () => {
+describe('Product Interface Design skill pack', () => {
+  it('loads exactly three bounded, component-library-neutral capabilities', async () => {
     const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
-    const pack = packs.find((candidate) => candidate.packId === 'ui.product-craft');
+    const pack = packs.find((candidate) => candidate.packId === 'ui.product-interface-design');
 
     expect(pack).toMatchObject({
-      version: '0.1.0',
+      displayName: 'Product Interface Design',
+      family: 'interface-design',
+      version: '0.3.0',
       selection: {
         maximumMeasuredTokens: 2200,
         maximumModules: 3,
       },
     });
-    expect(pack?.modules).toContainEqual(
-      expect.objectContaining({
-        id: 'ui-craft.visual-composition-and-polish',
-        path: 'guidance/visual-composition-and-polish.md',
-        measuredTokens: expect.any(Number),
-      }),
-    );
-    expect(pack?.modules).toContainEqual(
-      expect.objectContaining({
-        id: 'ui-craft.component-architecture-and-naming',
-        path: 'guidance/component-architecture-and-naming.md',
-      }),
-    );
-    expect(pack?.modules).toContainEqual(
-      expect.objectContaining({
-        id: 'ui-craft.human-interface-writing',
-        path: 'guidance/human-interface-writing.md',
-      }),
-    );
+    expect(pack?.modules.map(({ id, path }) => ({ id, path }))).toEqual([
+      { id: 'interface-design.structure', path: 'guidance/structure.md' },
+      { id: 'interface-design.finish', path: 'guidance/finish.md' },
+      { id: 'interface-design.behavior', path: 'guidance/behavior.md' },
+    ]);
+    expect(pack?.modules.every((module) => module.measuredTokens > 0)).toBe(true);
     expect(pack?.modules.every((module) => module.positiveSignals.length > 0)).toBe(true);
     expect(
       pack?.modules.every((module) =>
@@ -67,10 +56,9 @@ describe('product UI craft skill pack', () => {
       ),
     ).toBe(true);
     expect(pack?.modules.every((module) => module.rubricDimensions.length > 0)).toBe(true);
-    expect(pack?.modules.every((module) => module.measuredTokens > 0)).toBe(true);
     const rubric = JSON.parse(
       await readFile(
-        `${skoposRoot}/skill-packs/ui/product-craft/rubrics/product-ui-review.json`,
+        `${skoposRoot}/skill-packs/ui/product-interface-design/rubrics/product-interface-review.json`,
         'utf8',
       ),
     ) as { dimensions: string[]; blockingConditions: string[] };
@@ -108,30 +96,38 @@ describe('product UI craft skill pack', () => {
       [...(pack?.proofFixtureIds ?? [])].sort(),
     );
 
-    const guidance = await readFile(
-      `${skoposRoot}/skill-packs/ui/product-craft/guidance/visual-composition-and-polish.md`,
+    const finishGuidance = await readFile(
+      `${skoposRoot}/skill-packs/ui/product-interface-design/guidance/finish.md`,
       'utf8',
     );
-    expect(guidance).toContain('Use semantic type roles');
-    expect(guidance).toContain('Establish a small set of alignment lines');
-    expect(guidance).toContain('Give a region one primary containment treatment');
-    expect(guidance).toContain('Name the canvas and every persistent layer before styling');
-    expect(guidance).toContain('Make typography, spacing, alignment, and content order carry most hierarchy');
-    expect(guidance).toContain('Never render populated and empty results');
-    expect(guidance).toContain('Start from project component defaults');
-    expect(guidance).toContain('Each large region must earn its footprint');
-    expect(guidance).toContain('current, hovered, focused, pressed, selected');
-    expect(guidance).toMatch(/icon size and stroke\s+weight coherent and subordinate/);
-    expect(guidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
+    expect(finishGuidance).toContain('Use semantic type roles');
+    expect(finishGuidance).toContain('few alignment lines');
+    expect(finishGuidance).toContain('one main containment treatment');
+    expect(finishGuidance).toContain('canvas and persistent');
+    expect(finishGuidance).toMatch(/Let type, space, alignment, and order carry hierarchy/);
+    expect(finishGuidance).toContain('Large regions earn space');
+    expect(finishGuidance).toContain('Keep icons coherent and subordinate');
+    expect(finishGuidance).toContain('## Bad to Better');
+    expect(finishGuidance).toContain('Card every section');
+    expect(finishGuidance).toContain('Add a local hex');
+    expect(finishGuidance).toContain('Approve one desktop image');
+    expect(finishGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
 
-    const responsiveGuidance = await readFile(
-      `${skoposRoot}/skill-packs/ui/product-craft/guidance/responsive-and-states.md`,
+    const behaviorGuidance = await readFile(
+      `${skoposRoot}/skill-packs/ui/product-interface-design/guidance/behavior.md`,
       'utf8',
     );
-    expect(responsiveGuidance).toContain('transfer focus');
-    expect(responsiveGuidance).toContain('background inert');
-    expect(responsiveGuidance).toContain('return focus to the trigger');
-    expect(responsiveGuidance).toMatch(/scrollbar\s+residue/);
+    expect(behaviorGuidance).toContain('Inventory components');
+    expect(behaviorGuidance).toContain('Prefer reuse');
+    expect(behaviorGuidance).toContain('Move focus in');
+    expect(behaviorGuidance).toContain('background inert');
+    expect(behaviorGuidance).toContain('restore focus');
+    expect(behaviorGuidance).toContain('## Bad to Better');
+    expect(behaviorGuidance).toContain('Add `CheckoutBlueButton`');
+    expect(behaviorGuidance).toContain('Stack the shrunken desktop UI');
+    expect(behaviorGuidance).toContain('Framework guidance is conditional');
+    expect(behaviorGuidance).toMatch(/Never introduce\s+React/);
+    expect(behaviorGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
 
     expect(rubric.blockingConditions).toEqual(expect.arrayContaining([
       expect.stringContaining('modal drawer or dialog omits focus transfer'),
@@ -141,39 +137,29 @@ describe('product UI craft skill pack', () => {
       expect.stringContaining('task evidence, decision, or action value'),
     ]));
 
-    const writingGuidance = await readFile(
-      `${skoposRoot}/skill-packs/ui/product-craft/guidance/human-interface-writing.md`,
+    const structureGuidance = await readFile(
+      `${skoposRoot}/skill-packs/ui/product-interface-design/guidance/structure.md`,
       'utf8',
     );
-    expect(writingGuidance).toContain('Every sentence must help someone choose, act, or understand');
-    expect(writingGuidance).toContain('Label an action with a specific verb and outcome');
-    expect(writingGuidance).toContain('An error states the problem in user terms');
-    expect(writingGuidance).toContain('| Avoid | Prefer |');
-    expect(writingGuidance).toContain('Assign each string one role');
-    expect(writingGuidance).toContain('Do not repeat the same noun across all three');
-    expect(writingGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
-
-    const componentGuidance = await readFile(
-      `${skoposRoot}/skill-packs/ui/product-craft/guidance/component-architecture-and-naming.md`,
-      'utf8',
-    );
-    expect(componentGuidance).toContain('Choose in this order');
-    expect(componentGuidance).toContain('Record a short reuse inventory');
-    expect(componentGuidance).toContain('Do not encode prompt adjectives');
-    expect(componentGuidance).toContain('why an existing component could not own the change');
-    expect(componentGuidance).toMatch(
-      /Missing conformance capability means unverified, not\s+passed/,
-    );
-    expect(componentGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
+    expect(structureGuidance).toContain('Give each string one role');
+    expect(structureGuidance).toContain('Actions name a verb and outcome');
+    expect(structureGuidance).toContain('Errors state what happened');
+    expect(structureGuidance).toContain('## Bad to Better');
+    expect(structureGuidance).toContain('Save billing address');
+    expect(structureGuidance).toContain("You don't have permission to edit this workspace");
+    expect(structureGuidance).toContain('Your work is preserved—try again');
+    expect(structureGuidance).toContain('Invitation sent to maya@example.com');
+    expect(structureGuidance).toContain('Webhook returned HTTP 500');
+    expect(structureGuidance).not.toMatch(/Unisane|shadcn|Material UI|Radix|Tailwind/i);
   });
 
   it('keeps the accepted project binding aligned to the pack version', async () => {
     const bindings = await loadSkoposProjectSkillBindings({ cwd: skoposRoot });
 
     expect(
-      bindings.find((binding) => binding.packId === 'ui.product-craft'),
+      bindings.find((binding) => binding.packId === 'ui.product-interface-design'),
     ).toMatchObject({
-      packVersion: '0.1.0',
+      packVersion: '0.3.0',
       lifecycle: 'accepted',
     });
   });
@@ -181,8 +167,8 @@ describe('product UI craft skill pack', () => {
   it('executes every declared fixture against the candidate pack and binding', async () => {
     const result = await evaluateSkoposSkillFixturesRuntime({
       cwd: skoposRoot,
-      pack: 'ui.product-craft',
-      binding: 'skopos.ui.product-craft',
+      pack: 'ui.product-interface-design',
+      binding: 'skopos.ui.product-interface-design',
       dryRun: true,
     });
 
@@ -210,10 +196,10 @@ describe('product UI craft skill pack', () => {
       temporaryRoot,
       'skill-packs',
       'ui',
-      'product-craft',
+      'product-interface-design',
     );
     await cp(
-      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      join(skoposRoot, 'skill-packs/ui/product-interface-design'),
       temporaryPackDirectory,
       { recursive: true },
     );
@@ -261,7 +247,7 @@ describe('product UI craft skill pack', () => {
       join(temporaryPackDirectory, 'fixtures/duplicate.fixture.json'),
     );
     await expect(loadSkoposSkillPacks({ cwd: temporaryRoot })).rejects.toThrow(
-      /Duplicate skill fixture id: ui-product-craft-positive-hierarchy/,
+      /Duplicate skill fixture id: ui-product-interface-design-positive-hierarchy/,
     );
     await rm(temporaryRoot, { recursive: true, force: true });
   });
@@ -272,10 +258,10 @@ describe('product UI craft skill pack', () => {
       temporaryRoot,
       'skill-packs',
       'ui',
-      'product-craft',
+      'product-interface-design',
     );
     await cp(
-      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      join(skoposRoot, 'skill-packs/ui/product-interface-design'),
       temporaryPackDirectory,
       { recursive: true },
     );
@@ -329,7 +315,7 @@ describe('product UI craft skill pack', () => {
     expect(result.selectedSkills).toHaveLength(1);
     expect(result.selectedSkills[0]).toMatchObject({
       selectedModuleIds: expect.arrayContaining([
-        'ui-craft.react-boundaries',
+        'interface-design.behavior',
       ]),
       selectedActionIds: ['quality.run-proof-phase'],
       selectedGuardIds: ['quality.typecheck'],
@@ -357,7 +343,7 @@ describe('product UI craft skill pack', () => {
     );
     expect(result.explanations).toContainEqual(
       expect.objectContaining({
-        moduleId: 'ui-craft.react-boundaries',
+        moduleId: 'interface-design.behavior',
         outcome: 'selected',
         reasonCode: 'selected',
       }),
@@ -367,9 +353,9 @@ describe('product UI craft skill pack', () => {
   it('projects each project design-system binding and reports missing conformance honestly', async () => {
     const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
     const bindings = await loadSkoposProjectSkillBindings({ cwd: skoposRoot });
-    const pack = packs.find((candidate) => candidate.packId === 'ui.product-craft');
-    const binding = bindings.find((candidate) => candidate.packId === 'ui.product-craft');
-    if (!pack || !binding) throw new Error('Product UI Craft candidate sources are missing.');
+    const pack = packs.find((candidate) => candidate.packId === 'ui.product-interface-design');
+    const binding = bindings.find((candidate) => candidate.packId === 'ui.product-interface-design');
+    if (!pack || !binding) throw new Error('Product Interface Design candidate sources are missing.');
 
     const task = buildSkillTestTask(
       'Compose rendered navigation, tabs, buttons, and a data table from the project component catalog and semantic design tokens.',
@@ -441,14 +427,14 @@ describe('product UI craft skill pack', () => {
     };
 
     const alpha = await selectWith({
-      bindingId: 'project.alpha.ui-product-craft',
+      bindingId: 'project.alpha.ui-product-interface-design',
       catalogPath: 'packages/ui/src',
       tokenPath: 'packages/ui/src/app/styles.css',
       inventoryAction: 'project.alpha.design-system-inventory',
       conformanceGuard: 'project.alpha.design-system-conformance',
     });
     const beta = await selectWith({
-      bindingId: 'project.beta.ui-product-craft',
+      bindingId: 'project.beta.ui-product-interface-design',
       catalogPath: 'docs/00-start-here.md',
       tokenPath: 'docs/standards/terminology.md',
       inventoryAction: 'project.beta.design-system-inventory',
@@ -469,7 +455,7 @@ describe('product UI craft skill pack', () => {
     ] as const) {
       const selected = result.selectedSkills[0];
       expect(selected?.selectedModuleIds).toContain(
-        'ui-craft.component-architecture-and-naming',
+        'interface-design.behavior',
       );
       expect(selected?.adaptation.sourceBindings['component-catalog']).toEqual([
         expected.catalogPath,
@@ -484,7 +470,7 @@ describe('product UI craft skill pack', () => {
         expect.objectContaining({ role: 'design-system-conformance' }),
       );
       expect(selected?.selectedContext[0]).toMatchObject({
-        id: 'skill:ui.product-craft:project-adaptation',
+        id: 'skill:ui.product-interface-design:project-adaptation',
       });
       expect(selected?.selectedContext[0]?.summary).toContain(expected.catalogPath);
       expect(selected?.selectedContext[0]?.summary).toContain(expected.inventoryAction);
@@ -492,7 +478,7 @@ describe('product UI craft skill pack', () => {
     }
 
     const projectWithoutAutomatedConformance = await selectWith({
-      bindingId: 'project.no-automation.ui-product-craft',
+      bindingId: 'project.no-automation.ui-product-interface-design',
       catalogPath: 'docs/00-start-here.md',
       tokenPath: 'docs/standards/terminology.md',
       adaptationNotes: [
@@ -572,7 +558,7 @@ describe('product UI craft skill pack', () => {
 
     expect(
       result.explanations.find(
-        (entry) => entry.moduleId === 'ui-craft.hierarchy-and-brand',
+        (entry) => entry.moduleId === 'interface-design.structure',
       ),
     ).toMatchObject({
       outcome: 'suppressed',
@@ -609,14 +595,15 @@ describe('product UI craft skill pack', () => {
     });
     expect(measuredTokens).toBeLessThanOrEqual(result.budget.maximumMeasuredTokens);
     expect(moduleCount).toBeLessThanOrEqual(result.budget.maximumModules);
-    expect(result.explanations).toContainEqual(
+    expect(moduleCount).toBe(3);
+    expect(result.explanations).not.toContainEqual(
       expect.objectContaining({
         reasonCode: expect.stringMatching(/^(module|token)-budget-exhausted$/),
       }),
     );
   });
 
-  it('suppresses an oversized module instead of truncating its guidance', async () => {
+  it('keeps one focused capability intact inside the light Task budget', async () => {
     const result = await selectSkoposSkillsForTaskRuntime({
       cwd: skoposRoot,
       taskId: 'T-skill-light-budget',
@@ -631,16 +618,16 @@ describe('product UI craft skill pack', () => {
 
     expect(
       result.selectedSkills.flatMap((skill) => skill.selectedModuleIds),
-    ).not.toContain('ui-craft.human-interface-writing');
+    ).toEqual(['interface-design.structure']);
     expect(
       result.selectedSkills.reduce(
         (total, skill) => total + skill.measuredContextTokens,
         0,
       ),
     ).toBeLessThanOrEqual(800);
-    expect(result.explanations).toContainEqual(
+    expect(result.explanations).not.toContainEqual(
       expect.objectContaining({
-        moduleId: 'ui-craft.human-interface-writing',
+        moduleId: 'interface-design.structure',
         reasonCode: 'token-budget-exhausted',
       }),
     );
@@ -708,10 +695,10 @@ describe('product UI craft skill pack', () => {
 
   it('invalidates human acceptance when pack, project, or evaluation content changes', async () => {
     const temporaryRoot = await mkdtemp(join(tmpdir(), 'skopos-skill-identity-'));
-    const temporaryPackDirectory = join(temporaryRoot, 'product-craft');
+    const temporaryPackDirectory = join(temporaryRoot, 'product-interface-design');
     const temporaryProjectSource = join(temporaryRoot, 'project-source.md');
     await cp(
-      join(skoposRoot, 'skill-packs/ui/product-craft'),
+      join(skoposRoot, 'skill-packs/ui/product-interface-design'),
       temporaryPackDirectory,
       { recursive: true },
     );
@@ -770,7 +757,7 @@ describe('product UI craft skill pack', () => {
       ).rejects.toThrow(/projectSourceDigest.*changed/);
       await writeFile(temporaryProjectSource, 'Project source v1\n', 'utf8');
 
-      const guidancePath = join(temporaryPackDirectory, 'guidance/hierarchy-and-brand.md');
+      const guidancePath = join(temporaryPackDirectory, 'guidance/structure.md');
       const guidance = await readFile(guidancePath, 'utf8');
       await writeFile(guidancePath, `${guidance}\nMaterial pack change.\n`, 'utf8');
       await expect(
@@ -831,7 +818,7 @@ describe('product UI craft skill pack', () => {
     await mkdir(manifestDirectory, { recursive: true });
     const currentManifest = JSON.parse(
       await readFile(
-        `${skoposRoot}/skill-packs/ui/product-craft/pack.json`,
+        `${skoposRoot}/skill-packs/ui/product-interface-design/pack.json`,
         'utf8',
       ),
     ) as Record<string, unknown>;

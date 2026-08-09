@@ -1,0 +1,48 @@
+{
+  "snapshotId": "S-0dde7afd30a6",
+  "taskId": "T-ee940f71",
+  "sessionId": "interface-design-guidance-closure-20260809",
+  "actorId": "codex-interface-design",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "README.md",
+      "digest": "2343f4081864bf8e850ccf9b28b5551e00d33e87dd355ae1ce3e6f2254522cbc"
+    },
+    {
+      "path": "docs/architecture/public-package-content-and-provenance.md",
+      "digest": "ce18cf4ff879363a99c0cb2a5d3d4a61b53f8b9700a1bf2eb8c9b3b4af0d58c4"
+    },
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "d9d0b7bd758c2182a80dfe39d5ea7f704b99cc1cca8c163db716c830111acc02"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "55915e2b919f3fa0ef4ab90229a64493a418f65727be534763fe3ea3c41db96d"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "3cac84e5f67fe395b4dff8b1e3c90de20a42ce49fb46e909d65beb708caa5f56"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-packs.test.ts",
+      "digest": "0f8d3c6fb46fc7aa688eeb42bd7d41a175fc3020ca519124103cf90be274fcb6"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-skill-portability.ts",
+      "digest": "22dbd0f09ef06c64bafb276c6b3f4f947c5fecd6c1624c7a195867ecffeecf1d"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design",
+      "digest": "7e1add59f15a7ae247ea593ba5b1375b3cc3bac0296d866385105ab52b9b2542"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "a776f966f7398c00a2fdc6c19eb409d00bf1b7207233f83ea2263254d148d4da"
+    }
+  ],
+  "digest": "0dde7afd30a60983dc4b4470777e89b831088c0fe79b4aaaefa28c14807e0464",
+  "createdAt": "2026-08-09T10:31:27.834Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-ee940f71-S-0dde7afd30a6.json"
+}

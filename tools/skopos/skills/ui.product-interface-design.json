@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "project-skill-binding.skopos.ui.product-interface-design",
+  "type": "project-skill-binding",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Skopos self-hosting binding for the Product Interface Design skill pack.",
+  "updatedAt": "2026-08-09T17:53:52.471Z",
+  "bindingId": "skopos.ui.product-interface-design",
+  "packId": "ui.product-interface-design",
+  "packVersion": "0.3.0",
+  "lifecycle": "accepted",
+  "sourceBindings": {
+    "brand-doctrine": [
+      "docs/domains/product/vision.md",
+      "docs/work/archive/P-11229565-system-ui.md"
+    ],
+    "design-tokens": [
+      "packages/ui/src/app/styles.css",
+      "packages/ui/src/app/layout-tokens.ts"
+    ],
+    "component-catalog": [
+      "packages/ui/src"
+    ],
+    "approved-screen-precedents": [
+      "packages/ui/src/screens"
+    ],
+    "domain-language": [
+      "docs/standards/terminology.md"
+    ]
+  },
+  "actionBindings": {
+    "responsive-visual-capture": "ui.capture-responsive-proof",
+    "focused-frontend-tests": "quality.run-proof-phase"
+  },
+  "guardBindings": {
+    "frontend-type-safety": "quality.typecheck",
+    "accessibility-proof": "ui.accessibility-proof"
+  },
+  "adaptationNotes": [
+    "Existing Skopos UI code is supporting precedent, not automatic canonical design truth.",
+    "The routed console remains the product surface; generated portal output is derived evidence.",
+    "Visual rubric evidence cannot replace Skopos Verify and Readiness.",
+    "Treat local visual overrides as exceptional: preserve the bound component library's defaults and use project semantic tokens for application composition.",
+    "Use Skopos product terminology and audience knowledge from the bound sources; reusable examples guide judgment but do not define the product voice.",
+    "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
+  ],
+  "acceptance": {
+    "acceptedAt": "2026-08-09T17:53:52.471Z",
+    "acceptedBy": "codex",
+    "reason": "Accept the reviewed Design Context Library including generic explicit-justification rules for saturated signals after focused proof.",
+    "identity": {
+      "packSourceDigest": "sha256:23bb0187b971079c5ec6ad5cb08402c8399766682612058e61538e157780a20c",
+      "bindingSourceDigest": "sha256:ee2683f22a3e13438e0fec1a902bb76a08207d44e00850251f50b9c94a3d39b5",
+      "projectSourceDigest": "sha256:4226d6dde6af8034e35eb8dcac1a538c7115d0896baf868ff57748191ea5cb77",
+      "capabilityCatalogDigest": "sha256:416b78023d732ea17df231090d22e05bb9069ed14cc916113d8a989556d0124c",
+      "evaluationSourceDigest": "sha256:ef99367deaa60ad4c606be01aaf7935932b3a9ce63f940602afa1ac8dbc66396",
+      "combinedDigest": "sha256:1c651b3bd15ba8fa20bdc68725c8492a90bf1a9d73f911334aa8b2b1d0c08f6f"
+    }
+  }
+}

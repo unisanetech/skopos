@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-07
+lastUpdated: 2026-08-09
 relatedDocs:
   - P-e7e888e6-canonical-product-convergence.md
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -21,9 +21,15 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-09`: Completed Product Interface Design `0.3.0` smoke and full machine
+  evaluation from frozen inputs. Smoke passed 1-0; the eight-case result split 4-4 and
+  is `inconclusive`, despite clean validity, authority, containment, and budget proof.
+  Label-safe bundles and independent human-review instructions are ready. R2 remains
+  blocked because current-source material improvement is not certified and human
+  adjudication is still pending.
 - `2026-08-07`: Replaced the generated outline with the accepted release program,
   hard go/no-go gates, ordered Tasks, evidence requirements, release controls, and
-  post-release response. Product UI Craft is required in the first release and must
+  post-release response. Product Interface Design is required in the first release and must
   earn current-source efficacy certification; removing or disabling it is not an
   allowed shortcut.
 - `2026-08-06`: Created and accepted this Plan through Skopos.
@@ -46,7 +52,7 @@ and the initial post-release response. It does not replace:
    `P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md`
 3. the bundled first-package contract in
    `docs/decisions/031-bundled-cli-release-contract.md`
-4. the open Product UI Craft proof debt in
+4. the open Product Interface Design proof debt in
    `docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md`
 
 Those sources remain authoritative. This Plan compiles their release-critical outcomes
@@ -58,8 +64,8 @@ into one ordered program and may close only after their relevant gates are satis
 2. The first version is `0.1.0`.
 3. The first publication uses the `next` dist tag, never `latest`.
 4. Internal SDK packages and `@skopos/ui` remain private.
-5. Product UI Craft is included in the first release.
-6. Product UI Craft must pass current-source paired efficacy proof and independent
+5. Product Interface Design is included in the first release.
+6. Product Interface Design must pass current-source paired efficacy proof and independent
    blind human adjudication; it cannot be removed, disabled, or described as proven
    without that Evidence.
 7. No Task created from this Plan may publish, tag, promote, deprecate, or unpublish a
@@ -76,7 +82,7 @@ Known release blockers at Plan creation are:
 
 1. local `main` has unpublished convergence history and is not an immutable remote
    candidate
-2. the canonical convergence Plan and Product UI Craft Finding remain active
+2. the canonical convergence Plan and Product Interface Design Finding remain active
 3. the production dependency audit reports critical and high vulnerabilities
 4. real npm-registry `npx`, `npm exec`, and `pnpm dlx` proof does not yet exist
 5. package metadata, CLI version reporting, security/support docs, CI, and trusted
@@ -108,7 +114,7 @@ Exit gate:
 - license and SBOM review complete
 - supported runtime matrix explicit and green
 
-### R2 — Product UI Craft Efficacy
+### R2 — Product Interface Design Efficacy
 
 Purpose: certify the required first-release Skill on its exact shipped identity.
 
@@ -260,7 +266,7 @@ Promotion to `latest` requires a separate human-approved Task and all of the fol
 1. no unresolved critical/high vulnerability or security incident
 2. no data-loss, destructive, or false-closure defect
 3. registry install proof remains green on the supported matrix
-4. early-adopter continuation and Product UI Craft outcomes meet recorded thresholds
+4. early-adopter continuation and Product Interface Design outcomes meet recorded thresholds
 5. no release-blocking documentation, support, or package-metadata gap
 6. rollback and patch procedures have been exercised or reviewed
 

@@ -11,6 +11,13 @@ export interface SkoposSkillContextRecordType {
   typeId: string;
   kind: SkoposSkillContextRecordKind;
   displayName: string;
+  selection: {
+    priority: number;
+    defaultMaximumRecords: number;
+    maximumRecords: number;
+    requireExplicitMultiple: boolean;
+    justificationRequiredFacetValues?: Record<string, string[]>;
+  };
   requiredSelectorDimensions: string[];
   requiredConstraintKinds: string[];
   allowedFacetValues: Record<string, string[]>;
@@ -97,6 +104,8 @@ export type SkoposSkillContextSuppressionReason =
   | 'expired'
   | 'retired'
   | 'budget-suppressed'
+  | 'selection-limit'
+  | 'justification-required'
   | 'consumer-boundary';
 
 export interface SkoposSkillContextProjectAuthority {
@@ -136,6 +145,12 @@ export interface SkoposSkillContextBrief
   libraryId: string;
   libraryVersion: string;
   libraryDigest: string;
+  identity: {
+    algorithmId: string;
+    selectorDigest: string;
+    projectAuthorityDigest: string;
+    combinedDigest: string;
+  };
   projectAuthorities: SkoposSkillContextProjectAuthority[];
   selectedRecords: SkoposSkillContextBriefRecordDecision[];
   suppressedRecords: SkoposSkillContextBriefSuppression[];

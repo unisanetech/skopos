@@ -27,7 +27,7 @@ authorize publication. The first release is only `@skopos/cli@0.1.0` under the n
 
 Do not tag or publish when any of these is true:
 
-1. Product UI Craft's current-source efficacy and independent blind-review gate is not
+1. Product Interface Design's current-source efficacy and independent blind-review gate is not
    passed.
 2. A critical or high vulnerability, suspected secret, incompatible license, private
    adopter data, or unexplained package file remains.
@@ -55,7 +55,7 @@ Do not tag or publish when any of these is true:
    credentials, unexpected brands, or undeclared runtime assets.
 8. Install that tarball into fresh projects on the supported Node and operating-system
    matrix and exercise version, help, init, Session, Task, Action, Evidence, Readiness,
-   storage, Product UI Craft portability, and the bundled UI.
+   storage, Product Interface Design portability, and the bundled UI.
 9. Produce a scorecard that maps each R1–R6 gate to the candidate SHA, tarball digest,
    workflow run, and immutable evidence.
 
@@ -141,6 +141,6 @@ registry verification.
 ## Soak Before `latest`
 
 Keep `0.1.0` on `next` while monitoring install failures, initialization, data loss,
-false closure, coordination safety, Product UI Craft outcomes, UI/runtime errors,
+false closure, coordination safety, Product Interface Design outcomes, UI/runtime errors,
 platform compatibility, and documentation friction. Promotion to `latest` is a later,
 separate decision and requires a new approved Task.

@@ -21,6 +21,7 @@ relatedDocs:
   - architecture/storage-lifecycle-and-privacy.md
   - guides/storage-and-privacy.md
   - guides/semantic-guards.md
+  - guides/product-interface-design-independent-human-review.md
   - work/archive/P-067e15c4-proof-and-benchmarking.md
   - findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: when authority or routing changes
@@ -33,6 +34,8 @@ Skopos.
 
 ## Changelog
 
+- `2026-08-09`: Added the independent Product Interface Design human-review protocol
+  for the current release-gate A/B bundles.
 - `2026-08-09`: Added the progressive Task workflow and semantic Guard template guide
   to the developer and verification routes.
 - `2026-08-09`: Added the local storage lifecycle, cleanup safety, and privacy guide.
@@ -117,7 +120,8 @@ current artifact explicitly requires their rationale.
 3. [Local development](operations/local-development.md)
 4. [Manage local storage and privacy](guides/storage-and-privacy.md)
 5. [Configure semantic Guard templates](guides/semantic-guards.md)
-6. package-specific source and tests selected by the active Task
+6. [Review Product Interface Design independently](guides/product-interface-design-independent-human-review.md)
+7. package-specific source and tests selected by the active Task
 
 ### Scope Memory
 

@@ -168,6 +168,6 @@ coordinates, and proves them.
 The current source implements the canonical Project Memory, Scope, Plan, Task, Session,
 Work Queue, Action, Guard, Evidence, Readiness, coordination, adoption, Skill, handoff,
 CLI, MCP, and UI model without a prototype compatibility surface. Skopos remains
-pre-release while the convergence Plan is active, Product UI Craft efficacy still has
+pre-release while the convergence Plan is active, Product Interface Design efficacy still has
 an open promotion Finding, and the complete clean-clone and packed-install release gate
 has not been certified from one committed candidate.

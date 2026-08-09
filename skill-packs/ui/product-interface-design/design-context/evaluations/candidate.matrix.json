@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "id": "design-context-evaluation.product-interface-design-v1-candidate",
+  "status": "prepared-not-executed",
+  "libraryId": "product-interface-design",
+  "libraryVersion": "0.1.0",
+  "comparison": {
+    "control": "Accepted Product Interface Design core only",
+    "candidate": "The same core plus the exact resolved Context Brief",
+    "freezeRule": "Product facts and behavior remain equal; prompts do not prescribe visual styling or name source products.",
+    "promotionRule": "Machine comparison is diagnostic. Independent blind human review and real-project proof remain required."
+  },
+  "cases": [
+    {
+      "caseId": "developer-workbench",
+      "taskPrompt": "Create a responsive workspace for inspecting one deployment, its current state, recent activity, and available recovery actions.",
+      "selectors": { "domain": ["developer-platforms"], "experience": ["application-workbench"] }
+    },
+    {
+      "caseId": "ai-delegated-work",
+      "taskPrompt": "Create an interface where a user can delegate a bounded research task, inspect progress and sources, correct scope, and approve any external action.",
+      "selectors": { "domain": ["ai-assisted-products"], "experience": ["ai-assisted-delegated-work"] }
+    },
+    {
+      "caseId": "commerce-onboarding",
+      "taskPrompt": "Create a setup flow that connects a catalog, validates required information, explains permissions, and reaches a first synchronized item.",
+      "selectors": { "domain": ["commerce-operations"], "experience": ["setup-onboarding"] }
+    },
+    {
+      "caseId": "financial-review",
+      "taskPrompt": "Create a review and approval flow for a scheduled payout with amount, destination, timing, authority, errors, and recovery.",
+      "selectors": { "domain": ["financial-high-trust"], "experience": ["review-approval-transaction"] }
+    },
+    {
+      "caseId": "developer-monitoring",
+      "taskPrompt": "Create an operational status surface for a service with current health, freshness, meaningful changes, affected scope, and next actions.",
+      "selectors": { "domain": ["developer-platforms"], "experience": ["monitoring-operational-status"] }
+    },
+    {
+      "caseId": "commerce-mobile-transformation",
+      "taskPrompt": "Create a responsive order-resolution workflow that preserves the order, issue, evidence, decision, and recovery across compact and expanded layouts.",
+      "selectors": { "domain": ["commerce-operations"], "experience": ["mobile-task-transformation"] }
+    }
+  ],
+  "requiredCapture": [
+    "source",
+    "desktop and mobile renders",
+    "interaction states",
+    "overflow",
+    "automated accessibility results",
+    "errors and recovery",
+    "token and elapsed-time telemetry",
+    "correction history",
+    "randomized blind-review bundle"
+  ],
+  "pilotPreparation": [
+    {
+      "pilotId": "skopos-application",
+      "status": "awaiting-bounded-task",
+      "authorityRule": "Preserve Skopos components, tokens, terminology, and product behavior."
+    },
+    {
+      "pilotId": "non-skopos-established-system",
+      "status": "awaiting-project-and-human-authorization",
+      "authorityRule": "Use an established project design system and keep adopter-specific guidance outside Skopos core."
+    }
+  ]
+}

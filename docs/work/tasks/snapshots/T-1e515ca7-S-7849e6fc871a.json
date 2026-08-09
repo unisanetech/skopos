@@ -1,0 +1,72 @@
+{
+  "snapshotId": "S-7849e6fc871a",
+  "taskId": "T-1e515ca7",
+  "sessionId": "product-interface-showcase-closure",
+  "actorId": "codex-product-interface-showcase",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "d5b7e8edb800228dffa6e9e055ca84326f404ff5a1a84e7eba0c326902801cba"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "4e20374f020ddecc4ed4c8d7f79f93aadcc3b72718d3ea33686330f7d7659e35"
+    },
+    {
+      "path": "package.json",
+      "digest": "ead885570e99cc4c64f157ed6839fd926c8c1ec70211cd41529a826f61c2cad8"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "5c9f849a239341a0f4b5aef44f29d247e86b0c629111bcd955bc9a47b3852774"
+    },
+    {
+      "path": "packages/cli/src/__tests__/product-interface-design-showcase.test.ts",
+      "digest": "801048f76fb056de13fdc33b715568df841dba3f212d69fac502564b5a764aa2"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/fixtures/product-interface-design-showcase/index.html",
+      "digest": "72532b27816a161519d34131c5407feede2d61a9801461a171ed0b9a7ac7ce11"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/fixtures/product-interface-design-showcase/src.js",
+      "digest": "69bbd6e658286cc25f349c05d6a6d53261f047bf4b2ff94aefc795a9aa2560f9"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/fixtures/product-interface-design-showcase/styles.css",
+      "digest": "dc145d2c79685e4e357b088172074a2a123b54f248b93af1ef43d092f2895d35"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
+      "digest": "a7a8ec1966057b28d93194f12099bd730b64e0e7d4a45ed13722777ada8c2b98"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-showcase-support.ts",
+      "digest": "0433d9ce6a43e7fc787b0562c7f0c6bb5ee20f809e0e538ff6d1b086c6c398df"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-showcase.scenarios.json",
+      "digest": "a98d5d0af27c0571593f31ee46757b31045adf1fe8afedf5b83ac505688b9409"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-showcase.ts",
+      "digest": "89a0f1b5714e7759de847eae498f7840490973346fe49f98ac08ff3e4f93ef44"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-interface-design-efficacy.yaml",
+      "digest": "5056ceaaba10b52cf27c3c86711f9870a009324a0415a07816fdfdf5e11b1949"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-interface-design-showcase.yaml",
+      "digest": "3b723ace9e4c3963a35ec71b3ff1f469869ac8c2fc7ec9ec7f8b0477df3b012a"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "0a952d8c278379232c7258f0798808712b7222b86f60b9d1fea7cf5cb5f6e8a8"
+    }
+  ],
+  "digest": "7849e6fc871aecc36ac5083e9fc93369325eb8ff9561cbacb8b05e2ab155da3b",
+  "createdAt": "2026-08-09T13:35:09.393Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-1e515ca7-S-7849e6fc871a.json"
+}

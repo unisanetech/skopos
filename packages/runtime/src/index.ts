@@ -10,6 +10,7 @@ export * from './application/shared/memory-state.js';
 export * from './application/skills/skills.service.js';
 export * from './application/skills/skill-fixtures.service.js';
 export * from './application/skills/skill-evaluations.service.js';
+export * from './application/skills/skill-context.service.js';
 export * from './application/policies/policies.service.js';
 export * from './application/scan/scan.service.js';
 export * from './application/session/session-context.service.js';

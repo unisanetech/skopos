@@ -1,0 +1,1083 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-context-library.product-interface-design",
+  "type": "skill-context-library",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "A small reviewed library of transferable product-interface principles with explicit provenance, limits, freshness, and originality constraints.",
+  "updatedAt": "2026-08-09",
+  "libraryId": "product-interface-design",
+  "namespace": "design-context",
+  "version": "0.1.0",
+  "consumerPackIds": [
+    "ui.product-interface-design"
+  ],
+  "recordTypes": [
+    {
+      "typeId": "design-context.domain-guide",
+      "kind": "guide",
+      "displayName": "Domain Guide",
+      "selection": {
+        "priority": 10,
+        "defaultMaximumRecords": 1,
+        "maximumRecords": 2,
+        "requireExplicitMultiple": true
+      },
+      "requiredSelectorDimensions": [
+        "domain"
+      ],
+      "requiredConstraintKinds": [
+        "accessibility",
+        "trust",
+        "responsive",
+        "originality"
+      ],
+      "allowedFacetValues": {}
+    },
+    {
+      "typeId": "design-context.experience-guide",
+      "kind": "guide",
+      "displayName": "Experience Guide",
+      "selection": {
+        "priority": 20,
+        "defaultMaximumRecords": 1,
+        "maximumRecords": 2,
+        "requireExplicitMultiple": true
+      },
+      "requiredSelectorDimensions": [
+        "experience"
+      ],
+      "requiredConstraintKinds": [
+        "accessibility",
+        "trust",
+        "responsive",
+        "originality"
+      ],
+      "allowedFacetValues": {}
+    },
+    {
+      "typeId": "design-context.design-signal",
+      "kind": "signal",
+      "displayName": "Design Signal",
+      "selection": {
+        "priority": 30,
+        "defaultMaximumRecords": 1,
+        "maximumRecords": 2,
+        "requireExplicitMultiple": false,
+        "justificationRequiredFacetValues": {
+          "maturity": [
+            "saturated"
+          ]
+        }
+      },
+      "requiredSelectorDimensions": [],
+      "requiredConstraintKinds": [
+        "accessibility",
+        "trust",
+        "responsive",
+        "originality"
+      ],
+      "allowedFacetValues": {
+        "maturity": [
+          "emerging",
+          "established",
+          "saturated",
+          "retired"
+        ],
+        "guidance": [
+          "consider",
+          "prefer",
+          "avoid-default",
+          "platform-required"
+        ]
+      }
+    },
+    {
+      "typeId": "design-context.source-note",
+      "kind": "source-note",
+      "displayName": "Source Note",
+      "selection": {
+        "priority": 40,
+        "defaultMaximumRecords": 1,
+        "maximumRecords": 1,
+        "requireExplicitMultiple": false
+      },
+      "requiredSelectorDimensions": [],
+      "requiredConstraintKinds": [],
+      "allowedFacetValues": {}
+    }
+  ],
+  "records": [
+    {
+      "id": "design-context.domain-guide.developer-platforms",
+      "kind": "guide",
+      "typeId": "design-context.domain-guide",
+      "title": "Developer Platforms",
+      "purpose": "Keep dense technical work direct, legible, and efficient.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "developer-platforms"
+          ]
+        },
+        "positiveSignals": [
+          "The Task changes a repeated technical workflow on a rendered product surface."
+        ],
+        "negativeSignals": [
+          "The Task is backend-only, generated-only, documentation-only, or a public page."
+        ]
+      },
+      "problem": "Equal-weight panels and decorative containers can hide the primary technical object.",
+      "guidance": "Center one work object, recede orientation and metadata, align comparable facts, and reveal detail progressively.",
+      "failureModes": [
+        "Copying a recognizable developer-tool shell or mistaking compact dark styling for expert usability."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Preserve semantic order, keyboard access, focus visibility, and readable density."
+        ],
+        "trust": [
+          "Keep status, scope, and destructive consequences visible."
+        ],
+        "responsive": [
+          "Move secondary inspectors into named surfaces before compressing the primary work."
+        ],
+        "originality": [
+          "Do not copy another product's shell, palette, grid, navigation, copy, or assets."
+        ]
+      },
+      "operationalCost": "Requires overflow, focus-order, and pane-state proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.linear-refresh",
+        "design-context.source-note.vercel-geist",
+        "design-context.source-note.govuk-accessibility"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:b9679e80fd71415d075f4fb7950c6a73454208baf9869fa52a9dd5edda1369be"
+    },
+    {
+      "id": "design-context.domain-guide.ai-assisted-products",
+      "kind": "guide",
+      "typeId": "design-context.domain-guide",
+      "title": "AI-Assisted Products",
+      "purpose": "Make automated help understandable, steerable, and recoverable.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "ai-assisted-products"
+          ]
+        },
+        "positiveSignals": [
+          "The rendered workflow generates, recommends, delegates, remembers, or acts with AI."
+        ],
+        "negativeSignals": [
+          "AI is an implementation detail with no user-visible state, choice, or consequence."
+        ]
+      },
+      "problem": "Opaque capability, memory, or authority encourages overreliance and makes correction difficult.",
+      "guidance": "Show what AI can access and do, preserve user state, expose sources or uncertainty when relevant, and make correction or reversal easy.",
+      "failureModes": [
+        "Anthropomorphic certainty, invisible memory, or autonomous action without meaningful control."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Communicate AI state and changes through text and semantics, not animation or color alone."
+        ],
+        "trust": [
+          "Expose scope, permissions, uncertainty, consequences, and recovery in proportion to risk."
+        ],
+        "responsive": [
+          "Keep the current task and control path reachable when supporting reasoning moves into a secondary surface."
+        ],
+        "originality": [
+          "Do not copy branded AI symbols, agent personas, reasoning layouts, or company-specific language."
+        ]
+      },
+      "operationalCost": "Requires state, permission, interruption, error, and reversal proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.atlassian-ai",
+        "design-context.source-note.microsoft-responsible-ai"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2026-11-09"
+      },
+      "contentDigest": "sha256:773cbfdb3bdf998419bda5fa546da767d14252a9b48fd0789436c476380e784f"
+    },
+    {
+      "id": "design-context.domain-guide.commerce-operations",
+      "kind": "guide",
+      "typeId": "design-context.domain-guide",
+      "title": "Commerce Operations",
+      "purpose": "Help operators act quickly without losing business context or control.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "commerce-operations"
+          ]
+        },
+        "positiveSignals": [
+          "The Task changes merchant, catalog, order, inventory, fulfillment, or business operations."
+        ],
+        "negativeSignals": [
+          "The surface is a public storefront or marketing page rather than an operational product workflow."
+        ]
+      },
+      "problem": "Duplicated content, jargon, and disconnected actions slow global operators and increase mistakes.",
+      "guidance": "Use plain consistent terms, meet operators in the current object context, prioritize the next business action, and break complex work into recoverable steps.",
+      "failureModes": [
+        "Repeating the same content across containers or hiding business consequences behind generic labels."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Use semantic structure, short scannable content, and non-color state cues."
+        ],
+        "trust": [
+          "State affected objects, quantities, timing, and recovery before consequential actions."
+        ],
+        "responsive": [
+          "Preserve the primary business object and action while secondary context transforms."
+        ],
+        "originality": [
+          "Do not copy Shopify or Stripe Admin conventions outside their platforms."
+        ]
+      },
+      "operationalCost": "Requires terminology, locale, consequence, and recovery review.",
+      "sourceNoteIds": [
+        "design-context.source-note.shopify-content",
+        "design-context.source-note.stripe-app-design"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:955c3840bedeb5b1a56e7023d43c3c81c97ed8dc6bb02c7cbb735781cdba3988"
+    },
+    {
+      "id": "design-context.domain-guide.financial-high-trust",
+      "kind": "guide",
+      "typeId": "design-context.domain-guide",
+      "title": "Financial And High-Trust Products",
+      "purpose": "Make consequential decisions calm, explicit, and reviewable.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "financial-high-trust"
+          ]
+        },
+        "positiveSignals": [
+          "The Task presents money, authorization, compliance, identity, or another consequential decision."
+        ],
+        "negativeSignals": [
+          "The rendered surface carries no consequential or sensitive state."
+        ]
+      },
+      "problem": "Visual novelty can obscure amount, party, timing, permission, confidence, or reversibility.",
+      "guidance": "Prioritize consequence visibility, review, confidence, permission, and auditability over ornament.",
+      "failureModes": [
+        "Weak contrast, ambiguous totals, hidden permissions, or dramatic motion around irreversible actions."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Do not use color alone for money, risk, identity, or completion state."
+        ],
+        "trust": [
+          "State actor, amount or object, destination, timing, permission, and recovery before confirmation."
+        ],
+        "responsive": [
+          "Keep review facts adjacent to confirmation at every width."
+        ],
+        "originality": [
+          "Do not borrow financial brands, branded components, copy, illustrations, or trust marks."
+        ]
+      },
+      "operationalCost": "Requires consequence, error, permission, and audit-state proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.stripe-app-design",
+        "design-context.source-note.wise-design",
+        "design-context.source-note.microsoft-responsible-ai"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:49ef8f309ec5fabfa3203fbdfbd80a254ecc8d4d0b37e91656be4929f8c2bb3a"
+    },
+    {
+      "id": "design-context.experience-guide.application-workbench",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "Application Workbench",
+      "purpose": "Orient repeated work around one primary object and next decision.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "application-workbench"
+          ]
+        },
+        "positiveSignals": [
+          "The Task changes a multi-region workspace used for repeated operational work."
+        ],
+        "negativeSignals": [
+          "The Task is a short linear flow or public page."
+        ]
+      },
+      "problem": "Equal-weight regions make work compete with navigation, filters, and metadata.",
+      "guidance": "Keep the primary object central, make orientation stable but quiet, and place persistent context beside rather than over the work.",
+      "failureModes": [
+        "Carding every region, duplicating headers, or making inspectors block the task without reason."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Keep landmarks, pane labels, focus order, and return focus stable."
+        ],
+        "trust": [
+          "Preserve visible status and unsaved work through navigation."
+        ],
+        "responsive": [
+          "Assign one scroll owner and transform secondary panes into named drawers or routes."
+        ],
+        "originality": [
+          "Adapt the structure to project components rather than copying a workbench shell."
+        ]
+      },
+      "operationalCost": "Requires keyboard, overflow, scroll-owner, and pane-state proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.linear-refresh",
+        "design-context.source-note.vercel-geist",
+        "design-context.source-note.material-layout"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:741c139e91357c72741e2438e181b6fbbe655b662df4e2b03c56b2fc0316f3a2"
+    },
+    {
+      "id": "design-context.experience-guide.setup-onboarding",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "Setup And Onboarding",
+      "purpose": "Get a person to a meaningful first outcome with clear choices and recovery.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "setup-onboarding"
+          ]
+        },
+        "positiveSignals": [
+          "The Task introduces, configures, connects, imports, or activates a product capability."
+        ],
+        "negativeSignals": [
+          "The user already has context and performs the workflow repeatedly."
+        ]
+      },
+      "problem": "Feature tours and premature configuration delay value and hide required decisions.",
+      "guidance": "Explain the immediate outcome, ask only for necessary choices, show progress truthfully, and defer optional configuration.",
+      "failureModes": [
+        "Long tours, unexplained permissions, irreversible defaults, or celebratory screens before success."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Use headings, steps, labels, and errors that remain understandable without visual decoration."
+        ],
+        "trust": [
+          "Explain permissions, data use, defaults, and reversibility before commitment."
+        ],
+        "responsive": [
+          "Transform supporting explanation without separating a choice from its consequence."
+        ],
+        "originality": [
+          "Use project language and product facts; do not imitate another product's setup sequence."
+        ]
+      },
+      "operationalCost": "Requires first-run, validation, skip, resume, and failure proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.shopify-content",
+        "design-context.source-note.wise-design",
+        "design-context.source-note.govuk-accessibility"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:82cbe6701b9e13c28b3098a655d064a213b30e048545a0f523cbd96d794aa684"
+    },
+    {
+      "id": "design-context.experience-guide.review-approval-transaction",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "Review, Approval, Or Transaction",
+      "purpose": "Support an informed consequential decision without distraction.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "review-approval-transaction"
+          ]
+        },
+        "positiveSignals": [
+          "The Task confirms, approves, pays, publishes, deletes, grants, or submits a consequential change."
+        ],
+        "negativeSignals": [
+          "The action is immediate, trivial, and safely reversible."
+        ]
+      },
+      "problem": "Generic confirmation UI can omit the exact object, change, authority, or recovery path.",
+      "guidance": "Place decisive facts and differences near the action, name the consequence with a verb, and separate review from execution when risk warrants it.",
+      "failureModes": [
+        "Vague confirm labels, hidden changes, accidental double action, or success without an audit trail."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Announce errors and completion, preserve focus, and offer a non-color review of changes."
+        ],
+        "trust": [
+          "Show actor, object, change, destination, timing, and reversibility before execution."
+        ],
+        "responsive": [
+          "Keep decisive facts and the final action in the same reading path."
+        ],
+        "originality": [
+          "Do not copy branded payment, approval, or security treatments."
+        ]
+      },
+      "operationalCost": "Requires double-submit, error, reversal, and audit-state proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.stripe-app-design",
+        "design-context.source-note.microsoft-responsible-ai"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:0bb99d96c5cb1068ec37e9e5a266e0b3cfe1af0f92339197d1e36a6151a56e15"
+    },
+    {
+      "id": "design-context.experience-guide.monitoring-operational-status",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "Monitoring And Operational Status",
+      "purpose": "Make current health, meaningful change, and next action scannable.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "monitoring-operational-status"
+          ]
+        },
+        "positiveSignals": [
+          "The Task shows ongoing system, deployment, queue, incident, or operational state."
+        ],
+        "negativeSignals": [
+          "The surface is a static report with no changing state or operational response."
+        ]
+      },
+      "problem": "Dense dashboards can give every metric urgency while hiding freshness and causal context.",
+      "guidance": "Lead with health and meaningful change, expose freshness, connect anomalies to scope and action, and disclose raw detail on demand.",
+      "failureModes": [
+        "Vanity metrics, constant red urgency, stale status without timestamps, or charts without decisions."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Pair visual encodings with text and ensure tables or summaries preserve the same meaning."
+        ],
+        "trust": [
+          "Show freshness, source, scope, uncertainty, and degraded-data states."
+        ],
+        "responsive": [
+          "Prioritize health and action; move historical or diagnostic detail behind explicit navigation."
+        ],
+        "originality": [
+          "Do not copy another platform's observability shell, chart palette, or status vocabulary."
+        ]
+      },
+      "operationalCost": "Requires live, stale, partial, empty, alert, and recovery proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.linear-refresh",
+        "design-context.source-note.vercel-geist",
+        "design-context.source-note.govuk-accessibility"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:bc7bfa6e026332ec0229d9fe75603f96fb81578ffce0ff9d93115f2c8be31558"
+    },
+    {
+      "id": "design-context.experience-guide.ai-assisted-delegated-work",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "AI-Assisted Or Delegated Work",
+      "purpose": "Keep a person oriented and in control while automation helps or acts.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "ai-assisted-delegated-work"
+          ]
+        },
+        "positiveSignals": [
+          "The Task asks AI to generate, recommend, remember, coordinate, or take action."
+        ],
+        "negativeSignals": [
+          "There is no user-visible AI capability, state, or delegation."
+        ]
+      },
+      "problem": "A chat-like surface alone does not explain working scope, progress, evidence, or authority.",
+      "guidance": "Keep the goal and current state visible, separate proposal from action, show relevant evidence, and provide pause, correction, approval, and reversal in proportion to risk.",
+      "failureModes": [
+        "False familiarity, hidden tools or memory, vague progress, and irreversible delegated action."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Make generated changes, progress, and controls available without relying on animation or spatial position."
+        ],
+        "trust": [
+          "State capabilities, data scope, permissions, uncertainty, and irreversible boundaries."
+        ],
+        "responsive": [
+          "Preserve the goal, current action, and intervention controls while reasoning detail moves elsewhere."
+        ],
+        "originality": [
+          "Do not copy branded assistant personas, thread chrome, agent icons, or reasoning presentation."
+        ]
+      },
+      "operationalCost": "Requires capability, permission, interruption, correction, error, and recovery proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.atlassian-ai",
+        "design-context.source-note.microsoft-responsible-ai"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2026-11-09"
+      },
+      "contentDigest": "sha256:0fb9d454fe2d0459217bb06e4ccfb8291cd74907c805570174d800919fb34edb"
+    },
+    {
+      "id": "design-context.experience-guide.mobile-task-transformation",
+      "kind": "guide",
+      "typeId": "design-context.experience-guide",
+      "title": "Mobile Task Transformation",
+      "purpose": "Preserve the task when space, input, attention, and environment change.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "mobile-task-transformation"
+          ]
+        },
+        "positiveSignals": [
+          "The Task must work across compact, medium, and expanded layouts or touch-first contexts."
+        ],
+        "negativeSignals": [
+          "The product has an explicit, truthful desktop-only constraint."
+        ]
+      },
+      "problem": "Shrinking desktop regions creates tiny controls, nested scroll, hidden state, and broken reading order.",
+      "guidance": "Recompose around the primary task, sequence supporting context, use platform-appropriate controls, and preserve state through each transformation.",
+      "failureModes": [
+        "Compressed multi-column layouts, unexplained icon-only actions, or destructive controls detached from context."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Maintain target size, reading order, zoom, focus, and reduced-motion behavior."
+        ],
+        "trust": [
+          "Do not hide state, consequence, or limitations to fit a narrow surface."
+        ],
+        "responsive": [
+          "Transform regions and navigation deliberately rather than scaling the desktop composition."
+        ],
+        "originality": [
+          "Do not reproduce platform materials or expressive components unless project authority adopts them."
+        ]
+      },
+      "operationalCost": "Requires narrow, intermediate, wide, touch, keyboard, and orientation proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.material-layout",
+        "design-context.source-note.apple-materials",
+        "design-context.source-note.govuk-accessibility"
+      ],
+      "facets": {},
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2027-02-09"
+      },
+      "contentDigest": "sha256:0348c829982a0a50885f300954ab04bf150ec054c093e08b6863449df2d0c991"
+    },
+    {
+      "id": "design-context.design-signal.quiet-structural-hierarchy",
+      "kind": "signal",
+      "typeId": "design-context.design-signal",
+      "title": "Quiet Structural Hierarchy",
+      "purpose": "Let structure support the work without making every boundary visible.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "developer-platforms",
+            "commerce-operations",
+            "financial-high-trust"
+          ]
+        },
+        "positiveSignals": [
+          "A dense interface gives navigation, containers, and content equal visual weight."
+        ],
+        "negativeSignals": [
+          "The project design system requires stronger separation for accessibility or brand reasons."
+        ]
+      },
+      "problem": "Borders, cards, labels, icons, and accent color on every region create noise rather than hierarchy.",
+      "guidance": "Prefer alignment, spacing, typography, and restrained layers before adding containers or accent color.",
+      "failureModes": [
+        "Removing necessary boundaries or using low contrast in pursuit of visual quiet."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Quiet hierarchy must retain perceivable grouping, contrast, and focus."
+        ],
+        "trust": [
+          "Do not visually mute risk, status, or consequence."
+        ],
+        "responsive": [
+          "Recompose hierarchy instead of erasing labels or context."
+        ],
+        "originality": [
+          "Do not imitate a named product's minimal shell or monochrome palette."
+        ]
+      },
+      "operationalCost": "Requires rendered hierarchy and contrast review.",
+      "sourceNoteIds": [
+        "design-context.source-note.linear-refresh",
+        "design-context.source-note.apple-materials"
+      ],
+      "facets": {
+        "maturity": "established",
+        "guidance": "consider"
+      },
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2026-11-09"
+      },
+      "contentDigest": "sha256:24d5058c62be96299aa8929cd8938ab6532bd56ad3af4674e792111ba580d678"
+    },
+    {
+      "id": "design-context.design-signal.visible-automation-authority",
+      "kind": "signal",
+      "typeId": "design-context.design-signal",
+      "title": "Visible Automation Authority",
+      "purpose": "Make the boundary between suggestion and action explicit.",
+      "applicability": {
+        "selectors": {
+          "domain": [
+            "ai-assisted-products"
+          ],
+          "experience": [
+            "ai-assisted-delegated-work",
+            "review-approval-transaction"
+          ]
+        },
+        "positiveSignals": [
+          "Automation can access data, remember context, or affect external state."
+        ],
+        "negativeSignals": [
+          "The capability only formats local content with no sensitive data or external effect."
+        ]
+      },
+      "problem": "People cannot calibrate trust when access, memory, permissions, and action rights are invisible.",
+      "guidance": "Expose relevant scope and permission at the decision point, distinguish preview from execution, and keep rejection or reversal available.",
+      "failureModes": [
+        "Overloaded consent, hidden memory, or treating a loading animation as adequate progress and control."
+      ],
+      "constraints": {
+        "accessibility": [
+          "State authority and outcomes in programmatically determinable text."
+        ],
+        "trust": [
+          "Scale approval, audit, and reversal to consequence."
+        ],
+        "responsive": [
+          "Keep intervention controls adjacent to the current automated action."
+        ],
+        "originality": [
+          "Do not copy branded agent identity, consent wording, or reasoning UI."
+        ]
+      },
+      "operationalCost": "Requires permission, preview, reject, reverse, and audit proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.atlassian-ai",
+        "design-context.source-note.microsoft-responsible-ai"
+      ],
+      "facets": {
+        "maturity": "emerging",
+        "guidance": "prefer"
+      },
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2026-11-09"
+      },
+      "contentDigest": "sha256:e9e358e902178f8d9632a0d12ee7717cc59885c4736abf5602bb8af4b703ce99"
+    },
+    {
+      "id": "design-context.design-signal.adaptive-task-layout",
+      "kind": "signal",
+      "typeId": "design-context.design-signal",
+      "title": "Adaptive Task Layout",
+      "purpose": "Change composition with available space while preserving task meaning.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "application-workbench",
+            "mobile-task-transformation",
+            "review-approval-transaction"
+          ]
+        },
+        "positiveSignals": [
+          "The same workflow must remain usable across materially different widths or input modes."
+        ],
+        "negativeSignals": [
+          "The Task targets one fixed and documented environment."
+        ]
+      },
+      "problem": "Breakpoint scaling alone preserves the wrong simultaneous regions and interaction assumptions.",
+      "guidance": "Start from the task and transform pane, rail, sheet, route, or sequence roles according to space and ergonomics.",
+      "failureModes": [
+        "Using a fashionable component or platform material without project fit or implementation support."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Preserve semantics, focus, targets, and state across transformations."
+        ],
+        "trust": [
+          "Keep limitations and consequences visible in every composition."
+        ],
+        "responsive": [
+          "Test compact, intermediate, and expanded behavior rather than only two screenshots."
+        ],
+        "originality": [
+          "Do not copy Material, Apple, Stripe, or Vercel component styling."
+        ]
+      },
+      "operationalCost": "Requires cross-breakpoint behavior and state-continuity proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.material-layout",
+        "design-context.source-note.apple-materials",
+        "design-context.source-note.stripe-app-design"
+      ],
+      "facets": {
+        "maturity": "established",
+        "guidance": "prefer"
+      },
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-09",
+        "reviewedAt": "2026-08-09",
+        "reviewAfter": "2026-11-09"
+      },
+      "contentDigest": "sha256:3240f1379c362a67b44c993cc9038e83a208990ce46b847e22df9fba9be641d8"
+    }
+  ],
+  "sourceNotes": [
+    {
+      "id": "design-context.source-note.linear-refresh",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Linear 2026 Interface Refresh",
+      "sourceOwner": "Linear",
+      "sourceType": "official-product",
+      "officialUrl": "https://linear.app/now/behind-the-latest-design-refresh",
+      "relevantSurface": "Dense developer workspaces and navigation",
+      "observation": "Linear describes reducing equal visual weight, excessive icons, and visible treatments so the central task stays in focus while orientation recedes.",
+      "transferRationale": "The hierarchy principle transfers to dense repeated work when project evidence supports it.",
+      "doNotCopy": [
+        "Dark palette",
+        "Recognizable shell",
+        "Navigation geometry",
+        "Brand styling"
+      ],
+      "limitations": [
+        "A branded product retrospective is not a universal usability standard.",
+        "The source does not prove suitability for novice or high-risk workflows."
+      ],
+      "licenseOrAssetRestrictions": "Principles are paraphrased; no screenshots, copy, code, tokens, or assets are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:5aff8f11b3f0f7696098859687df4b67007595d71719353a2ddc2432ff435926"
+    },
+    {
+      "id": "design-context.source-note.vercel-geist",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Vercel Geist",
+      "sourceOwner": "Vercel",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://vercel.com/geist/stack",
+      "relevantSurface": "Developer interfaces, layout, typography, components, and contextual panels",
+      "observation": "Geist documents a consistent high-contrast system and distinguishes persistent associated context from blocking decisions, with explicit keyboard and focus behavior.",
+      "transferRationale": "Semantic component choice, consistent foundations, and contextual detail patterns transfer when implemented through project-owned components.",
+      "doNotCopy": [
+        "Geist styling",
+        "Vercel grid aesthetic",
+        "Typography",
+        "Component code",
+        "Brand assets"
+      ],
+      "limitations": [
+        "Component advice reflects Vercel's system and implementation constraints.",
+        "Its aesthetic is not evidence of fit for another product."
+      ],
+      "licenseOrAssetRestrictions": "No component code, fonts, icons, screenshots, or brand assets are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:f1403e0c7f6bc2be3ef74f8a783204a68add8226631d74ed7da71b8a23051f90"
+    },
+    {
+      "id": "design-context.source-note.atlassian-ai",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Atlassian AI Interaction Guidelines",
+      "sourceOwner": "Atlassian",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://atlassian.design/rovo-ui/ai-interaction-guidelines",
+      "relevantSurface": "AI-assisted and delegated work",
+      "observation": "The guidance emphasizes contextual proactivity, flow preservation, inspectability, collaboration, permissions, risk communication, and course correction.",
+      "transferRationale": "These interaction responsibilities transfer to visible AI capabilities independently of Atlassian's brand expression.",
+      "doNotCopy": [
+        "Rovo identity",
+        "Blue thread",
+        "Branded icons",
+        "Component styling",
+        "Product copy"
+      ],
+      "limitations": [
+        "Examples are shaped by Atlassian products and policies.",
+        "Specific disclosure or approval requirements remain project and jurisdiction dependent."
+      ],
+      "licenseOrAssetRestrictions": "Only original paraphrased principles are retained; no visual or textual assets are copied.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:8b84bea0d7eb590fe7d2bd90b7464c7075571bfbbcd66147032994f623cc1aa9"
+    },
+    {
+      "id": "design-context.source-note.microsoft-responsible-ai",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Microsoft Fluent Responsible AI",
+      "sourceOwner": "Microsoft",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://fluent2.microsoft.design/responsible-AI",
+      "relevantSurface": "AI transparency, scope, control, memory, permissions, errors, and recovery",
+      "observation": "The guidance covers expectation setting, source and accuracy cues, data and memory scope, meaningful latency, action rights, approval, correction, reversal, and actionable errors.",
+      "transferRationale": "Trust calibration and control principles transfer to AI interfaces, while policy details stay project-owned.",
+      "doNotCopy": [
+        "Copilot identity",
+        "Microsoft-specific disclaimers",
+        "Reasoning panel styling",
+        "Memory indicators",
+        "Product copy"
+      ],
+      "limitations": [
+        "Some requirements are Microsoft product rules rather than general standards.",
+        "Displaying reasoning can introduce privacy, safety, or misinterpretation risks."
+      ],
+      "licenseOrAssetRestrictions": "No Fluent assets, components, screenshots, or exact copy are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:1ac884e2b8918c503b11e0989c7ce5d3ade30540bb5a45119f6d46189a0c89cf"
+    },
+    {
+      "id": "design-context.source-note.stripe-app-design",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Stripe Apps Design",
+      "sourceOwner": "Stripe",
+      "sourceType": "platform-guidance",
+      "officialUrl": "https://docs.stripe.com/stripe-apps/design",
+      "relevantSurface": "Contextual financial operations and focused workflows",
+      "observation": "Stripe limits customization for consistency and accessibility, recommends meeting users in existing object context, and separates contextual side-by-side work from focused uninterrupted tasks.",
+      "transferRationale": "Context-first entry, appropriate focus, and constrained expression transfer to high-trust embedded workflows.",
+      "doNotCopy": [
+        "Stripe Dashboard styling",
+        "App indicator",
+        "ContextView or FocusView composition",
+        "Components",
+        "Brand assets"
+      ],
+      "limitations": [
+        "Direct component and surface rules apply only inside Stripe Apps.",
+        "Constrained customization is not automatically right for standalone products."
+      ],
+      "licenseOrAssetRestrictions": "No Stripe components, code, screenshots, copy, or brand assets are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2027-02-09",
+      "contentDigest": "sha256:dbebfd912ad6f994fad170a5525b96f6eda70ee02d7b6703339938fd52652867"
+    },
+    {
+      "id": "design-context.source-note.wise-design",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Wise Design",
+      "sourceOwner": "Wise",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://docs.wise.design/design-at-wise/get-started",
+      "relevantSurface": "Cross-platform financial brand and product consistency",
+      "observation": "Wise presents one design system spanning brand and product, supported by platform-specific tokens, components, patterns, and screen templates.",
+      "transferRationale": "A coherent authority with platform-specific implementations supports consistency without forcing identical composition.",
+      "doNotCopy": [
+        "Wise visual identity",
+        "Tokens",
+        "Components",
+        "Illustrations",
+        "Templates",
+        "Brand voice"
+      ],
+      "limitations": [
+        "The available source is an overview, not evidence for individual financial interaction patterns.",
+        "Wise brand expression is not transferable."
+      ],
+      "licenseOrAssetRestrictions": "No Wise assets, libraries, templates, screenshots, or copy are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2027-02-09",
+      "contentDigest": "sha256:95b8588f620ab0357d74b52205a57c8aa89f5338cb7c66b88378deccb3cad051"
+    },
+    {
+      "id": "design-context.source-note.shopify-content",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Shopify App Content Guidance",
+      "sourceOwner": "Shopify",
+      "sourceType": "platform-guidance",
+      "officialUrl": "https://shopify.dev/docs/apps/design/content",
+      "relevantSurface": "Global merchant-facing operational content",
+      "observation": "Shopify recommends plain scannable language, consistent terminology, strong action verbs, prioritized steps, reduced duplication, and merchant control.",
+      "transferRationale": "Clear, consistent, action-oriented product language transfers to operational products with diverse users.",
+      "doNotCopy": [
+        "Shopify voice",
+        "Admin layout",
+        "Polaris components",
+        "Example copy",
+        "Merchant-specific conventions outside commerce"
+      ],
+      "limitations": [
+        "A grade-level benchmark is locale-specific and not a substitute for user research.",
+        "Shopify Admin conventions apply directly only to Shopify integrations."
+      ],
+      "licenseOrAssetRestrictions": "Only paraphrased writing principles are retained; no examples, images, or exact copy are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2027-02-09",
+      "contentDigest": "sha256:a6fdfc87638b1664a820ba75b57695ce6b0b6caf94b873dea612d87fd8b608c4"
+    },
+    {
+      "id": "design-context.source-note.apple-materials",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Apple Human Interface Guidelines: Materials",
+      "sourceOwner": "Apple",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://developer.apple.com/design/human-interface-guidelines/materials",
+      "relevantSurface": "Platform hierarchy, materials, contrast, and context",
+      "observation": "Apple describes materials as hierarchy and orientation tools, separates functional controls from content, and recommends sparse use with legibility and system adaptation.",
+      "transferRationale": "Semantic layering, restraint, and context preservation transfer; platform material appearance does not.",
+      "doNotCopy": [
+        "Liquid Glass appearance",
+        "Apple component styling",
+        "System assets",
+        "Platform-specific material recipes"
+      ],
+      "limitations": [
+        "Liquid Glass is platform-specific and can become visual noise or reduce contrast when generalized.",
+        "System components and accessibility settings change actual behavior."
+      ],
+      "licenseOrAssetRestrictions": "No Apple design resources, assets, screenshots, code, or platform appearance are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:d93551ca69d5f16dbe6c6d287ea943af2122e274885d72a674748f6fe2875d0e"
+    },
+    {
+      "id": "design-context.source-note.material-layout",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "Material Design 3 Adaptive Layouts And States",
+      "sourceOwner": "Google",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://m3.material.io/foundations/layout/canonical-examples/overview",
+      "relevantSurface": "Adaptive pane composition and interaction states",
+      "observation": "Material documents feed, list-detail, and supporting-pane scaffolds across compact, medium, and expanded breakpoints, plus consistent visible interaction states.",
+      "transferRationale": "Task-based pane transformation and complete states transfer when expressed through the project's system.",
+      "doNotCopy": [
+        "Material styling",
+        "Expressive shapes",
+        "Motion",
+        "Components",
+        "Dynamic color",
+        "Canonical screen appearance"
+      ],
+      "limitations": [
+        "Canonical layouts are starting points, not universal solutions.",
+        "Material components and expressive styling should not overwrite a non-Material system."
+      ],
+      "licenseOrAssetRestrictions": "No Material kit, code, icons, screenshots, components, or exact styling are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2026-11-09",
+      "contentDigest": "sha256:7ca6bad3ee1bb19948b61c119d3a5c30e83fe901fd10426a7830d3d84683b429"
+    },
+    {
+      "id": "design-context.source-note.govuk-accessibility",
+      "kind": "source-note",
+      "typeId": "design-context.source-note",
+      "title": "GOV.UK Design System Accessibility Strategy",
+      "sourceOwner": "Government Digital Service",
+      "sourceType": "official-design-system",
+      "officialUrl": "https://design-system.service.gov.uk/accessibility/accessibility-strategy/",
+      "relevantSurface": "Universal design, progressive enhancement, evidence, and accessibility verification",
+      "observation": "The strategy emphasizes tolerance for error, low cognitive effort, semantic HTML, resilient fallbacks, evidenced prioritization, and combined automated, manual, and user research.",
+      "transferRationale": "Resilience and evidence-backed accessibility transfer across product domains and constrain visual trends.",
+      "doNotCopy": [
+        "GOV.UK visual language",
+        "Service patterns without domain fit",
+        "Government content style"
+      ],
+      "limitations": [
+        "Public-service priorities and governance do not map directly to every commercial product.",
+        "Automated checks alone cannot establish accessibility."
+      ],
+      "licenseOrAssetRestrictions": "No GOV.UK components, templates, screenshots, or exact content are redistributed.",
+      "observedAt": "2026-08-09",
+      "reviewAfter": "2027-02-09",
+      "contentDigest": "sha256:3caf7713422421a752d5a1ab1a56b3a1038c16259b36db0b79893d0055bfb1c7"
+    }
+  ],
+  "contentDigest": "sha256:289701e134e2de5582aae2368a41f05a0190b03b3ab1237696046a61596801d5"
+}

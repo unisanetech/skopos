@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-07-25
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-09
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -26,6 +26,59 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-09`: Implemented the first generic Skill Context consumer without adding a
+  Product Interface Design module or design vocabulary to core. The pack-owned Design
+  Context Library now carries four Domain Guides, six Experience Guides, three Design
+  Signals, and ten official Source Notes. Generic runtime resolution fails closed on
+  missing or ambiguous explicit selectors, preserves project-authority precedence,
+  excludes expired and retired content, charges records to the existing Task-wide
+  budget, requires explicit Task justification for pack-declared saturated facet
+  values, and binds reuse to algorithm, selectors, project authority, and Library
+  identity. Copied-pack and clean packed-install proof pass, and a six-case behavioral
+  matrix is prepared but unexecuted. Live Task projection remains deliberately
+  inactive until explicit selectors have one canonical Task authority; no goal-keyword
+  inference was added.
+  The exact accepted combined identity is
+  `sha256:1c651b3bd15ba8fa20bdc68725c8492a90bf1a9d73f911334aa8b2b1d0c08f6f`;
+  8/8 existing Skill fixtures pass.
+- `2026-08-09`: Separated three previously conflated Product Interface Design proof
+  purposes. The fixed one-case `operations-workbench` run is now explicitly a pipeline
+  canary for paid-model invocation, isolation, rendering, telemetry, and blinded-review
+  plumbing; its repeated page is not creative-range or promotion Evidence. A new
+  candidate-only showcase selects three scenarios not previously used by the same
+  accepted Skill identity, starts each coding agent from a minimal static scaffold, and
+  preserves the brief, exact identity, source, desktop/mobile renders, checks, telemetry,
+  and a human-readable gallery. The frozen paired suite and independent blind human
+  threshold remain the only synthetic promotion path. Showcase output is qualitative
+  diagnostic material and cannot unblock R2. The unchanged `0.3.0` pack was re-accepted
+  against the intentional capability-catalog change with combined digest
+  `sha256:8c26ec241456c1e2f656ac603baae70c586e4d4d0ae345235e434777c2ec7485`;
+  8/8 deterministic fixtures pass.
+- `2026-08-09`: Completed the frozen Product Interface Design `0.3.0` machine efficacy
+  cycle without post-outcome tuning. The exact one-case smoke passed 1-0; the full
+  eight-case run completed all 24 calls with 4 candidate wins and 4 control wins, no
+  tie, invalid case, abort, authority regression, correction, supervision, or
+  containment finding. Full usage was 2,842,392 input tokens (716,184 fresh) and
+  150,264 output, within all ceilings. The result is `inconclusive`, not efficacy
+  certification. The generated label-safe A/B bundles now have an independent human
+  review protocol; R2 remains blocked and the pack remains non-promotional.
+- `2026-08-09`: Enriched Product Interface Design `0.3.0` without restoring the former
+  module sprawl. Structure, Behavior, and Finish now contain 21 concise Bad-to-Better
+  patterns for human interface writing, component reuse, responsive transformation,
+  states, accessibility, conditional React boundaries, hierarchy, tokens, density,
+  and rendered proof. All eight fixtures pass; focused Structure and Behavior
+  selections measure 596 and 612 tokens, while all three capabilities measure 1,530,
+  below the 1,800 standard-Task ceiling. The exact accepted combined digest is
+  `sha256:6a777cc44b8f6b887a187f566813a9cbe1baf6e1e415752bbcd2aa6d91a29464`.
+  R2 remains blocked pending fresh efficacy and independent blind human review.
+- `2026-08-09`: Renamed the required pre-release UI Skill to Product Interface Design
+  `0.2.0` (`ui.product-interface-design`) and simplified its public capability model
+  from seven modules to Structure, Behavior, and Finish. React advice is conditional
+  inside Behavior rather than a standalone capability. The exact accepted source
+  passes 8/8 deterministic fixtures; focused selections measure 524 and 518 tokens,
+  and all three capabilities measure 1,310 tokens. Product UI Craft evaluations remain
+  immutable historical Evidence and do not certify the renamed source. Release gate R2
+  remains blocked pending fresh efficacy and independent blind human review.
 - `2026-08-06`: The isolated Unisane ecommerce canary exposed a project-adaptation
   defect: the worker imported six library components but still invented navigation,
   drawer, segmented-control, filter, and progress contracts and introduced 58 distinct
@@ -288,7 +341,7 @@ relatedDocs:
 
 ## Context
 
-Coding agents benefit from researched, project-specific craft guidance for work such as
+Coding agents benefit from researched, project-specific design guidance for work such as
 brand-consistent UI, React rendering boundaries, responsive behavior, accessibility,
 interface writing, and evidence-based SEO. Policies and guards can state or enforce hard
 rules, but they do not teach the judgment needed to apply project truth well in a
@@ -339,8 +392,9 @@ old-pack compatibility path.
 14. Project Memory is preferred before generic guidance. A selected module binds only
     the project context, Actions, Guards, rubric dimensions, and failure signals it
     actually needs; matching one module cannot select every capability in its pack.
-15. The pre-release Skill system has one canonical `schemaVersion: 1`. Every built-in
-    pack starts at `0.1.0`, including `ui.product-craft`. The clean hard cut updates the
+15. The pre-release Skill system has one canonical `schemaVersion: 1`. Built-in packs
+    start at `0.1.0`; pre-release version changes identify materially revised exact
+    sources. The current first pack is `ui.product-interface-design@0.3.0`. The clean hard cut updates the
     schema, selector, packs, bindings, fixtures, projections, tests, and docs together
     without migrations, aliases, deprecated formats, parallel runtimes, or silent
     fallback.
@@ -392,7 +446,7 @@ The first canonical schema and loader now enforce the following in place:
    fields fail strict validation
 5. the current runtime resolves only the context, Actions, and Guards named by selected
    modules
-6. the initial Product UI Craft pack and its accepted project binding use `0.1.0`
+6. the required Product Interface Design pack and its accepted project binding use `0.3.0`
 7. Task admission passes current owned and changed paths into one normalized Skill
    signal envelope instead of reducing selection to the goal and Scope label
 8. module eligibility requires positive structural intent plus Scope, path, capability,
@@ -411,12 +465,12 @@ The first canonical schema and loader now enforce the following in place:
 13. one generated per-Task selection artifact owns both cache reuse and explanations;
     its identity includes the selection algorithm, normalized Task signals, accepted
     Skill identities, Action/Guard catalog, and resolved policy
-14. every declared Product UI Craft fixture resolves exactly once and executes without
+14. every declared Product Interface Design fixture resolves exactly once and executes without
     a model or network call across positive, visual-restraint, negative, ambiguous,
     generated-output, capability-locality, and budget cases
 15. `skills apply` evaluates the candidate source first and refuses acceptance while
     any deterministic fixture fails
-16. one strict Product UI Craft evaluation suite owns eight paired cases and a clean
+16. one strict Product Interface Design evaluation suite owns eight paired cases and a clean
     runnable project template; the runtime isolates arms, bounds real non-symlink
     artifacts to each arm, blinds reviewer inputs, validates rubric scores on the
     declared 0-3 scale, supports a one-case smoke projection without changing the suite,
@@ -439,19 +493,14 @@ The first canonical schema and loader now enforce the following in place:
     stale selection after capability identity changes
 
 The deterministic fixture baseline, staged paired-evaluation infrastructure, automated
-responsive/accessibility canary, packed non-Skopos adoption, and exact re-acceptance are
-complete for Product UI Craft. Historical frozen runs remain valid only for their bound
-source identities: the first full run recorded 2 candidate wins, 6 control wins, one
-candidate authority regression, and a reviewer-trace containment limitation; the
-second-cycle `operations-workbench` smoke also favored the control on three dimensions
-and tied one. Screenshot review of that smoke drove a new visual-modernity source,
-rubric, fixture, and suite identity. Its seven fixtures and focused tests pass, and its
-exact real `operations-workbench` smoke now favors the candidate on three dimensions
-and ties one, with clean containment and bounded cost. This one-case result is not full
-efficacy certification. Product UI Craft and catalog expansion stay blocked pending a
-separately authorized 24-call full comparison bound to this exact smoke identity and
-independent subjective human review. Invalid or zero-token launches remain diagnostic
-infrastructure evidence and do not count as Skill outcomes.
+responsive/accessibility canary, packed non-Skopos adoption, and exact acceptance are
+complete for Product Interface Design. Its three modules pass all eight fixtures and
+fit the standard Task budget at 1,310 measured tokens together. Historical Product UI
+Craft runs remain valid only for their bound identities and cannot certify the renamed
+source. Product Interface Design and catalog expansion stay blocked pending a
+separately authorized paired comparison and independent subjective human review.
+Invalid or zero-token launches remain diagnostic infrastructure evidence and do not
+count as Skill outcomes.
 
 ## Consequences
 

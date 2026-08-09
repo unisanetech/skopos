@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: target
-implementationStatus: phase-1-contract-implemented
+implementationStatus: phase-4-deterministic-foundation-implemented
 lastUpdated: 2026-08-09
 relatedDocs:
   - 00-architecture.md
@@ -34,6 +34,15 @@ authority.
 
 ## Changelog
 
+- `2026-08-09`: Added the first reviewed pack-owned Library, a generic deterministic
+  resolver, compact Context Brief identity, project-authority precedence, expiry and
+  retirement exclusion, Task-wide budget suppression, exact selector invalidation,
+  pack-declared explicit justification for saturated signals, copied-pack and packed-
+  install proof, and a prepared but unexecuted behavioral matrix. The
+  Library contains four Domain Guides, six Experience Guides, three Design Signals,
+  and ten dated Source Notes. Routine `skills context` activation remains deferred
+  until explicit Task selector evidence has one canonical input path; the runtime does
+  not infer design context from incidental Task wording.
 - `2026-08-09`: Implemented the Phase 1 contract through a generic core Skill Context
   envelope and capability-owned Design Context vocabulary and fixtures. Skopos core owns
   reusable identity, provenance, freshness, applicability, budget, and validation
@@ -88,10 +97,10 @@ The implementation boundary is intentionally asymmetric:
 5. A future Skill may use the generic infrastructure with a different namespace and
    vocabulary without importing design semantics or changing a core project primitive.
 
-Phase 1 keeps its synthetic contract fixture outside the currently accepted pack
-directory so proving the optional contract does not change that pack's source digest.
-The reviewed production Library enters the pack source only when the Library is ready
-for exact re-acceptance.
+The synthetic Phase 1 contract fixture remains outside the pack as a generic-boundary
+regression. The reviewed production Library now lives inside the Product Interface
+Design pack and therefore participates in the pack's exact source digest, packed asset
+boundary, and explicit re-acceptance lifecycle.
 
 Design Context is not:
 
@@ -282,6 +291,12 @@ One generated Context Brief owns the resolved context for a Task. It records:
 8. token cost and budget decisions
 9. source-note ids and observation dates
 10. exact Context Brief digest
+
+The generated identity also records the generic selector algorithm, normalized Task
+selectors, project-authority digest, and combined digest. Selection requires explicit
+Task evidence. Until one canonical Task field owns those selectors, the resolver is
+used by deterministic proof and prepared evaluation inputs but is not silently invoked
+from goal-text keyword matching.
 
 The brief is derived state under `.skopos/**`; accepted library sources remain tracked
 and portable. A changed library, binding, project authority, selector, or Task signal

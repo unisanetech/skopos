@@ -12,6 +12,10 @@ import { SKOPOS_SCOPE_KINDS } from '@skopos/model';
 import { z } from 'zod';
 
 import { listFilesUnder, readTextFile } from '../../adapters/workspace-filesystem.adapter.js';
+import {
+  loadSkoposSkillContextLibrary,
+  type SkoposLoadedSkillContextLibrary,
+} from '../load-skill-context-library/load-skill-context-library.service.js';
 
 const nonEmptyString = z.string().min(1);
 const signalSchema = z
@@ -110,7 +114,7 @@ const skillPackManifestSchema = z
     packId: nonEmptyString,
     family: z.enum([
       'project-intelligence',
-      'ui-craft',
+      'interface-design',
       'frontend-engineering',
       'accessibility',
       'ux-writing',
@@ -152,6 +156,13 @@ const skillPackManifestSchema = z
         maximumModules: z.number().int().positive(),
       })
       .strict(),
+    contextLibrary: z
+      .object({
+        path: nonEmptyString,
+        maximumMeasuredTokens: z.number().int().positive(),
+      })
+      .strict()
+      .optional(),
     modules: z.array(skillModuleSchema).min(1),
     failureSignals: z.array(failureSignalSchema),
     rubricPath: nonEmptyString,
@@ -402,6 +413,7 @@ export interface SkoposLoadedSkillPack
   modules: SkoposLoadedSkillModule[];
   fixtures: SkoposLoadedSkillFixture[];
   evaluationSuites: SkoposLoadedSkillEvaluationSuite[];
+  loadedContextLibrary?: SkoposLoadedSkillContextLibrary;
   sourcePath: string;
 }
 
@@ -475,11 +487,23 @@ export const loadSkoposSkillPacks = async ({
         pack,
         packDirectory,
       });
+      const loadedContextLibrary = pack.contextLibrary
+        ? await loadSkoposSkillContextLibrary({
+            cwd: packDirectory,
+            sourcePath: pack.contextLibrary.path,
+          })
+        : undefined;
+      if (loadedContextLibrary && !loadedContextLibrary.consumerPackIds.includes(pack.packId)) {
+        throw new Error(
+          `Skill Context Library ${loadedContextLibrary.libraryId} does not declare consumer ${pack.packId}.`,
+        );
+      }
       packs.push({
         ...pack,
         modules,
         fixtures,
         evaluationSuites,
+        ...(loadedContextLibrary ? { loadedContextLibrary } : {}),
         sourcePath: relative(cwd, manifestPath) || manifestPath,
       });
     }

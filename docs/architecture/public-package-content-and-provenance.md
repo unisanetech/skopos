@@ -34,17 +34,21 @@ The public package manifest exposes the `skopos` binary and import export only.
 Repository build, test, benchmark, proof, release, and UI-capture scripts are owned by
 the private workspace root and must not appear in the installed package manifest.
 
-## Product UI Craft Runtime Assets
+## Product Interface Design Runtime Assets
 
-Product UI Craft is part of the public capability and must not be removed. Its public
-runtime files are fail-closed in `packages/cli/scripts/copy-skill-packs.mjs`. The
-allowlist contains exactly 42 files under these roles:
+Product Interface Design `0.3.0` is an owner-authorized Unisane capability and must not
+be removed. Its public runtime files are fail-closed in
+`packages/cli/scripts/copy-skill-packs.mjs`. The allowlist contains exactly 40 files
+under these roles:
 
 1. `pack.json` for selection and authority metadata
 2. `guidance/**` for selected agent context
-3. `fixtures/**` for deterministic applicability checks
-4. `rubrics/**` for review dimensions
-5. `evaluations/core.suite.json` and `evaluations/templates/**` for explicit,
+3. `design-context/library.json` for the reviewed, pack-owned Context Library
+4. `design-context/evaluations/candidate.matrix.json` for the frozen behavioral-
+   evaluation inputs
+5. `fixtures/**` for deterministic applicability checks
+6. `rubrics/**` for review dimensions
+7. `evaluations/core.suite.json` and `evaluations/templates/**` for explicit,
    user-invoked evaluation runs
 
 Evaluation templates stay in the runtime package because the installed runtime reads
@@ -98,6 +102,6 @@ Before publication, the release gate must show:
   the Unisane UI source copied into Skopos, its theme/token baseline, and corresponding
   bundled object code; the previously blocking provenance criterion is resolved.
 - `2026-08-09`: Declared the separate source and npm review boundaries, retained the
-  runtime-required Product UI Craft evaluation assets behind an exact allowlist,
+  runtime-required Product Interface Design evaluation assets behind an exact allowlist,
   moved repository-only scripts out of the publishable manifest, and recorded the
   unresolved `UNLICENSED` UI-source provenance blocker.

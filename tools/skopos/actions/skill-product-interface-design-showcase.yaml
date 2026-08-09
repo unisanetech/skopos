@@ -1,0 +1,40 @@
+id: skill.product-interface-design-showcase
+title: Generate a fresh Product Interface Design showcase
+description: Uses the accepted Product Interface Design Skill to create three new interfaces from minimal scaffolds, capture desktop/mobile renders, and build a qualitative review gallery. Automatic runs do not repeat scenarios for the same Skill identity.
+category: quality-check
+scope:
+  - workspace
+command: pnpm proof:product-interface-design-showcase -- --count=3 --execute --authorized
+cwd: .
+inputs:
+  - packages/cli/src/benchmarks/product-interface-design-showcase.ts
+  - packages/cli/src/benchmarks/product-interface-design-showcase-support.ts
+  - packages/cli/src/benchmarks/product-interface-design-showcase.scenarios.json
+  - packages/cli/src/benchmarks/fixtures/product-interface-design-showcase
+  - skill-packs/ui/product-interface-design/pack.json
+  - tools/skopos/skills/ui.product-interface-design.json
+outputs:
+  - .skopos/evaluations
+affects: []
+capabilities:
+  process: required
+  network: required
+  browser: required
+  tools: [pnpm, node, codex]
+  secrets: []
+  services: [openai-codex]
+effects:
+  workspace: none
+  artifacts: isolated
+  external: declared
+concurrency: exclusive
+workspaceMode: overlay-safe
+safety: artifact-producing
+requiresApproval: true
+timeoutMs: 3600000
+whenToUse: Use after an explicitly authorized request to inspect the Skill's creative range on fresh product-interface tasks. The gallery is qualitative diagnostic material, not paired efficacy, human adjudication, or release-promotion Evidence.
+phases:
+  - closure
+risks:
+  - high-impact
+owner: skopos-skills

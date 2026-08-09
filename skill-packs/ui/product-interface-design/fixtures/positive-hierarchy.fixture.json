@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-interface-design-positive-hierarchy",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Select hierarchy guidance for a rendered product surface with structural UI intent.",
+  "fixtureId": "ui-product-interface-design-positive-hierarchy",
+  "packId": "ui.product-interface-design",
+  "category": "positive",
+  "task": {
+    "goal": "Establish the hierarchy, layout, brand expression, and reading order of the rendered product workspace.",
+    "scope": {
+      "id": "fixture-product-ui",
+      "title": "Fixture Product UI",
+      "path": "src/ui",
+      "kind": "application",
+      "ancestorIds": ["fixture-product"],
+      "aliases": [],
+      "codeRoots": ["src/ui"]
+    },
+    "acceptanceCriteria": [
+      "The product page has one clear visual hierarchy.",
+      "Responsive layout preserves reading order through desktop and mobile viewport adaptation."
+    ],
+    "constraints": [
+      "Preserve the exact Product Interface Design pack; do not modify it merely to improve this fixture result."
+    ],
+    "nonGoals": [
+      "Do not change existing product behavior or modify Product Interface Design guidance."
+    ],
+    "openDecisions": [],
+    "risk": "standard",
+    "phase": "iteration",
+    "ownedPaths": ["src/ui/workspace.tsx"],
+    "changedPaths": ["src/ui/workspace.tsx"],
+    "affectedCapabilities": ["browser-rendering", "design-tokens"],
+    "selectedActionIds": [],
+    "applicableGuardIds": [],
+    "acceptedFailureEvidence": [],
+    "projectLifecycle": "greenfield"
+  },
+  "expectation": {
+    "selectedModuleIds": [
+      "interface-design.structure",
+      "interface-design.behavior",
+      "interface-design.finish"
+    ],
+    "suppressedModuleReasonCodes": {},
+    "selectedActionIds": [
+      "quality.run-proof-phase",
+      "ui.capture-responsive-proof"
+    ],
+    "selectedGuardIds": [
+      "quality.typecheck",
+      "ui.accessibility-proof"
+    ],
+    "maximumSelectedModules": 3,
+    "maximumMeasuredTokens": 1800
+  }
+}

@@ -1,0 +1,128 @@
+{
+  "snapshotId": "S-f012e85eabbc",
+  "taskId": "T-4b256788",
+  "sessionId": "interface-design-closure-20260809",
+  "actorId": "codex-interface-design",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "CONTRIBUTING.md",
+      "digest": "689506c88fdab892f9cc1375ca730e3f6ae7a4d226e432e29bd313078317ee2b"
+    },
+    {
+      "path": "README.md",
+      "digest": "40370e3b9bb16e89352142c238e6a163f4656886de453d64ebcd1256e2c4c535"
+    },
+    {
+      "path": "docs/architecture/public-package-content-and-provenance.md",
+      "digest": "822c317020420d2102ddf8ce223453bce568cf656793ea4dbe61515013382899"
+    },
+    {
+      "path": "docs/decisions/006-eval-harness-and-scoring-contract.md",
+      "digest": "672e754e1d5a0f07e6d6ae7983d7a708d1d54d5dae40b4bd48e2c6ab650d6638"
+    },
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "27e0540672fd3fe47db12dd5234968431727eb631b7d1b93e84e271ea6ffc4dc"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "b68a82c073b716a66cb46d705468ff39ddc3d08b0525865733574ffb8c74ce88"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "digest": "1eeb4841aa3fdb0837c94b6629609471fce4c24c48956000ca5e8fc085954377"
+    },
+    {
+      "path": "docs/operations/release-security.md",
+      "digest": "fd96ec0ffd7eac87771e17c94d0029b993890bea3c924f7f59ee89e4afa688ea"
+    },
+    {
+      "path": "docs/overview.md",
+      "digest": "063eae4c664e2cf5be51097813a6cd76d6aea5cb2051e635b9a35fa1531f1731"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-22bcd9ef-certify-current-source-product-ui-craft-efficacy-and-por.md",
+      "digest": "dc28a4b6fdd3f928ee91139c9bb9d452bf7f7a45ea5cf22c32159ed099182979"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "c09b1f29a137c739532750ba10685c937d740e240bd11ded9066dccd24388408"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "f3e02f12936ab57a74512a4e52567473f27b02cb94954f0e164d8f271190b6c1"
+    },
+    {
+      "path": "docs/work/tasks/T-22bcd9ef-certify-current-source-product-ui-craft-efficacy-and-por.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "package.json",
+      "digest": "83df39e1c551689c8f30f76d2fcf69a832e62258bb15d73a269c98b50a74580a"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "digest": "b629bd4f21b3402e46af8d96a8aed94a705d5a7df5f757bc92d4233495ff694f"
+    },
+    {
+      "path": "packages/cli/scripts/copy-skill-packs.mjs",
+      "digest": "17921e20445056e87244f2f436e6c10b33823e538f3c2a8b32bd46c5f809b62a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "c05edf1a557fcc2abfa0e5ba609dd8b6e7b94b0da9b431559d84d05a604ca99c"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "91c9d35b447109ce39b8f48eab070d4b9592f4fd9f4174ddb0f987d320c8a78e"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-packs.test.ts",
+      "digest": "a91dd338e9fd36ee31621afd9b2b4a8ed49b91b3dfb3d66e56fa1701908bb286"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "567cc8d51d0bc7f94a8073fd9bda1cf14bd2ae4600ea525ede6838c50b4d40f4"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-skill-portability.ts",
+      "digest": "699f25d57aeaf58b1edbf420736a477471b9d1a865146503a393ff495d4f556e"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
+      "digest": "766e37dbb643e184fa37a68c209ace9a570d49bf62c5f5d0d586671116c4c047"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-ui-craft-efficacy.ts",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "skill-packs/ui/product-craft",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design",
+      "digest": "8bea1a45b62f5e9313ebcfd3298ecf1837935750c369cd1f3d74be6c2492aa06"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-interface-design-efficacy.yaml",
+      "digest": "fd28104ae7e63b5253a55dabcbaf41495948ccc575c5742d4570289b89498c0d"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-ui-craft-efficacy.yaml",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-craft.json",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "20ba55accafd84f79725b5448753aec97b4ac5c6e66c4f99cde16e6c4e158b5f"
+    }
+  ],
+  "digest": "f012e85eabbc4626915e4c09cecfcd840cfcef663433f0846f24d6fb2de798b7",
+  "createdAt": "2026-08-09T09:53:21.471Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4b256788-S-f012e85eabbc.json"
+}

@@ -68,6 +68,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
+    "@skopos/indexer": "workspace:*",
     "@skopos/instructions": "workspace:*",
     "@skopos/model": "workspace:*",
     "@skopos/runtime": "workspace:*",

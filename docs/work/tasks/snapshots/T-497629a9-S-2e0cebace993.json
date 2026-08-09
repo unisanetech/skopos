@@ -1,0 +1,92 @@
+{
+  "snapshotId": "S-2e0cebace993",
+  "taskId": "T-497629a9",
+  "sessionId": "design-context-closure-20260809",
+  "actorId": "codex",
+  "baseRevision": "2084008449fc3ed2e886812abd3acdc019051070",
+  "paths": [
+    {
+      "path": "docs/architecture/design-context-model.md",
+      "digest": "50c68febe0481b26351bb04fb4ebec9c76198d5d6f13ed54fffee73c59b98cb5"
+    },
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "9e46f4ec24e06dd9585818c942bc624ce632a92a016a660d70f1b3c87133dd82"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "55e419dce66cb93857aa7d0a8406bf17b2cf0ac69f17f0daefc0827d2344a281"
+    },
+    {
+      "path": "docs/work/plans/P-7b4e3c12-design-context-library.md",
+      "digest": "9de94f74d159867f2db35a4410eaed2420efa9cd8c0029f76ccabdcc851e6693"
+    },
+    {
+      "path": "fixtures/skill-context/product-interface-design/phase-1.contract.fixture.json",
+      "digest": "3a5b83891058a6ce6507bb7687f14ccce44d40094764f3c25fbe9c0423fd0e28"
+    },
+    {
+      "path": "package.json",
+      "digest": "5e53dc513d1f1d5d0995bee5d0ae95eda6493c71b83bc10ce9cde0b6a1e9d708"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "5c9f849a239341a0f4b5aef44f29d247e86b0c629111bcd955bc9a47b3852774"
+    },
+    {
+      "path": "packages/cli/scripts/copy-skill-packs.mjs",
+      "digest": "ff050cadcdba9f8e9e6233184e33c9c91526075b5fa21a092c2121822737b132"
+    },
+    {
+      "path": "packages/cli/src/__tests__/design-context-library.test.ts",
+      "digest": "0ed3894f5ab62c09ba73a1a08b9a6e53381c3e4ce89547984e68b87065cb531d"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "ceab86792b758ffa9c08cb322e80ff6cbe8a96fe607f05fbd72f0d7a10574b92"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-context-resolution.test.ts",
+      "digest": "3519ee31f8b77bda392a6f234b7ec59b7dc08ecc589fa04caddba2d6643d5e8f"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-packs.test.ts",
+      "digest": "0f8d3c6fb46fc7aa688eeb42bd7d41a175fc3020ca519124103cf90be274fcb6"
+    },
+    {
+      "path": "packages/indexer/src/application/load-skill-context-library/load-skill-context-library.service.ts",
+      "digest": "aea6b311ae4a33bf29fc4a06bafd59613880610f03442f4e23abf867bf2185c4"
+    },
+    {
+      "path": "packages/indexer/src/application/load-skill-packs/load-skill-packs.service.ts",
+      "digest": "beeda079b7f38f3028236fad58160684ea7f6ceabb2f2aa790a2285981ba8395"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-context.ts",
+      "digest": "418350388762fbfb2404b1a11ea6da590ad85d038041254f7cac6556c19d0cfe"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-pack.ts",
+      "digest": "7ee3b29890dc2fd93891325be8d6e7c40b47c86cdde16654c002ff92eda4ac78"
+    },
+    {
+      "path": "packages/runtime/src/application/skills",
+      "digest": "fa00467a9bcab8ad4d0678c9d341d8fbd34bb8ea85cb0cc140d3f0d3a38adf5b"
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "digest": "2257c0f7cc0502b94c19f97b1d4bf6370938afe1e72d776e33c14f271e858d62"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design",
+      "digest": "5d247b487d3887909f8e9d3a0dbf2188859ffdf273a0e04cdf15dcd254c821ed"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "a34a418f948a1fbfe8b1aec34dbd39707cd6980367dcbdb6cf3df6b2f3dc88f8"
+    }
+  ],
+  "digest": "2e0cebace993f95db2c4b4e5c99957190a0b3b75f1791b15fd607407aadd17a7",
+  "createdAt": "2026-08-09T18:01:36.977Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-497629a9-S-2e0cebace993.json"
+}

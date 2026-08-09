@@ -300,7 +300,7 @@ describe('tracked Task portability', () => {
     });
     expect(completed.state).toBe('complete');
     expect(completed.steps.every((step) => step.status === 'complete')).toBe(true);
-  });
+  }, 15_000);
 
   it('keeps observation Evidence valid when selected Actions own generated outputs', async () => {
     const workspaceRoot = await createWorkspace();
@@ -664,7 +664,7 @@ describe('tracked Task portability', () => {
         taskId: task.id,
       }),
     ).resolves.toMatchObject({ state: 'active' });
-  });
+  }, 15_000);
 
   it('rejects a high-impact snapshot missing one declared owned path', async () => {
     const workspaceRoot = await createWorkspace();

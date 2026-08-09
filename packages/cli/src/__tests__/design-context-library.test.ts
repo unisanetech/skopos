@@ -188,6 +188,12 @@ describe('Product Interface Design Design Context contract', () => {
       libraryId: fixture.library.libraryId,
       libraryVersion: fixture.library.version,
       libraryDigest: fixture.library.contentDigest,
+      identity: {
+        algorithmId: 'skill-context-selection@1',
+        selectorDigest: 'sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        projectAuthorityDigest: 'sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        combinedDigest: 'sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+      },
       projectAuthorities: [
         {
           id: 'project.design-system',

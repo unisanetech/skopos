@@ -38,9 +38,13 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         join(packedPackageRoot, 'dist', 'skill-packs'),
       );
       expect(packedSkillAssets).toEqual(sourceSkillAssets);
-      expect(packedSkillAssets).toHaveLength(42);
-      expect(packedSkillAssets).toContain('ui/product-craft/pack.json');
-      expect(packedSkillAssets).toContain('ui/product-craft/evaluations/core.suite.json');
+      expect(packedSkillAssets).toHaveLength(40);
+      expect(packedSkillAssets).toContain('ui/product-interface-design/pack.json');
+      expect(packedSkillAssets).toContain('ui/product-interface-design/evaluations/core.suite.json');
+      expect(packedSkillAssets).toContain('ui/product-interface-design/design-context/library.json');
+      expect(packedSkillAssets).toContain(
+        'ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
+      );
 
       const packedText = await readTextSurface(packedPackageRoot);
       for (const prohibited of [
@@ -367,7 +371,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
     }
   });
 
-  it('proves Product UI Craft behavior from the packed CLI without source resolution', async () => {
+  it('proves Product Interface Design behavior from the packed CLI without source resolution', async () => {
     const report = await runExternalSkillPortability();
 
     expect(report.result).toBe('pass');
@@ -376,8 +380,8 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       label: 'minimal',
       fixtureResult: { passed: 8, failed: 0 },
       relevantTask: {
-        selectedPackIds: ['ui.product-craft'],
-        selectedModuleIds: ['ui-craft.react-boundaries'],
+        selectedPackIds: ['ui.product-interface-design'],
+        selectedModuleIds: ['interface-design.behavior'],
         skillContextEntryCount: 2,
       },
       irrelevantTask: {

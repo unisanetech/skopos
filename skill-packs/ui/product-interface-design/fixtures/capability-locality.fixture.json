@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-selection-fixture.ui-product-interface-design-capability-locality",
+  "type": "skill-selection-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Resolve only React-boundary capabilities for a hydration-boundary task.",
+  "fixtureId": "ui-product-interface-design-capability-locality",
+  "packId": "ui.product-interface-design",
+  "category": "capability-locality",
+  "task": {
+    "goal": "Narrow the client rendering and hydration boundary around one interactive island.",
+    "scope": {
+      "id": "fixture-product-ui",
+      "title": "Fixture Product UI",
+      "path": "src/ui",
+      "kind": "application",
+      "ancestorIds": ["fixture-product"],
+      "aliases": ["frontend"],
+      "codeRoots": ["src/ui"]
+    },
+    "acceptanceCriteria": ["Keep server rendering outside the interactive island."],
+    "constraints": [],
+    "nonGoals": ["Do not redesign the product page."],
+    "openDecisions": ["Which component owns hydration?"],
+    "risk": "standard",
+    "phase": "iteration",
+    "ownedPaths": ["src/ui/workspace.tsx"],
+    "changedPaths": ["src/ui/workspace.tsx"],
+    "affectedCapabilities": ["hydration"],
+    "selectedActionIds": [],
+    "applicableGuardIds": ["quality.typecheck"],
+    "acceptedFailureEvidence": [
+      {
+        "id": "failure.client-boundary-expansion",
+        "summary": "Client rendering expanded beyond the interactive island."
+      }
+    ],
+    "projectLifecycle": "established-brownfield"
+  },
+  "expectation": {
+    "selectedModuleIds": ["interface-design.behavior"],
+    "suppressedModuleReasonCodes": {},
+    "selectedActionIds": ["quality.run-proof-phase"],
+    "selectedGuardIds": ["quality.typecheck"],
+    "maximumSelectedModules": 1,
+    "maximumMeasuredTokens": 1800
+  }
+}

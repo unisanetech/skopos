@@ -23,7 +23,8 @@ reviewCycle: per Skill capability phase
 
 ## Summary
 
-Skopos has the correct authority model and one promising `ui.product-craft` source, but
+Skopos has the correct authority model and one promising
+`ui.product-interface-design@0.3.0` source, but
 the remaining project adaptation depth, behavioral fixtures, evaluation, and external
 proof do not yet justify adding a broad Skill catalog. Task-aware selection, shared
 budgets, exact acceptance identity, and exact generated selection reuse are now in
@@ -64,7 +65,7 @@ canonical Skill system, not a versioned migration.
    Reuse requires the same algorithm, complete Task signal digest, accepted Skill
    identities, capability catalog, and resolved policy digest; stale acceptance
    bypasses reuse.
-9. Product UI Craft now owns eight strict versioned fixture manifests covering positive,
+9. Product Interface Design now owns eight strict versioned fixture manifests covering positive,
    visual-restraint, negative, ambiguous, generated-output, capability-locality,
    project-bound design-system conformance, and budget behavior.
    Loader discovery enforces an exact declaration-to-manifest match, the runtime executes
@@ -80,7 +81,7 @@ canonical Skill system, not a versioned migration.
    subjective visual approval remains a separate human judgment.
 11. Packed external adoption now passes in one minimal project and a sanitized Billquest
     copy outside the Skopos checkout. Both projects install the packed CLI plus only its
-    ordinary declared dependencies, resolve Product UI Craft from installed `dist`, pass
+    ordinary declared dependencies, resolve the required UI Skill from installed `dist`, pass
     all six fixtures bound to the portability proof identity, apply a project binding,
     select module-local Task context and
     capabilities, generate five host projections, reuse an exact selection, invalidate
@@ -105,8 +106,8 @@ canonical Skill system, not a versioned migration.
     and durable blinded bundles. The later ecommerce canary audit changed Skill guidance
     and rubric source, so the 6-2 result is now historical for the current accepted
     identity; neither a new model comparison nor independent human review exists for it.
-14. Release-gate rerun `product-ui-craft-r2-full-20260809-r5` completed against the
-    exact currently accepted identity after a passing no-model preflight and candidate-
+14. Historical release-gate rerun `product-ui-craft-r2-full-20260809-r5` completed
+    against its exact accepted Product UI Craft identity after a passing no-model preflight and candidate-
     winning one-case smoke. All 16 workers and 8 blinded model reviews completed with
     zero tie, invalid case, aborted case, authority regression, checkout reference,
     cross-arm reference, or `NODE_PATH` contamination. Usage remained within every
@@ -114,7 +115,52 @@ canonical Skill system, not a versioned migration.
     output tokens. Model review favored Product UI Craft in 3 cases and the no-Skill
     control in 5. The operations smoke result also reversed in the full run. The report
     is therefore `inconclusive`, independent human review remains pending, and the
-    current source does not satisfy the material-improvement release gate.
+    superseded source did not satisfy the material-improvement release gate.
+15. The user replaced that pre-release identity with Product Interface Design
+    `0.2.0` (`ui.product-interface-design`). Seven guidance modules were consolidated
+    into Structure, Behavior, and Finish; the live family is `interface-design`, and
+    React advice is now conditional inside Behavior. All eight deterministic fixtures pass. Copy-only selection uses Structure
+    at 524 measured tokens, hydration-boundary selection uses Behavior at 518, and the
+    complete three-capability case uses 1,310, below the 1,800 standard-Task ceiling.
+    The exact accepted combined identity is
+    `sha256:fb32b6c6b841bec9e7c979a9c9547032b33a9f51a3650ab7b5216fc6c3e35eab`.
+    This proves bounded selection and identity integrity only. No paired efficacy or
+    independent human result exists for the renamed source, so release gate R2 remains
+    blocked.
+16. Product Interface Design `0.3.0` retains exactly Structure, Behavior, and Finish
+    while adding 21 concise Bad-to-Better patterns. Structure now demonstrates actions,
+    headings, help, empty states, errors, recovery, confirmations, and removal of
+    technical leakage. Behavior demonstrates reuse, responsive transformation, states,
+    native controls, dialogs, naming, and conditional React boundaries. Finish
+    demonstrates hierarchy, color priority, semantic tokens, product character,
+    evidence density, and responsive proof. All eight fixtures pass; focused Structure
+    and Behavior selections measure 596 and 612 tokens, and the complete selection
+    measures 1,530. The exact accepted combined identity is
+    `sha256:6a777cc44b8f6b887a187f566813a9cbe1baf6e1e415752bbcd2aa6d91a29464`.
+    This supersedes deterministic proof for `0.2.0`.
+17. The exact `0.3.0` efficacy cycle preserved frozen source after outcome. The
+    one-case smoke passed 1-0 with clean containment and 304,511 input tokens, 127,231
+    fresh input tokens, and 19,826 output tokens. The authorized full run then completed
+    all 16 workers and 8 blinded model reviews with 4 candidate wins, 4 control wins,
+    no ties, invalid cases, aborts, authority regressions, correction turns,
+    supervision events, source-checkout references, cross-arm references, or
+    `NODE_PATH`. Full usage remained inside every ceiling at 2,842,392 input tokens,
+    716,184 fresh input tokens, and 150,264 output tokens. The report is
+    `inconclusive`: machine review does not demonstrate material targeted improvement,
+    and independent human adjudication remains pending. Eight label-safe A/B bundles
+    and reviewer instructions are available, but R2 remains blocked.
+18. The first Product Interface Design Design Context candidate now has deterministic
+    infrastructure rather than a link list. The pack owns a reviewed `0.1.0` Library
+    with four Domain Guides, six Experience Guides, three Design Signals, ten dated
+    official Source Notes, explicit limitations and do-not-copy constraints, and exact
+    digests. Generic core owns only loading, selection, explanation, budget, freshness,
+    precedence, and identity mechanics. Focused proof covers the complete initial
+    selector matrix, ambiguity, project precedence, expiry, retirement, budget,
+    saturated-signal justification, invalidation, irrelevant/public-page exclusion,
+    copied-pack equivalence, and clean packed installation. A
+    neutral six-case comparison matrix exists but has not run. This closes the
+    deterministic Design Context foundation only; it does not close this Finding,
+    prove real-project usefulness, or satisfy R2.
 
 ## Impact
 

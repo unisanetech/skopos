@@ -1,0 +1,60 @@
+{
+  "snapshotId": "S-4eddd0a5e517",
+  "taskId": "T-20edad31",
+  "sessionId": "interface-design-efficacy-closure-20260809",
+  "actorId": "codex-interface-design",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "19a4b23345696698e21857cb76b59afc4fb4142bacad0be52f0caa609240467a"
+    },
+    {
+      "path": "docs/decisions/040-project-adapted-skill-packs-as-capability-projections.md",
+      "digest": "b38e14bd808ab2119e230c17ec87eb0b4c1296df78e53864191f14206a76114a"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "093afaffd121bb1e0a3e43a9f1131f6c69be68d2e71f7fcd4b49b58e597e6ed1"
+    },
+    {
+      "path": "docs/guides/product-interface-design-independent-human-review.md",
+      "digest": "09ef6d88898b0286cbea5be2e943de32a1b4db71e4ed8dd7507da09a4751e0d0"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "76ea1439948e8f27762d6741f3d1ddc68d5a658e6b5ad37ec638a0bcf79cce87"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "bcbd23623b701b527dc662d1d7612fdc81f64f1ba72b4802b2698c8da3892aa5"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "5c9f849a239341a0f4b5aef44f29d247e86b0c629111bcd955bc9a47b3852774"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
+      "digest": "766e37dbb643e184fa37a68c209ace9a570d49bf62c5f5d0d586671116c4c047"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "482902db814677d5d8f7efa6a911134897b2f2836e78ff8ac61003130dad53ca"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design",
+      "digest": "7e1add59f15a7ae247ea593ba5b1375b3cc3bac0296d866385105ab52b9b2542"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-interface-design-efficacy.yaml",
+      "digest": "fd28104ae7e63b5253a55dabcbaf41495948ccc575c5742d4570289b89498c0d"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "a776f966f7398c00a2fdc6c19eb409d00bf1b7207233f83ea2263254d148d4da"
+    }
+  ],
+  "digest": "4eddd0a5e51776d35d7f157726edb9946b3aa56d4a0c8c7efc9da754ced2e41c",
+  "createdAt": "2026-08-09T12:11:37.417Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-20edad31-S-4eddd0a5e517.json"
+}

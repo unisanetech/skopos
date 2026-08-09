@@ -13,7 +13,7 @@ import type { SkoposScopeKind } from './skopos-scope-lite.js';
 
 export type SkoposSkillPackFamily =
   | 'project-intelligence'
-  | 'ui-craft'
+  | 'interface-design'
   | 'frontend-engineering'
   | 'accessibility'
   | 'ux-writing'
@@ -53,6 +53,11 @@ export interface SkoposSkillAuthorityBoundary {
 export interface SkoposSkillSelectionPolicy {
   maximumMeasuredTokens: number;
   maximumModules: number;
+}
+
+export interface SkoposSkillContextBinding {
+  path: string;
+  maximumMeasuredTokens: number;
 }
 
 export interface SkoposSkillTaskBudget {
@@ -141,6 +146,7 @@ export interface SkoposSkillPackManifest extends SkoposArtifactEnvelope<'skill-p
   projectLifecycles: SkoposProjectLifecycle[];
   taskRisks: SkoposTaskRisk[];
   selection: SkoposSkillSelectionPolicy;
+  contextLibrary?: SkoposSkillContextBinding;
   modules: SkoposSkillModuleManifest[];
   failureSignals: SkoposSkillFailureSignal[];
   rubricPath: string;

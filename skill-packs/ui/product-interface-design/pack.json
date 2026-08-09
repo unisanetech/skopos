@@ -1,0 +1,498 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-pack.ui.product-interface-design",
+  "type": "skill-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Task-selective product interface design guidance organized around structure, behavior, and finish.",
+  "updatedAt": "2026-08-06",
+  "packId": "ui.product-interface-design",
+  "family": "interface-design",
+  "variant": "product-interface-design",
+  "version": "0.3.0",
+  "displayName": "Product Interface Design",
+  "description": "Design, implement, and review clear, responsive, accessible product interfaces using the project's existing design system.",
+  "plainLanguageSummary": "Use this for product screens that need better structure, behavior, or rendered finish without replacing project-owned design truth.",
+  "authorityBoundary": {
+    "actionAuthority": "skopos",
+    "taskStateAuthority": "skopos",
+    "readinessAuthority": "skopos"
+  },
+  "ownership": {
+    "purpose": "Improve the hierarchy, composition, language, responsive behavior, and rendered polish of product interfaces using project-owned design truth.",
+    "owns": [
+      "Product-interface hierarchy and visual composition",
+      "Human interface writing and content-role economy",
+      "Responsive presentation, complete states, and rendered polish review"
+    ],
+    "excludes": [
+      "Backend-only behavior and infrastructure",
+      "Generated, vendored, build, and distribution output",
+      "Public marketing narrative and conversion strategy",
+      "Business workflow design, deep security review, and data-visualization semantics"
+    ],
+    "overlapRules": [
+      "Load another pack only when it contributes a distinct flow, component, accessibility, performance, security, or data-interface judgment.",
+      "Project tokens, components, terminology, Actions, and Guards remain authoritative over reusable guidance."
+    ]
+  },
+  "projectLifecycles": [
+    "greenfield",
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "taskRisks": ["light", "standard", "high-impact"],
+  "selection": {
+    "maximumMeasuredTokens": 2200,
+    "maximumModules": 3
+  },
+  "contextLibrary": {
+    "path": "design-context/library.json",
+    "maximumMeasuredTokens": 420
+  },
+  "modules": [
+    {
+      "id": "interface-design.structure",
+      "title": "Structure",
+      "summary": "Define the interface job, reading order, information hierarchy, product language, and product-specific character before styling details.",
+      "path": "guidance/structure.md",
+      "importance": "recommended",
+      "positiveSignals": [
+        {
+          "id": "signal.interface-structure",
+          "summary": "The task creates or materially changes hierarchy, layout, reading order, brand expression, or user-facing language on a rendered product surface.",
+          "confidence": "high",
+          "evidence": ["A Task-owned product page, screen, navigation surface, layout, or interface-content role changes"]
+        },
+        {
+          "id": "signal.interface-language",
+          "summary": "The task creates or materially revises labels, actions, guidance, empty states, errors, confirmations, onboarding, or settings language.",
+          "confidence": "high",
+          "evidence": ["Owned rendered source or acceptance changes user-facing product language"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.no-rendered-product-surface",
+          "summary": "The task has no rendered product-interface surface.",
+          "confidence": "high",
+          "evidence": ["Owned paths and acceptance remain backend, infrastructure, generated output, or internal documentation"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["application", "product"],
+        "pathKinds": ["authored-source", "test"],
+        "capabilities": ["browser-rendering", "design-tokens"]
+      },
+      "projectRoles": {
+        "context": ["brand-doctrine", "design-tokens", "domain-language"],
+        "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
+        "actions": [],
+        "recommendedActions": ["responsive-visual-capture"],
+        "guards": [],
+        "recommendedGuards": ["design-token-drift", "accessibility-proof"]
+      },
+      "rubricDimensions": [
+        "user-task clarity",
+        "task-archetype and reference fit",
+        "information hierarchy and brand fit",
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
+        "cognitive load and progressive disclosure",
+        "plain language, terminology, voice, and contextual tone",
+        "page-wide content-role uniqueness and repetition control",
+        "action labels, feedback, errors, empty states, and recovery",
+        "inclusion, user agency, and interruption discipline"
+      ],
+      "failureSignalIds": [
+        "failure.archetype-mismatch",
+        "failure.reference-mismatch",
+        "failure.color-role-ambiguity",
+        "failure.attention-color-overuse",
+        "failure.background-layer-confusion",
+        "failure.legacy-dashboard-convergence",
+        "failure.visual-hierarchy-drift",
+        "failure.container-overuse",
+        "failure.generic-ui-copy",
+        "failure.interface-copy-repetition"
+      ]
+    },
+    {
+      "id": "interface-design.finish",
+      "title": "Finish",
+      "summary": "Apply disciplined typography, spacing, layers, attention, density, and evidence-based rendered review without generic UI treatments.",
+      "path": "guidance/finish.md",
+      "importance": "recommended",
+      "positiveSignals": [
+        {
+          "id": "signal.interface-finish",
+          "summary": "The task materially changes or reviews typography, spacing, alignment, surfaces, density, containment, background layers, attention hierarchy, or rendered polish.",
+          "confidence": "high",
+          "evidence": ["Owned frontend source or acceptance changes a rendered page, shell, panel, component composition, visual treatment, or proof boundary"]
+        },
+        {
+          "id": "signal.rendered-interface-review",
+          "summary": "The task needs closure or review against rendered product-interface evidence.",
+          "confidence": "high",
+          "evidence": ["Acceptance names polish, review, screenshot, visual proof, responsive proof, or interface closure"]
+        },
+        {
+          "id": "signal.design-system-finish",
+          "summary": "The task applies project tokens or components to the rendered composition and visual system.",
+          "confidence": "high",
+          "evidence": ["Acceptance names semantic tokens, component defaults, design-system conformance, or a local palette"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.mechanical-ui-change",
+          "summary": "The task is a mechanical rename or generated-output refresh with no rendered composition change.",
+          "confidence": "high",
+          "evidence": ["Acceptance requires no visual, responsive, hierarchy, or interaction behavior change"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["application", "product", "package"],
+        "pathKinds": ["authored-source", "style", "test"],
+        "capabilities": ["browser-rendering", "design-tokens", "component-library"]
+      },
+      "projectRoles": {
+        "context": ["design-tokens", "component-catalog"],
+        "recommendedContext": ["approved-screen-precedents", "ui-failure-patterns"],
+        "actions": ["responsive-visual-capture"],
+        "recommendedActions": ["design-system-inventory", "accessibility-audit"],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": ["design-system-conformance", "design-token-drift", "accessibility-proof"]
+      },
+      "rubricDimensions": [
+        "type scale and readable hierarchy",
+        "spacing rhythm and alignment",
+        "surface, border, elevation, and density discipline",
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
+        "token and component consistency",
+        "scroll ownership and content reachability",
+        "rendered proof quality"
+      ],
+      "failureSignalIds": [
+        "failure.raw-visual-values",
+        "failure.generic-ai-convergence",
+        "failure.color-role-ambiguity",
+        "failure.attention-color-overuse",
+        "failure.background-layer-confusion",
+        "failure.legacy-dashboard-convergence",
+        "failure.visual-hierarchy-drift",
+        "failure.container-overuse",
+        "failure.interaction-layout-break"
+      ]
+    },
+    {
+      "id": "interface-design.behavior",
+      "title": "Behavior",
+      "summary": "Implement responsive interaction, complete states, accessible behavior, component reuse, and narrow framework boundaries.",
+      "path": "guidance/behavior.md",
+      "importance": "recommended",
+      "positiveSignals": [
+        {
+          "id": "signal.interface-behavior",
+          "summary": "The task changes responsive layout, interactive controls, component composition, or user input behavior.",
+          "confidence": "high",
+          "evidence": ["Acceptance or owned source changes viewport adaptation, navigation, controls, overlays, forms, data display, or user interaction"]
+        },
+        {
+          "id": "signal.client-rendering-boundary",
+          "summary": "The task changes a client or server rendering boundary, hydration behavior, or interactive island.",
+          "confidence": "high",
+          "evidence": ["Acceptance names hydration, a client or server boundary, a rendering directive, or an interactive island"]
+        },
+        {
+          "id": "signal.responsive-interface",
+          "summary": "The task changes responsive layout or interaction across narrow, intermediate, and wide content constraints.",
+          "confidence": "high",
+          "evidence": ["Acceptance names responsive transformation, viewport adaptation, reordering, overlays, or scroll ownership"]
+        },
+        {
+          "id": "signal.complete-states",
+          "summary": "The task implements asynchronous rendering or control availability across loading, empty, failure, permission, success, disabled, and retry conditions.",
+          "confidence": "high",
+          "evidence": ["Owned source changes rendered lifecycle conditions or their interactive recovery behavior"]
+        }
+      ],
+      "negativeSignals": [
+        {
+          "id": "anti.static-noninteractive-artifact",
+          "summary": "The task changes no responsive or stateful product behavior.",
+          "confidence": "high",
+          "evidence": ["The rendered output is fixed, generated, or outside a user workflow"]
+        },
+        {
+          "id": "anti.interface-copy-only",
+          "summary": "The task changes interface wording only and does not alter interactive behavior, component structure, state transitions, or responsive layout.",
+          "confidence": "high",
+          "evidence": ["The Task explicitly limits work to labels, messages, guidance, or other user-facing copy"]
+        }
+      ],
+      "applicability": {
+        "scopeKinds": ["application", "product", "package"],
+        "pathKinds": ["authored-source", "public-export", "test"],
+        "capabilities": ["responsive-layout", "interactive-state", "browser-rendering", "component-library"]
+      },
+      "projectRoles": {
+        "context": ["component-catalog"],
+        "recommendedContext": ["approved-screen-precedents", "domain-language", "design-tokens", "ui-failure-patterns"],
+        "actions": [],
+        "recommendedActions": ["focused-frontend-tests"],
+        "guards": ["frontend-type-safety"],
+        "recommendedGuards": ["design-system-conformance", "client-boundary-review"]
+      },
+      "rubricDimensions": [
+        "responsive adaptation",
+        "responsive transformation and truthful limitations",
+        "navigation and interaction state clarity",
+        "state and recovery completeness",
+        "accessibility and keyboard behavior",
+        "token and component consistency",
+        "component reuse, ownership, API shape, and durable naming",
+        "frontend rendering boundaries"
+      ],
+      "failureSignalIds": [
+        "failure.mobile-compression",
+        "failure.interaction-layout-break",
+        "failure.component-proliferation",
+        "failure.prompt-shaped-naming",
+        "failure.client-boundary-expansion"
+      ]
+    }
+  ],
+  "failureSignals": [
+    {
+      "id": "failure.archetype-mismatch",
+      "summary": "Agents repeatedly apply a composition suited to a different product job, density, risk, or interaction model.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.reference-mismatch",
+      "summary": "Visual precedent repeatedly comes from a homepage, unrelated archetype, viewport, or state and does not support the implemented decision.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.color-role-ambiguity",
+      "summary": "Color repeatedly decorates the interface without preserving distinct action, focus, semantic, data, neutral, or brand-expression meaning.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.attention-color-overuse",
+      "summary": "Saturated backgrounds, borders, icons, badges, dots, links, metadata, and status text repeatedly compete instead of preserving one clear attention order.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.background-layer-confusion",
+      "summary": "Page tint, nested surfaces, borders, or elevation repeatedly obscure the canvas and persistent layer hierarchy or make unused background dominate the task.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.legacy-dashboard-convergence",
+      "summary": "Interfaces repeatedly default to a generic dark shell, tinted canvas, bordered cards, pills, and permanent sidebar-list-inspector composition without same-task project evidence.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.generic-ai-convergence",
+      "summary": "Screens repeatedly converge on interchangeable gradient, oversized-heading, icon-card, pill, generic-accent, or fake-metric styling without project evidence.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.raw-visual-values",
+      "summary": "Raw color, spacing, radius, or shadow values recur where project tokens exist.",
+      "evidenceKinds": ["guard-failure", "review-finding", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.client-boundary-expansion",
+      "summary": "Small interactive behavior repeatedly expands the client-rendered component tree.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.generic-ui-copy",
+      "summary": "Interfaces repeatedly expose technical terms, duplicate headings, vague actions, robotic language, dead ends, or unnecessary explanatory text.",
+      "evidenceKinds": ["finding", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.mobile-compression",
+      "summary": "Desktop layouts repeatedly compress or overflow instead of adapting to content and interaction constraints.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.visual-hierarchy-drift",
+      "summary": "Type roles, spacing rhythm, alignment, or density repeatedly obscure the page's primary reading order.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.container-overuse",
+      "summary": "Nested cards, borders, shadows, pills, or competing surfaces repeatedly replace whitespace and hierarchy.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 2
+    },
+    {
+      "id": "failure.interaction-layout-break",
+      "summary": "Bounded content, scrolling, navigation state, focus, or persistent controls repeatedly fail in the rendered interface.",
+      "evidenceKinds": ["guard-failure", "review-finding", "user-correction"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.component-proliferation",
+      "summary": "Agents repeatedly create components, wrappers, or variants that duplicate an existing semantic role or extension point.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.prompt-shaped-naming",
+      "summary": "Component, prop, or variant names repeatedly mirror temporary request wording, visual treatment, motion, or feature-local adjectives instead of durable roles.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    },
+    {
+      "id": "failure.interface-copy-repetition",
+      "summary": "Shell, breadcrumb, eyebrow, title, description, navigation, and panel copy repeatedly compete for the same language role.",
+      "evidenceKinds": ["review-finding", "user-correction", "source-observation"],
+      "minimumOccurrences": 1
+    }
+  ],
+  "rubricPath": "rubrics/product-interface-review.json",
+  "researchSources": [
+    {
+      "id": "w3c.wcag",
+      "title": "WCAG 2 overview",
+      "kind": "normative-standard",
+      "url": "https://www.w3.org/WAI/standards-guidelines/wcag/",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["accessibility requirements and conformance framing"]
+    },
+    {
+      "id": "w3c.aria-apg",
+      "title": "ARIA Authoring Practices Guide",
+      "kind": "official-documentation",
+      "url": "https://www.w3.org/WAI/ARIA/apg/",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["keyboard and accessible interaction patterns"]
+    },
+    {
+      "id": "react.server-components",
+      "title": "React Server Components",
+      "kind": "official-documentation",
+      "url": "https://react.dev/reference/rsc/server-components",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2026-10-25",
+      "supports": ["server and client component composition"]
+    },
+    {
+      "id": "next.server-client-components",
+      "title": "Next.js Server and Client Components",
+      "kind": "official-documentation",
+      "url": "https://nextjs.org/docs/app/getting-started/server-and-client-components",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2026-10-25",
+      "supports": ["Next.js rendering-boundary decisions"]
+    },
+    {
+      "id": "webdev.responsive",
+      "title": "Responsive web design basics",
+      "kind": "supporting-research",
+      "url": "https://web.dev/articles/responsive-web-design-basics",
+      "reviewedAt": "2026-07-25",
+      "reviewAfter": "2027-01-25",
+      "supports": ["content-led responsive layout and device capability"]
+    },
+    {
+      "id": "samsung.one-ui-writing.focused",
+      "title": "Samsung One UI: Focused and purposeful",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/focused-and-purposeful.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["purposeful copy, focused choices, useful actions, human language, and user agency"]
+    },
+    {
+      "id": "samsung.one-ui-writing.simple",
+      "title": "Samsung One UI: Simple and human",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/simple-and-human.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["defensive text, interruption discipline, user benefits, and inclusive language"]
+    },
+    {
+      "id": "samsung.one-ui-writing.empowering",
+      "title": "Samsung One UI: Empowering and engaging",
+      "kind": "official-documentation",
+      "url": "https://developer.samsung.com/one-ui/writing/empowering.html",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["user agency, supportive tone, and empowering product language"]
+    },
+    {
+      "id": "apple.hig-writing",
+      "title": "Apple Human Interface Guidelines: Writing",
+      "kind": "official-documentation",
+      "url": "https://developer.apple.com/design/human-interface-guidelines/writing",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["voice, action-oriented labels, language patterns, contextual errors, and inclusive interface copy"]
+    },
+    {
+      "id": "google.material-communication",
+      "title": "Material communication principles",
+      "kind": "official-documentation",
+      "url": "https://codelabs.developers.google.com/codelabs/material-communication-guidance",
+      "reviewedAt": "2026-08-04",
+      "reviewAfter": "2027-02-04",
+      "supports": ["concise but human language, essential detail, voice and tone, and component writing"]
+    },
+    {
+      "id": "atlassian.color-roles",
+      "title": "Atlassian Design System: Color",
+      "kind": "official-documentation",
+      "url": "https://atlassian.design/foundations/color",
+      "reviewedAt": "2026-08-06",
+      "reviewAfter": "2027-02-06",
+      "supports": ["semantic color roles, neutral dominance, emphasis levels, interaction states, and avoiding meaningless accent use"]
+    },
+    {
+      "id": "carbon.color-layering",
+      "title": "Carbon Design System: Color usage and layering",
+      "kind": "official-documentation",
+      "url": "https://carbondesignsystem.com/elements/color/usage/",
+      "reviewedAt": "2026-08-06",
+      "reviewAfter": "2027-02-06",
+      "supports": ["explicit base and persistent surface layers, contextual layer tokens, and bounded high-contrast theme shifts"]
+    }
+  ],
+  "proofFixtureIds": [
+    "ui-product-interface-design-positive-hierarchy",
+    "ui-product-interface-design-visual-restraint-review",
+    "ui-product-interface-design-negative-backend",
+    "ui-product-interface-design-ambiguous-documentation",
+    "ui-product-interface-design-generated-output",
+    "ui-product-interface-design-capability-locality",
+    "ui-product-interface-design-design-system-conformance",
+    "ui-product-interface-design-budget"
+  ],
+  "evaluationSuiteIds": [
+    "ui-product-interface-design-core"
+  ]
+}

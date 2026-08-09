@@ -53,8 +53,8 @@ proportional package and clean-install proof.
 ## Release-Sensitive Areas
 
 Changes to public commands, package contents, stored data, evidence semantics,
-security boundaries, policy, adoption, or Product UI Craft require explicit review and
-may invalidate existing release evidence. Product UI Craft is required for the first
+security boundaries, policy, adoption, or Product Interface Design require explicit review and
+may invalidate existing release evidence. Product Interface Design is required for the first
 release and cannot be removed or disabled to make a gate pass.
 
 Do not hand-edit generated instruction mirrors or runtime-managed `.skopos/**`

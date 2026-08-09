@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-evaluation-suite.ui-product-interface-design-core",
+  "type": "skill-evaluation-suite",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Frozen third-cycle paired cases spanning distinct product-surface archetypes after the second-cycle negative smoke, without exposing evaluator oracles to workers.",
+  "suiteId": "ui-product-interface-design-core",
+  "packId": "ui.product-interface-design",
+  "cases": [
+    {
+      "caseId": "operations-workbench",
+      "title": "Operations workbench",
+      "taskPrompt": "Improve this incident operations workbench so an on-call engineer can scan severity, ownership, recency, and the next response action quickly. Preserve the existing filtering and selection behavior and use the project's supplied tokens and components.",
+      "projectTemplatePath": "evaluations/templates/operations-workbench",
+      "candidateModuleIds": ["interface-design.structure", "interface-design.finish"],
+      "rubricDimensions": [
+        "task-archetype and reference fit",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
+        "state and recovery completeness"
+      ]
+    },
+    {
+      "caseId": "transaction-trust",
+      "title": "Transaction trust",
+      "taskPrompt": "Improve this international transfer confirmation so the sender can understand the amount, rate, fees, arrival estimate, recipient, and irreversible consequence before confirming. Preserve calculations and submission behavior.",
+      "projectTemplatePath": "evaluations/templates/transaction-trust",
+      "candidateModuleIds": ["interface-design.structure"],
+      "rubricDimensions": [
+        "task-archetype and reference fit",
+        "color-role clarity and product-specific character",
+        "action labels, feedback, errors, empty states, and recovery",
+        "inclusion, user agency, and interruption discipline"
+      ]
+    },
+    {
+      "caseId": "discovery-coordination",
+      "title": "Discovery coordination",
+      "taskPrompt": "Improve this workspace discovery page so people can coordinate filters, results, saved state, and the selected workspace without losing context. Preserve search, filtering, and selection behavior.",
+      "projectTemplatePath": "evaluations/templates/discovery-coordination",
+      "candidateModuleIds": ["interface-design.structure", "interface-design.finish"],
+      "rubricDimensions": [
+        "task-archetype and reference fit",
+        "cognitive load and progressive disclosure",
+        "navigation and interaction state clarity",
+        "scroll ownership and content reachability"
+      ]
+    },
+    {
+      "caseId": "documentation-workspace",
+      "title": "Documentation workspace",
+      "taskPrompt": "Improve this API quickstart so a developer can understand the sequence, switch language, compare explanation with code, and identify the next step without losing reading context. Preserve language switching.",
+      "projectTemplatePath": "evaluations/templates/documentation-workspace",
+      "candidateModuleIds": ["interface-design.structure", "interface-design.finish"],
+      "rubricDimensions": [
+        "task-archetype and reference fit",
+        "user-task clarity",
+        "type scale and readable hierarchy",
+        "scroll ownership and content reachability"
+      ]
+    },
+    {
+      "caseId": "responsive-transformation",
+      "title": "Responsive transformation",
+      "taskPrompt": "Make this scheduling workspace genuinely useful on narrow screens. Preserve the desktop timeline, but transform navigation, date controls, resource context, and appointment details instead of merely shrinking or stacking them.",
+      "projectTemplatePath": "evaluations/templates/responsive-transformation",
+      "candidateModuleIds": ["interface-design.behavior", "interface-design.finish"],
+      "rubricDimensions": [
+        "responsive transformation and truthful limitations",
+        "navigation and interaction state clarity",
+        "scroll ownership and content reachability",
+        "accessibility and keyboard behavior"
+      ]
+    },
+    {
+      "caseId": "failure-recovery",
+      "title": "Failure recovery",
+      "taskPrompt": "Improve the failed invoice-import state so the operator understands what succeeded, what failed, what was preserved, and the safest recovery action. Preserve retry, download, and cancel behavior without exposing internal implementation details.",
+      "projectTemplatePath": "evaluations/templates/failure-recovery",
+      "candidateModuleIds": ["interface-design.behavior", "interface-design.structure"],
+      "rubricDimensions": [
+        "state and recovery completeness",
+        "action labels, feedback, errors, empty states, and recovery",
+        "plain language, terminology, voice, and contextual tone",
+        "inclusion, user agency, and interruption discipline"
+      ]
+    },
+    {
+      "caseId": "product-character",
+      "title": "Product character",
+      "taskPrompt": "Give this independent audio marketplace a distinctive, credible browsing experience using its supplied editorial assets and tokens. Improve hierarchy, color roles, density, and product character while preserving preview and save controls; avoid generic SaaS card styling.",
+      "projectTemplatePath": "evaluations/templates/product-character",
+      "candidateModuleIds": ["interface-design.structure", "interface-design.finish"],
+      "rubricDimensions": [
+        "color-role clarity and product-specific character",
+        "visual quietness and attention economy",
+        "background, layer, and contrast architecture",
+        "rendered proof quality"
+      ]
+    },
+    {
+      "caseId": "complete-service-flow",
+      "title": "Complete service flow",
+      "taskPrompt": "Improve this appointment-booking review step across hierarchy, responsive behavior, validation feedback, consent, recovery, and final confirmation. Preserve the existing choices and booking behavior and keep the public-service tone calm and direct.",
+      "projectTemplatePath": "evaluations/templates/complete-service-flow",
+      "candidateModuleIds": ["interface-design.structure", "interface-design.behavior", "interface-design.finish"],
+      "rubricDimensions": [
+        "user-task clarity",
+        "responsive transformation and truthful limitations",
+        "state and recovery completeness",
+        "action labels, feedback, errors, empty states, and recovery"
+      ]
+    }
+  ]
+}
