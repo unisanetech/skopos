@@ -307,6 +307,39 @@ export const resolveSkoposSkillContextBriefRuntime = (
   return parseSkoposSkillContextBrief(brief);
 };
 
+export const renderSkoposSkillContextBriefRuntime = (
+  brief: SkoposSkillContextBrief,
+): string => {
+  const lines = [
+    `Context Brief ${brief.identity.combinedDigest}`,
+    `Library: ${brief.libraryId}@${brief.libraryVersion} (${brief.libraryDigest})`,
+    '',
+    'Apply these selected principles through project-owned components, tokens, terminology, and behavior:',
+  ];
+  for (const principle of brief.principles) {
+    lines.push(
+      `- ${principle.guidance}`,
+      `  Adaptation: ${principle.adaptation}`,
+      `  Deliberate difference: ${principle.deliberateDifference}`,
+      ...(principle.doNotCopy.length > 0
+        ? [`  Do not copy: ${principle.doNotCopy.join('; ')}`]
+        : []),
+    );
+  }
+  if (brief.unresolvedProjectContextGaps.length > 0) {
+    lines.push(
+      '',
+      'Unresolved project context:',
+      ...brief.unresolvedProjectContextGaps.map((gap) => `- ${gap}`),
+    );
+  }
+  lines.push(
+    '',
+    `Budget: ${brief.budget.measuredTokens}/${brief.budget.maximumMeasuredTokens} measured tokens including base Skill context.`,
+  );
+  return lines.join('\n');
+};
+
 const assertResolutionInput = (input: SkoposSkillContextResolutionInput): void => {
   if (input.baseMeasuredTokens > input.maximumMeasuredTokens) {
     throw new Error('Base Skill context already exceeds the Task-wide token ceiling.');

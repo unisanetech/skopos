@@ -6,6 +6,7 @@ import { buildSkoposSkillSourceDigest } from '@skopos/indexer';
 import type {
   SkoposContextEntry,
   SkoposSkillEvaluationArtifact,
+  SkoposSkillEvaluationCase,
   SkoposSkillEvaluationEnvironmentIdentity,
   SkoposSkillEvaluationReviewInput,
   SkoposSkillEvaluationReviewOutput,
@@ -32,6 +33,19 @@ export interface SkoposSkillEvaluationReviewer {
   ): Promise<SkoposSkillEvaluationReviewOutput>;
 }
 
+export interface SkoposSkillPairedComparisonCase
+  extends Omit<SkoposSkillEvaluationCase, 'candidateModuleIds'> {
+  controlModuleIds: string[];
+  candidateModuleIds: string[];
+  candidateAdditionalContext: SkoposContextEntry[];
+}
+
+export interface SkoposSkillPairedComparison {
+  comparisonId: string;
+  sourcePaths: string[];
+  cases: SkoposSkillPairedComparisonCase[];
+}
+
 export const runSkoposSkillPairedEvaluationRuntime = async ({
   cwd,
   pack: packId,
@@ -45,6 +59,7 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
   operatingModel,
   environment,
   caseIds,
+  comparison,
   dryRun = false,
 }: {
   cwd: string;
@@ -59,6 +74,7 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
   operatingModel: Parameters<typeof buildSkoposSkillAcceptanceIdentityRuntime>[0]['operatingModel'];
   environment: SkoposSkillEvaluationEnvironmentIdentity;
   caseIds?: string[];
+  comparison?: SkoposSkillPairedComparison;
   dryRun?: boolean;
 }): Promise<{
   artifact: SkoposSkillEvaluationArtifact;
@@ -88,13 +104,20 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
     binding,
     operatingModel,
   });
+  if (comparison) assertComparison(comparison);
+  const suiteSourcePaths = comparison?.sourcePaths ?? [suite.sourcePath];
   const suiteDigest = await buildSkoposSkillSourceDigest({
     cwd: workspaceRoot,
-    sourcePaths: [suite.sourcePath],
+    sourcePaths: suiteSourcePaths,
   });
   if (suiteDigest.missingPaths.length > 0) {
     throw new Error(
       `Skill evaluation suite source is missing: ${suiteDigest.missingPaths.join(', ')}.`,
+    );
+  }
+  if (comparison && environment.suiteDigest !== suiteDigest.digest) {
+    throw new Error(
+      `Comparison environment identity is stale: suiteDigest must equal ${suiteDigest.digest}.`,
     );
   }
   const runRoot = resolve(
@@ -104,20 +127,27 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
   const packDirectory = dirname(resolve(workspaceRoot, pack.sourcePath));
   const results = [];
 
+  const availableCases: SkoposSkillPairedComparisonCase[] = comparison
+    ? comparison.cases
+    : suite.cases.map((evaluationCase) => ({
+        ...evaluationCase,
+        controlModuleIds: [],
+        candidateAdditionalContext: [],
+      }));
   const selectedCases = caseIds
     ? caseIds.map((caseId) => {
-        const evaluationCase = suite.cases.find((candidate) => candidate.caseId === caseId);
+        const evaluationCase = availableCases.find((candidate) => candidate.caseId === caseId);
         if (!evaluationCase) throw new Error(`Unknown Skill evaluation case: ${caseId}`);
         return evaluationCase;
       })
-    : suite.cases;
+    : availableCases;
   if (selectedCases.length === 0) throw new Error('Skill evaluation requires at least one case.');
 
   for (const evaluationCase of selectedCases) {
-    const candidateContext = await Promise.all(
-      evaluationCase.candidateModuleIds.map(async (moduleId) => {
+    const buildModuleContext = async (moduleIds: string[]): Promise<SkoposContextEntry[]> =>
+      Promise.all(moduleIds.map(async (moduleId) => {
         const module = pack.modules.find((candidate) => candidate.id === moduleId);
-        if (!module) throw new Error(`Unknown candidate module ${moduleId}.`);
+        if (!module) throw new Error(`Unknown comparison module ${moduleId}.`);
         return {
           id: `skill:${pack.packId}:${module.id}`,
           kind: 'skill' as const,
@@ -127,8 +157,15 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
           appliesTo: [...module.applicability.scopeKinds, ...module.applicability.capabilities],
           provenance: [],
         } satisfies SkoposContextEntry;
-      }),
-    );
+      }));
+    const [controlContext, candidateModuleContext] = await Promise.all([
+      buildModuleContext(evaluationCase.controlModuleIds),
+      buildModuleContext(evaluationCase.candidateModuleIds),
+    ]);
+    const candidateContext = [
+      ...candidateModuleContext,
+      ...evaluationCase.candidateAdditionalContext,
+    ];
     const arms = await Promise.all(
       (['control', 'candidate'] as const).map(async (arm) => {
         const opaqueArmId = digest(`${runId}:${evaluationCase.caseId}:${arm}`).slice(0, 12);
@@ -143,7 +180,7 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
           caseId: evaluationCase.caseId,
           taskPrompt: evaluationCase.taskPrompt,
           workspaceRoot: armRoot,
-          additionalContext: arm === 'candidate' ? candidateContext : [],
+          additionalContext: arm === 'candidate' ? candidateContext : controlContext,
         });
         const realArmRoot = await realpath(armRoot);
         for (const artifactPath of output.artifactPaths) {
@@ -279,7 +316,7 @@ export const runSkoposSkillPairedEvaluationRuntime = async ({
     packId: pack.packId,
     packVersion: pack.version,
     bindingId: binding.bindingId,
-    suiteId: suite.suiteId,
+    suiteId: comparison?.comparisonId ?? suite.suiteId,
     runId,
     identity: { ...acceptanceIdentity, suiteSourceDigest: suiteDigest.digest },
     environment,
@@ -375,6 +412,40 @@ const buildIncompleteResult = ({
 
 const createRunId = (): string =>
   `${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}-${digest(String(Math.random())).slice(0, 8)}`;
+
+const assertComparison = (comparison: SkoposSkillPairedComparison): void => {
+  assertSafeId(comparison.comparisonId, 'comparison');
+  if (comparison.sourcePaths.length === 0) {
+    throw new Error('A paired comparison requires at least one digest-bound source path.');
+  }
+  if (comparison.cases.length === 0) {
+    throw new Error('A paired comparison requires at least one case.');
+  }
+  const caseIds = new Set<string>();
+  for (const evaluationCase of comparison.cases) {
+    assertSafeId(evaluationCase.caseId, 'comparison case');
+    if (caseIds.has(evaluationCase.caseId)) {
+      throw new Error(`Duplicate paired comparison case: ${evaluationCase.caseId}.`);
+    }
+    caseIds.add(evaluationCase.caseId);
+    if (evaluationCase.controlModuleIds.length === 0) {
+      throw new Error(
+        `Paired comparison ${evaluationCase.caseId} requires explicit control modules.`,
+      );
+    }
+    if (evaluationCase.candidateModuleIds.length === 0) {
+      throw new Error(
+        `Paired comparison ${evaluationCase.caseId} requires explicit candidate modules.`,
+      );
+    }
+    const contextIds = evaluationCase.candidateAdditionalContext.map((entry) => entry.id);
+    if (new Set(contextIds).size !== contextIds.length) {
+      throw new Error(
+        `Paired comparison ${evaluationCase.caseId} contains duplicate candidate context ids.`,
+      );
+    }
+  }
+};
 
 const assertSafeId = (value: string, label: string): void => {
   if (!/^[A-Za-z0-9._-]+$/.test(value)) throw new Error(`Invalid ${label} id: ${value}`);

@@ -13,6 +13,7 @@ import type {
   SkoposSkillContextProjectAuthority,
 } from '../../../model/src/index.js';
 import {
+  renderSkoposSkillContextBriefRuntime,
   resolveSkoposSkillContextBriefRuntime,
   SKOPOS_SKILL_CONTEXT_SELECTION_ALGORITHM_ID,
 } from '../../../runtime/src/application/skills/skill-context.service.js';
@@ -310,6 +311,27 @@ describe('generic Skill Context resolution for Product Interface Design', () => 
     );
     expect(changedSelector.identity.combinedDigest).not.toBe(
       first.identity.combinedDigest,
+    );
+  });
+
+  it('renders the exact resolved Brief without leaking capability-specific vocabulary into core', async () => {
+    const library = await loadLibrary();
+    const brief = resolve({
+      library,
+      selectors: {
+        domain: ['financial-high-trust'],
+        experience: ['review-approval-transaction'],
+      },
+      taskId: 'T-rendered-context',
+    });
+    const rendered = renderSkoposSkillContextBriefRuntime(brief);
+
+    expect(rendered).toContain(brief.identity.combinedDigest);
+    expect(rendered).toContain(brief.libraryDigest);
+    expect(rendered).toContain('Prioritize consequence visibility');
+    expect(rendered).toContain('Do not copy:');
+    expect(rendered).toContain(
+      `${brief.budget.measuredTokens}/${brief.budget.maximumMeasuredTokens}`,
     );
   });
 

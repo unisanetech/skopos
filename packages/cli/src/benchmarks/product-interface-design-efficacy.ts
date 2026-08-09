@@ -6,6 +6,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import {
+  buildSkoposSkillSourceDigest,
   loadSkoposActionManifests,
   loadSkoposGuardManifests,
   loadSkoposSkillPacks,
@@ -20,8 +21,11 @@ import type {
 } from '@skopos/model';
 import {
   evaluateSkoposSkillFixturesRuntime,
+  renderSkoposSkillContextBriefRuntime,
+  resolveSkoposSkillContextBriefRuntime,
   runSkoposSkillPairedEvaluationRuntime,
   type SkoposSkillEvaluationReviewer,
+  type SkoposSkillPairedComparison,
   type SkoposSkillEvaluationWorker,
 } from '@skopos/runtime';
 import { chromium } from 'playwright';
@@ -30,16 +34,44 @@ const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 const bindingPath = 'tools/skopos/skills/ui.product-interface-design.json';
 const packPath = 'skill-packs/ui/product-interface-design/pack.json';
 const suitePath = 'skill-packs/ui/product-interface-design/evaluations/core.suite.json';
+const contextMatrixPath =
+  'skill-packs/ui/product-interface-design/design-context/evaluations/candidate.matrix.json';
+const contextLibraryPath =
+  'skill-packs/ui/product-interface-design/design-context/library.json';
 const rubricPath = 'skill-packs/ui/product-interface-design/rubrics/product-interface-review.json';
 const templateRoot = 'skill-packs/ui/product-interface-design/evaluations/templates';
 const fixtureRoot = 'skill-packs/ui/product-interface-design/fixtures';
 const modelId = process.env.SKOPOS_EFFICACY_MODEL ?? 'gpt-5.6-sol';
 const reasoningEffort = process.env.SKOPOS_EFFICACY_REASONING ?? 'medium';
 const codexPath = process.env.SKOPOS_CODEX_PATH ?? '/Applications/ChatGPT.app/Contents/Resources/codex';
-const smokeCaseIds = ['operations-workbench'];
-const fullCaseIds = [
+const coreSmokeCaseIds = ['operations-workbench'];
+const coreFullCaseIds = [
   'operations-workbench', 'transaction-trust', 'discovery-coordination', 'documentation-workspace',
   'responsive-transformation', 'failure-recovery', 'product-character', 'complete-service-flow',
+];
+const contextSmokeCaseIds = ['developer-workbench'];
+const contextFullCaseIds = [
+  'developer-workbench', 'ai-delegated-work', 'commerce-onboarding',
+  'financial-review', 'developer-monitoring', 'commerce-mobile-transformation',
+];
+const contextTemplateCases: Record<string, string> = {
+  'developer-workbench': 'documentation-workspace',
+  'ai-delegated-work': 'discovery-coordination',
+  'commerce-onboarding': 'complete-service-flow',
+  'financial-review': 'transaction-trust',
+  'developer-monitoring': 'operations-workbench',
+  'commerce-mobile-transformation': 'responsive-transformation',
+};
+const contextRubricDimensions = [
+  'task-archetype and reference fit',
+  'information hierarchy and brand fit',
+  'color-role clarity and product-specific character',
+  'navigation and interaction state clarity',
+  'state and recovery completeness',
+  'responsive transformation and truthful limitations',
+  'accessibility and keyboard behavior',
+  'inclusion, user agency, and interruption discipline',
+  'rendered proof quality',
 ];
 const sanitizedPath = '/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin';
 const disabledFeatures = ['plugins', 'apps', 'multi_agent', 'browser_use', 'in_app_browser', 'workspace_dependencies'];
@@ -75,7 +107,9 @@ type CommandRecord = {
 
 type RunReport = {
   schemaVersion: 1;
-  purpose: 'pipeline-canary' | 'paired-release-efficacy';
+  purpose: 'pipeline-canary' | 'paired-release-efficacy' |
+    'design-context-pipeline-canary' | 'design-context-paired-efficacy';
+  comparison: 'core-vs-no-skill' | 'core-plus-context-vs-core';
   result: 'pass' | 'fail' | 'inconclusive';
   stage: 'smoke' | 'full';
   runId: string;
@@ -106,13 +140,21 @@ type RunReport = {
 const args = new Set(process.argv.slice(2));
 const execute = args.has('--execute');
 const authorized = args.has('--authorized');
+const comparisonArg = process.argv.find((value) => value.startsWith('--comparison='))
+  ?.slice('--comparison='.length);
+if (comparisonArg && comparisonArg !== 'core' && comparisonArg !== 'design-context') {
+  throw new Error(`Unknown evaluation comparison: ${comparisonArg}`);
+}
+const comparisonMode = (comparisonArg ?? 'core') as 'core' | 'design-context';
 const stageArg = process.argv.find((value) => value.startsWith('--stage='))?.slice('--stage='.length);
 if (stageArg && stageArg !== 'smoke' && stageArg !== 'full') throw new Error(`Unknown evaluation stage: ${stageArg}`);
 const stage = (stageArg ?? 'smoke') as 'smoke' | 'full';
+const smokeCaseIds = comparisonMode === 'design-context' ? contextSmokeCaseIds : coreSmokeCaseIds;
+const fullCaseIds = comparisonMode === 'design-context' ? contextFullCaseIds : coreFullCaseIds;
 const selectedCaseIds = stage === 'smoke' ? smokeCaseIds : fullCaseIds;
 const runIdArg = process.argv.find((value) => value.startsWith('--run-id='));
 const runId = runIdArg?.slice('--run-id='.length) ??
-  `product-interface-design-${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}`;
+  `product-interface-design${comparisonMode === 'design-context' ? '-context' : ''}-${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}`;
 const isolatedRoot = join(tmpdir(), `skopos-${runId}`);
 const artifactBaseRoot = process.env.SKOPOS_ARTIFACT_ROOT ? resolve(process.env.SKOPOS_ARTIFACT_ROOT) : skoposRoot;
 const evidenceRoot = join(artifactBaseRoot, '.skopos/evaluations', runId);
@@ -121,13 +163,25 @@ const commands: CommandRecord[] = [];
 const main = async (): Promise<void> => {
   if (execute && !authorized) throw new Error('--execute requires --authorized.');
   await Promise.all([mkdir(isolatedRoot, { recursive: true }), mkdir(evidenceRoot, { recursive: true })]);
+  const comparison = comparisonMode === 'design-context'
+    ? await buildDesignContextComparison()
+    : undefined;
   const identities = await buildIdentities(stage, selectedCaseIds);
   const preflight = await runPreflight();
   const matrix = { cases: selectedCaseIds.length, workerCalls: selectedCaseIds.length * 2,
     reviewerCalls: selectedCaseIds.length, totalCalls: selectedCaseIds.length * 3 };
   const reportBase = {
     schemaVersion: 1 as const,
-    purpose: stage === 'smoke' ? 'pipeline-canary' as const : 'paired-release-efficacy' as const,
+    purpose: comparisonMode === 'design-context'
+      ? stage === 'smoke'
+        ? 'design-context-pipeline-canary' as const
+        : 'design-context-paired-efficacy' as const
+      : stage === 'smoke'
+        ? 'pipeline-canary' as const
+        : 'paired-release-efficacy' as const,
+    comparison: comparisonMode === 'design-context'
+      ? 'core-plus-context-vs-core' as const
+      : 'core-vs-no-skill' as const,
     stage,
     runId,
     generatedAt: new Date().toISOString(),
@@ -152,6 +206,7 @@ const main = async (): Promise<void> => {
     };
     await writeReport(report);
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    if (report.result === 'fail') process.exitCode = 1;
     return;
   }
   if (preflight.status === 'fail') throw new Error('Evaluation preflight failed; no model call was started.');
@@ -171,6 +226,7 @@ const main = async (): Promise<void> => {
     operatingModel,
     environment: identities,
     caseIds: selectedCaseIds,
+    comparison,
   });
   const containment = await inspectContainment();
   const failed = result.artifact.invalidCases > 0 || result.artifact.abortedCases > 0 ||
@@ -195,6 +251,117 @@ const main = async (): Promise<void> => {
   await writeExternalReceipt('succeeded');
   process.stdout.write(`${JSON.stringify({ report, evaluation: result.artifact }, null, 2)}\n`);
   if (failed || overBudget) process.exitCode = 1;
+};
+
+const buildDesignContextComparison = async (): Promise<SkoposSkillPairedComparison> => {
+  const [packs, matrixSource, suiteSource] = await Promise.all([
+    loadSkoposSkillPacks({ cwd: skoposRoot }),
+    readFile(join(skoposRoot, contextMatrixPath), 'utf8'),
+    readFile(join(skoposRoot, suitePath), 'utf8'),
+  ]);
+  const pack = packs.find((candidate) => candidate.packId === 'ui.product-interface-design');
+  if (!pack?.loadedContextLibrary || !pack.contextLibrary) {
+    throw new Error('Product Interface Design has no loaded Context Library.');
+  }
+  const matrix = JSON.parse(matrixSource) as {
+    id: string;
+    status: string;
+    cases: Array<{
+      caseId: string;
+      taskPrompt: string;
+      selectors: Record<string, string[]>;
+    }>;
+  };
+  if (matrix.status !== 'prepared-not-executed') {
+    throw new Error(`Unexpected Design Context matrix status: ${matrix.status}.`);
+  }
+  if (matrix.cases.map(({ caseId }) => caseId).join('\n') !== contextFullCaseIds.join('\n')) {
+    throw new Error('Design Context matrix cases no longer match the frozen runner order.');
+  }
+  const suite = JSON.parse(suiteSource) as {
+    cases: Array<{ caseId: string; title: string; projectTemplatePath: string }>;
+  };
+  const templates = new Map(suite.cases.map((entry) => [entry.caseId, entry]));
+  const moduleIds = ['interface-design.structure', 'interface-design.behavior', 'interface-design.finish'];
+  const baseMeasuredTokens = moduleIds.reduce((total, moduleId) => {
+    const module = pack.modules.find((candidate) => candidate.id === moduleId);
+    if (!module) throw new Error(`Missing Product Interface Design module ${moduleId}.`);
+    return total + module.measuredTokens;
+  }, 0);
+  const maximumMeasuredTokens = Math.min(
+    pack.selection.maximumMeasuredTokens,
+    baseMeasuredTokens + pack.contextLibrary.maximumMeasuredTokens,
+  );
+  const generatedAt = new Date().toISOString();
+  const briefRoot = join(evidenceRoot, 'resolved-context-briefs');
+  await mkdir(briefRoot, { recursive: true });
+
+  const cases = await Promise.all(matrix.cases.map(async (entry) => {
+    const templateCaseId = contextTemplateCases[entry.caseId];
+    const template = templateCaseId ? templates.get(templateCaseId) : undefined;
+    if (!template) throw new Error(`No frozen template mapping exists for ${entry.caseId}.`);
+    const portableTemplatePath = join(dirname(suitePath), '..', template.projectTemplatePath);
+    const templateDigest = await digestTree(join(skoposRoot, portableTemplatePath));
+    const brief = resolveSkoposSkillContextBriefRuntime({
+      taskId: `evaluation-${entry.caseId}`,
+      packId: pack.packId,
+      packVersion: pack.version,
+      library: pack.loadedContextLibrary!,
+      selectors: entry.selectors,
+      taskEvidence: [
+        entry.taskPrompt,
+        ...Object.entries(entry.selectors).map(([dimension, values]) =>
+          `${dimension}: ${values.join(', ')}`),
+      ],
+      projectAuthorities: [{
+        id: `evaluation-template.${entry.caseId}`,
+        role: 'interface-authority',
+        sourcePaths: [portableTemplatePath],
+        sourceDigest: templateDigest,
+        summary: 'The case-local components, tokens, language, and behavior remain authoritative.',
+      }],
+      maximumMeasuredTokens,
+      baseMeasuredTokens,
+      asOf: generatedAt.slice(0, 10),
+      generatedAt,
+    });
+    if (brief.principles.length < 2) {
+      throw new Error(`Design Context case ${entry.caseId} resolved fewer than two primary principles.`);
+    }
+    await writeFile(
+      join(briefRoot, `${entry.caseId}.json`),
+      `${JSON.stringify(brief, null, 2)}\n`,
+    );
+    return {
+      caseId: entry.caseId,
+      title: template.title,
+      taskPrompt: entry.taskPrompt,
+      projectTemplatePath: template.projectTemplatePath,
+      controlModuleIds: moduleIds,
+      candidateModuleIds: moduleIds,
+      candidateAdditionalContext: [{
+        id: `skill-context-brief.${entry.caseId}`,
+        kind: 'skill' as const,
+        title: 'Resolved Context Brief',
+        summary: renderSkoposSkillContextBriefRuntime(brief),
+        importance: 'recommended' as const,
+        appliesTo: Object.values(entry.selectors).flat(),
+        provenance: [contextMatrixPath, contextLibraryPath].map((path) => ({
+          authority: 'accepted' as const,
+          sourceKind: 'skill' as const,
+          sourceId: `${pack.packId}@${pack.version}`,
+          path,
+        })),
+      }],
+      rubricDimensions: contextRubricDimensions,
+    };
+  }));
+
+  return {
+    comparisonId: 'ui-product-interface-design-context',
+    sourcePaths: [contextMatrixPath, contextLibraryPath, suitePath],
+    cases,
+  };
 };
 
 class CodexEvaluationAdapter implements SkoposSkillEvaluationWorker, SkoposSkillEvaluationReviewer {
@@ -485,6 +652,13 @@ const buildIdentities = async (
   const binding = JSON.parse(await readFile(join(skoposRoot, bindingPath), 'utf8')) as {
     acceptance: { identity: { packSourceDigest: string; bindingSourceDigest: string; capabilityCatalogDigest: string } };
   };
+  const comparisonDigest = await buildSkoposSkillSourceDigest({
+    cwd: skoposRoot,
+    sourcePaths: evaluationSourcePaths(),
+  });
+  if (comparisonDigest.missingPaths.length > 0) {
+    throw new Error(`Evaluation identity source is missing: ${comparisonDigest.missingPaths.join(', ')}.`);
+  }
   return {
     modelId, reasoningEffort, hostId: 'codex-cli', workerAdapterId: 'codex-exec-ui-worker@1',
     reviewerId: 'codex-exec-blinded-ui-reviewer@1',
@@ -499,7 +673,7 @@ const buildIdentities = async (
     capabilityDigest: binding.acceptance.identity.capabilityCatalogDigest,
     fixtureDigest: await digestTree(join(skoposRoot, fixtureRoot)),
     rubricDigest: await digestFile(join(skoposRoot, rubricPath)),
-    suiteDigest: await digestFile(join(skoposRoot, suitePath)),
+    suiteDigest: comparisonDigest.digest,
     toolchainDigest: await digestText(`${await commandVersion(codexPath, ['--version'])}\n${await commandVersion(process.execPath, ['--version'])}\nplaywright`),
     permissionsDigest: await digestText(JSON.stringify({ worker: 'workspace-write', reviewer: 'read-only',
       network: 'not-requested', nodePath: 'removed', path: sanitizedPath, disabledFeatures })),
@@ -537,7 +711,7 @@ const runPreflight = async (): Promise<RunReport['preflight']> => {
   await check('frozen-assets', async () => {
     const templatePaths = await selectedTemplatePaths(selectedCaseIds);
     await Promise.all([
-      stat(join(skoposRoot, suitePath)),
+      ...evaluationSourcePaths().map((path) => stat(join(skoposRoot, path))),
       stat(join(skoposRoot, rubricPath)),
       ...templatePaths.flatMap((templatePath) =>
         ['index.html', 'styles.css', 'src.js'].map((file) => stat(join(skoposRoot, templatePath, file))),
@@ -545,6 +719,15 @@ const runPreflight = async (): Promise<RunReport['preflight']> => {
     ]);
     return `${selectedCaseIds.length} declared case(s); suite, rubric, and ${templatePaths.length} case-local template(s) present.`;
   });
+  if (comparisonMode === 'design-context') {
+    await check('resolved-context-briefs', async () => {
+      const paths = await readdir(join(evidenceRoot, 'resolved-context-briefs'));
+      if (paths.length !== contextFullCaseIds.length) {
+        throw new Error(`Expected ${contextFullCaseIds.length} exact resolved Context Briefs, found ${paths.length}.`);
+      }
+      return `${paths.length} exact candidate Briefs resolved; control and candidate share the same three core modules.`;
+    });
+  }
   await check('accepted-source-identity', async () => {
     const [evaluation, bindingSource] = await Promise.all([
       evaluateSkoposSkillFixturesRuntime({ cwd: skoposRoot, pack: 'ui.product-interface-design',
@@ -567,11 +750,18 @@ const selectedTemplatePaths = async (caseIds: string[]): Promise<string[]> => {
   };
   const casesById = new Map(suite.cases.map((entry) => [entry.caseId, entry]));
   return [...new Set(caseIds.map((caseId) => {
-    const evaluationCase = casesById.get(caseId);
+    const sourceCaseId = comparisonMode === 'design-context'
+      ? contextTemplateCases[caseId]
+      : caseId;
+    const evaluationCase = sourceCaseId ? casesById.get(sourceCaseId) : undefined;
     if (!evaluationCase) throw new Error(`Evaluation case ${caseId} is absent from ${suitePath}.`);
     return join(dirname(suitePath), '..', evaluationCase.projectTemplatePath);
   }))].sort();
 };
+
+const evaluationSourcePaths = (): string[] => comparisonMode === 'design-context'
+  ? [contextMatrixPath, contextLibraryPath, suitePath]
+  : [suitePath];
 
 const digestSelectedTemplates = async (caseIds: string[]): Promise<string> => {
   const templatePaths = await selectedTemplatePaths(caseIds);
@@ -603,6 +793,12 @@ const assertValidSmokeReport = async (identities: SkoposSkillEvaluationEnvironme
   const report = JSON.parse(await readFile(resolve(reportArg), 'utf8')) as RunReport;
   if (report.stage !== 'smoke' || report.result !== 'pass' || report.preflight.status !== 'pass') {
     throw new Error('Full evaluation requires one successful smoke report.');
+  }
+  const expectedComparison = comparisonMode === 'design-context'
+    ? 'core-plus-context-vs-core'
+    : 'core-vs-no-skill';
+  if (report.comparison !== expectedComparison) {
+    throw new Error('Full evaluation requires a smoke report for the same comparison.');
   }
   const exactFields: Array<keyof SkoposSkillEvaluationEnvironmentIdentity> = [
     'modelId', 'reasoningEffort', 'hostId', 'workerAdapterId', 'reviewerId', 'workerPromptDigest',

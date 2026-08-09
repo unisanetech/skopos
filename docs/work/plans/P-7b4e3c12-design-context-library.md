@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phases-1-through-4-foundation-implemented
+implementationStatus: phases-1-through-4-implemented-phase-5-runner-preflight-passed
 lastUpdated: 2026-08-09
 relatedDocs:
   - ../../architecture/design-context-model.md
@@ -56,8 +56,12 @@ owns the architectural choice.
 10. Focused deterministic proof covers the complete initial domain and experience
     matrix, explicit justification for saturated signals, copied-pack loading, and a
     clean packed CLI installation without source-checkout access.
-11. A six-case Library-backed behavioral matrix and two pilot slots are prepared but
-    explicitly unexecuted. No efficacy or pilot result is claimed.
+11. The six-case Library-backed behavioral matrix now has a generic digest-bound
+    paired-comparison runner. Its no-model preflight resolves all six exact Context
+    Briefs, gives both arms the same three accepted core modules, gives only the
+    candidate its Brief, verifies browser and isolation readiness, and preserves the
+    accepted `0.3.0` identity at 8/8 fixtures. Workers and reviewers remain explicitly
+    unexecuted, so no efficacy or pilot result is claimed.
 12. Live Task projection is intentionally not activated until explicit domain and
     experience selectors have one canonical Task input path. Goal-text inference is
     rejected as unsafe and nondeterministic product authority.
@@ -286,8 +290,16 @@ automatic expansion.
 
 Preparation record: `design-context/evaluations/candidate.matrix.json` freezes six
 neutral combined-domain/experience briefs, equal-arm rules, capture requirements, and
-pilot placeholders. Its status is `prepared-not-executed`; it is not Evidence of
-quality, efficacy, or release readiness.
+pilot placeholders. The generic paired-evaluation runtime accepts an optional
+digest-bound comparison definition, so the control and candidate can share the exact
+accepted core while the candidate alone receives its rendered Context Brief. The
+Product Interface Design benchmark exposes this as
+`pnpm proof:product-interface-design-context-efficacy`; a passing no-model preflight
+records six resolved Briefs and validates exact source identity, templates, browser,
+toolchain, and containment without starting a worker or reviewer. The matrix status
+remains `prepared-not-executed`; this is not Evidence of quality, efficacy, human
+adjudication, or release readiness. Model smoke and full execution still require
+separate explicit authorization.
 
 ### Phase 6 — Real-project pilots
 

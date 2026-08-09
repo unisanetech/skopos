@@ -1,0 +1,48 @@
+{
+  "snapshotId": "S-b12114f6c4f4",
+  "taskId": "T-c7cd96b5",
+  "sessionId": "design-context-eval-20260810b",
+  "actorId": "codex",
+  "baseRevision": "500bf64ee187db52814a32d6686a89a19158b2f4",
+  "paths": [
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "b0b69cf2f16bab7c43fa06bcdc8d18bb784574177c9bd99e8973f646bfbde7a1"
+    },
+    {
+      "path": "docs/work/plans/P-7b4e3c12-design-context-library.md",
+      "digest": "7ba7cfdb6e8bfa45e26c04bf567c2af28886e6d1b938c559f80f7ead84b86fd2"
+    },
+    {
+      "path": "package.json",
+      "digest": "dfd334d8dbf9dc827154283ea0ba082907dc3f80ac7e663c74b0a750e2f43e29"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-context-resolution.test.ts",
+      "digest": "356d8b921c41145d65118d75b795c4deeaf7205e6e48ea5cbdba48c5d195c6fa"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-evaluations.test.ts",
+      "digest": "ae1c8c2989e8af392b3f7d686f5ced9bc4c3adcc1f9b5bc31e5e2878b779c635"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
+      "digest": "fd75781525fd568f970e78e9cdf5619ee043cbfe7ef8d7195b9b72abb8ade34c"
+    },
+    {
+      "path": "packages/runtime/src/application/skills/skill-context.service.ts",
+      "digest": "b2c6b9b111475a9d8ba4d40b20e167740750f02b4c23b3d8c5d9bd1e1f63c2c4"
+    },
+    {
+      "path": "packages/runtime/src/application/skills/skill-evaluations.service.ts",
+      "digest": "6b4af35c12b65f843e25a794b7bc013b515feb0157f48fe0f44dbd1936909e37"
+    },
+    {
+      "path": "tools/skopos/actions/skill-product-interface-design-context-efficacy.yaml",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    }
+  ],
+  "digest": "b12114f6c4f444ca97225d38d0f5dbe9a772fd3f2952030202a22c95682919b3",
+  "createdAt": "2026-08-09T19:52:05.365Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c7cd96b5-S-b12114f6c4f4.json"
+}

@@ -150,17 +150,22 @@ canonical Skill system, not a versioned migration.
     and independent human adjudication remains pending. Eight label-safe A/B bundles
     and reviewer instructions are available, but R2 remains blocked.
 18. The first Product Interface Design Design Context candidate now has deterministic
-    infrastructure rather than a link list. The pack owns a reviewed `0.1.0` Library
+    and executable evaluation infrastructure rather than a link list. The pack owns a reviewed `0.1.0` Library
     with four Domain Guides, six Experience Guides, three Design Signals, ten dated
     official Source Notes, explicit limitations and do-not-copy constraints, and exact
     digests. Generic core owns only loading, selection, explanation, budget, freshness,
     precedence, and identity mechanics. Focused proof covers the complete initial
     selector matrix, ambiguity, project precedence, expiry, retirement, budget,
     saturated-signal justification, invalidation, irrelevant/public-page exclusion,
-    copied-pack equivalence, and clean packed installation. A
-    neutral six-case comparison matrix exists but has not run. This closes the
-    deterministic Design Context foundation only; it does not close this Finding,
-    prove real-project usefulness, or satisfy R2.
+    copied-pack equivalence, and clean packed installation. Its neutral six-case
+    comparison now reuses the isolated paired-evaluation pipeline through a generic,
+    digest-bound comparison definition: both arms receive the same accepted core and
+    only the candidate receives its exact resolved Context Brief. The no-model
+    preflight passes with six Briefs, browser readiness, zero model calls, and the
+    accepted identity still current at 8/8 fixtures. Model smoke, full comparison,
+    independent human adjudication, and real-project pilots have not run. This closes
+    executable preparation only; it does not close this Finding, prove usefulness, or
+    satisfy R2.
 
 ## Impact
 
@@ -206,6 +211,15 @@ canonical Skill system, not a versioned migration.
 7. Packed external-project proof passes without access to the source checkout.
 
 ## Changelog
+
+- `2026-08-10`: Made the frozen Design Context matrix executable without changing or
+  re-accepting Product Interface Design guidance. The generic paired runtime can now
+  bind exact comparison sources, give both arms explicit common modules, and add exact
+  candidate-only context while preserving opaque workspaces and blind review. Focused
+  regression proof passes, and the no-model smoke preflight resolves six Briefs and
+  passes toolchain, browser, containment, and accepted-identity checks with zero model
+  calls. The costly smoke/full run and independent human review remain unexecuted, so
+  the Finding and R2 stay blocked.
 
 - `2026-08-09`: Preserved the exact current-source R2 result without post-outcome
   tuning. Preflight passed, the one-case smoke favored Product UI Craft, and the full

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  buildSkoposSkillSourceDigest,
   loadSkoposActionManifests,
   loadSkoposGuardManifests,
   loadSkoposSkillPacks,
@@ -268,6 +269,137 @@ describe('paired Skill evaluation', () => {
       await rm(evaluationRoot, { recursive: true, force: true });
     }
   });
+
+  it('compares the same core context with a digest-bound candidate-only addition', async () => {
+    const evaluationRoot = await mkdtemp(join(tmpdir(), 'skopos-paired-context-'));
+    const matrixPath =
+      'skill-packs/ui/product-interface-design/design-context/evaluations/candidate.matrix.json';
+    const matrixDigest = await buildSkoposSkillSourceDigest({
+      cwd: skoposRoot,
+      sourcePaths: [matrixPath],
+    });
+    const workerInputs: SkoposSkillEvaluationWorkerInput[] = [];
+    try {
+      const result = await runSkoposSkillPairedEvaluationRuntime({
+        cwd: skoposRoot,
+        pack: 'ui.product-interface-design',
+        binding: 'skopos.ui.product-interface-design',
+        suite: 'ui-product-interface-design-core',
+        runId: 'paired-context-fixture',
+        evaluationRoot,
+        operatingModel: await buildOperatingModel(),
+        environment: fixtureEnvironment('full', matrixDigest.digest),
+        comparison: {
+          comparisonId: 'ui-product-interface-design-context',
+          sourcePaths: [matrixPath],
+          cases: [{
+            caseId: 'developer-workbench',
+            title: 'Developer workbench',
+            taskPrompt: 'Improve one deployment workspace.',
+            projectTemplatePath: 'evaluations/templates/operations-workbench',
+            controlModuleIds: ['interface-design.structure'],
+            candidateModuleIds: ['interface-design.structure'],
+            candidateAdditionalContext: [{
+              id: 'skill-context-brief.fixture',
+              kind: 'skill',
+              title: 'Resolved Context Brief',
+              summary: 'Candidate-only exact context.',
+              importance: 'recommended',
+              appliesTo: ['developer-workbench'],
+              provenance: [matrixPath],
+            }],
+            rubricDimensions: ['user-task clarity'],
+          }],
+        },
+        dryRun: true,
+        worker: {
+          execute: async (input) => {
+            workerInputs.push(input);
+            const artifactPath = `${input.workspaceRoot}/result.json`;
+            await writeFile(artifactPath, '{}\n');
+            return {
+              status: 'completed', summary: `${input.additionalContext.length} context entries.`,
+              artifactPaths: [artifactPath], measuredInputTokens: 100,
+              measuredCachedInputTokens: 50, measuredOutputTokens: 20, toolCalls: 1,
+              correctionTurns: 0, supervisionEvents: 0, durationMs: 10,
+              authorityViolationIds: [],
+            };
+          },
+        },
+        reviewer: {
+          review: async (input) => {
+            const winner = input.alternatives.find((entry) => entry.summary.startsWith('2'))?.label;
+            if (!winner) throw new Error('Expected the candidate-only context addition.');
+            return {
+              status: 'completed', winner, reason: 'Candidate has the bounded addition.',
+              dimensionScores: { 'user-task clarity': { A: 2, B: 3 } },
+              measuredInputTokens: 20, measuredCachedInputTokens: 10,
+              measuredOutputTokens: 10, durationMs: 5,
+            };
+          },
+        },
+      });
+
+      expect(result.artifact).toMatchObject({
+        suiteId: 'ui-product-interface-design-context',
+        candidateWins: 1,
+        controlWins: 0,
+        identity: { suiteSourceDigest: matrixDigest.digest },
+      });
+      expect(workerInputs.map((input) => input.additionalContext.length).sort()).toEqual([1, 2]);
+      expect(workerInputs.filter((input) =>
+        input.additionalContext.some((entry) => entry.id === 'skill-context-brief.fixture'),
+      )).toHaveLength(1);
+      expect(workerInputs.every((input) =>
+        input.additionalContext.some((entry) => entry.id.includes('interface-design.structure')),
+      )).toBe(true);
+    } finally {
+      await rm(evaluationRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('rejects a stale comparison identity before starting a worker', async () => {
+    await expect(runSkoposSkillPairedEvaluationRuntime({
+      cwd: skoposRoot,
+      pack: 'ui.product-interface-design',
+      binding: 'skopos.ui.product-interface-design',
+      suite: 'ui-product-interface-design-core',
+      operatingModel: await buildOperatingModel(),
+      environment: fixtureEnvironment('smoke', 'sha256:stale'),
+      comparison: {
+        comparisonId: 'stale-context-comparison',
+        sourcePaths: [
+          'skill-packs/ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
+        ],
+        cases: [{
+          caseId: 'stale-case', title: 'Stale case', taskPrompt: 'Do bounded work.',
+          projectTemplatePath: 'evaluations/templates/operations-workbench',
+          controlModuleIds: ['interface-design.structure'],
+          candidateModuleIds: ['interface-design.structure'],
+          candidateAdditionalContext: [], rubricDimensions: ['user-task clarity'],
+        }],
+      },
+      dryRun: true,
+      worker: { execute: async () => { throw new Error('Worker must not run.'); } },
+      reviewer: { review: async () => { throw new Error('Reviewer must not run.'); } },
+    })).rejects.toThrow('Comparison environment identity is stale');
+  });
+});
+
+const fixtureEnvironment = (
+  evaluationStage: 'smoke' | 'full',
+  suiteDigest: string,
+) => ({
+  modelId: 'fixture-model', reasoningEffort: 'fixed', hostId: 'vitest',
+  workerAdapterId: 'fixture-worker@1', reviewerId: 'fixture-reviewer@1',
+  evaluationStage, selectedCaseSetDigest: 'sha256:fixture-cases',
+  workerPromptDigest: 'sha256:fixture-worker-prompt',
+  reviewerPromptDigest: 'sha256:fixture-reviewer-prompt',
+  budgetDigest: 'sha256:fixture-budget', projectTemplateDigest: 'sha256:fixture-template',
+  packDigest: 'sha256:fixture-pack', bindingDigest: 'sha256:fixture-binding',
+  capabilityDigest: 'sha256:fixture-capability', fixtureDigest: 'sha256:fixture-fixtures',
+  rubricDigest: 'sha256:fixture-rubric', suiteDigest,
+  toolchainDigest: 'sha256:fixture-toolchain', permissionsDigest: 'sha256:fixture-permissions',
 });
 
 const buildOperatingModel = async (): Promise<SkoposAgentNativeOperatingModel> => {
