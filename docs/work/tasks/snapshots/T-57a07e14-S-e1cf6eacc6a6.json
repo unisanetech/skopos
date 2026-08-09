@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-e1cf6eacc6a6",
+  "taskId": "T-57a07e14",
+  "sessionId": "codex-portability-fix-session",
+  "actorId": "codex-portability-fix",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/discussion-continuation.test.ts",
+      "digest": "80097a790a85ff04d45ef070532d2a917ce33c44f88c4fc3d9c473f1e935181b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/session-context-contract.test.ts",
+      "digest": "6fe0cfc1e9f83531385505bce2d81c8006ace6f7566951a438fc3ba789dcb476"
+    },
+    {
+      "path": "packages/runtime/src/application/shared/codex-session-import.ts",
+      "digest": "dc1ab340bce478c61e2a1d4b3019cfd5393bd1b54d9fbf5a23f70fecbc3f608f"
+    }
+  ],
+  "digest": "e1cf6eacc6a69c1e3a21e1ad91dc96b58feb23b04c38aa10d9e065805bf4ccec",
+  "createdAt": "2026-08-09T15:44:56.087Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-57a07e14-S-e1cf6eacc6a6.json"
+}

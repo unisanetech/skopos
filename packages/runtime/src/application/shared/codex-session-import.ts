@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { mkdir, open, readFile, readdir, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, relative, sep } from 'node:path';
+import { StringDecoder } from 'node:string_decoder';
 
 import type { SkoposDiscussionRawJournalTurn } from '@skopos/model';
 
@@ -35,6 +36,12 @@ interface CodexSessionMatch {
   messages: CodexSessionMessage[];
 }
 
+interface CodexSessionMetadataMatch {
+  sessionId: string;
+  sessionCwd: string;
+  matchMode: CodexSessionMatch['matchMode'];
+}
+
 interface CodexSessionTurnBlock {
   entries: CodexSessionEnvelope[];
   messages: CodexSessionMessage[];
@@ -42,6 +49,8 @@ interface CodexSessionTurnBlock {
 
 const DEFAULT_CODEX_HOME = join(homedir(), '.codex');
 const CODEX_SESSIONS_DIRECTORY = 'sessions';
+const CODEX_SESSION_METADATA_CHUNK_BYTES = 16 * 1024;
+const CODEX_SESSION_METADATA_MAX_BYTES = 256 * 1024;
 
 export const syncLatestCodexDiscussionJournal = async ({
   workspaceRoot,
@@ -151,9 +160,18 @@ const loadLatestCodexSessionMatch = async ({
   const sessionFiles = await listCodexSessionFiles(sessionsRoot);
 
   for (const sessionFile of sessionFiles) {
+    const metadataMatch = await inspectCodexSessionMetadataMatch({
+      sessionFile,
+      workspaceRoot,
+    });
+    if (!metadataMatch) {
+      continue;
+    }
+
     const sessionMatch = await parseCodexSessionMatch({
       sessionFile,
       workspaceRoot,
+      metadataMatch,
     });
     if (sessionMatch) {
       return sessionMatch;
@@ -183,12 +201,102 @@ const collectJsonlFiles = async (directoryPath: string): Promise<string[]> => {
   return nestedFiles.flat();
 };
 
-const parseCodexSessionMatch = async ({
+const inspectCodexSessionMetadataMatch = async ({
   sessionFile,
   workspaceRoot,
 }: {
   sessionFile: string;
   workspaceRoot: string;
+}): Promise<CodexSessionMetadataMatch | undefined> => {
+  const file = await open(sessionFile, 'r').catch(() => undefined);
+  if (!file) {
+    return undefined;
+  }
+
+  const decoder = new StringDecoder('utf8');
+  const chunk = Buffer.allocUnsafe(CODEX_SESSION_METADATA_CHUNK_BYTES);
+  let bufferedText = '';
+  let position = 0;
+
+  try {
+    while (position < CODEX_SESSION_METADATA_MAX_BYTES) {
+      const remainingBytes = CODEX_SESSION_METADATA_MAX_BYTES - position;
+      const requestedBytes = Math.min(chunk.byteLength, remainingBytes);
+      const { bytesRead } = await file.read(chunk, 0, requestedBytes, position);
+      if (bytesRead === 0) {
+        bufferedText += decoder.end();
+        return parseCodexSessionMetadataLines(bufferedText, workspaceRoot);
+      }
+
+      position += bytesRead;
+      bufferedText += decoder.write(chunk.subarray(0, bytesRead));
+
+      let newlineIndex = bufferedText.indexOf('\n');
+      while (newlineIndex >= 0) {
+        const line = bufferedText.slice(0, newlineIndex).trim();
+        bufferedText = bufferedText.slice(newlineIndex + 1);
+        const metadata = parseCodexSessionMetadataLine(line, workspaceRoot);
+        if (metadata !== undefined) {
+          return metadata ?? undefined;
+        }
+        newlineIndex = bufferedText.indexOf('\n');
+      }
+    }
+  } finally {
+    await file.close();
+  }
+
+  return undefined;
+};
+
+const parseCodexSessionMetadataLines = (
+  contents: string,
+  workspaceRoot: string,
+): CodexSessionMetadataMatch | undefined => {
+  for (const line of contents.split('\n')) {
+    const metadata = parseCodexSessionMetadataLine(line.trim(), workspaceRoot);
+    if (metadata !== undefined) {
+      return metadata ?? undefined;
+    }
+  }
+  return undefined;
+};
+
+const parseCodexSessionMetadataLine = (
+  line: string,
+  workspaceRoot: string,
+): CodexSessionMetadataMatch | null | undefined => {
+  if (line.length === 0) {
+    return undefined;
+  }
+
+  const sessionMeta = parseCodexSessionEnvelope(line);
+  if (sessionMeta?.type !== 'session_meta') {
+    return undefined;
+  }
+
+  const sessionId = sessionMeta.payload?.id;
+  const sessionCwd = sessionMeta.payload?.cwd;
+  const matchMode = classifyCodexSessionMatchMode(sessionCwd, workspaceRoot);
+  if (!sessionId || !sessionCwd || !matchMode) {
+    return null;
+  }
+
+  return {
+    sessionId,
+    sessionCwd,
+    matchMode,
+  };
+};
+
+const parseCodexSessionMatch = async ({
+  sessionFile,
+  workspaceRoot,
+  metadataMatch,
+}: {
+  sessionFile: string;
+  workspaceRoot: string;
+  metadataMatch: CodexSessionMetadataMatch;
 }): Promise<CodexSessionMatch | undefined> => {
   const contents = await readFile(sessionFile, 'utf8').catch(() => undefined);
   if (!contents) {
@@ -210,29 +318,21 @@ const parseCodexSessionMatch = async ({
     return undefined;
   }
 
-  const sessionMeta = parsedRecords.find((entry) => entry.type === 'session_meta');
-  const sessionId = sessionMeta?.payload?.id;
-  const sessionCwd = sessionMeta?.payload?.cwd;
-  const matchMode = classifyCodexSessionMatchMode(sessionCwd, workspaceRoot);
-  if (!sessionId || !matchMode) {
-    return undefined;
-  }
-
   const messages =
-    matchMode === 'exact-session'
+    metadataMatch.matchMode === 'exact-session'
       ? parsedRecords
           .flatMap((entry) => toCodexSessionMessages(entry))
           .filter((message) => !isInjectedCodexBootstrapMessage(message))
       : collectSegmentedCodexSessionMessages({
           entries: parsedRecords,
           workspaceRoot,
-          sessionCwd: sessionCwd ?? workspaceRoot,
+          sessionCwd: metadataMatch.sessionCwd,
         });
 
   return {
-    sessionId,
+    sessionId: metadataMatch.sessionId,
     sessionPath: sessionFile,
-    matchMode,
+    matchMode: metadataMatch.matchMode,
     messages,
   };
 };

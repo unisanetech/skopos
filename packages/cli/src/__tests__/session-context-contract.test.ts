@@ -1,6 +1,6 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, open, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 import {
   SKOPOS_COMMUNICATION_CONTRACT,
@@ -19,6 +19,8 @@ import {
   renderSkoposSessionAdditionalContext,
 } from '@skopos/runtime';
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { syncLatestCodexDiscussionJournal } from '../../../runtime/src/application/shared/codex-session-import.js';
 
 const temporaryRoots: string[] = [];
 
@@ -286,6 +288,206 @@ describe('session communication contract', () => {
       proposalDigest: 'proposal-digest',
     });
   });
+});
+
+describe('Codex session discussion import', () => {
+  it('skips a very large nonmatching log before parsing the newest exact-session match', async () => {
+    const fixture = await createCodexImportFixture();
+    const largeNonmatchingPath = join(
+      fixture.codexHome,
+      'sessions/2026/08/09/rollout-2026-08-09T04-00-00-nonmatching.jsonl',
+    );
+    await writeSparseCodexSession({
+      path: largeNonmatchingPath,
+      sessionId: 'nonmatching-session',
+      cwd: join(fixture.root, 'unrelated-repository'),
+    });
+    await writeCodexSession({
+      path: join(
+        fixture.codexHome,
+        'sessions/2026/08/09/rollout-2026-08-09T03-00-00-newest-match.jsonl',
+      ),
+      sessionId: 'newest-matching-session',
+      cwd: fixture.workspaceRoot,
+      messages: [
+        codexMessage('2026-08-09T03:00:01.000Z', 'user', 'Continue the exact Task.'),
+        codexMessage('2026-08-09T03:00:02.000Z', 'assistant', 'Continuing now.'),
+      ],
+    });
+    await writeCodexSession({
+      path: join(
+        fixture.codexHome,
+        'sessions/2026/08/09/rollout-2026-08-09T02-00-00-older-match.jsonl',
+      ),
+      sessionId: 'older-matching-session',
+      cwd: fixture.workspaceRoot,
+      messages: [codexMessage('2026-08-09T02:00:01.000Z', 'user', 'Older context.')],
+    });
+
+    const startedAt = Date.now();
+    const result = await syncLatestCodexDiscussionJournal({
+      workspaceRoot: fixture.workspaceRoot,
+      codexHome: fixture.codexHome,
+      dryRun: true,
+    });
+    const elapsedMilliseconds = Date.now() - startedAt;
+
+    expect((await stat(largeNonmatchingPath)).size).toBe(LARGE_NONMATCHING_LOG_BYTES);
+    expect(result).toMatchObject({
+      matchMode: 'exact-session',
+      sourceSessionId: 'newest-matching-session',
+      importedTurnCount: 2,
+      totalJournalTurnCount: 2,
+      journalWrite: 'dry-run',
+    });
+    expect(elapsedMilliseconds).toBeLessThan(5_000);
+  });
+
+  it('completes a no-match scan without reading a very large message body', async () => {
+    const fixture = await createCodexImportFixture();
+    const largeNonmatchingPath = join(
+      fixture.codexHome,
+      'sessions/2026/08/09/rollout-2026-08-09T05-00-00-no-match.jsonl',
+    );
+    await writeSparseCodexSession({
+      path: largeNonmatchingPath,
+      sessionId: 'no-match-session',
+      cwd: join(fixture.root, 'another-repository'),
+    });
+
+    const startedAt = Date.now();
+    const result = await syncLatestCodexDiscussionJournal({
+      workspaceRoot: fixture.workspaceRoot,
+      codexHome: fixture.codexHome,
+      dryRun: true,
+    });
+    const elapsedMilliseconds = Date.now() - startedAt;
+
+    expect((await stat(largeNonmatchingPath)).size).toBe(LARGE_NONMATCHING_LOG_BYTES);
+    expect(result).toMatchObject({
+      importedTurnCount: 0,
+      totalJournalTurnCount: 0,
+      journalWrite: 'skipped',
+    });
+    expect(result.sourceSessionId).toBeUndefined();
+    expect(elapsedMilliseconds).toBeLessThan(5_000);
+  });
+
+  it('preserves segmented-parent-session filtering for the selected match', async () => {
+    const fixture = await createCodexImportFixture();
+    const parentRoot = dirname(fixture.workspaceRoot);
+    await writeCodexSession({
+      path: join(
+        fixture.codexHome,
+        'sessions/2026/08/09/rollout-2026-08-09T06-00-00-segmented.jsonl',
+      ),
+      sessionId: 'segmented-parent-session',
+      cwd: parentRoot,
+      messages: [
+        codexMessage('2026-08-09T06:00:01.000Z', 'user', 'Work in a sibling repository.'),
+        codexMessage('2026-08-09T06:00:02.000Z', 'assistant', 'Sibling work complete.'),
+        codexMessage(
+          '2026-08-09T06:00:03.000Z',
+          'user',
+          `Now continue in ${fixture.workspaceRoot}.`,
+        ),
+        codexMessage('2026-08-09T06:00:04.000Z', 'assistant', 'Workspace work resumed.'),
+      ],
+    });
+
+    const result = await syncLatestCodexDiscussionJournal({
+      workspaceRoot: fixture.workspaceRoot,
+      codexHome: fixture.codexHome,
+      dryRun: true,
+    });
+
+    expect(result).toMatchObject({
+      matchMode: 'segmented-parent-session',
+      sourceSessionId: 'segmented-parent-session',
+      importedTurnCount: 2,
+      totalJournalTurnCount: 2,
+      journalWrite: 'dry-run',
+    });
+  });
+});
+
+const LARGE_NONMATCHING_LOG_BYTES = 512 * 1024 * 1024;
+
+const createCodexImportFixture = async (): Promise<{
+  root: string;
+  workspaceRoot: string;
+  codexHome: string;
+}> => {
+  const root = await mkdtemp(join(tmpdir(), 'skopos-codex-import-'));
+  temporaryRoots.push(root);
+  const workspaceRoot = join(root, 'workspace');
+  const codexHome = join(root, 'codex-home');
+  await Promise.all([
+    mkdir(workspaceRoot, { recursive: true }),
+    mkdir(join(codexHome, 'sessions'), { recursive: true }),
+  ]);
+  return { root, workspaceRoot, codexHome };
+};
+
+const writeSparseCodexSession = async ({
+  path,
+  sessionId,
+  cwd,
+}: {
+  path: string;
+  sessionId: string;
+  cwd: string;
+}): Promise<void> => {
+  await mkdir(dirname(path), { recursive: true });
+  const file = await open(path, 'w');
+  try {
+    await file.writeFile(`${JSON.stringify(codexSessionMeta(sessionId, cwd))}\n`, 'utf8');
+    await file.truncate(LARGE_NONMATCHING_LOG_BYTES);
+  } finally {
+    await file.close();
+  }
+};
+
+const writeCodexSession = async ({
+  path,
+  sessionId,
+  cwd,
+  messages,
+}: {
+  path: string;
+  sessionId: string;
+  cwd: string;
+  messages: unknown[];
+}): Promise<void> => {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(
+    path,
+    [codexSessionMeta(sessionId, cwd), ...messages]
+      .map((entry) => JSON.stringify(entry))
+      .join('\n')
+      .concat('\n'),
+    'utf8',
+  );
+};
+
+const codexSessionMeta = (sessionId: string, cwd: string): unknown => ({
+  timestamp: '2026-08-09T00:00:00.000Z',
+  type: 'session_meta',
+  payload: { id: sessionId, cwd },
+});
+
+const codexMessage = (
+  timestamp: string,
+  role: 'user' | 'assistant',
+  text: string,
+): unknown => ({
+  timestamp,
+  type: 'response_item',
+  payload: {
+    type: 'message',
+    role,
+    content: [{ type: role === 'user' ? 'input_text' : 'output_text', text }],
+  },
 });
 
 const createAdoptionSessionWorkspace = async (): Promise<string> => {
