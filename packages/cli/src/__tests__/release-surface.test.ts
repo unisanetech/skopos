@@ -3,6 +3,8 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import { normalizePortablePath } from '../../scripts/portable-path.mjs';
+
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 const PACKAGE_NAMES = [
@@ -38,6 +40,17 @@ const PUBLIC_BUNDLED_CLI_PACKAGE = '@skopos/cli';
 const FIRST_PUBLIC_CLI_VERSION = '0.1.0';
 
 describe('skopos release surface contract', () => {
+  it('uses one portable asset identity on Windows and POSIX hosts', () => {
+    expect(
+      normalizePortablePath(
+        String.raw`ui\product-interface-design\design-context\library.json`,
+      ),
+    ).toBe('ui/product-interface-design/design-context/library.json');
+    expect(
+      normalizePortablePath('ui/product-interface-design/design-context/library.json'),
+    ).toBe('ui/product-interface-design/design-context/library.json');
+  });
+
   it('declares machine-readable surface metadata for every package', async () => {
     for (const packageName of PACKAGE_NAMES) {
       const packageJson = await loadPackageJson(packageName);

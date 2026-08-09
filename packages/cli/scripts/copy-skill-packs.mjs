@@ -2,6 +2,8 @@ import { cp, mkdir, readdir, rm } from 'node:fs/promises';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { normalizePortablePath } from './portable-path.mjs';
+
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const packageRoot = join(scriptDirectory, '..');
 const workspaceRoot = join(packageRoot, '..', '..');
@@ -62,7 +64,7 @@ const listFiles = async (root, current = root) => {
     if (entry.isDirectory()) {
       files.push(...await listFiles(root, absolutePath));
     } else if (entry.isFile()) {
-      files.push(relative(root, absolutePath));
+      files.push(normalizePortablePath(relative(root, absolutePath)));
     }
   }
   return files.sort();
