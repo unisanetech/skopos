@@ -32,6 +32,7 @@ export * from './contracts/skopos-scan-summary.js';
 export * from './contracts/skopos-session-context.js';
 export * from './contracts/skopos-scope-lite.js';
 export * from './contracts/skopos-skill-pack.js';
+export * from './contracts/skopos-skill-context.js';
 export * from './contracts/skopos-source-dependency.js';
 export * from './contracts/skopos-stack-intelligence.js';
 export * from './contracts/skopos-start.js';

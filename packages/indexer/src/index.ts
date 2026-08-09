@@ -10,6 +10,7 @@ export * from './application/build-scopes-lite/build-scopes-lite.service.js';
 export * from './application/build-scope-relations-graph/build-scope-relations-graph.service.js';
 export * from './application/build-workspace-graph/build-workspace-graph.service.js';
 export * from './application/load-policy-packs/load-policy-packs.service.js';
+export * from './application/load-skill-context-library/load-skill-context-library.service.js';
 export * from './application/load-scope-registry/load-scope-registry.service.js';
 export * from './application/load-skill-packs/load-skill-packs.service.js';
 export * from './application/skill-source-digest/skill-source-digest.service.js';

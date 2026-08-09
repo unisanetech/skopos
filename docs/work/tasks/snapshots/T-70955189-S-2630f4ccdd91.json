@@ -1,0 +1,72 @@
+{
+  "snapshotId": "S-2630f4ccdd91",
+  "taskId": "T-70955189",
+  "sessionId": "design-context-phase1-closure",
+  "actorId": "codex",
+  "baseRevision": "ed8bbe017dffdd76a29b1f51b0f8d4e3bc2c5d91",
+  "paths": [
+    {
+      "path": "docs/architecture/design-context-model.md",
+      "digest": "05fcf4727ed03fa2540dbbb6d0a19b1cbd8c647e493c04a5b677510e5428d7d5"
+    },
+    {
+      "path": "docs/work/plans/P-7b4e3c12-design-context-library.md",
+      "digest": "4225373b781786c0e0042d6eb5251d1a9e0409d4e06710b2cd763aabae1a253b"
+    },
+    {
+      "path": "fixtures/skill-context/product-interface-design/phase-1.contract.fixture.json",
+      "digest": "8a0c1eb9203d6178fbbb48b41a596e03d05803f86921f16289dc742430d8ba87"
+    },
+    {
+      "path": "package.json",
+      "digest": "407a87b3fc2dd76934c7d1fa4b7697f8a85abcbebc72233ce2e05dad436179a6"
+    },
+    {
+      "path": "packages/cli/src/__tests__/design-context-library.test.ts",
+      "digest": "bfe92dc6834904da1dfa7e85429a9c0cc7b55c77639e1858f0702bf5abcd39ed"
+    },
+    {
+      "path": "packages/cli/src/__tests__/skill-packs.test.ts",
+      "digest": "0f8d3c6fb46fc7aa688eeb42bd7d41a175fc3020ca519124103cf90be274fcb6"
+    },
+    {
+      "path": "packages/indexer/src/application/load-design-context-library/load-design-context-library.service.ts",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "packages/indexer/src/application/load-skill-context-library/load-skill-context-library.service.ts",
+      "digest": "268705f3bc23e8a8a514585cbd48dd77f942c66fa6ec2aa1efe1f94641db4597"
+    },
+    {
+      "path": "packages/indexer/src/application/load-skill-packs/load-skill-packs.service.ts",
+      "digest": "a8612bf7a549095294138b642f1a8cc880a35c3c1d2fde69b2b94e3abffa81bd"
+    },
+    {
+      "path": "packages/indexer/src/index.ts",
+      "digest": "eca95f956679d3e8f4fddaab50baa4313a4400ff905c783e2d21a508c986421d"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-design-context.ts",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-context.ts",
+      "digest": "1177294242f569b29fc09b3ee5b30d2c62104101e3a0dc5dde4dbda538943e69"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-skill-pack.ts",
+      "digest": "6656d728537c84aab25070c5b74658bf9770b60a2f542a40f6b3678d4c35ac3e"
+    },
+    {
+      "path": "packages/model/src/index.ts",
+      "digest": "599ecabeb920870813112ba5cb5bac434bfa825d9f61b22f537824c630d02bd8"
+    },
+    {
+      "path": "skill-packs/ui/product-interface-design/design-context/fixtures",
+      "digest": "4b66bf93b3932a9539880b2421e35019af9daf84363a0246280ffcac173b2678"
+    }
+  ],
+  "digest": "2630f4ccdd912e0361acfedf8ba9f28d98719b0b6cffcc29e56097ee69699815",
+  "createdAt": "2026-08-09T16:58:31.298Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-70955189-S-2630f4ccdd91.json"
+}

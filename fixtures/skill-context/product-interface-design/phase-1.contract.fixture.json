@@ -1,0 +1,482 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-context-contract-fixture.product-interface-design-phase-1",
+  "type": "skill-context-contract-fixture",
+  "status": "active",
+  "authority": "supporting",
+  "summary": "Frozen Product Interface Design cases for the generic Skill Context contract and future deterministic Design Context resolution.",
+  "updatedAt": "2026-08-09",
+  "fixtureId": "product-interface-design-phase-1",
+  "library": {
+    "schemaVersion": 1,
+    "id": "skill-context-library.product-interface-design-contract-fixture",
+    "type": "skill-context-library",
+    "status": "active",
+    "authority": "canonical",
+    "summary": "Synthetic Design Context records used only to prove the generic Skill Context boundary.",
+    "updatedAt": "2026-08-09",
+    "libraryId": "product-interface-design-contract-fixture",
+    "namespace": "design-context",
+    "version": "0.1.0-test",
+    "consumerPackIds": ["ui.product-interface-design"],
+    "recordTypes": [
+      {
+        "typeId": "design-context.domain-guide",
+        "kind": "guide",
+        "displayName": "Domain Guide",
+        "requiredSelectorDimensions": ["domain"],
+        "requiredConstraintKinds": ["accessibility", "trust", "responsive", "originality"],
+        "allowedFacetValues": {}
+      },
+      {
+        "typeId": "design-context.experience-guide",
+        "kind": "guide",
+        "displayName": "Experience Guide",
+        "requiredSelectorDimensions": ["experience"],
+        "requiredConstraintKinds": ["accessibility", "trust", "responsive", "originality"],
+        "allowedFacetValues": {}
+      },
+      {
+        "typeId": "design-context.design-signal",
+        "kind": "signal",
+        "displayName": "Design Signal",
+        "requiredSelectorDimensions": [],
+        "requiredConstraintKinds": ["accessibility", "trust", "responsive", "originality"],
+        "allowedFacetValues": {
+          "maturity": ["emerging", "established", "saturated", "retired"],
+          "guidance": ["consider", "prefer", "avoid-default", "platform-required"]
+        }
+      },
+      {
+        "typeId": "design-context.source-note",
+        "kind": "source-note",
+        "displayName": "Source Note",
+        "requiredSelectorDimensions": [],
+        "requiredConstraintKinds": [],
+        "allowedFacetValues": {}
+      }
+    ],
+    "records": [
+      {
+        "id": "design-context.domain-guide.developer-platforms",
+        "kind": "guide",
+        "typeId": "design-context.domain-guide",
+        "title": "Developer Platforms",
+        "purpose": "Support legible density and efficient technical work.",
+        "applicability": {
+          "selectors": {
+            "domain": ["developer-platforms"],
+            "platform": ["web"],
+            "audience": ["developers", "technical-operators"]
+          },
+          "positiveSignals": ["The Task changes a repeated technical workflow on a rendered product surface."],
+          "negativeSignals": ["The Task is backend-only, generated-only, or a public marketing page."]
+        },
+        "problem": "Generic dashboard composition can hide the primary technical object.",
+        "guidance": "Keep the primary object direct, make density legible, and disclose detail progressively.",
+        "failureModes": ["Copying a recognizable developer-tool shell instead of following project structure."],
+        "constraints": {
+          "accessibility": ["Preserve semantic order and keyboard access at high density."],
+          "trust": ["Show scope and consequence before destructive actions."],
+          "responsive": ["Move secondary inspectors into named overlays rather than shrinking every pane."],
+          "originality": ["Do not copy another product's shell, palette, navigation, or wording."]
+        },
+        "operationalCost": "May require pane-state and overflow testing.",
+        "sourceNoteIds": ["design-context.source-note.project-authority"],
+        "facets": {},
+        "freshness": {
+          "state": "active",
+          "createdAt": "2026-08-09",
+          "reviewedAt": "2026-08-09",
+          "reviewAfter": "2027-02-05"
+        },
+        "contentDigest": "sha256:3688ce5aa3ce6e2f8dfaf34b8654805c914be7067220b5099c686d666557dc51"
+      },
+      {
+        "id": "design-context.domain-guide.financial-high-trust",
+        "kind": "guide",
+        "typeId": "design-context.domain-guide",
+        "title": "Financial And High-Trust Products",
+        "purpose": "Make consequential decisions calm, explicit, and reviewable.",
+        "applicability": {
+          "selectors": {
+            "domain": ["financial-high-trust"],
+            "platform": ["web", "mobile"],
+            "audience": ["account-holders", "financial-operators"]
+          },
+          "positiveSignals": ["The Task presents money, authorization, compliance, or another consequential decision."],
+          "negativeSignals": ["The surface is decorative or carries no consequential state."]
+        },
+        "problem": "Visual novelty can obscure amount, party, timing, permission, or reversibility.",
+        "guidance": "Prioritize consequence visibility, review, confidence, and auditability over ornament.",
+        "failureModes": ["Using dramatic motion or weak contrast around irreversible actions."],
+        "constraints": {
+          "accessibility": ["Do not use color alone for financial state or risk."],
+          "trust": ["State amount, actor, destination, timing, and recovery before confirmation."],
+          "responsive": ["Keep review facts adjacent to confirmation on narrow screens."],
+          "originality": ["Do not borrow financial brands, copy, illustrations, or branded components."]
+        },
+        "sourceNoteIds": ["design-context.source-note.normative-authority"],
+        "facets": {},
+        "freshness": {
+          "state": "active",
+          "createdAt": "2026-08-09",
+          "reviewedAt": "2026-08-09",
+          "reviewAfter": "2027-02-05"
+        },
+        "contentDigest": "sha256:d2e666a380bba2ca7335c84c6599bbc52c27e038fe489b072136671bcb0e3e13"
+      },
+      {
+        "id": "design-context.experience-guide.application-workbench",
+        "kind": "guide",
+        "typeId": "design-context.experience-guide",
+        "title": "Application Workbench",
+        "purpose": "Orient repeated work around one primary object and next decision.",
+        "applicability": {
+          "selectors": {
+            "experience": ["application-workbench"],
+            "platform": ["web"],
+            "audience": ["operators", "experts"]
+          },
+          "positiveSignals": ["The Task changes a multi-region workspace used for repeated operational work."],
+          "negativeSignals": ["The Task is a short linear setup flow or a public page."]
+        },
+        "problem": "Equal-weight panels make the work object compete with navigation and metadata.",
+        "guidance": "Anchor the workspace on one primary object, stable orientation, and progressive supporting detail.",
+        "failureModes": ["Carding every region and giving all content equal emphasis."],
+        "constraints": {
+          "accessibility": ["Keep landmarks, focus order, and pane labels stable as layout transforms."],
+          "trust": ["Preserve visible status and unsaved-work state across navigation."],
+          "responsive": ["Assign one scroll owner and move secondary panes behind named controls."],
+          "originality": ["Adapt the principle to project navigation and components rather than copying a workbench shell."]
+        },
+        "sourceNoteIds": ["design-context.source-note.project-authority"],
+        "facets": {},
+        "freshness": {
+          "state": "active",
+          "createdAt": "2026-08-09",
+          "reviewedAt": "2026-08-09",
+          "reviewAfter": "2027-02-05"
+        },
+        "contentDigest": "sha256:214f24988a7ef92af9b7147ad21b4082472874097efffcf44b3fd83dd87870b6"
+      },
+      {
+        "id": "design-context.design-signal.calm-operational-density",
+        "kind": "signal",
+        "typeId": "design-context.design-signal",
+        "title": "Calm Operational Density",
+        "purpose": "Support dense expert work through alignment and progressive detail.",
+        "applicability": {
+          "selectors": {
+            "domain": ["developer-platforms"],
+            "experience": ["application-workbench"],
+            "platform": ["web"]
+          },
+          "positiveSignals": ["The interface exposes many comparable facts during repeated expert work."],
+          "negativeSignals": ["The audience needs stepwise explanation rather than dense comparison."]
+        },
+        "problem": "Large card grids can make dense work busier without improving scanning.",
+        "guidance": "Prefer quiet layers, aligned facts, and progressive detail when project evidence supports density.",
+        "failureModes": ["Treating dark palettes or compact spacing as proof of professional quality."],
+        "constraints": {
+          "accessibility": ["Maintain readable type, focus visibility, and sufficient contrast."],
+          "trust": ["Do not hide state or consequence to make a surface visually quiet."],
+          "responsive": ["Reduce simultaneous regions before reducing legibility."],
+          "originality": ["Do not reproduce a named product's dark shell or layout."]
+        },
+        "sourceNoteIds": ["design-context.source-note.project-authority"],
+        "facets": {
+          "maturity": "established",
+          "guidance": "consider"
+        },
+        "freshness": {
+          "state": "active",
+          "createdAt": "2026-08-09",
+          "reviewedAt": "2026-08-09",
+          "reviewAfter": "2026-11-07"
+        },
+        "contentDigest": "sha256:360d2a309562475e78fd4a8393acb170fac0d80586224064e9f7713c2e8ebf10"
+      },
+      {
+        "id": "design-context.design-signal.expired-translucent-layers",
+        "kind": "signal",
+        "typeId": "design-context.design-signal",
+        "title": "Expired Translucent Layers",
+        "purpose": "Exercise fail-closed expiry without supplying active guidance.",
+        "applicability": {
+          "selectors": {
+            "domain": ["developer-platforms"],
+            "platform": ["web"]
+          },
+          "positiveSignals": ["The project authority explicitly supports translucent materials."],
+          "negativeSignals": ["Readability, performance, or project tokens conflict with translucency."]
+        },
+        "problem": "Time-sensitive guidance becomes unsafe when reused without review.",
+        "guidance": "Exclude this record after its review date until semantic review occurs.",
+        "failureModes": ["Refreshing a date without reviewing current applicability."],
+        "constraints": {
+          "accessibility": ["Preserve contrast across content and system settings."],
+          "trust": ["Do not obscure consequence or system state."],
+          "responsive": ["Keep material effects legible on constrained layouts."],
+          "originality": ["Do not imitate platform-specific glass styling."]
+        },
+        "sourceNoteIds": ["design-context.source-note.normative-authority"],
+        "facets": {
+          "maturity": "emerging",
+          "guidance": "consider"
+        },
+        "freshness": {
+          "state": "needs-review",
+          "createdAt": "2025-01-01",
+          "reviewedAt": "2025-01-01",
+          "reviewAfter": "2025-04-01"
+        },
+        "contentDigest": "sha256:ebefffe1f2bf090dec1495258e0d9bd2c710128c249a8a99517979e24403095d"
+      },
+      {
+        "id": "design-context.design-signal.retired-generic-glass-shell",
+        "kind": "signal",
+        "typeId": "design-context.design-signal",
+        "title": "Retired Generic Glass Shell",
+        "purpose": "Keep historical explanation while excluding a retired convention.",
+        "applicability": {
+          "selectors": {
+            "domain": ["developer-platforms"],
+            "platform": ["web"]
+          },
+          "positiveSignals": ["A historical decision references this convention."],
+          "negativeSignals": ["New Tasks must exclude retired records from selection."]
+        },
+        "problem": "Familiar visual conventions can survive after they stop serving product context.",
+        "guidance": "Retain the rationale as history but never select it for a new Context Brief.",
+        "failureModes": ["Using historical familiarity as current product evidence."],
+        "constraints": {
+          "accessibility": ["Historical availability does not waive current accessibility requirements."],
+          "trust": ["Historical availability does not establish current suitability."],
+          "responsive": ["Historical availability does not establish current responsive behavior."],
+          "originality": ["Do not revive a recognizable generic glass composition."]
+        },
+        "sourceNoteIds": ["design-context.source-note.project-authority"],
+        "facets": {
+          "maturity": "retired",
+          "guidance": "avoid-default"
+        },
+        "freshness": {
+          "state": "retired",
+          "createdAt": "2024-01-01",
+          "reviewedAt": "2025-01-01",
+          "reviewAfter": "2025-04-01"
+        },
+        "contentDigest": "sha256:28c13f0c2d760d191217d97b4e4eb02ff50d5331f0895d60aa88b5ac0b9480c3"
+      }
+    ],
+    "sourceNotes": [
+      {
+        "id": "design-context.source-note.project-authority",
+        "kind": "source-note",
+        "typeId": "design-context.source-note",
+        "title": "Synthetic Project Interface Authority",
+        "sourceOwner": "Skopos test fixture",
+        "sourceType": "project-authority",
+        "projectPath": "skill-packs/ui/product-interface-design/guidance/structure.md",
+        "relevantSurface": "Product application interfaces",
+        "observation": "Project components, tokens, language, and interaction contracts outrank reusable guidance.",
+        "transferRationale": "This proves project precedence without depending on another product.",
+        "doNotCopy": ["Do not turn fixture wording or composition into a template."],
+        "limitations": ["This synthetic source proves contract shape, not design efficacy."],
+        "licenseOrAssetRestrictions": "No third-party assets are included.",
+        "observedAt": "2026-08-09",
+        "reviewAfter": "2027-02-05",
+        "contentDigest": "sha256:7bcf7d5d52fc2605b36a38dfe4eafafa805ea25932fe7c0d878365d81074cc96"
+      },
+      {
+        "id": "design-context.source-note.normative-authority",
+        "kind": "source-note",
+        "typeId": "design-context.source-note",
+        "title": "Synthetic Normative Authority",
+        "sourceOwner": "Skopos test fixture",
+        "sourceType": "normative-standard",
+        "projectPath": "docs/standards/validation.md",
+        "relevantSurface": "Accessible rendered interfaces",
+        "observation": "Accessibility, truthful state, and user control remain mandatory regardless of visual direction.",
+        "transferRationale": "This proves normative precedence and provenance fields.",
+        "doNotCopy": ["Do not infer a visual identity from a normative source."],
+        "limitations": ["This fixture is not a substitute for the referenced standard."],
+        "licenseOrAssetRestrictions": "No external assets or copied text are redistributed.",
+        "observedAt": "2026-08-09",
+        "reviewAfter": "2027-02-05",
+        "contentDigest": "sha256:6722d61adb1319e83e5949a5b3dce6a85deb3925510cf94abed46b75e75e6185"
+      }
+    ],
+    "contentDigest": "sha256:25a707f436fa0f7ab133cfe8626722463d840b1af8b594ba4edbf3f18fe12ebe"
+  },
+  "cases": [
+    {
+      "caseId": "positive-developer-workbench",
+      "category": "positive",
+      "task": {
+        "goal": "Improve a developer operations workbench while preserving project components.",
+        "selectors": {
+          "domain": ["developer-platforms"],
+          "experience": ["application-workbench"],
+          "platform": ["web"],
+          "audience": ["developers"]
+        },
+        "projectAuthorityIds": ["project.design-system"],
+        "maximumMeasuredTokens": 900,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [
+          "design-context.domain-guide.developer-platforms",
+          "design-context.experience-guide.application-workbench",
+          "design-context.design-signal.calm-operational-density"
+        ],
+        "suppressedRecordReasonCodes": {
+          "design-context.design-signal.expired-translucent-layers": "expired",
+          "design-context.design-signal.retired-generic-glass-shell": "retired"
+        }
+      }
+    },
+    {
+      "caseId": "negative-backend-maintenance",
+      "category": "negative",
+      "task": {
+        "goal": "Refactor a database adapter without changing a rendered interface.",
+        "selectors": {
+          "work": ["backend-only"]
+        },
+        "projectAuthorityIds": [],
+        "maximumMeasuredTokens": 900,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [],
+        "suppressedRecordReasonCodes": {
+          "design-context.domain-guide.developer-platforms": "irrelevant",
+          "design-context.domain-guide.financial-high-trust": "irrelevant",
+          "design-context.experience-guide.application-workbench": "irrelevant",
+          "design-context.design-signal.calm-operational-density": "irrelevant",
+          "design-context.design-signal.expired-translucent-layers": "expired",
+          "design-context.design-signal.retired-generic-glass-shell": "retired"
+        }
+      }
+    },
+    {
+      "caseId": "ambiguous-product-surface",
+      "category": "ambiguous",
+      "task": {
+        "goal": "Make the product screen feel current.",
+        "selectors": {
+          "platform": ["web"]
+        },
+        "projectAuthorityIds": [],
+        "maximumMeasuredTokens": 900,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [],
+        "suppressedRecordReasonCodes": {
+          "design-context.domain-guide.developer-platforms": "ambiguous",
+          "design-context.domain-guide.financial-high-trust": "ambiguous",
+          "design-context.experience-guide.application-workbench": "ambiguous"
+        }
+      }
+    },
+    {
+      "caseId": "expired-signal-exclusion",
+      "category": "expired",
+      "task": {
+        "goal": "Review material layering in a developer workbench.",
+        "selectors": {
+          "domain": ["developer-platforms"],
+          "experience": ["application-workbench"],
+          "platform": ["web"]
+        },
+        "projectAuthorityIds": ["project.design-system"],
+        "maximumMeasuredTokens": 900,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [
+          "design-context.domain-guide.developer-platforms",
+          "design-context.experience-guide.application-workbench"
+        ],
+        "suppressedRecordReasonCodes": {
+          "design-context.design-signal.expired-translucent-layers": "expired"
+        }
+      }
+    },
+    {
+      "caseId": "retired-signal-exclusion",
+      "category": "retired",
+      "task": {
+        "goal": "Continue a workbench redesign without restoring retired visual conventions.",
+        "selectors": {
+          "domain": ["developer-platforms"],
+          "experience": ["application-workbench"],
+          "platform": ["web"]
+        },
+        "projectAuthorityIds": ["project.design-system"],
+        "maximumMeasuredTokens": 900,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [
+          "design-context.domain-guide.developer-platforms",
+          "design-context.experience-guide.application-workbench"
+        ],
+        "suppressedRecordReasonCodes": {
+          "design-context.design-signal.retired-generic-glass-shell": "retired"
+        }
+      }
+    },
+    {
+      "caseId": "explicit-multi-domain-review",
+      "category": "multi-selector",
+      "task": {
+        "goal": "Design a developer platform screen that approves a consequential financial operation.",
+        "selectors": {
+          "domain": ["developer-platforms", "financial-high-trust"],
+          "experience": ["application-workbench"],
+          "platform": ["web"]
+        },
+        "projectAuthorityIds": ["project.design-system", "project.financial-policy"],
+        "maximumMeasuredTokens": 1200,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [
+          "design-context.domain-guide.developer-platforms",
+          "design-context.domain-guide.financial-high-trust",
+          "design-context.experience-guide.application-workbench"
+        ],
+        "suppressedRecordReasonCodes": {}
+      }
+    },
+    {
+      "caseId": "budget-suppresses-lower-authority-signal",
+      "category": "budget",
+      "task": {
+        "goal": "Improve a developer workbench within a constrained Skill budget.",
+        "selectors": {
+          "domain": ["developer-platforms"],
+          "experience": ["application-workbench"],
+          "platform": ["web"]
+        },
+        "projectAuthorityIds": ["project.design-system"],
+        "maximumMeasuredTokens": 500,
+        "asOf": "2026-08-09"
+      },
+      "expectation": {
+        "selectedRecordIds": [
+          "design-context.domain-guide.developer-platforms",
+          "design-context.experience-guide.application-workbench"
+        ],
+        "suppressedRecordReasonCodes": {
+          "design-context.design-signal.calm-operational-density": "budget-suppressed"
+        }
+      }
+    }
+  ]
+}

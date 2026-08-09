@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: target
-implementationStatus: planned
+implementationStatus: phase-1-contract-implemented
 lastUpdated: 2026-08-09
 relatedDocs:
   - 00-architecture.md
@@ -34,6 +34,11 @@ authority.
 
 ## Changelog
 
+- `2026-08-09`: Implemented the Phase 1 contract through a generic core Skill Context
+  envelope and capability-owned Design Context vocabulary and fixtures. Skopos core owns
+  reusable identity, provenance, freshness, applicability, budget, and validation
+  mechanics; Product Interface Design owns every design-specific record type, rule,
+  example, and source.
 - `2026-08-09`: Accepted the initial target model, vocabulary, authority order,
   progressive-disclosure contract, freshness lifecycle, provenance rules, and proof
   requirements.
@@ -66,6 +71,27 @@ Design Context is:
 4. progressively disclosed from compact accepted sources
 5. provenance-backed and reviewable
 6. bounded by the existing Task-wide Skill budget
+
+The implementation boundary is intentionally asymmetric:
+
+1. Skopos core may own a generic `Skill Context Library` and `Skill Context Brief`
+   contract because selection identity, provenance, freshness, budget accounting,
+   portability, and explanation are shared Skill infrastructure.
+2. A Skill pack declares its own namespaced record types, selector dimensions,
+   required constraints, facets, content, and fixtures over that generic contract.
+3. Product Interface Design therefore owns `design-context.domain-guide`,
+   `design-context.experience-guide`, `design-context.design-signal`, and
+   `design-context.source-note` under its pack source.
+4. Core model, indexer, runtime, CLI, and MCP code must not hardcode Product Interface
+   Design, Design Context, design domains, experience names, visual conventions, or
+   source candidates.
+5. A future Skill may use the generic infrastructure with a different namespace and
+   vocabulary without importing design semantics or changing a core project primitive.
+
+Phase 1 keeps its synthetic contract fixture outside the currently accepted pack
+directory so proving the optional contract does not change that pack's source digest.
+The reviewed production Library enters the pack source only when the Library is ready
+for exact re-acceptance.
 
 Design Context is not:
 
@@ -171,6 +197,11 @@ misapplication. The implementation schema must represent:
 9. source-note references
 10. creation, review, and expiry metadata
 11. exact content digest
+
+These are Design Context requirements declared by the Product Interface Design pack,
+not fixed core record names. Core validates the generic record envelope plus the
+pack-declared type contract: required selector dimensions, required constraint kinds,
+allowed facet values, relationships, provenance, freshness, namespace, and digests.
 
 A Design Signal additionally declares two independent dimensions:
 

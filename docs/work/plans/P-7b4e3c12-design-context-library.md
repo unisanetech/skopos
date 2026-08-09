@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: planned
+implementationStatus: phase-1-implemented
 lastUpdated: 2026-08-09
 relatedDocs:
   - ../../architecture/design-context-model.md
@@ -43,8 +43,13 @@ owns the architectural choice.
 4. The frozen paired machine evaluation finished 4-4 and remains inconclusive.
 5. The current Task-wide complete selection measures 1,530 tokens against a 1,800-token
    standard-Task ceiling.
-6. No accepted Design Context schema, library, resolver, expiry behavior, or paired
-   evaluation exists.
+6. Phase 1 now provides a generic, project-agnostic Skill Context contract in core and
+   pack-owned Design Context record-type declarations and frozen fixtures.
+7. The contract validates namespace, type rules, applicability, provenance,
+   relationships, freshness, exact digests, budget shape, and Context Brief
+   originality fields without a model or network call.
+8. No reviewed production Library, resolver, active Context Brief generation, or
+   Library-backed paired evaluation exists yet.
 
 The existing result is the baseline. This Plan must not reinterpret it as a pass.
 
@@ -174,6 +179,15 @@ visual novelty are never admission criteria.
 
 Exit when the contract is deterministic, documented, and covered without a model or
 network call.
+
+Implementation record: Task `T-70955189` introduced generic `Skill Context` core
+contracts and validation, while keeping the complete Design Context vocabulary,
+taxonomy, and representative fixture content capability-owned and outside generic core
+code. The Phase 1 fixture remains outside the currently accepted pack digest; the
+production Library enters the pack only with deliberate exact re-acceptance. The
+fixture covers positive, negative, ambiguous, expired, retired, explicit multi-domain,
+and budget-pressure cases. Product Interface Design continues to expose exactly
+Structure, Behavior, and Finish when no Library is bound.
 
 ### Phase 2 — Small reviewed Library
 
