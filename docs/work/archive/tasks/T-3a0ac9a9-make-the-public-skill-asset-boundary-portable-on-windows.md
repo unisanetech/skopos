@@ -1,14 +1,14 @@
 ---
 title: "Task: Make the public Skill asset boundary portable on Windows"
-status: active
+status: complete
 owner: "codex"
 id: T-3a0ac9a9
 scope: "skopos"
 role: task
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: current
+view: exception
 risk: standard
 proofSubject: task-closure
 proofBaseline: baseline-757bba3369033173
@@ -19,7 +19,7 @@ lastUpdated: 2026-08-09
 
 ## Changelog
 
-- `2026-08-09`: Synchronized Task state `active` from Skopos.
+- `2026-08-09`: Synchronized Task state `complete` from Skopos.
 
 ## Goal
 
@@ -97,12 +97,12 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "schemaVersion": 1,
   "id": "T-3a0ac9a9",
   "type": "task",
-  "status": "active",
+  "status": "durable",
   "generatedAt": "2026-08-09T18:41:57.976Z",
-  "updatedAt": "2026-08-09T18:50:17.210Z",
+  "updatedAt": "2026-08-09T18:54:59.397Z",
   "planIds": [],
   "childTasks": [],
-  "state": "active",
+  "state": "complete",
   "detail": "standard",
   "title": "Make the public Skill asset boundary portable on Windows",
   "goal": "Make the public Skill asset boundary portable on Windows",
