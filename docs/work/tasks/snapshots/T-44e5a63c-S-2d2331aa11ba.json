@@ -1,0 +1,28 @@
+{
+  "snapshotId": "S-2d2331aa11ba",
+  "taskId": "T-44e5a63c",
+  "sessionId": "codex-design-context-20260809",
+  "actorId": "codex-design-context",
+  "baseRevision": "9d8e670243efaffa97086bcfd29c9fc85893b5d6",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "b9cb9049412178cc7874580e5aca751e7f96ae05c7314824613419aad6c1f9b3"
+    },
+    {
+      "path": "docs/architecture/design-context-model.md",
+      "digest": "8f96167e028a01e34ea0afa97eaebedac5dd5f957c056a822a47c4b5d000c197"
+    },
+    {
+      "path": "docs/decisions/D-a61f2d9c-design-context-as-progressive-product-knowledge.md",
+      "digest": "f2e9bbf9d2f6bdb4e39e4cf5322d7b0a536eeb547684985dc0991bcb4db4bdaa"
+    },
+    {
+      "path": "docs/work/plans/P-7b4e3c12-design-context-library.md",
+      "digest": "639dc07e22c940cee30515785c27cf640fae57903ef27c8c87a7581c43fdf0a4"
+    }
+  ],
+  "digest": "2d2331aa11ba5fb707ff080a96d7866f2703aff10e439c72f9de5ee4b7227d9f",
+  "createdAt": "2026-08-09T15:49:53.180Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-44e5a63c-S-2d2331aa11ba.json"
+}

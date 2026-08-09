@@ -16,6 +16,7 @@ relatedDocs:
   - config-model.md
   - artifact-model.md
   - agent-native-operating-model.md
+  - design-context-model.md
   - docs-governance.md
   - evidence-and-readiness-model.md
   - policy-applicability-and-fixture-governance.md
@@ -32,6 +33,10 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-09`: Added the Design Context model for bounded, current, and
+  provenance-backed product-design knowledge. Design Context remains a supporting
+  Skill-system capability rather than a new Skill, package, runtime authority, or live
+  inspiration feed.
 - `2026-08-09`: Declared separate repository-source and npm-tarball release
   boundaries, exact public Skill runtime assets, private workspace tooling ownership,
   and the requirement for explicit compatible provenance before copied UI source can
@@ -127,6 +132,12 @@ Projects contribute:
 3. Actions with explicit effects and concurrency
 4. deterministic Guards
 5. Policies and task-selective Skills
+
+The Skill system may resolve a bounded Design Context Brief from accepted project
+truth and a versioned Design Context Library. The library supplies task-selective
+domain, experience, and time-sensitive design knowledge; it does not supersede project
+components, tokens, brand rules, platform conventions, Policies, Guards, or Skill
+ownership. See [Design Context](design-context-model.md).
 
 They do not create another Task, execution, or closure authority. Ordinary user and
 system workflows remain valid domain concepts; they are not Skopos primitives.
