@@ -11,6 +11,10 @@ node_modules/
 !.yarn/sdks/
 !.yarn/versions/
 
+# Local package-manager authentication
+.npmrc
+!.npmrc.example
+
 # Build outputs
 dist/
 dist-*/
@@ -20,6 +24,10 @@ out/
 .vite/
 .turbo/
 *.tsbuildinfo
+
+# Release staging and packed artifacts
+.release/
+*.tgz
 
 # Test and coverage outputs
 coverage/
@@ -37,12 +45,22 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+*.pid
+*.pid.lock
 
 # Local environment files
 .env
 .env.*
 !.env.example
 !.env.sample
+.envrc
+.direnv/
+
+# Private keys and signing material
+*.pem
+*.key
+*.p12
+*.pfx
 
 # Editor and OS noise
 .DS_Store
@@ -52,9 +70,13 @@ pnpm-debug.log*
 .vscode/
 *.swp
 *.swo
+*.orig
+*.rej
 
 # Temporary files
 .tmp/
 tmp/
 temp/
 .cache/
+.eslintcache
+.stylelintcache

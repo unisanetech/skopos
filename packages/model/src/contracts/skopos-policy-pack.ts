@@ -30,6 +30,27 @@ export type SkoposProjectLifecycle =
 
 export type SkoposPolicySignalConfidence = 'low' | 'medium' | 'high';
 
+export type SkoposRepositoryFamily =
+  | 'application'
+  | 'service'
+  | 'cli'
+  | 'library'
+  | 'platform-monorepo'
+  | 'mobile'
+  | 'data-ml'
+  | 'infrastructure'
+  | 'documentation'
+  | 'embedded'
+  | 'unknown';
+
+export interface SkoposRepositoryProfile {
+  primaryFamily: SkoposRepositoryFamily;
+  families: SkoposRepositoryFamily[];
+  languages: string[];
+  confidence: SkoposPolicySignalConfidence;
+  evidence: string[];
+}
+
 export interface SkoposPolicySignal {
   id: string;
   summary: string;
@@ -232,6 +253,7 @@ export interface SkoposPolicyRecommendationArtifact
   extends SkoposArtifactEnvelope<'policy-recommendations'> {
   workspaceRoot: string;
   projectLifecycle: SkoposProjectLifecycle;
+  repositoryProfile: SkoposRepositoryProfile;
   defaultTaskRisk: SkoposTaskRisk;
   recommendedTaskRisks: SkoposTaskRiskRule[];
   recommendations: SkoposPolicyRecommendationEntry[];

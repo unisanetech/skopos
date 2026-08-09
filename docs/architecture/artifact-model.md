@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-09
 relatedDocs:
   - 00-architecture.md
   - docs-governance.md
+  - storage-lifecycle-and-privacy.md
   - ../standards/terminology.md
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
 reviewCycle: when persistence or artifact ownership changes
@@ -24,6 +25,8 @@ Skopos distinguishes tracked project truth from rebuildable local projections.
 
 ## Changelog
 
+- `2026-08-09`: Added the reference-aware local storage lifecycle, privacy boundary,
+  explicit pins, and content-free cleanup receipts.
 - `2026-08-05`: Clarified that the exact Task handoff may contain one bounded,
   agent-authored conversation capsule plus compiled freshness identities. It remains a
   disposable generated projection; portable recovery continues to rely on the tracked
@@ -84,6 +87,7 @@ canonical target already owns the truth.
 ├── handoffs/<worktree-id>/<task-id>/
 ├── index/
 ├── runs/
+├── storage/
 ├── tasks/<worktree-id>/<task-id>/
 ├── ui/
 └── coordination.sqlite
@@ -91,7 +95,9 @@ canonical target already owns the truth.
 
 Rules:
 
-1. the directory is ignored and disposable
+1. the directory is ignored and reconstructable from tracked truth, but individual
+   local artifacts are not assumed disposable while active work or proof references
+   them
 2. local artifacts use `authority: generated`
 3. no accepted Decision, Plan, Policy, Pattern, or tracked Task exists only here
 4. a clean clone reconstructs indexes and local Task projections from tracked sources
@@ -109,6 +115,14 @@ Rules:
 10. clean reconstruction must recover durable project and Task truth without any local
     conversation capsule; cross-machine continuation may use an explicitly pushed
     immutable Task snapshot but never an ambient host transcript
+11. managed local artifacts are classified as temporary, cache, diagnostic, Task
+    evidence, release evidence, or user pinned; retention and limits are project policy
+12. cleanup is dry-run by default and may delete only eligible units with no active,
+    tracked, release-baseline, running-Action, or user-pin reference
+13. applied cleanup writes a metadata-only receipt; receipts never copy deleted file
+    contents
+14. `.skopos/` can contain private source, prompts, screenshots, traces, generated
+    code, and provider receipts, so it must not be shared wholesale
 
 ## Artifact Envelope
 

@@ -26,6 +26,26 @@ export const skoposDecisionModeSchema = z.enum(['fast', 'balanced', 'strict']);
 
 export const skoposPrivacyModeSchema = z.enum(['local-only', 'metadata-sync', 'enterprise']);
 
+export const skoposStoragePolicySchema = z
+  .object({
+    softLimitMb: z.number().int().positive(),
+    hardLimitMb: z.number().int().positive(),
+    retentionDays: z
+      .object({
+        temporary: z.number().int().nonnegative(),
+        cache: z.number().int().nonnegative(),
+        diagnostic: z.number().int().nonnegative(),
+        taskEvidence: z.number().int().nonnegative(),
+        releaseEvidence: z.number().int().nonnegative(),
+      })
+      .strict(),
+  })
+  .strict()
+  .refine((policy) => policy.hardLimitMb >= policy.softLimitMb, {
+    message: 'Skopos storage hardLimitMb must be greater than or equal to softLimitMb.',
+    path: ['hardLimitMb'],
+  });
+
 export const skoposCommandMapSchema = z
   .object({
     dev: z.string().min(1).optional(),
@@ -97,6 +117,7 @@ export const skoposRootConfigSchema = z
         redactSecrets: z.boolean(),
       })
       .strict(),
+    storage: skoposStoragePolicySchema.optional(),
   })
   .strict()
   .superRefine((config, context) => {

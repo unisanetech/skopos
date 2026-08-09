@@ -67,6 +67,7 @@ describe('skopos release surface contract', () => {
         );
         expect(packageJson.license).toBe('Apache-2.0');
         expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'README.md', 'LICENSE']));
+        expect(packageJson.scripts).toBeUndefined();
         continue;
       }
 
@@ -98,6 +99,36 @@ describe('skopos release surface contract', () => {
       expect.objectContaining({
         access: 'public',
         tag: 'next',
+      }),
+    );
+  });
+
+  it('declares complete public discovery, ownership, support, and runtime metadata', async () => {
+    const cliPackage = await loadPackageJson(PUBLIC_BUNDLED_CLI_PACKAGE);
+
+    expect(cliPackage.description).toContain('Project memory');
+    expect(cliPackage.repository).toEqual({
+      type: 'git',
+      url: 'git+https://github.com/Croodo/skopos.git',
+      directory: 'packages/cli',
+    });
+    expect(cliPackage.homepage).toBe('https://github.com/Croodo/skopos#readme');
+    expect(cliPackage.bugs).toEqual({ url: 'https://github.com/Croodo/skopos/issues' });
+    expect(cliPackage.author).toEqual(expect.objectContaining({ name: 'Croodo' }));
+    expect(cliPackage.maintainers).toEqual([
+      expect.objectContaining({ name: 'Croodo' }),
+    ]);
+    expect(cliPackage.keywords).toEqual(
+      expect.arrayContaining(['coding-agents', 'project-memory', 'developer-tools']),
+    );
+    expect(cliPackage.engines).toEqual({ node: '^22.13.0 || ^24.0.0' });
+    expect(cliPackage.bin).toEqual({ skopos: 'dist/cli.js' });
+    expect(cliPackage.exports).toEqual(
+      expect.objectContaining({
+        '.': expect.objectContaining({
+          types: './dist/index.d.ts',
+          import: './dist/index.js',
+        }),
       }),
     );
   });
@@ -149,7 +180,21 @@ describe('skopos release surface contract', () => {
 interface PackageJsonShape {
   name: string;
   version: string;
+  description?: string;
   license?: string;
+  author?: PersonShape;
+  maintainers?: PersonShape[];
+  repository?: {
+    type?: string;
+    url?: string;
+    directory?: string;
+  };
+  homepage?: string;
+  bugs?: { url?: string };
+  keywords?: string[];
+  engines?: { node?: string };
+  bin?: Record<string, string>;
+  exports?: Record<string, { types?: string; import?: string }>;
   private?: boolean;
   scripts?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -163,6 +208,12 @@ interface PackageJsonShape {
     releaseTarget?: string;
     publishPhase?: string;
   };
+}
+
+interface PersonShape {
+  name?: string;
+  email?: string;
+  url?: string;
 }
 
 const loadPackageJson = async (packageName: string): Promise<PackageJsonShape> => {

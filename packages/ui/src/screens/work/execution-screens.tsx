@@ -337,6 +337,7 @@ export function ExecutionTaskDetailView({
         <TaskDetailInspectorAside
           taskView={taskView}
           taskActions={taskActions}
+          workflow={state.currentTaskWorkflow?.taskId === task.id ? state.currentTaskWorkflow : undefined}
         />
       }
     >

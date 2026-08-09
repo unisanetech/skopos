@@ -10,6 +10,28 @@ import type {
 export type SkoposTaskRisk = 'light' | 'standard' | 'high-impact';
 export type SkoposTaskDetail = 'light' | 'standard' | 'detailed';
 export type SkoposProofSubjectKind = 'task-closure' | 'project-integration';
+export type SkoposTaskWorkflowKind = 'fast-path' | 'tracked' | 'strict';
+export type SkoposTaskRiskSelectionSource =
+  | 'automatic'
+  | 'explicit-override'
+  | 'proof-subject';
+
+export interface SkoposTaskAdmissionAssessment {
+  recommendedRisk: SkoposTaskRisk;
+  recommendedDetail: SkoposTaskDetail;
+  selectedRisk: SkoposTaskRisk;
+  selectedDetail: SkoposTaskDetail;
+  selectionSource: SkoposTaskRiskSelectionSource;
+  workflow: SkoposTaskWorkflowKind;
+  reasons: string[];
+  signals: {
+    goalSignals: string[];
+    ownedPathCount: number;
+    affectedScopeIds: string[];
+    impactCategories: string[];
+    proofSubjectKind: SkoposProofSubjectKind;
+  };
+}
 
 export interface SkoposProofSubject {
   kind: SkoposProofSubjectKind;
@@ -93,6 +115,34 @@ export interface SkoposTaskPathState {
   digest: string;
 }
 
+export interface SkoposTaskOwnershipExpansion {
+  paths: string[];
+  reason: string;
+  actorId: string;
+  recordedAt: string;
+  baselinePaths: SkoposTaskPathState[];
+}
+
+export interface SkoposTaskOwnershipSuggestion {
+  paths: string[];
+  reason: string;
+  command: string;
+  confirmationRequired: boolean;
+}
+
+export interface SkoposTaskWorkflowAssessment {
+  taskId: string;
+  workflow: SkoposTaskWorkflowKind;
+  readiness: 'blocked' | 'work-in-progress' | 'ready-for-closure';
+  nextCommand: string;
+  nextReason: string;
+  ownershipSuggestion?: SkoposTaskOwnershipSuggestion;
+  evidence: {
+    requiredActionIds: string[];
+    acceptanceRequirementIds: string[];
+  };
+}
+
 export type SkoposTaskPathAttributionKind =
   | 'task-owned'
   | 'task-attributed'
@@ -173,10 +223,12 @@ export interface SkoposTaskArtifact extends SkoposArtifactEnvelope<'task'> {
   scope: SkoposResolvedScope;
   contract: SkoposTaskContractDeclaration;
   risk: SkoposTaskRisk;
+  admission?: SkoposTaskAdmissionAssessment;
   proofSubject: SkoposProofSubject;
   priority: number;
   dependencyTaskIds: string[];
   changeScope: SkoposTaskChangeScope;
+  ownershipExpansions?: SkoposTaskOwnershipExpansion[];
   steps: SkoposTaskStep[];
   selectedActions: SkoposActionRequirement[];
   selectedGuardIds: string[];

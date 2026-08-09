@@ -27,7 +27,10 @@ export function TaskGuidanceCard({
     >
       <div className="border-y border-outline-weak">
         <div className="px-3 py-4">
-          <p className="text-label-medium text-on-surface-variant">Current step</p>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-label-medium text-on-surface-variant">Current step</p>
+            <StatusPill value={guidance.workflow.replace('-', ' ')} tone="info" />
+          </div>
           <p className="mt-1.5 text-title-large text-on-surface wrap-break-word">
             {guidance.doingNowText}
           </p>
@@ -49,7 +52,33 @@ export function TaskGuidanceCard({
         <GuidanceRow label="Issues" value={guidance.findingText} />
         <GuidanceRow label="Blockers" value={guidance.blockerText} />
         <GuidanceRow label="Evidence needed" value={guidance.proofText} />
+        <div className="border-t border-outline-weak px-3 py-3">
+          <p className="text-label-small text-on-surface-variant">Exact next command</p>
+          <code className="mt-1 block break-all whitespace-pre-wrap font-mono text-body-small text-on-surface">
+            {guidance.nextCommand}
+          </code>
+          <p className="mt-1 text-body-small text-on-surface-variant">
+            {guidance.nextReason}
+          </p>
+        </div>
       </div>
+      {guidance.ownershipSuggestion ? (
+        <div className="mt-4 border-y border-warning px-3 py-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-title-small text-on-surface">Review unowned changes</p>
+            <StatusPill
+              value={guidance.ownershipSuggestion.confirmationRequired ? 'confirmation required' : 'review suggested'}
+              tone="warning"
+            />
+          </div>
+          <p className="mt-1 text-body-small text-on-surface-variant">
+            {guidance.ownershipSuggestion.reason}
+          </p>
+          <ul className="mt-2 grid gap-1 font-mono text-body-small text-on-surface">
+            {guidance.ownershipSuggestion.paths.map((path) => <li key={path}>{path}</li>)}
+          </ul>
+        </div>
+      ) : null}
       {guidance.openQuestions.length > 0 ? (
         <div className="mt-4 border-y border-outline-weak">
           {guidance.openQuestions.map((question, index) => {
@@ -221,6 +250,23 @@ export function TaskContractCard({
           <ContractSummary label="Risk and detail" value={`${task.risk} · ${task.detail}`} helper="Controls how much contract and proof is required." />
           <ContractSummary label="Proof subject" value={task.proofSubject.kind} helper={`Baseline ${task.proofSubject.baselineId}`} />
         </div>
+        {task.admission ? (
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div>
+              <p className="text-label-small text-on-surface-variant">Why this workflow</p>
+              <div className="mt-2 border-y border-outline-weak">
+                <ContractRow label="Workflow" value={task.admission.workflow.replace('-', ' ')} />
+                <ContractRow label="Selection" value={task.admission.selectionSource.replace('-', ' ')} />
+                <ContractRow label="Recommended" value={`${task.admission.recommendedRisk} · ${task.admission.recommendedDetail}`} />
+              </div>
+            </div>
+            <ContractList
+              title="Admission reasons"
+              items={task.admission.reasons}
+              empty="No admission explanation recorded."
+            />
+          </div>
+        ) : null}
         <div className="grid gap-5 lg:grid-cols-3">
           <ContractList title="Acceptance" items={task.contract.acceptanceCriteria} empty="No acceptance criteria recorded." />
           <ContractList title="Not part of this Task" items={task.contract.nonGoals} empty="No explicit non-goals recorded." />

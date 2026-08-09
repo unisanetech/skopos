@@ -168,6 +168,9 @@ function ReadinessSubjectsCard({
     : undefined;
   const taskProofSubject = taskView?.task.proofSubject.kind;
   const decision = state.sessionContext?.pendingDecision;
+  const workflow = state.currentTaskWorkflow?.taskId === task?.id
+    ? state.currentTaskWorkflow
+    : undefined;
 
   return (
     <ContentSection
@@ -182,11 +185,24 @@ function ReadinessSubjectsCard({
         />
         <ReadinessSubjectRow
           title="Task continuation"
-          state={task ? (decision?.blocking ? 'blocked by a decision' : task.state) : 'no current Task'}
+          state={task ? (decision?.blocking ? 'blocked by a decision' : workflow?.readiness ?? task.state) : 'no current Task'}
           explanation={
             task
-              ? `Whether ${task.id} may take its next step now.`
+              ? workflow
+                ? `${workflow.nextReason} Next: ${workflow.nextCommand}`
+                : `Whether ${task.id} may take its next step now.`
               : 'Select or start a Task before asking whether implementation can continue.'
+          }
+        />
+        <ReadinessSubjectRow
+          title="Task ownership"
+          state={workflow?.ownershipSuggestion ? 'review needed' : task ? 'bounded' : 'not in scope'}
+          explanation={
+            workflow?.ownershipSuggestion
+              ? `${workflow.ownershipSuggestion.paths.length} changed path${workflow.ownershipSuggestion.paths.length === 1 ? ' is' : 's are'} outside declared ownership.`
+              : task
+                ? 'No current changed path is waiting for ownership review.'
+                : 'Ownership is evaluated after a Task starts.'
           }
         />
         <ReadinessSubjectRow

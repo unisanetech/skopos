@@ -637,12 +637,69 @@ describe('tracked Task portability', () => {
 
     expect(readiness.readiness).toBe('blocked');
     expect(readiness.blockers.join('\n')).toContain('immutable Task snapshot');
+
+    const snapshotsDirectory = join(workspaceRoot, 'docs/work/tasks/snapshots');
+    await mkdir(snapshotsDirectory, { recursive: true });
+    await writeFile(
+      join(snapshotsDirectory, `${task.id}-S-empty.json`),
+      JSON.stringify({
+        createdAt: '2026-02-01T00:00:00.000Z',
+        digest: digestSkoposTaskPathStates([]),
+        paths: [],
+      }),
+      'utf8',
+    );
+    const emptySnapshotReadiness = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+    expect(emptySnapshotReadiness.readiness).toBe('blocked');
+    expect(emptySnapshotReadiness.blockers.join('\n')).toContain(
+      'does not cover any Task-owned paths',
+    );
     await expect(
       showSkoposTaskRuntime({
         cwd: workspaceRoot,
         taskId: task.id,
       }),
     ).resolves.toMatchObject({ state: 'active' });
+  });
+
+  it('rejects a high-impact snapshot missing one declared owned path', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Reject incomplete high-impact snapshot coverage',
+      actor: 'agent-a',
+      risk: 'high-impact',
+      detail: 'detailed',
+      ownedPaths: ['src/index.ts', 'README.md'],
+    });
+    const [sourceState] = await captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: ['src/index.ts'],
+    });
+    const snapshotsDirectory = join(workspaceRoot, 'docs/work/tasks/snapshots');
+    await mkdir(snapshotsDirectory, { recursive: true });
+    await writeFile(
+      join(snapshotsDirectory, `${started.task.id}-S-partial.json`),
+      JSON.stringify({
+        createdAt: '2026-02-01T00:00:00.000Z',
+        digest: digestSkoposTaskPathStates([sourceState!]),
+        paths: [sourceState],
+      }),
+      'utf8',
+    );
+
+    const readiness = await assessSkoposTaskReadinessRuntime({
+      cwd: workspaceRoot,
+      taskId: started.task.id,
+      target: 'close',
+    });
+    expect(readiness.blockers.join('\n')).toContain(
+      'does not cover Task-owned paths: README.md',
+    );
   });
 
   it('selects the newest immutable snapshot by creation time instead of digest filename', async () => {

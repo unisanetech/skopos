@@ -1,15 +1,20 @@
 import { resolve } from 'node:path';
 
 import {
+  assessSkoposTaskWorkflowRuntime,
   applySkoposTaskDispositionRuntime,
   claimSkoposTaskRuntime,
   completeSkoposTaskStepRuntime,
+  expandSkoposTaskOwnershipRuntime,
   moveSkoposTaskToVerificationRuntime,
   releaseSkoposTaskRuntime,
   resolveSkoposTaskMemoryObligationRuntime,
   showSkoposTaskRuntime,
 } from '@skopos/runtime';
-import type { SkoposTaskDispositionKind } from '@skopos/model';
+import type {
+  SkoposTaskDispositionKind,
+  SkoposTaskWorkflowAssessment,
+} from '@skopos/model';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
 import { paginateCollection, parseCollectionLimit } from '../shared/pagination.js';
@@ -50,6 +55,12 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
                   reason: parsed.reason!,
                   successorTaskId: parsed.successorTaskId,
                 })
+            : parsed.subcommand === 'ownership' && parsed.action === 'add'
+              ? await expandSkoposTaskOwnershipRuntime({
+                  ...common,
+                  ownedPaths: parsed.ownedPaths!,
+                  reason: parsed.reason!,
+                })
             : parsed.subcommand === 'step' && parsed.action === 'complete'
               ? await completeSkoposTaskStepRuntime({
                   ...common,
@@ -64,14 +75,18 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
                     targetPath: parsed.targetPath,
                   })
               : failUnknownTaskCommand(parsed);
+  const workflow = await assessSkoposTaskWorkflowRuntime({
+    cwd: parsed.cwd,
+    taskId: task.id,
+  });
 
   if (parsed.json) {
     writeJsonOutput(
       parsed.collection
         ? buildPagedTaskDetailOutput(task, parsed.collection, parsed.cursor, parsed.limit)
         : parsed.full
-          ? buildTaskDetailIndex(task)
-          : buildCompactTaskOutput(task),
+          ? buildTaskDetailIndex(task, workflow)
+          : buildCompactTaskOutput(task, workflow),
     );
     return;
   }
@@ -83,9 +98,26 @@ export const runTaskCommand = async (args: string[]): Promise<void> => {
     `Goal: ${task.goal}`,
     `Scope: ${task.scope.scope.id}`,
     `Risk/detail: ${task.risk} / ${task.detail}`,
+    `Workflow: ${workflow.workflow}`,
+    `Readiness: ${workflow.readiness}`,
     `Claimed by: ${task.coordination.claimedBy?.actorId ?? '(none)'}`,
     `Steps: ${task.steps.filter((step) => step.status === 'complete').length}/${task.steps.length} complete`,
     `Memory obligations: ${task.memoryObligations.filter((entry) => entry.status === 'open').length}/${task.memoryObligations.length} open`,
+    'Next step:',
+    workflow.nextCommand,
+    `Why: ${workflow.nextReason}`,
+    ...(workflow.ownershipSuggestion
+      ? [
+          `Unowned changed paths: ${workflow.ownershipSuggestion.paths.length}`,
+          ...workflow.ownershipSuggestion.paths.map((path) => `- ${path}`),
+        ]
+      : []),
+    ...(parsed.subcommand === 'ownership'
+      ? [
+          `Added owned paths: ${parsed.ownedPaths!.join(', ')}`,
+          `Reason: ${parsed.reason}`,
+        ]
+      : []),
   ]);
 };
 
@@ -100,6 +132,7 @@ interface ParsedTaskArgs {
   reason?: string;
   targetPath?: string;
   successorTaskId?: string;
+  ownedPaths?: string[];
   cwd: string;
   actor?: string;
   compact: boolean;
@@ -124,6 +157,7 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
   let reason: string | undefined;
   let targetPath: string | undefined;
   let successorTaskId: string | undefined;
+  const ownedPaths: string[] = [];
 
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index]!;
@@ -167,6 +201,10 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       successorTaskId = requireFlagValue(args, ++index, '--successor');
     } else if (argument.startsWith('--successor=')) {
       successorTaskId = argument.slice('--successor='.length);
+    } else if (argument === '--own') {
+      ownedPaths.push(requireFlagValue(args, ++index, '--own'));
+    } else if (argument.startsWith('--own=')) {
+      ownedPaths.push(argument.slice('--own='.length));
     } else if (argument === '--cwd') {
       cwd = resolve(requireFlagValue(args, ++index, '--cwd'));
     } else if (argument.startsWith('--cwd=')) {
@@ -215,6 +253,28 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
       resolution,
       reason,
       targetPath,
+      cwd,
+      actor,
+      compact,
+      full,
+      collection,
+      cursor,
+      limit,
+      json,
+    };
+  }
+  if (subcommand === 'ownership') {
+    if (first !== 'add' || !second || ownedPaths.length === 0 || !reason) {
+      throw new Error(
+        'Usage: skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>].',
+      );
+    }
+    return {
+      subcommand,
+      action: first,
+      taskId: second,
+      ownedPaths,
+      reason,
       cwd,
       actor,
       compact,
@@ -283,6 +343,7 @@ const parseTaskArgs = (args: string[]): ParsedTaskArgs => {
 
 export const buildCompactTaskOutput = (
   task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+  workflow?: SkoposTaskWorkflowAssessment,
 ) => {
   const nextStep = task.steps.find(
     (step) => step.status !== 'complete' && step.status !== 'skipped',
@@ -298,6 +359,8 @@ export const buildCompactTaskOutput = (
     title: task.title,
     goal: task.goal,
     risk: task.risk,
+    admission: task.admission,
+    workflow,
     proofSubject: task.proofSubject,
     scopeId: task.scope.scope.id,
     trackedDocumentPath: task.trackedDocumentPath,
@@ -315,6 +378,7 @@ export const buildCompactTaskOutput = (
     ownedPaths,
     additionalOwnedPathCount:
       task.changeScope.declaredOwnedPaths.length - ownedPaths.length,
+    ownershipExpansionCount: task.ownershipExpansions?.length ?? 0,
     selectedActionIds: task.selectedActions.slice(0, 12).map((action) => action.id),
     additionalSelectedActionCount: Math.max(0, task.selectedActions.length - 12),
     selectedGuardIds: task.selectedGuardIds.slice(0, 12),
@@ -371,8 +435,9 @@ export const buildPagedTaskDetailOutput = (
 
 export const buildTaskDetailIndex = (
   task: Awaited<ReturnType<typeof showSkoposTaskRuntime>>,
+  workflow?: SkoposTaskWorkflowAssessment,
 ) => ({
-  ...buildCompactTaskOutput(task),
+  ...buildCompactTaskOutput(task, workflow),
   type: 'task-detail-index',
   detailCollections: taskDetailCollections.map((collection) => ({
     collection,

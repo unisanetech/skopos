@@ -665,6 +665,7 @@ const buildPolicyRecommendationLines = (
     'Skopos policy recommendations',
     'Status: Recommendation ready',
     `Summary: Skopos reviewed ${result.recommendations.length} policy pack${result.recommendations.length === 1 ? '' : 's'} for a ${result.projectLifecycle} project.`,
+    `Repository: ${result.repositoryProfile.primaryFamily} (${result.repositoryProfile.confidence} confidence)${result.repositoryProfile.languages.length > 0 ? `; languages: ${result.repositoryProfile.languages.join(', ')}` : ''}.`,
     `Default work lane: ${result.defaultTaskRisk}`,
   ];
 

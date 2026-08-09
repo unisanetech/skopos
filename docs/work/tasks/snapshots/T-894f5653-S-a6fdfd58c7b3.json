@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-a6fdfd58c7b3",
+  "taskId": "T-894f5653",
+  "sessionId": "codex-release-hardening-t894f5653",
+  "actorId": "codex-release-hardening",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "README.md",
+      "digest": "809a3ec7cb0971eac993b3725f52be94d778b3d1fe11f1bd71cd57b89ae6b0c0"
+    },
+    {
+      "path": "docs/guides/developer-workflows.md",
+      "digest": "b70b684904ae67b2ea505b80174e945ccc653ff2b8130b2a2b58a17617d76c6f"
+    },
+    {
+      "path": "packages/cli/src/__tests__/coordination-lifecycle.test.ts",
+      "digest": "46afc416845d4889e6e47317a674f37ee01d7336c93c70cfa5bf1acc5b48ecdc"
+    },
+    {
+      "path": "packages/cli/src/__tests__/help-contract.test.ts",
+      "digest": "877e0c3e85aacd49de23a264181c3fda5cead4b5e86643f807da67fc47240109"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-ownership-expansion.test.ts",
+      "digest": "e5711b8b131ecec3e362de67900f3ffac8520d58cab08348d13eae74a122b4ee"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/coordination.ts",
+      "digest": "08106b9561ccf0cc702c90f22caa1e0aacea5420e39a82b9b07d3e57545857d1"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "0350d334ad438a235d5b6d85a651e60583e542037546ffd2114243c0572adef0"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "da70e169d1ac7e45d4949438dd50d16f4f8227e2bbd7555491a8a4ea765dbaa5"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "36cd395618024f81a39a25152b7df6200fe870c51236999537423ddf54a1f82a"
+    },
+    {
+      "path": "packages/runtime/src/application/coordination/coordination.service.ts",
+      "digest": "84670974c3a263155f99f3a5524c2f4f7123652dcccb77d719ab438b763e393d"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "016e5c89c9b67cae57d99898f7bd0251f5a17e64b688fd5c62a1f7f2904ca27f"
+    }
+  ],
+  "digest": "a6fdfd58c7b394194e2ed16c8f0dcb92638746fe985d9e5981748a5bb980804c",
+  "createdAt": "2026-08-09T03:28:42.937Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-894f5653-S-a6fdfd58c7b3.json"
+}

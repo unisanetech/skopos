@@ -122,6 +122,7 @@ export interface SnapshotSkoposCoordinationTaskOptions {
   cwd: string;
   taskId: string;
   sessionId: string;
+  declaredOwnedPaths: string[];
 }
 
 export interface WithSkoposTaskMutationTransactionOptions {
@@ -952,6 +953,7 @@ export const snapshotSkoposCoordinationTask = async ({
   cwd,
   taskId,
   sessionId,
+  declaredOwnedPaths,
 }: SnapshotSkoposCoordinationTaskOptions): Promise<SkoposTaskSnapshotResult> => {
   const workspaceRoot = resolve(cwd);
   const audit = await auditSkoposCoordinationTask({ cwd: workspaceRoot, taskId });
@@ -968,9 +970,16 @@ export const snapshotSkoposCoordinationTask = async ({
     if (reservation.sessionId !== sessionId) {
       throw new Error(`Session ${sessionId} does not own Task ${taskId}.`);
     }
-    const paths = readClaims(db)
+    const claimedPaths = readClaims(db)
       .filter((claim) => taskId === claim.taskId)
       .map((claim) => snapshotPathForClaim(claim.resourceKind, claim.resourceKey));
+    const paths = [...new Set([...declaredOwnedPaths, ...claimedPaths])]
+      .sort((left, right) => left.localeCompare(right));
+    if (paths.length === 0) {
+      throw new Error(
+        `Task ${taskId} cannot be snapshotted without declared owned paths or materializable path claims.`,
+      );
+    }
     const states = await captureSkoposTaskPathStates({
       workspaceRoot,
       paths,

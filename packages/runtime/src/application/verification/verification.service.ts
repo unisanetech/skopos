@@ -15,6 +15,8 @@ import type {
   SkoposReadinessTarget,
   SkoposObservationEvidenceArtifact,
   SkoposTaskActionEvidenceLink,
+  SkoposTaskArtifact,
+  SkoposTaskPathAttribution,
   SkoposTaskPathMutationAttribution,
   SkoposVerificationArtifact,
   SkoposVerificationPhase,
@@ -31,6 +33,7 @@ import {
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
 import {
   applySkoposTaskReadinessStateRuntime,
+  isSkoposTrackedTaskProjectionPath,
   moveSkoposTaskToVerificationRuntime,
   resolveSkoposTrackedTaskProjectionPaths,
   showSkoposTaskRuntime,
@@ -80,10 +83,22 @@ export const verifySkoposTaskRuntime = async ({
     phase,
     risk: task.risk,
   });
-  impact.ignoredPreExistingPaths = taskChanges.ignoredPreExistingPaths;
-  impact.excludedOtherTaskPaths = taskChanges.excludedOtherTaskPaths;
-  impact.externalUnattributedPaths = taskChanges.externalUnattributedPaths;
-  impact.pathAttributions = taskChanges.pathAttributions;
+  impact.ignoredPreExistingPaths = excludeTrackedTaskDocuments(
+    taskChanges.ignoredPreExistingPaths,
+    taskProjectionPaths,
+  );
+  impact.excludedOtherTaskPaths = excludeTrackedTaskDocuments(
+    taskChanges.excludedOtherTaskPaths,
+    taskProjectionPaths,
+  );
+  impact.externalUnattributedPaths = excludeTrackedTaskDocuments(
+    taskChanges.externalUnattributedPaths,
+    taskProjectionPaths,
+  );
+  impact.pathAttributions = excludeTrackedTaskProjectionAttributions(
+    taskChanges.pathAttributions,
+    taskProjectionPaths,
+  );
   const requiredActions = dedupeActions(impact.requiredActions);
   const requiredActionIds = new Set(requiredActions.map((action) => action.id));
   const [manifests, runs, observations, actionLinks, memoryCatalog] = await Promise.all([
@@ -275,7 +290,17 @@ export const excludeTrackedTaskDocuments = (
   changedPaths: string[],
   trackedDocumentPaths: string[],
 ): string[] =>
-  changedPaths.filter((path) => !trackedDocumentPaths.includes(path));
+  changedPaths.filter(
+    (path) => !isSkoposTrackedTaskProjectionPath(path, trackedDocumentPaths),
+  );
+
+export const excludeTrackedTaskProjectionAttributions = (
+  attributions: SkoposTaskPathAttribution[],
+  trackedDocumentPaths: string[],
+): SkoposTaskPathAttribution[] =>
+  attributions.filter(
+    ({ path }) => !isSkoposTrackedTaskProjectionPath(path, trackedDocumentPaths),
+  );
 
 export const recordSkoposObservationEvidenceRuntime = async ({
   cwd,
@@ -428,7 +453,7 @@ export const assessSkoposTaskReadinessRuntime = async ({
   });
   const snapshotBlocker =
     target === 'close' && task.risk === 'high-impact'
-      ? await verifyLatestTaskSnapshot(workspaceRoot, taskId)
+      ? await verifyLatestTaskSnapshot(workspaceRoot, task)
       : undefined;
   const unfinishedPreVerificationSteps = task.steps.filter(
     (step) =>
@@ -579,8 +604,9 @@ export const finishSkoposTaskRuntime = async ({
 
 const verifyLatestTaskSnapshot = async (
   workspaceRoot: string,
-  taskId: string,
+  task: Pick<SkoposTaskArtifact, 'id' | 'changeScope'>,
 ): Promise<string | undefined> => {
+  const taskId = task.id;
   const directory = join(workspaceRoot, 'docs', 'work', 'tasks', 'snapshots');
   try {
     const names = (await readdir(directory)).filter(
@@ -612,6 +638,16 @@ const verifyLatestTaskSnapshot = async (
     const { name: latestName, snapshot } = latest;
     if (!snapshot.digest || !Array.isArray(snapshot.paths)) {
       return `Task snapshot ${latestName} is invalid.`;
+    }
+    if (snapshot.paths.length === 0) {
+      return `Task snapshot ${latestName} does not cover any Task-owned paths.`;
+    }
+    const snapshottedPaths = new Set(snapshot.paths.map((entry) => entry.path));
+    const missingOwnedPaths = task.changeScope.declaredOwnedPaths.filter(
+      (path) => !snapshottedPaths.has(path),
+    );
+    if (missingOwnedPaths.length > 0) {
+      return `Task snapshot ${latestName} does not cover Task-owned paths: ${missingOwnedPaths.join(', ')}.`;
     }
     const current = await captureSkoposTaskPathStates({
       workspaceRoot,

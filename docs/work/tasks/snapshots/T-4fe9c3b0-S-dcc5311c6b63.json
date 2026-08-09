@@ -1,0 +1,16 @@
+{
+  "snapshotId": "S-dcc5311c6b63",
+  "taskId": "T-4fe9c3b0",
+  "sessionId": "release-package-provenance-closure-20260809",
+  "actorId": "codex-release-package",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "docs/architecture/public-package-content-and-provenance.md",
+      "digest": "85720b374b48e8733ba63356e902ec75e0a9706ed23065bc113d1650a96c04a1"
+    }
+  ],
+  "digest": "dcc5311c6b6375cb689075e261d1742158bd262c17b4e7abf39184a258e2e936",
+  "createdAt": "2026-08-09T00:26:48.468Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4fe9c3b0-S-dcc5311c6b63.json"
+}

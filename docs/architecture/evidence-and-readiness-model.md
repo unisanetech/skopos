@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-09
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
@@ -34,6 +34,9 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-09`: Made Guard and Action selection explain both selected and skipped
+  capabilities, and projected changed paths outside Task ownership into an exact
+  reviewed ownership-expansion recovery step.
 - `2026-08-04`: Added explicit Action output exclusions for operational descendants
   of shared-derived output trees while retaining source binding and semantic output
   tamper detection.
@@ -268,11 +271,22 @@ weakened by this convenience surface.
 ## Validation Economy
 
 1. select Actions from Task-owned paths, Scope, phase, and risk
-2. run the narrowest sufficient Action first
-3. stop at the first failing Action and fix that failure class
-4. reuse fresh source-bound Evidence
-5. run broad release proof once after coherent affected-scope proof passes
-6. never turn a root command catalog into a mandatory checklist
+2. retain a deterministic decision for every loaded Guard and Action: selected, or
+   skipped because phase, risk, path, Scope, or required-Guard applicability did not
+   match
+3. expose those decisions through `skopos impact --why` and bounded decision
+   collections instead of making agents infer why a check did not run
+4. run the narrowest sufficient Action first
+5. stop at the first failing Action and fix that failure class
+6. reuse fresh source-bound Evidence
+7. run broad release proof once after coherent affected-scope proof passes
+8. never turn a root command catalog into a mandatory checklist
+
+Task workflow assessment compares current Git-visible changes with the Task admission
+baseline and declared ownership. Newly changed external paths remain outside proof and
+produce an exact audited `task ownership add` suggestion. Standard and high-impact
+Tasks never adopt the suggestion silently. Pre-existing and other-Task changes remain
+separate classifications.
 
 ## Boundaries
 

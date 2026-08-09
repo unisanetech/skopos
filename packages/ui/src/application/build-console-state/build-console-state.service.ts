@@ -30,6 +30,7 @@ import type {
   SkoposScopesLiteArtifact,
 } from '@skopos/model';
 import {
+  assessSkoposTaskWorkflowRuntime,
   assessSkoposProjectReadinessRuntime,
   buildSkoposSessionContextRuntime,
   resolveCurrentTaskState,
@@ -90,6 +91,7 @@ export const buildSkoposUiConsoleState = async ({
     scopesArtifact,
     proofReport,
     taskQuestions,
+    currentTaskWorkflow,
     adapterSupport,
     understanding,
     memoryView,
@@ -113,6 +115,12 @@ export const buildSkoposUiConsoleState = async ({
         ? loadJsonArtifact<SkoposTaskQuestionArtifact>(
             currentTaskState.questionsPath,
           ).then((artifact) => artifact ?? undefined)
+        : Promise.resolve(undefined),
+      currentTaskState
+        ? assessSkoposTaskWorkflowRuntime({
+            cwd: workspaceRoot,
+            taskId: currentTaskState.task.id,
+          }).catch(() => undefined)
         : Promise.resolve(undefined),
       loadAdapterSupportView(workspaceRoot),
       loadUnderstandingView(workspaceRoot),
@@ -161,6 +169,7 @@ export const buildSkoposUiConsoleState = async ({
     sessionContext,
     readinessReport,
     taskQuestions,
+    currentTaskWorkflow,
     indexArtifact,
     proofReport,
     activity,

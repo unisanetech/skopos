@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-30
+lastUpdated: 2026-08-09
 relatedDocs:
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -17,6 +17,10 @@ relatedDocs:
   - overview.md
   - domains/product/positioning.md
   - architecture/00-architecture.md
+  - architecture/policy-applicability-and-fixture-governance.md
+  - architecture/storage-lifecycle-and-privacy.md
+  - guides/storage-and-privacy.md
+  - guides/semantic-guards.md
   - work/archive/P-067e15c4-proof-and-benchmarking.md
   - findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: when authority or routing changes
@@ -29,6 +33,11 @@ Skopos.
 
 ## Changelog
 
+- `2026-08-09`: Added the progressive Task workflow and semantic Guard template guide
+  to the developer and verification routes.
+- `2026-08-09`: Added the local storage lifecycle, cleanup safety, and privacy guide.
+- `2026-08-09`: Added the canonical policy applicability, architecture-pack
+  portability, and active fixture-governance route.
 - `2026-07-30`: Repaired the convergence finding link after its lifecycle move to the
   findings archive.
 - `2026-07-28`: Rebuilt the router around the canonical Project Memory families,
@@ -88,6 +97,8 @@ explain history but never define current behavior.
 7. [Retrieval strategy](architecture/retrieval-and-query-strategy.md)
 8. [Evidence and Readiness model](architecture/evidence-and-readiness-model.md)
 9. [Action extension model](architecture/action-extension-model.md)
+10. [Policy applicability and fixture governance](architecture/policy-applicability-and-fixture-governance.md)
+11. [Storage lifecycle and privacy](architecture/storage-lifecycle-and-privacy.md)
 
 ### Work
 
@@ -104,7 +115,9 @@ current artifact explicitly requires their rationale.
 1. [Developer workflows](guides/developer-workflows.md)
 2. [Bootstrap a project](guides/bootstrap-a-project.md)
 3. [Local development](operations/local-development.md)
-4. package-specific source and tests selected by the active Task
+4. [Manage local storage and privacy](guides/storage-and-privacy.md)
+5. [Configure semantic Guard templates](guides/semantic-guards.md)
+6. package-specific source and tests selected by the active Task
 
 ### Scope Memory
 

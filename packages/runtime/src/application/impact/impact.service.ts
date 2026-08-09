@@ -1,7 +1,11 @@
 import { join, resolve } from 'node:path';
 
 import { buildSkoposImpactGraph, buildSkoposImpactReport } from '@skopos/verification';
-import type { SkoposImpactReport } from '@skopos/model';
+import type {
+  SkoposActionPhase,
+  SkoposImpactReport,
+  SkoposTaskRisk,
+} from '@skopos/model';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -14,6 +18,8 @@ export interface BuildSkoposImpactRuntimeOptions {
   cwd: string;
   changedPaths?: string[];
   actor?: string;
+  phase?: SkoposActionPhase;
+  risk?: SkoposTaskRisk;
 }
 
 export interface BuildSkoposImpactRuntimeResult extends SkoposImpactReport {
@@ -24,12 +30,16 @@ export const buildSkoposImpactRuntime = async ({
   cwd,
   changedPaths = [],
   actor,
+  phase,
+  risk,
 }: BuildSkoposImpactRuntimeOptions): Promise<BuildSkoposImpactRuntimeResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   const impact = await buildSkoposImpactReport({
     cwd: resolve(cwd),
     changedPaths,
+    phase,
+    risk,
   });
   const impactGraph = buildSkoposImpactGraph({
     workspaceRoot,

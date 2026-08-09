@@ -1,0 +1,20 @@
+id: project.semantic-guidance
+title: Project semantic guidance remains current
+description: Reject reviewed retired guidance when affected documentation teaches it as current truth.
+owner: project
+scope:
+  - docs
+strength: required
+appliesTo:
+  paths:
+    - docs/**/*.md
+  phases:
+    - closure
+  risks:
+    - light
+    - standard
+    - high-impact
+requires:
+  actionIds:
+    - project.semantic-guidance-check
+  evidence: source-bound-action

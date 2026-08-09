@@ -6,14 +6,18 @@ import { buildSkoposDocumentCatalog } from '@skopos/indexer';
 import type {
   SkoposDocumentKnowledgeEntry,
   SkoposPlanResult,
+  SkoposImpactReport,
   SkoposProofSubjectKind,
+  SkoposResolvedScope,
   SkoposTaskArtifact,
   SkoposTaskContractDeclaration,
   SkoposTaskDetail,
   SkoposTaskDispositionKind,
   SkoposTaskMemoryObligation,
   SkoposTaskRisk,
+  SkoposTaskAdmissionAssessment,
   SkoposTaskRunResult,
+  SkoposTaskWorkflowAssessment,
   SkoposTaskState,
   SkoposTaskQuestionArtifact,
   SkoposTaskRecommendationArtifact,
@@ -23,6 +27,8 @@ import {
   buildSkoposImpactReport,
   buildSkoposTaskIdentity,
   captureSkoposTaskChangeScope,
+  captureSkoposTaskPathStates,
+  resolveSkoposTaskChangedPaths,
   resolveSkoposWorkspaceIdentity,
 } from '@skopos/verification';
 
@@ -82,9 +88,23 @@ export const prepareSkoposTaskRuntime = async ({
     nonGoals,
     constraints,
   });
-  const resolvedRisk = proofSubjectKind === 'project-integration'
-    ? 'high-impact'
-    : risk ?? inferTaskRisk(plan);
+  const admissionImpact =
+    ownedPaths.length > 0
+      ? await buildSkoposImpactReport({
+          cwd: workspaceRoot,
+          changedPaths: ownedPaths,
+          phase: 'closure',
+        })
+      : undefined;
+  const admission = assessSkoposTaskAdmission({
+    plan,
+    impact: admissionImpact,
+    ownedPaths,
+    explicitRisk: risk,
+    explicitDetail: detail,
+    proofSubjectKind,
+  });
+  const resolvedRisk = admission.selectedRisk;
   if (proofSubjectKind === 'project-integration' && ownedPaths.length === 0) {
     throw new Error('Project-integration proof requires at least one explicitly owned path.');
   }
@@ -118,12 +138,10 @@ export const prepareSkoposTaskRuntime = async ({
   const hasBlockingQuestions = questions.entries.some(
     (question) => question.blocking && question.status === 'open',
   );
-  const resolvedDetail = proofSubjectKind === 'project-integration'
-    ? 'detailed'
-    : detail ?? inferTaskDetail(resolvedRisk);
+  const resolvedDetail = admission.selectedDetail;
   const memoryObligations = await inferSkoposTaskMemoryObligationsRuntime({
     cwd: workspaceRoot,
-    plan,
+    scope: plan.scope,
     risk: resolvedRisk,
     ownedPaths,
   });
@@ -162,6 +180,7 @@ export const prepareSkoposTaskRuntime = async ({
     scope: plan.scope,
     contract,
     risk: resolvedRisk,
+    admission,
     proofSubject: {
       kind: proofSubjectKind,
       baselineId: buildProofSubjectBaselineId(changeScope),
@@ -417,6 +436,144 @@ export const showSkoposTaskRuntime = async ({
   });
 };
 
+export const assessSkoposTaskWorkflowRuntime = async ({
+  cwd,
+  taskId,
+}: {
+  cwd: string;
+  taskId: string;
+}): Promise<SkoposTaskWorkflowAssessment> => {
+  const workspaceRoot = resolve(cwd);
+  const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const changes = await resolveSkoposTaskChangedPaths({
+    workspaceRoot,
+    changeScope: task.changeScope,
+    currentTaskId: task.id,
+    generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
+  });
+  const projectionPaths = new Set(
+    resolveSkoposTrackedTaskProjectionPaths(task.trackedDocumentPath),
+  );
+  const unownedPaths = changes.externalUnattributedPaths
+    .filter((path) =>
+      !isSkoposTrackedTaskProjectionPath(path, [...projectionPaths]),
+    )
+    .sort((left, right) => left.localeCompare(right));
+  const actorId = task.coordination.claimedBy?.actorId ?? '<id>';
+  const ownershipCommand = unownedPaths.length > 0
+    ? [
+        'skopos task ownership add',
+        task.id,
+        ...unownedPaths.flatMap((path) => ['--own', shellQuote(path)]),
+        '--reason',
+        shellQuote('Adopt reviewed changed paths discovered during active work.'),
+        '--actor',
+        shellQuote(actorId),
+      ].join(' ')
+    : undefined;
+  const openQuestions = task.questions.filter(
+    (question) => question.blocking && question.status === 'open',
+  );
+  const pendingAction = task.selectedActions.find((action) =>
+    task.steps.some(
+      (step) => step.id === `action-${action.id}` && step.status !== 'complete',
+    ),
+  );
+  const pendingStep = task.steps.find(
+    (step) => step.status !== 'complete' && step.status !== 'skipped',
+  );
+  const terminal = ['complete', 'cancelled', 'superseded'].includes(task.state);
+  const workflow = task.admission?.workflow ??
+    (task.risk === 'light' ? 'fast-path' : task.risk === 'high-impact' ? 'strict' : 'tracked');
+
+  if (terminal) {
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'ready-for-closure',
+      nextCommand: `skopos task show ${shellQuote(task.id)} . --json`,
+      nextReason: `Task ${task.id} is ${task.state}; inspect its durable result instead of mutating it.`,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (ownershipCommand) {
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'blocked',
+      nextCommand: ownershipCommand,
+      nextReason: `${unownedPaths.length} changed path${unownedPaths.length === 1 ? ' is' : 's are'} outside declared Task ownership and must be reviewed before proof.`,
+      ownershipSuggestion: {
+        paths: unownedPaths,
+        reason: 'Changed after Task admission without current Task ownership or attribution.',
+        command: ownershipCommand,
+        confirmationRequired: task.risk === 'high-impact',
+      },
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (openQuestions.length > 0) {
+    const question = openQuestions[0]!;
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'blocked',
+      nextCommand: `skopos decide ${shellQuote(question.id)} <option-id> . --actor ${shellQuote(actorId)}`,
+      nextReason: question.whyItMatters,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (pendingAction) {
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'work-in-progress',
+      nextCommand: `skopos actions run ${shellQuote(pendingAction.id)} . --task ${shellQuote(task.id)} --actor ${shellQuote(actorId)} --json`,
+      nextReason: pendingAction.reason,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (pendingStep) {
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'work-in-progress',
+      nextCommand: `skopos task step complete ${shellQuote(task.id)} ${shellQuote(pendingStep.id)} . --actor ${shellQuote(actorId)}`,
+      nextReason: `Complete “${pendingStep.title}” before closure.`,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  return {
+    taskId: task.id,
+    workflow,
+    readiness: 'ready-for-closure',
+    nextCommand:
+      workflow === 'fast-path'
+        ? `skopos finish ${shellQuote(task.id)} . --actor ${shellQuote(actorId)} --json`
+        : `skopos verify ${shellQuote(task.id)} . --phase closure --json`,
+    nextReason:
+      workflow === 'fast-path'
+        ? 'The light fast path can perform closure verification inside finish.'
+        : 'Run closure verification before finishing tracked or strict work.',
+    evidence: workflowEvidence(task),
+  };
+};
+
+const workflowEvidence = (
+  task: SkoposTaskArtifact,
+): SkoposTaskWorkflowAssessment['evidence'] => ({
+  requiredActionIds: task.selectedActions.map((action) => action.id),
+  acceptanceRequirementIds: task.evidenceRequirements.map((requirement) => requirement.id),
+});
+
+const shellQuote = (value: string): string =>
+  `'${value.replaceAll("'", "'\\''")}'`;
+
 export const claimSkoposTaskRuntime = async ({
   cwd,
   taskId,
@@ -477,6 +634,196 @@ export const releaseSkoposTaskRuntime = async ({
       };
     },
   });
+
+export const expandSkoposTaskOwnershipRuntime = async ({
+  cwd,
+  taskId,
+  ownedPaths,
+  reason,
+  actor,
+}: {
+  cwd: string;
+  taskId: string;
+  ownedPaths: string[];
+  reason: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const actorId = resolveSkoposRuntimeActorId(actor);
+  if (!actorId) {
+    throw new Error('Task ownership expansion requires --actor <id> or SKOPOS_ACTOR.');
+  }
+  const normalizedReason = reason.trim();
+  if (!normalizedReason) {
+    throw new Error('Task ownership expansion requires a non-empty reason.');
+  }
+  const requestedPaths = [...new Set(ownedPaths.map(normalizeProjectPath).filter(Boolean))]
+    .sort((left, right) => left.localeCompare(right));
+  if (requestedPaths.length === 0) {
+    throw new Error('Task ownership expansion requires at least one --own <path>.');
+  }
+  for (const path of requestedPaths) {
+    if (!isWorkspaceRelativePath(path)) {
+      throw new Error(`Task-owned path must stay inside the workspace: ${path}.`);
+    }
+  }
+
+  const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  assertTaskActor(existing, actorId);
+  if (!['active', 'blocked'].includes(existing.state)) {
+    throw new Error(
+      `Task ${taskId} must be active or blocked before ownership can expand; current state is ${existing.state}.`,
+    );
+  }
+  const addedPaths = requestedPaths.filter(
+    (path) =>
+      !existing.changeScope.declaredOwnedPaths.some(
+        (declaredPath) => path === declaredPath || isPathInside(path, declaredPath),
+      ),
+  );
+  if (addedPaths.length === 0) {
+    throw new Error(`Task ${taskId} already owns every requested path.`);
+  }
+  const declaredOwnedPaths = [
+    ...new Set([...existing.changeScope.declaredOwnedPaths, ...addedPaths]),
+  ].sort((left, right) => left.localeCompare(right));
+  const [impact, baselinePaths, inferredMemoryObligations] = await Promise.all([
+    buildSkoposImpactReport({
+      cwd: workspaceRoot,
+      changedPaths: declaredOwnedPaths,
+      phase: 'closure',
+      risk: existing.risk,
+    }),
+    captureSkoposTaskPathStates({
+      workspaceRoot,
+      paths: addedPaths,
+      ignoredTaskId: taskId,
+    }),
+    inferSkoposTaskMemoryObligationsRuntime({
+      cwd: workspaceRoot,
+      scope: existing.scope,
+      risk: existing.risk,
+      ownedPaths: declaredOwnedPaths,
+    }),
+  ]);
+
+  return mutateTask({
+    cwd: workspaceRoot,
+    taskId,
+    actor: actorId,
+    mutate: (task, resolvedActorId, now) => {
+      assertTaskActor(task, resolvedActorId);
+      if (task.updatedAt !== existing.updatedAt) {
+        throw new Error(`Task ${taskId} changed while ownership expansion was prepared; retry.`);
+      }
+      if (!['active', 'blocked'].includes(task.state)) {
+        throw new Error(
+          `Task ${taskId} must be active or blocked before ownership can expand; current state is ${task.state}.`,
+        );
+      }
+      const changeScope = {
+        ...task.changeScope,
+        declaredOwnedPaths,
+      };
+      const existingSteps = new Map(task.steps.map((step) => [step.id, step]));
+      const existingRecommendations = new Map(
+        task.recommendations
+          .filter((entry) => entry.actionKind === 'run-action' && entry.actionId)
+          .map((entry) => [entry.actionId!, entry]),
+      );
+      const existingMemoryObligations = new Map(
+        task.memoryObligations.map((entry) => [entry.id, entry]),
+      );
+      const memoryObligations = [
+        ...inferredMemoryObligations.map(
+          (entry) => existingMemoryObligations.get(entry.id) ?? entry,
+        ),
+        ...task.memoryObligations.filter(
+          (entry) => !inferredMemoryObligations.some((candidate) => candidate.id === entry.id),
+        ),
+      ].sort((left, right) => left.id.localeCompare(right.id));
+      const selectedActions = impact.requiredActions;
+      const selectedGuards = impact.matchedGuards;
+      return {
+        ...task,
+        proofSubject: {
+          ...task.proofSubject,
+          baselineId: buildProofSubjectBaselineId(changeScope),
+        },
+        changeScope,
+        ownershipExpansions: [
+          ...(task.ownershipExpansions ?? []),
+          {
+            paths: addedPaths,
+            reason: normalizedReason,
+            actorId: resolvedActorId,
+            recordedAt: now,
+            baselinePaths,
+          },
+        ],
+        selectedActions,
+        selectedGuardIds: selectedGuards.map((guard) => guard.id),
+        evidenceRequirements: [
+          ...task.evidenceRequirements.filter((entry) => !entry.id.startsWith('guard-')),
+          ...selectedGuards
+            .filter((guard) => guard.strength === 'required')
+            .map((guard) => ({
+              id: `guard-${guard.id}`,
+              acceptanceCriterion: `Guard ${guard.id}: ${guard.title}`,
+              phase: 'closure' as const,
+              actionIds: guard.requiredActionIds,
+              guardIds: [guard.id],
+              evidence: guard.evidence,
+            })),
+        ],
+        steps: [
+          ...task.steps.filter((step) => !step.id.startsWith('action-')),
+          ...selectedActions.map(
+            (action) =>
+              existingSteps.get(`action-${action.id}`) ?? {
+                id: `action-${action.id}`,
+                kind: 'action' as const,
+                title: action.title,
+                detail: action.reason,
+                status: 'pending' as const,
+              },
+          ),
+        ],
+        recommendations: [
+          ...task.recommendations.filter((entry) => entry.actionKind !== 'run-action'),
+          ...selectedActions.map(
+            (action) =>
+              existingRecommendations.get(action.id) ?? {
+                id: `run-${action.id}`,
+                title: action.title,
+                summary: action.reason,
+                priority: 'medium' as const,
+                actionKind: 'run-action' as const,
+                actionId: action.id,
+                blocking: false,
+                status: 'open' as const,
+              },
+          ),
+        ],
+        memoryObligations,
+        coordination: {
+          ...task.coordination,
+          lastUpdatedBy: resolvedActorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+    afterPersist: async (updated) => {
+      await writeJsonArtifact({
+        artifactPath: resolveSkoposTaskRecommendationsPath(
+          workspaceRoot,
+          updated.taskIdentity,
+        ),
+        artifact: buildTaskRecommendationProjection(updated),
+      });
+    },
+  });
+};
 
 export const applySkoposTaskDispositionRuntime = async ({
   cwd,
@@ -843,20 +1190,142 @@ const normalizeTaskContract = ({
 const normalizeEntries = (entries: string[]): string[] =>
   [...new Set(entries.map((entry) => entry.trim()).filter(Boolean))];
 
-const inferTaskRisk = (plan: SkoposPlanResult): SkoposTaskRisk => {
-  const searchable = `${plan.goal} ${plan.risks.join(' ')}`.toLowerCase();
-  if (
-    ['architecture', 'migration', 'security', 'public api', 'release', 'multi-package'].some(
-      (signal) => searchable.includes(signal),
-    )
-  ) {
-    return 'high-impact';
-  }
-  return plan.implementationSteps.length <= 3 ? 'light' : 'standard';
-};
-
 const inferTaskDetail = (risk: SkoposTaskRisk): SkoposTaskDetail =>
   risk === 'high-impact' ? 'detailed' : risk;
+
+const HIGH_IMPACT_GOAL_SIGNALS = [
+  'architecture',
+  'authentication',
+  'authorization',
+  'breaking change',
+  'database migration',
+  'data migration',
+  'deployment',
+  'multi-package',
+  'multi-repository',
+  'privacy',
+  'public api',
+  'public contract',
+  'release',
+  'security',
+] as const;
+
+const LIGHT_GOAL_SIGNALS = [
+  'comment',
+  'copy edit',
+  'formatting',
+  'spelling',
+  'typo',
+  'wording',
+] as const;
+
+export const assessSkoposTaskAdmission = ({
+  plan,
+  impact,
+  ownedPaths,
+  explicitRisk,
+  explicitDetail,
+  proofSubjectKind,
+}: {
+  plan: SkoposPlanResult;
+  impact?: SkoposImpactReport;
+  ownedPaths: string[];
+  explicitRisk?: SkoposTaskRisk;
+  explicitDetail?: SkoposTaskDetail;
+  proofSubjectKind: SkoposProofSubjectKind;
+}): SkoposTaskAdmissionAssessment => {
+  const searchable = `${plan.goal} ${plan.risks.join(' ')}`.toLowerCase();
+  const goalSignals = HIGH_IMPACT_GOAL_SIGNALS.filter((signal) =>
+    searchable.includes(signal),
+  );
+  const lightGoalSignals = LIGHT_GOAL_SIGNALS.filter((signal) =>
+    searchable.includes(signal),
+  );
+  const affectedScopeIds = [
+    ...new Set(impact?.affectedScopes.map((scope) => scope.id) ?? [plan.scope.scope.id]),
+  ].sort();
+  const affectedNonWorkspaceScopeCount =
+    impact?.affectedScopes.filter((scope) => scope.kind !== 'workspace').length ??
+    (plan.scope.scope.kind === 'workspace' ? 0 : 1);
+  const impactCategories = [
+    ...new Set(impact?.changed.map((entry) => entry.category) ?? []),
+  ].sort();
+  const reasons: string[] = [];
+  let recommendedRisk: SkoposTaskRisk;
+
+  if (proofSubjectKind === 'project-integration') {
+    recommendedRisk = 'high-impact';
+    reasons.push('Project-integration proof always requires strict high-impact work.');
+  } else if (goalSignals.length > 0) {
+    recommendedRisk = 'high-impact';
+    reasons.push(`The goal contains high-impact signal${goalSignals.length === 1 ? '' : 's'}: ${goalSignals.join(', ')}.`);
+  } else if (affectedNonWorkspaceScopeCount > 1 || ownedPaths.length >= 12) {
+    recommendedRisk = 'high-impact';
+    reasons.push(
+      affectedNonWorkspaceScopeCount > 1
+        ? `Declared ownership affects ${affectedNonWorkspaceScopeCount} non-workspace Scopes.`
+        : `Declared ownership spans ${ownedPaths.length} paths.`,
+    );
+  } else {
+    const durableSurface = ownedPaths.some((path) =>
+      /^(?:AGENTS\.md|skopos\.config\.|tools\/skopos\/|docs\/(?:architecture|decisions|standards)\/)/u.test(
+        normalizeProjectPath(path),
+      ),
+    );
+    const clearlyLight =
+      ownedPaths.length <= 1 &&
+      !durableSurface &&
+      (lightGoalSignals.length > 0 || plan.implementationSteps.length <= 3);
+    recommendedRisk = clearlyLight ? 'light' : 'standard';
+    reasons.push(
+      clearlyLight
+        ? 'The work is narrow, local, and has no durable-governance or cross-Scope signal.'
+        : 'The work changes multiple paths, durable guidance, configuration, or a normal coordinated surface.',
+    );
+  }
+
+  const selectionSource =
+    proofSubjectKind === 'project-integration'
+      ? 'proof-subject' as const
+      : explicitRisk
+        ? 'explicit-override' as const
+        : 'automatic' as const;
+  const selectedRisk =
+    proofSubjectKind === 'project-integration'
+      ? 'high-impact'
+      : explicitRisk ?? recommendedRisk;
+  const selectedDetail =
+    proofSubjectKind === 'project-integration'
+      ? 'detailed'
+      : explicitDetail ?? inferTaskDetail(selectedRisk);
+  if (explicitRisk && explicitRisk !== recommendedRisk) {
+    reasons.push(
+      `The caller explicitly selected ${explicitRisk}; Skopos recommended ${recommendedRisk} and kept both values visible.`,
+    );
+  }
+
+  return {
+    recommendedRisk,
+    recommendedDetail: inferTaskDetail(recommendedRisk),
+    selectedRisk,
+    selectedDetail,
+    selectionSource,
+    workflow:
+      selectedRisk === 'light'
+        ? 'fast-path'
+        : selectedRisk === 'high-impact'
+          ? 'strict'
+          : 'tracked',
+    reasons,
+    signals: {
+      goalSignals: [...goalSignals, ...lightGoalSignals],
+      ownedPathCount: ownedPaths.length,
+      affectedScopeIds,
+      impactCategories,
+      proofSubjectKind,
+    },
+  };
+};
 
 const MEMORY_ROLES = new Set<SkoposTaskMemoryObligation['role']>([
   'architecture',
@@ -869,12 +1338,12 @@ const MEMORY_ROLES = new Set<SkoposTaskMemoryObligation['role']>([
 
 export const inferSkoposTaskMemoryObligationsRuntime = async ({
   cwd,
-  plan,
+  scope,
   risk,
   ownedPaths,
 }: {
   cwd: string;
-  plan: SkoposPlanResult;
+  scope: SkoposResolvedScope;
   risk: SkoposTaskRisk;
   ownedPaths: string[];
 }): Promise<SkoposTaskMemoryObligation[]> => {
@@ -890,24 +1359,24 @@ export const inferSkoposTaskMemoryObligationsRuntime = async ({
   );
 
   if (risk === 'high-impact' && obligations.length === 0) {
-    const scopeMemoryRoot = normalizeProjectPath(plan.scope.scope.memoryRoot ?? 'docs');
+    const scopeMemoryRoot = normalizeProjectPath(scope.scope.memoryRoot ?? 'docs');
     const scopeDocument = eligibleDocuments
       .filter(
         (document) =>
-          document.metadata?.scope === plan.scope.scope.id ||
+          document.metadata?.scope === scope.scope.id ||
           isPathInside(document.path, scopeMemoryRoot),
       )
       .sort(compareMemoryCandidates)[0];
     obligations.push({
       id: scopeDocument
         ? buildMemoryObligationId(scopeDocument.role, scopeDocument.path)
-        : `memory-architecture-${shortDigest(plan.scope.scope.id)}`,
+        : `memory-architecture-${shortDigest(scope.scope.id)}`,
       role: scopeDocument && MEMORY_ROLES.has(scopeDocument.role)
         ? scopeDocument.role
         : 'architecture',
       reason: scopeDocument
-        ? `High-impact work must review and synchronize the existing ${scopeDocument.role} Memory for Scope ${plan.scope.scope.id}.`
-        : `High-impact work must review and synchronize durable Memory for Scope ${plan.scope.scope.id}.`,
+        ? `High-impact work must review and synchronize the existing ${scopeDocument.role} Memory for Scope ${scope.scope.id}.`
+        : `High-impact work must review and synchronize durable Memory for Scope ${scope.scope.id}.`,
       status: 'open',
       targetPath: scopeDocument?.path,
     });
@@ -1197,9 +1666,31 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
     '',
     ...asBulletList(task.contract.constraints, 'None declared.'),
     '',
+    '## Admission And Workflow',
+    '',
+    ...(task.admission
+      ? [
+          `- Workflow: \`${task.admission.workflow}\``,
+          `- Selected risk/detail: \`${task.admission.selectedRisk}\` / \`${task.admission.selectedDetail}\``,
+          `- Recommended risk/detail: \`${task.admission.recommendedRisk}\` / \`${task.admission.recommendedDetail}\``,
+          `- Selection source: \`${task.admission.selectionSource}\``,
+          ...task.admission.reasons.map((reason) => `- Reason: ${reason}`),
+        ]
+      : [`- Legacy Task admission; workflow derives from risk \`${task.risk}\`.`]),
+    '',
     '## Owned Paths',
     '',
     ...asBulletList(task.changeScope.declaredOwnedPaths.map((path) => `\`${path}\``), 'None declared.'),
+    '',
+    '## Ownership Expansions',
+    '',
+    ...asBulletList(
+      (task.ownershipExpansions ?? []).map(
+        (entry) =>
+          `\`${entry.recordedAt}\` by \`${entry.actorId}\`: ${entry.paths.map((path) => `\`${path}\``).join(', ')} — ${entry.reason}`,
+      ),
+      'None recorded.',
+    ),
     '',
     '## Steps',
     '',
@@ -1273,6 +1764,32 @@ export const resolveSkoposTrackedTaskProjectionPaths = (
       ? posix.join(posix.dirname(archiveDirectory), 'tasks', posix.basename(normalizedPath))
       : normalizedPath;
   return [...new Set([activePath, archivedPath, normalizedPath])];
+};
+
+export const isSkoposTrackedTaskProjectionPath = (
+  candidatePath: string,
+  trackedDocumentPaths: string[],
+): boolean => {
+  const normalizedCandidate = normalizeProjectPath(candidatePath);
+  const normalizedTrackedPaths = trackedDocumentPaths.map(normalizeProjectPath);
+  if (normalizedTrackedPaths.includes(normalizedCandidate)) return true;
+
+  for (const trackedPath of normalizedTrackedPaths) {
+    const taskId = posix.basename(trackedPath).match(/^(T-[a-z0-9]+)-/iu)?.[1];
+    const taskDirectory = posix.dirname(trackedPath);
+    if (
+      !taskId ||
+      posix.basename(taskDirectory) !== 'tasks' ||
+      posix.basename(posix.dirname(taskDirectory)) === 'archive'
+    ) {
+      continue;
+    }
+    const snapshotPrefix = `${posix.join(taskDirectory, 'snapshots', `${taskId}-S-`)}`;
+    if (normalizedCandidate.startsWith(snapshotPrefix) && normalizedCandidate.endsWith('.json')) {
+      return true;
+    }
+  }
+  return false;
 };
 
 const asBulletList = (values: string[], empty: string): string[] =>

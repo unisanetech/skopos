@@ -151,6 +151,7 @@ export const buildSkoposImpactReport = async ({
     recommendedCommands,
     matchedGuards: guardSelection.guards,
     requiredActions: guardSelection.actions,
+    selectionExplanation: guardSelection.explanation,
     warnings,
     instructionMirrorIssues,
     summary: `Impact touches ${normalizedChangedPaths.length} path(s) across ${Math.max(affectedScopes.length, 1)} scope(s) with ${guardSelection.guards.length} applicable Guard(s) and ${guardSelection.actions.length} required Action(s).`,

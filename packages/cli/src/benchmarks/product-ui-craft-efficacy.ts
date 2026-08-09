@@ -646,7 +646,8 @@ const inspectContainment = async (): Promise<RunReport['containment']> => {
 
 const traceReferencesSource = async (path: string): Promise<string[]> => {
   const trace = await readFile(path, 'utf8').catch(() => '');
-  return trace.includes(skoposRoot) ? [relative(skoposRoot, path)] : [];
+  const traceOutsideEvidenceRoot = trace.replaceAll(evidenceRoot, '<evaluation-evidence-root>');
+  return traceOutsideEvidenceRoot.includes(skoposRoot) ? [relative(skoposRoot, path)] : [];
 };
 
 const digestTree = async (root: string): Promise<string> => {

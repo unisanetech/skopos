@@ -20,6 +20,27 @@ export interface SkoposImpactEntry {
   affectedScopeIds: string[];
 }
 
+export type SkoposImpactSelectionStatus = 'selected' | 'skipped';
+
+export interface SkoposGuardSelectionExplanation {
+  id: string;
+  status: SkoposImpactSelectionStatus;
+  reason: string;
+  matchedPaths: string[];
+}
+
+export interface SkoposActionSelectionExplanation {
+  id: string;
+  status: SkoposImpactSelectionStatus;
+  reason: string;
+  requiredByGuardIds: string[];
+}
+
+export interface SkoposImpactSelectionExplanation {
+  guards: SkoposGuardSelectionExplanation[];
+  actions: SkoposActionSelectionExplanation[];
+}
+
 export interface SkoposImpactReport {
   workspaceRoot: string;
   changedPathSource: 'explicit' | 'git-status' | 'task';
@@ -33,6 +54,7 @@ export interface SkoposImpactReport {
   recommendedCommands: string[];
   matchedGuards: SkoposGuardMatch[];
   requiredActions: SkoposActionRequirement[];
+  selectionExplanation: SkoposImpactSelectionExplanation;
   warnings: string[];
   instructionMirrorIssues: string[];
   graphPath?: string;

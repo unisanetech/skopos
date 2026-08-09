@@ -16,7 +16,7 @@ Usage:
   skopos coordination task reserve <task-id> [target] --session <id> [--json]
   skopos coordination task release <task-id> [target] --session <id> --reason <text> [--json]
   skopos coordination claim add <kind> <resource> [target] --task <id> --session <id> [--json]
-  skopos start <goal> [target] [--scope <scope>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
+  skopos start <goal> [target] [--scope <scope>] [--risk <light|standard|high-impact>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
   skopos decide <question-id> <option-id> [target] [--actor <id>] [--full] [--dry-run] [--json]
   skopos discuss append-turn [target] [--thread <id>] [--session-id <id>] [--role <user|assistant|system>] [--source-event <event>] [--transcript-path <path>] [--message <text>|--message-stdin] [--dry-run] [--json]
   skopos discuss checkpoint [target] [--dry-run] [--json]
@@ -64,11 +64,12 @@ Usage:
   skopos task show <task-id> [target] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos task claim <task-id> [target] --actor <id> [--json]
   skopos task release <task-id> [target] --actor <id> [--json]
+  skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>] [--json]
   skopos task step complete <task-id> <step-id> [--cwd <target>] --actor <id> [--json]
   skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
   skopos task verify <task-id> [target] --actor <id> [--full] [--json]
   skopos knowledge [target] [--actor <id>] [--full] [--summary] [--fields <names>] [--json]
-  skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--collection <changed|matched-guards|required-actions>] [--cursor <token>] [--limit <1-100>] [--json]
+  skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--phase <phase>] [--risk <risk>] [--why] [--collection <changed|matched-guards|required-actions|guard-decisions|action-decisions>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos instructions scaffold [target] [--mode existing|greenfield] [--force] [--dry-run] [--actor <id>] [--json]
   skopos instructions sync [target] [--dry-run] [--actor <id>] [--json]
   skopos understand [target] [--actor <id>] [--dry-run] [--json]
@@ -81,7 +82,19 @@ Usage:
 const SKOPOS_START_HELP = `Skopos start
 
 Usage:
-  skopos start <goal> [target] [--scope <scope>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
+  skopos start <goal> [target] [--scope <scope>] [--risk <light|standard|high-impact>] [--proof-subject <task-closure|project-integration>] [--accept <criterion>] [--non-goal <text>] [--constraint <text>] [--own <path>] [--priority <0-100>] [--depends-on <task-id>] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--full] [--dry-run] [--json]
+
+Task risk:
+  Use --risk when the caller has already classified the Task. Otherwise Skopos infers
+  risk and detail from the goal, owned paths, affected Scopes, and proof subject. The
+  Task records both the recommendation and any explicit override. Explicit
+  project-integration proof remains high-impact.
+
+Progressive workflow:
+  light        Fast path: focused Evidence, no tracked Task document, no snapshot, and
+               finish performs closure verification without a separate verify command.
+  standard     Tracked path for bounded coordinated work.
+  high-impact  Strict path with durable Task state, Memory review, and immutable snapshot.
 
 Proof subjects:
   task-closure         Default. Prove only the admitted Task-owned change boundary.
@@ -91,6 +104,16 @@ Proof subjects:
 Unrelated pre-existing or other-Task changes stay visible but do not silently enter
 either proof subject. Use project-integration only when the requested outcome is an
 integration or release baseline, not as a workaround for a dirty worktree.
+`;
+
+const SKOPOS_DECIDE_HELP = `Skopos decide
+
+Usage:
+  skopos decide <question-id> <option-id> [target] [--actor <id>] [--full] [--dry-run] [--json]
+
+Records one explicit answer to an open Task question and recomputes the Work Queue.
+Use \`skopos session context . --json\` to see the recommendation, alternatives, and
+the exact option ids before deciding.
 `;
 
 const SKOPOS_ACTIONS_HELP = `Skopos actions
@@ -104,6 +127,47 @@ Usage:
 Every live-worktree Action manifest must explicitly declare
 \`workspaceMode: overlay-safe\`. A successful project-level run becomes Task proof
 only when it is linked with \`--task <id>\` or reused through the Evidence command.
+`;
+
+const SKOPOS_TASK_HELP = `Skopos task
+
+Usage:
+  skopos task show <task-id> [target] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--json]
+  skopos task claim <task-id> [target] --actor <id> [--json]
+  skopos task release <task-id> [target] --actor <id> [--json]
+  skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>] [--json]
+  skopos task disposition <task-id> <resume|ready|defer|return-from-verification|cancel|supersede> --reason <text> [--successor <task-id>] [--cwd <target>] --actor <id> [--json]
+  skopos task step complete <task-id> <step-id> [--cwd <target>] --actor <id> [--json]
+  skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
+  skopos task verify <task-id> [target] --actor <id> [--json]
+
+Ownership expansion is explicit and audited. It preserves the admission baseline,
+records the actor, reason, and adopted-path state, refreshes affected Guards and
+Actions, and changes the proof-subject identity so stale proof cannot close the wider
+Task.
+
+Task show reports changed paths outside declared ownership and provides an exact,
+audited ownership-add command. High-impact work never adopts those paths silently.
+`;
+
+const SKOPOS_IMPACT_HELP = `Skopos impact
+
+Usage:
+  skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--phase <admission|iteration|stabilization|closure>] [--risk <light|standard|high-impact>] [--why] [--collection <changed|matched-guards|required-actions|guard-decisions|action-decisions>] [--cursor <token>] [--limit <1-100>] [--json]
+
+Impact is the deterministic explanation surface for affected Scopes, Guards, and
+Actions. Use --why for a human-readable list of every selected and skipped capability.
+Use guard-decisions or action-decisions for bounded JSON pagination.
+`;
+
+const SKOPOS_TASK_OWNERSHIP_HELP = `Skopos task ownership
+
+Usage:
+  skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>] [--json]
+
+Use this when review discovers additional files that belong to the same Task intent.
+Create a follow-up Task instead when the new path changes the goal, risk, public
+behavior, or accepted proof subject.
 `;
 
 const SKOPOS_SKILLS_HELP = `Skopos skills
@@ -162,12 +226,16 @@ not widen the proof subject or run missing Actions implicitly.
 
 const COMMAND_HELP = new Map<string, string>([
   ['start', SKOPOS_START_HELP],
+  ['decide', SKOPOS_DECIDE_HELP],
+  ['task', SKOPOS_TASK_HELP],
+  ['task ownership', SKOPOS_TASK_OWNERSHIP_HELP],
   ['skills', SKOPOS_SKILLS_HELP],
   ['skills context', SKOPOS_SKILLS_CONTEXT_HELP],
   ['actions', SKOPOS_ACTIONS_HELP],
   ['actions run', SKOPOS_ACTIONS_RUN_HELP],
   ['verify', SKOPOS_VERIFY_HELP],
   ['finish', SKOPOS_FINISH_HELP],
+  ['impact', SKOPOS_IMPACT_HELP],
 ]);
 
 const HELP_FLAGS = new Set(['--help', '-h']);

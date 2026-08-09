@@ -1,32 +1,30 @@
 schemaVersion: 1
-updatedAt: 2026-07-28T13:17:05.790Z
+updatedAt: 2026-08-08T23:36:25.404Z
 defaultTaskRisk: standard
 acceptedPacks:
   - packId: architecture.mid-app
-    version: 0.1.0
-    acceptedAt: 2026-07-28T13:17:05.790Z
-    acceptedBy: codex-self-adoption
-    reason: Refresh accepted policy projections with content-bound source dependencies.
+    version: 0.2.0
+    acceptedAt: 2026-08-08T23:36:25.404Z
+    acceptedBy: codex-release-hardening
+    reason: Accept the evidence-based 0.2.0 portability and advisory-heuristic corrections required by the public-release hardening handoff.
     source: manual
   - packId: clean-code.maintainability
     version: 0.1.0
     acceptedAt: 2026-06-26T23:12:14.471Z
     acceptedBy: codex
-    reason: Accept clean-code maintainability Guards as part of Skopos self-hosting
-      quality baseline.
+    reason: Accept clean-code maintainability Guards as part of Skopos self-hosting quality baseline.
+    source: manual
+  - packId: stack.async-work
+    version: 0.1.0
+    acceptedAt: 2026-06-24T10:41:28.634Z
+    acceptedBy: codex
+    reason: Accept async work and queue stack guidance as Skopos' first stack-decision policy pack.
     source: manual
   - packId: verification.progressive-validation
     version: 0.1.0
     acceptedAt: 2026-06-24T10:41:43.943Z
     acceptedBy: codex
     reason: Accept progressive verification Guards as Skopos' Evidence and Readiness policy.
-    source: manual
-  - packId: stack.async-work
-    version: 0.1.0
-    acceptedAt: 2026-06-24T10:41:28.634Z
-    acceptedBy: codex
-    reason: Accept async work and queue stack guidance as Skopos' first
-      stack-decision policy pack.
     source: manual
 overrides: []
 roleMappings: []

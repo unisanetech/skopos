@@ -76,7 +76,7 @@ Use `skopos --help` for the full CLI surface and `skopos <command> --help` where
 
 - This block is generated from tracked project policy; do not edit it directly.
 - Source of truth: `tools/skopos/policies.yaml`
-- Accepted packs: `architecture.mid-app@0.1.0`, `clean-code.maintainability@0.1.0`, `verification.progressive-validation@0.1.0`, `stack.async-work@0.1.0`
+- Accepted packs: `architecture.mid-app@0.2.0`, `clean-code.maintainability@0.1.0`, `stack.async-work@0.1.0`, `verification.progressive-validation@0.1.0`
 - Default Task risk: `standard`
 - Progressive verification: keep small Tasks light, use proportional Actions and Guards for standard work, and use detailed high-impact Tasks or child Tasks for public API, architecture, stack, security, migration, multi-Scope, or long-running changes.
 - Agent brief: `.skopos/cache/agent/policy-brief.json`

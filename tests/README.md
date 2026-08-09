@@ -7,54 +7,32 @@ Keep Skopos tests split into:
 3. regression fixtures for known failures
 4. performance tests for large-repo indexing and incremental rebuilds
 
-Current active coverage starts in `packages/cli/src/__tests__/cli.e2e.test.ts`, backed by `fixtures/repos/basic-monorepo`.
+The active CLI test suite lives in `packages/cli/src/__tests__`. The package scripts in
+`packages/cli/package.json` define the maintained default, e2e, proof, release-smoke,
+and UI-proof lanes. Do not cite a test file unless it exists in that directory and is
+selected by a current package or root script.
 
-Proof-phase benchmark coverage now also lives in `packages/cli/src/__tests__/proof-phase.e2e.test.ts`, backed by:
+## Repository fixtures
 
-1. `fixtures/repos/clean-service`
-2. `fixtures/repos/basic-monorepo`
-3. `fixtures/repos/messy-monorepo`
-4. `fixtures/repos/legacy-multi-package`
-5. `fixtures/repos/approval-workflow-repo`
-6. `fixtures/repos/large-monorepo`
-7. `fixtures/repos/stale-docs-repo`
-8. `fixtures/repos/boundary-aware-workspace`
-9. `fixtures/repos/self-hosted-tooling-workspace`
-10. `fixtures/repos/mixed-brownfield-monorepo`
-11. `fixtures/repos/library-structure-drift`
-12. `fixtures/repos/brownfield-stabilization-delta-before`
-13. `fixtures/repos/brownfield-stabilization-delta-after`
+`fixtures/repos/registry.json` is the active fixture authority. Every registered entry
+declares its repository family, language, purpose, expected policy outcome, and current
+consumer. `packages/cli/src/__tests__/policy-recommendation-portability.test.ts` fails
+when a non-empty fixture is unregistered, a registry entry has no directory, repository
+classification changes unexpectedly, or an expected policy recommendation regresses.
 
-The current proof scorecard now covers:
+The registry includes JavaScript/TypeScript brownfield and workspace cases plus
+representative Python, Rust, Go, Java, .NET, Ruby, Swift, HCL, mobile, data/ML,
+infrastructure, documentation, and embedded cases. Passing that focused test is the
+minimum proof for claimed recommendation portability; it does not certify every tool
+or command across every ecosystem.
 
-1. clean brownfield bootstrap and planning
-2. messy brownfield diagnosis for a high-conflict repo
-3. quieter legacy brownfield structure drift with canonical docs and instructions but weak workspace boundaries
-4. workflow-sensitive closure
-5. approval-sensitive workflow enforcement for destructive workflows that require explicit approval
-6. stale-docs trust for weak canonical docs routing and overdue docs metadata
-7. current-state versus recommended-state architecture interpretation
-8. large-repo subtree targeting and sliced compiled artifacts
-9. tool-native enforcement through generated Claude Code hook execution
-10. deterministic self-hosted dogfooding coverage for workflow discovery, trust readiness, and portal rendering
-11. mixed brownfield diagnosis coverage for repos that should land in `needs-stabilization` without being treated as high-conflict
-12. partial architecture-drift coverage for a library-style multi-package repo that should stay `partial`, not `divergent`
-13. before-versus-after brownfield comparison coverage where stabilization must produce a measurable repo-health and trust delta
+When adding a fixture:
 
-The proof harness now uses a shared scorecard contract with:
-
-1. benchmark category and priority metadata
-2. weighted benchmark scoring
-3. must-win benchmark aggregation
-4. per-category summaries
-
-The proof harness now also compares the latest scorecard against:
-
-1. `internal/evals/proof-phase-baseline.json`
-
-The same proof run now also persists the latest scorecard and baseline comparison to:
-
-1. `.skopos/evidence/proof/latest-report.json`
+1. use synthetic names and data
+2. state one active purpose
+3. register the expected family, language, recommendation result, and consuming test
+4. add or extend executable assertions that exercise the intended behavior
+5. remove or archive the fixture when its consumer and purpose are retired
 
 Operational reliability characterization lives in
 `packages/cli/src/__tests__/operational-reliability-baseline.test.ts`, backed by

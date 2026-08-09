@@ -3,9 +3,9 @@
 export { runSkoposCli } from './cli/index.js';
 
 import { runSkoposCli } from './cli/index.js';
+import { renderSkoposCliFailure } from './cli/shared/error-guidance.js';
 
 runSkoposCli().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`${message}\n`);
+  process.stderr.write(`${renderSkoposCliFailure(error)}\n`);
   process.exitCode = 1;
 });

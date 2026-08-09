@@ -1,0 +1,10 @@
+Skopos
+Copyright 2026 The Skopos Authors
+
+This product includes reviewed user-interface source that originated in Unisane UI.
+The copyright owner has explicitly authorized the copied source and its compiled
+output for distribution as part of Skopos under the Apache License, Version 2.0.
+
+This notice does not grant rights to unrelated Unisane source, packages, trademarks,
+or future changes. Skopos does not depend on a private Unisane package or registry at
+runtime.

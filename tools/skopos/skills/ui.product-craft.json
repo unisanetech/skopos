@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product UI Craft skill pack.",
-  "updatedAt": "2026-08-06T13:26:54.269Z",
+  "updatedAt": "2026-08-09T00:55:13.479Z",
   "bindingId": "skopos.ui.product-craft",
   "packId": "ui.product-craft",
   "packVersion": "0.1.0",
@@ -46,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-06T13:26:54.269Z",
-    "acceptedBy": "codex-stabilization",
-    "reason": "Re-accept the exact Product UI Craft source after the policy-compliant UI utility split and all eight deterministic fixtures pass.",
+    "acceptedAt": "2026-08-09T00:55:13.479Z",
+    "acceptedBy": "codex-storage-release",
+    "reason": "Re-accept the owner-authorized Apache-2.0 Product UI Craft and Skopos UI sources after public-package provenance sanitization and responsive accessibility hardening; Product UI Craft remains required.",
     "identity": {
-      "packSourceDigest": "sha256:409bc91f4eb49aede06c86c2c4e8558ad31fbfeb3575f3783a4794771c61262c",
-      "bindingSourceDigest": "sha256:03d719d5902e0f23a4fd91bf8821d069cc0c609dab06b04971a9750979f406d1",
-      "projectSourceDigest": "sha256:25b5e3de55ea3244f863af9fe0f7384e6ed5d391b71982c7f4522bdaeb1cd601",
+      "packSourceDigest": "sha256:fc7b067f486f68dee3a08a649ed682f1bcc5f80df2118d7e1dce8615b2118d80",
+      "bindingSourceDigest": "sha256:88bd09fede9bcd4fe0e9563f3750a6b5bb840c67f4443264e9d1dd3a2105b6cb",
+      "projectSourceDigest": "sha256:664b231a93d7b6de2bb345119302cfe219fb0b8dd9727daf76ed299ce208d2b3",
       "capabilityCatalogDigest": "sha256:4853c5fbdaab7856d30fef1036f2e6f446c4b11d32035f05e2bd6c319a51301e",
       "evaluationSourceDigest": "sha256:51564f51da4976a7402bf8b2f450d92e0f53784a8204f30d567ab60b9915cf89",
-      "combinedDigest": "sha256:e16ceb35eb53abfa7eee6a94a1fef98b5e0bfcaa3423ccddc38e91aea597514b"
+      "combinedDigest": "sha256:cd31b33d19c777995d578a1557b6782759ec116e866481fd3bf64588cde9d2c2"
     }
   }
 }

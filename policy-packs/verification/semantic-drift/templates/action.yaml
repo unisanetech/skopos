@@ -1,0 +1,38 @@
+id: project.semantic-guidance-check
+title: Check project semantic guidance
+description: Run the project-configured retired-guidance checker over governed documentation.
+category: docs-validator
+scope:
+  - docs
+command: node tools/skopos/scripts/semantic-guidance-check.mjs --config tools/skopos/semantic-guidance.json docs
+cwd: .
+inputs:
+  - docs/**/*.md
+  - tools/skopos/semantic-guidance.json
+  - tools/skopos/scripts/semantic-guidance-check.mjs
+outputs: []
+affects: []
+capabilities:
+  process: required
+  network: none
+  browser: none
+  tools:
+    - node
+  secrets: []
+  services: []
+effects:
+  workspace: none
+  artifacts: isolated
+  external: none
+concurrency: shared
+workspaceMode: overlay-safe
+safety: read-only
+requiresApproval: false
+phases:
+  - closure
+risks:
+  - light
+  - standard
+  - high-impact
+recommendedAfter: []
+owner: project

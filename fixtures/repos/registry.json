@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "consumer": "packages/cli/src/__tests__/policy-recommendation-portability.test.ts",
+  "fixtures": [
+    { "id": "approval-workflow-repo", "family": "documentation", "languages": ["JavaScript"], "purpose": "Approval and human-decision documentation fixture.", "expected": { "primaryFamily": "documentation", "architectureMidApp": "review" } },
+    { "id": "basic-monorepo", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Basic workspace discovery fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "boundary-aware-workspace", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Workspace boundary and excluded-area fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "brownfield-stabilization-delta-after", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Post-stabilization brownfield comparison fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "brownfield-stabilization-delta-before", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Pre-stabilization brownfield comparison fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "clean-service", "family": "service", "languages": ["TypeScript"], "purpose": "Small clean service fixture.", "expected": { "primaryFamily": "service", "architectureMidApp": "review" } },
+    { "id": "large-monorepo", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Large workspace discovery fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "legacy-multi-package", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Legacy workspace without a modern workspace manifest.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "library-structure-drift", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Library workspace structure-drift fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "messy-monorepo", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Incomplete and conflicting workspace fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "mixed-brownfield-monorepo", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Mixed brownfield workspace and generated-state fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "self-hosted-tooling-workspace", "family": "platform-monorepo", "languages": ["JavaScript"], "purpose": "Self-hosted tooling and instruction-surface fixture.", "expected": { "primaryFamily": "platform-monorepo", "architectureMidApp": "review" } },
+    { "id": "stale-docs-repo", "family": "service", "languages": ["TypeScript"], "purpose": "Service with stale architecture documentation.", "expected": { "primaryFamily": "service", "architectureMidApp": "review" } },
+    { "id": "python-django-service", "family": "service", "languages": ["Python"], "purpose": "Non-JS service with multiple feature areas and an infrastructure boundary.", "expected": { "primaryFamily": "service", "architectureMidApp": "apply" } },
+    { "id": "rust-cli", "family": "cli", "languages": ["Rust"], "purpose": "Rust command-line product fixture.", "expected": { "primaryFamily": "cli", "architectureMidApp": "review" } },
+    { "id": "go-public-library", "family": "library", "languages": ["Go"], "purpose": "Go public-library anti-signal fixture.", "expected": { "primaryFamily": "library", "architectureMidApp": "avoid" } },
+    { "id": "java-service", "family": "service", "languages": ["Java"], "purpose": "Java service convention fixture.", "expected": { "primaryFamily": "service", "architectureMidApp": "review" } },
+    { "id": "dotnet-service", "family": "service", "languages": [".NET"], "purpose": ".NET web-service convention fixture.", "expected": { "primaryFamily": "service", "architectureMidApp": "review" } },
+    { "id": "ruby-rails-service", "family": "service", "languages": ["Ruby"], "purpose": "Rails service convention fixture.", "expected": { "primaryFamily": "service", "architectureMidApp": "review" } },
+    { "id": "swift-mobile-app", "family": "mobile", "languages": ["Swift"], "purpose": "SwiftUI mobile application fixture.", "expected": { "primaryFamily": "mobile", "architectureMidApp": "review" } },
+    { "id": "python-data-ml", "family": "data-ml", "languages": ["Python"], "purpose": "Python data and machine-learning pipeline fixture.", "expected": { "primaryFamily": "data-ml", "architectureMidApp": "review" } },
+    { "id": "terraform-infrastructure", "family": "infrastructure", "languages": ["HCL"], "purpose": "Terraform infrastructure-only fixture.", "expected": { "primaryFamily": "infrastructure", "architectureMidApp": "review" } },
+    { "id": "docs-project", "family": "documentation", "languages": [], "purpose": "Documentation-only repository fixture.", "expected": { "primaryFamily": "documentation", "architectureMidApp": "review" } },
+    { "id": "embedded-rust", "family": "embedded", "languages": ["Rust"], "purpose": "Rust no_std embedded firmware fixture.", "expected": { "primaryFamily": "embedded", "architectureMidApp": "review" } },
+    { "id": "java-application", "family": "application", "languages": ["Java"], "purpose": "Non-web Java screen application fixture.", "expected": { "primaryFamily": "application", "architectureMidApp": "review" } },
+    { "id": "unknown-project", "family": "unknown", "languages": [], "purpose": "Insufficient-evidence fixture proving unknown repositories remain review-only.", "expected": { "primaryFamily": "unknown", "architectureMidApp": "review" } }
+  ]
+}

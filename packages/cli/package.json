@@ -3,8 +3,38 @@
   "version": "0.1.0",
   "private": false,
   "type": "module",
-  "description": "CLI entrypoint for the Skopos SDK",
+  "description": "Project memory, task continuity, coordination, and trustworthy proof for coding agents",
   "license": "Apache-2.0",
+  "author": {
+    "name": "Croodo",
+    "email": "67230713+Croodo@users.noreply.github.com",
+    "url": "https://github.com/Croodo"
+  },
+  "maintainers": [
+    {
+      "name": "Croodo",
+      "email": "67230713+Croodo@users.noreply.github.com",
+      "url": "https://github.com/Croodo"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Croodo/skopos.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/Croodo/skopos#readme",
+  "bugs": {
+    "url": "https://github.com/Croodo/skopos/issues"
+  },
+  "keywords": [
+    "coding-agents",
+    "project-memory",
+    "task-management",
+    "developer-tools",
+    "codex",
+    "claude-code",
+    "ai-agents"
+  ],
   "engines": {
     "node": "^22.13.0 || ^24.0.0"
   },
@@ -30,21 +60,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     }
-  },
-  "scripts": {
-    "build": "tsup && node scripts/copy-policy-packs.mjs && node scripts/copy-skill-packs.mjs && node scripts/copy-ui-app.mjs",
-    "dev": "tsup --watch",
-    "check-types": "tsc --noEmit",
-    "test": "vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts src/__tests__/canonical-surface.test.ts src/__tests__/compact-command-output.test.ts src/__tests__/instructions-sync-contract.test.ts src/__tests__/action-evidence.test.ts src/__tests__/verification-recommendation-evidence.test.ts src/__tests__/task-change-scope.test.ts src/__tests__/task-portability.test.ts src/__tests__/host-projection-model.test.ts src/__tests__/host-actor-binding.test.ts src/__tests__/session-context-contract.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/coordination-lifecycle.test.ts src/__tests__/adoption-assessment.test.ts src/__tests__/adoption-proposal.test.ts src/__tests__/adoption-approval.test.ts src/__tests__/adoption-verification.test.ts src/__tests__/project-artifact.test.ts src/__tests__/source-dependency-digest.test.ts src/__tests__/document-catalog.test.ts src/__tests__/scope-registry.test.ts",
-    "test:e2e": "vitest run src/__tests__/canonical-surface.test.ts src/__tests__/task-portability.test.ts",
-    "benchmark:transport": "node --import tsx src/benchmarks/agent-transport-economy.ts --write",
-    "benchmark:external-workspace": "node --import tsx src/benchmarks/external-workspace-pilot.ts",
-    "proof:external-skill-portability": "node --import tsx src/benchmarks/external-skill-portability.ts",
-    "proof:external-continuation": "node --import tsx src/benchmarks/external-skill-portability.ts",
-    "proof:product-ui-craft-efficacy": "node --import tsx src/benchmarks/product-ui-craft-efficacy.ts",
-    "proof": "vitest run --maxWorkers=1 src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-matrix.test.ts",
-    "release:smoke": "vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts",
-    "ui:proof": "node --import tsx src/scripts/capture-ui-proof.ts"
   },
   "dependencies": {
     "typescript": "5.9.3",

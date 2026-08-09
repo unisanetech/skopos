@@ -1,0 +1,76 @@
+{
+  "snapshotId": "S-4a0d0dae7f69",
+  "taskId": "T-bd2b43a5",
+  "sessionId": "release-hardening-policy-20260809",
+  "actorId": "codex-release-hardening",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": ".cursor/rules/project.mdc",
+      "digest": "9f633ef8ddf03928e6f70ee4c831c471c5a4a95716fa2a7c076bf087a586161d"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "digest": "b549f7b31276eb76d960fc908107cb9ef5c8ae58c0134a69cf4fbc8174437522"
+    },
+    {
+      "path": "AGENTS.md",
+      "digest": "a80c7164554e47b18e572c811c860e73c5deaee1b3f6d3aa1be5e39f4b9267b3"
+    },
+    {
+      "path": "CLAUDE.md",
+      "digest": "9a08eeaa32e4b4abfb9a6534fc3edaeff2dbe25d77cf8563c748ee5b15b5f0ea"
+    },
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "7a3181a71b666ac1fd4bf49b030d52b6db664aaad0c38cb9253c7c61c15e56f9"
+    },
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "e8a3f41c6fa8a6597350e7e8aafdeeb55e907aac5ca6364a54e6184dbdb41d7e"
+    },
+    {
+      "path": "docs/architecture/policy-applicability-and-fixture-governance.md",
+      "digest": "d08d48a1724e3f074cf0fb010c299ee1e4fa30d455169862f14fbfbbff8db23e"
+    },
+    {
+      "path": "fixtures/repos",
+      "digest": "96fabb59b38fc663c889ad2171aff0fdc0e4dc67e179eac909c71575f4649258"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "b758fd015a27636105670029a12de5e381482f1be83e984c9fad40a256b63447"
+    },
+    {
+      "path": "packages/cli/src/__tests__",
+      "digest": "77d7fd31a6a8e83c586ede9be274935ae999d83f9d6798a450f386895a0ddd2b"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/policies.ts",
+      "digest": "93007fba24f6c4485aef1cae3c4fc4ae5192eb76a17238551c2206c4203a773a"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-policy-pack.ts",
+      "digest": "1f588dad2c91efb0ee7d5a44e0b5ee57fd18b96e8fe5691a39881fc56de1a212"
+    },
+    {
+      "path": "packages/runtime/src/application/policies/policies.service.ts",
+      "digest": "873bf2d3582d0c2cdba777cb24ace7ff0f92dc84e66294a831aae0a33019b1d4"
+    },
+    {
+      "path": "policy-packs/architecture/mid-app",
+      "digest": "67ed38fbc18977e5fd18cf1d6d3c613e46fb938692b12f4accc277865412d146"
+    },
+    {
+      "path": "tests/README.md",
+      "digest": "6d2df5aa6f444e804bac236fee87e03d46ae46cc433d6d13893cd4464bc7f7c9"
+    },
+    {
+      "path": "tools/skopos/policies.yaml",
+      "digest": "e4f7c45a199a6a440faa2674bf4d495310a2024c75de0751f6b7f5ae847a0458"
+    }
+  ],
+  "digest": "4a0d0dae7f697c8215add86114998191aef70051127a4d05611116d6ff8ef184",
+  "createdAt": "2026-08-08T23:43:26.198Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-bd2b43a5-S-4a0d0dae7f69.json"
+}

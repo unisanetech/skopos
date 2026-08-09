@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: planned
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-09
 relatedDocs:
   - ../../decisions/040-project-adapted-skill-packs-as-capability-projections.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
@@ -27,6 +27,14 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-09`: Completed the authorized current-source R2 machine cycle without
+  changing frozen inputs after the outcome. Exact preflight and one-case smoke passed;
+  the full eight-case run completed all 24 calls with zero invalid, aborted, authority,
+  or containment finding and stayed within token ceilings. Blinded model review favored
+  Product UI Craft 3-5, so current-source efficacy is not certified. Independent human
+  review remains pending, the active MUST Finding stays open, no additional pack may be
+  promoted, and any next Skill revision/evaluation must be a separately approved cycle
+  rather than post-outcome tuning inside this run.
 - `2026-08-06`: Closed the silent design-system-adaptation defect found in the isolated
   Unisane ecommerce canary. Product UI Craft now selects component conformance for
   ordinary rendered controls, injects exact project-bound component/token authorities

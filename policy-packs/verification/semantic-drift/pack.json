@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "id": "policy-pack.verification.semantic-drift",
+  "type": "policy-pack",
+  "status": "active",
+  "authority": "canonical",
+  "summary": "Portable templates for detecting retired project guidance that ordinary syntax and build checks cannot understand.",
+  "updatedAt": "2026-08-09",
+  "packId": "verification.semantic-drift",
+  "family": "verification",
+  "variant": "semantic-drift",
+  "version": "0.1.0",
+  "displayName": "Semantic Drift Guards",
+  "description": "Project-configured templates for distinguishing active positive guidance from prohibition, history, and temporary transition context.",
+  "plainLanguageSummary": "Use this when old architecture paths, presets, commands, or product rules must not be taught as current truth.",
+  "bestFor": [
+    "Projects retiring architecture paths or public guidance",
+    "Documentation where green builds can still preserve contradictory advice",
+    "Teams that need project-specific semantic checks without embedding domain truth in Skopos core"
+  ],
+  "notFor": [
+    "General prose quality scoring",
+    "Replacing human review of ambiguous product meaning",
+    "Secrets, security scanning, or arbitrary code execution"
+  ],
+  "userQuestions": [
+    "Which phrase or path is retired?",
+    "Which negative, historical, or temporary contexts are legitimate?",
+    "Which project Action should run this check?"
+  ],
+  "qualityBar": [
+    "Project terms live in project configuration, never in Skopos core.",
+    "Positive violations fail while prohibition, historical, and temporary examples pass.",
+    "Every violation identifies its rule, file, line, and text.",
+    "Ambiguous matches remain visible for human review instead of becoming invented truth."
+  ],
+  "agentUse": [
+    "Copy the templates into the adopted project's tools/skopos area.",
+    "Replace example patterns with reviewed project truth.",
+    "Register the checker as an Action and bind it through an affected-path Guard.",
+    "Keep semantic rules narrow and cover both allowed and forbidden examples."
+  ],
+  "projectLifecycles": [
+    "early-product",
+    "established-brownfield",
+    "legacy-stabilization"
+  ],
+  "appliesWhen": [
+    {
+      "id": "signal.retired-guidance",
+      "summary": "The project has explicit retired paths, presets, commands, or product claims that must not be taught as current.",
+      "confidence": "high",
+      "evidence": [
+        "a Decision or architecture document names retired authority",
+        "manual review has found stale positive guidance after ordinary checks passed"
+      ]
+    }
+  ],
+  "avoidWhen": [
+    {
+      "id": "anti.no-reviewed-semantic-rule",
+      "summary": "No human-reviewed project truth defines what is forbidden and what context is allowed.",
+      "confidence": "high",
+      "evidence": [
+        "the proposed rule is only a stylistic preference",
+        "allowed historical or negative examples cannot be stated"
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "verification.semantic-drift.retired-positive-guidance",
+      "title": "Retired authority is not taught as current",
+      "severity": "must",
+      "summary": "Reviewed retired phrases may appear only in explicitly allowed negative, historical, or temporary context.",
+      "rationale": "Syntax checks cannot tell whether documentation still recommends superseded architecture or product behavior.",
+      "appliesTo": [
+        "architecture documentation",
+        "developer guides",
+        "examples and generated reference"
+      ],
+      "examples": [
+        "Do not use the retired package path.",
+        "Before the cutover, the legacy preset was the default."
+      ],
+      "antiPatterns": [
+        "Use the retired package path for new modules.",
+        "The retired preset is the recommended default."
+      ],
+      "checkIds": [
+        "verification.semantic-drift.retired-positive-guidance"
+      ]
+    }
+  ],
+  "requiredDocs": [
+    "policies/overview.md",
+    "templates/semantic-guidance.config.example.json",
+    "templates/guard.yaml",
+    "templates/action.yaml"
+  ],
+  "generatedArtifacts": [
+    ".skopos/runs/<run-id>.json"
+  ],
+  "driftCheckIds": [
+    "verification.semantic-drift.retired-positive-guidance"
+  ],
+  "proofFixtureIds": [
+    "verification.semantic-drift.allowed-contexts",
+    "verification.semantic-drift.positive-violation"
+  ]
+}

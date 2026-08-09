@@ -14,9 +14,9 @@ tools, and talks with the developer. Skopos gives that agent a durable operating
 for the parts that should survive beyond one chat.
 
 > **Current status:** Skopos is pre-release and is not yet published for public use.
-> The first-release product contract is implemented and the current committed candidate
-> passes the automated clean-clone, packed-install, and release-proof baseline. Broader
-> product convergence and Product UI Craft efficacy work are still open. See
+> The working source passes important automated packaging and clean-install checks, but
+> there is no immutable release candidate yet. Product UI Craft is required and remains
+> included; its latest full paired evaluation did not pass the efficacy gate. See
 > [Current status](#current-status) for details.
 
 ## The Problem Skopos Solves
@@ -51,10 +51,13 @@ With Skopos, the workflow becomes explicit:
 1. The agent loads the relevant architecture, standards, and current work.
 2. It starts a Task with a goal, acceptance criterion, and owned paths.
 3. Skopos warns other cooperating sessions about overlapping work.
-4. Project-defined Actions run the correct checks for the affected area.
-5. Evidence is attached to the Task's acceptance criteria.
-6. Skopos reports what passed, what remains, and whether the Task is ready to close.
-7. A later session can continue from the recorded Task instead of starting over.
+4. Skopos recommends a proportional light, standard, or high-impact workflow and
+   explains the recommendation.
+5. Project-defined Actions run the correct checks for the affected area and explain
+   why unrelated checks were skipped.
+6. Evidence is attached to the Task's acceptance criteria.
+7. Skopos reports what passed, what remains, and whether the Task is ready to close.
+8. A later session can continue from the recorded Task instead of starting over.
 
 The coding agent still implements the retry logic. Skopos keeps the work connected to
 project intent and proof.
@@ -78,6 +81,10 @@ useful action from actual project state.
 Projects register their existing build, test, lint, generation, and verification
 commands as Actions. Deterministic Guards decide which evidence is required for the
 paths and Scopes a Task changes.
+
+Skopos also explains why registered Guards and Actions were skipped. Small local work
+uses a compact fast path; architecture, security, migration, release, and other
+high-impact work keeps strict Evidence and snapshot requirements.
 
 ### Honest completion
 
@@ -153,7 +160,7 @@ Skopos is currently used directly from its source workspace.
 
 ### Requirements
 
-- Node.js 22.5 or newer
+- Node.js `^22.13.0` or `^24.0.0`
 - pnpm 10.26.0
 
 ### Set up the workspace
@@ -197,6 +204,17 @@ skopos start "<goal>" . \
 # Ask for the next useful action
 skopos work next . --actor <id> --json
 
+# Explain why checks were selected or skipped
+skopos impact <changed-path> --phase closure --risk standard --why
+
+# Expand the same Task when review discovers another required file
+skopos task ownership add <task-id> \
+  --own <additional-path> \
+  --reason "<why this still belongs to the accepted Task>" \
+  --actor <id> \
+  --cwd . \
+  --json
+
 # Diagnose whether the Task has enough evidence to close
 skopos verify <task-id> . --phase closure --json
 
@@ -208,6 +226,17 @@ Use `skopos --help` for the complete CLI and `skopos <command> --help` for a com
 exact contract. Common supporting commands include `skopos knowledge`, `skopos adopt`,
 `skopos task show`, `skopos decide`, `skopos actions`, `skopos evidence`,
 `skopos readiness`, and `skopos coordination`.
+
+Ownership expansion is an audited change to the Task proof boundary. Skopos records
+the added paths, actor, reason, and adoption-time path state, refreshes applicable
+Guards and Actions, and changes the proof identity so earlier narrow proof cannot close
+the wider Task. Start a follow-up Task instead when the newly discovered work changes
+the goal, risk, public behavior, or proof subject.
+
+`skopos task show` also detects changed paths outside the Task boundary and returns the
+exact audited ownership command to review. The bundled read-only UI presents the same
+workflow, readiness, ownership, and Evidence guidance without creating another
+mutation authority.
 
 An explicit integration or release baseline uses a stricter proof subject:
 
@@ -271,17 +300,23 @@ them.
 
 Skopos is **pre-release**. It has not launched or been published as a public package.
 
-The current source implements the first-release model for Project Memory, Scopes,
+The working source implements the first-release model for Project Memory, Scopes,
 Plans, Tasks, Sessions, Work Queue, Actions, Guards, Evidence, Readiness, coordination,
-adoption, Skills, handoff, CLI, MCP, and UI. The current committed release candidate
-also passes the automated clean-clone reconstruction, locked install, build and init,
-typecheck, test, release proof, packed-install smoke, responsive UI, and accessibility
-baseline.
+adoption, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed focused
+typecheck, clean packed-install, package-content, storage-lifecycle, responsive UI, and
+accessibility checks. Those results are working-tree evidence, not certification of an
+immutable public candidate.
 
-That proof is an important baseline, not a launch announcement. Release remains blocked
-while the broader [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
-and the separate [Product UI Craft efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md)
-remain open. Project-level adoption outcomes must also satisfy the Plan's final gate.
+The latest complete Product UI Craft paired run was safe and contained, but the Skill
+won 3 of 8 cases while the no-Skill control won 5. That is a real release blocker, not
+a launch-quality result. Product UI Craft will not be removed to bypass the gate. A
+new, separately approved improvement and blind-review cycle is required, alongside the
+remaining [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
+and [Product UI Craft efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
+
+Before publication, Skopos must also complete the security, package, CI, trusted
+publishing, clean-clone, and immutable-candidate gates in the
+[first public release Plan](docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md).
 
 There is no prototype compatibility promise or old-state migration contract. Until the
 release gate is fully accepted, APIs, commands, and project structure may still change.
@@ -293,6 +328,10 @@ release gate is fully accepted, APIs, commands, and project structure may still 
 - [Architecture](docs/architecture/00-architecture.md) — packages, runtime, and data flow
 - [Agent-native operating model](docs/architecture/agent-native-operating-model.md) — how agents and Skopos divide responsibilities
 - [Developer workflows](docs/guides/developer-workflows.md) — practical repository commands
+- [Security policy](SECURITY.md) — private reporting and the supported security boundary
+- [Support](SUPPORT.md) — where to ask for help and what information to include
+- [Contributing](CONTRIBUTING.md) — setup, review, proof, and contribution expectations
+- [Release and rollback runbook](docs/operations/release-runbook.md) — the fail-closed operator checklist
 - [Accepted product decision](docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md) — why this model exists
 
 ## Contributing

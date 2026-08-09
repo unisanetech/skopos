@@ -380,6 +380,7 @@ const proveBillquestProject = async ({
   const commands: CommandRecord[] = [];
   installBillquestDependencies(projectRoot, commands);
   const installed = await installPackedCli({ projectRoot, tarballPath, nested: true });
+  await writeBillquestScopeRegistry(projectRoot);
   runJson(installed.cliPath, projectRoot, commands, [
     'init', '.', '--mode', 'existing', '--actor', actor, '--json',
   ]);
@@ -392,9 +393,11 @@ const proveBillquestProject = async ({
     installedCliRoot: installed.installedCliRoot,
     commands,
     relevant: {
-      goal: 'Refine the responsive tool workspace hierarchy and layout while preserving the existing form and preview behavior.',
-      acceptance: 'The tool workspace keeps clear responsive hierarchy at desktop and mobile widths.',
+      goal: 'Establish the hierarchy, layout, brand expression, and reading order of the rendered Billquest product workspace while preserving the existing form and preview behavior.',
+      acceptance: 'Responsive layout preserves reading order through desktop and mobile viewport adaptation.',
       ownedPath: 'components/features/tool-workspace/ToolWorkspacePage.tsx',
+      scopeId: 'billquest-ui',
+      risk: 'standard',
       expectedModuleIds: [
         'ui-craft.hierarchy-and-brand',
         'ui-craft.responsive-and-states',
@@ -435,6 +438,8 @@ const proveProjectBehavior = async ({
     goal: string;
     acceptance: string;
     ownedPath: string;
+    scopeId?: string;
+    risk?: 'light' | 'standard' | 'high-impact';
     expectedModuleIds: string[];
   };
   irrelevant: { goal: string; ownedPath: string };
@@ -794,13 +799,21 @@ const startTask = (
   cliPath: string,
   projectRoot: string,
   commands: CommandRecord[],
-  task: { goal: string; acceptance: string; ownedPath: string },
+  task: {
+    goal: string;
+    acceptance: string;
+    ownedPath: string;
+    scopeId?: string;
+    risk?: 'light' | 'standard' | 'high-impact';
+  },
   sessionId?: string,
 ): { id: string } => {
   const started = runJson<{ task: { id: string } }>(cliPath, projectRoot, commands, [
     'start', task.goal, '.',
     '--accept', task.acceptance,
     '--own', task.ownedPath,
+    ...(task.scopeId ? ['--scope', task.scopeId] : []),
+    ...(task.risk ? ['--risk', task.risk] : []),
     '--actor', actor,
     ...(sessionId
       ? [
@@ -964,6 +977,52 @@ const packCli = (packRoot: string): string => {
     .find((entry) => entry.endsWith('.tgz'));
   if (!reported) throw new Error(`pnpm pack did not report a tarball:\n${output}`);
   return isAbsolute(reported) ? reported : resolve(cliPackageRoot, reported);
+};
+
+const writeBillquestScopeRegistry = async (projectRoot: string): Promise<void> => {
+  await Promise.all([
+    mkdir(join(projectRoot, 'tools/skopos'), { recursive: true }),
+    mkdir(join(projectRoot, 'docs/scopes/billquest-ui'), { recursive: true }),
+  ]);
+  await writeFile(
+    join(projectRoot, 'tools/skopos/scopes.yaml'),
+    `${[
+      'schemaVersion: 1',
+      'scopes:',
+      '  - id: workspace',
+      '    title: Billquest Workspace',
+      '    kind: workspace',
+      '    path: .',
+      '    memoryRoot: docs',
+      '    codeRoots:',
+      '      - .',
+      '    parent: null',
+      '    profile: core.workspace',
+      '    dependsOn: []',
+      '    owners:',
+      `      - ${actor}`,
+      '    aliases:',
+      '      - billquest',
+      '  - id: billquest-ui',
+      '    title: Billquest Product UI',
+      '    kind: application',
+      '    path: components/features/tool-workspace',
+      '    memoryRoot: docs/scopes/billquest-ui',
+      '    codeRoots:',
+      '      - components/features/tool-workspace',
+      '      - components/ui/unisane',
+      '      - app',
+      '    parent: workspace',
+      '    profile: core.application',
+      '    dependsOn: []',
+      '    owners:',
+      `      - ${actor}`,
+      '    aliases:',
+      '      - billquest-product-ui',
+      '',
+    ].join('\n')}`,
+    'utf8',
+  );
 };
 
 const writeProjectCapabilityBinding = async ({

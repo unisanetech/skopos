@@ -30,6 +30,7 @@ import type {
   SkoposToolAdapterSummary,
   SkoposProjectReadinessArtifact,
   SkoposSessionContextRunResult,
+  SkoposTaskWorkflowAssessment,
 } from '@skopos/model';
 
 import type { SkoposUiActivityViewsResult } from './skopos-ui-activity-view.js';
@@ -290,6 +291,7 @@ export interface SkoposUiConsoleState {
   sessionContext?: SkoposSessionContextRunResult;
   readinessReport: SkoposProjectReadinessArtifact;
   taskQuestions?: SkoposTaskQuestionArtifact;
+  currentTaskWorkflow?: SkoposTaskWorkflowAssessment;
   indexArtifact?: SkoposContentIndexArtifact;
   proofReport?: SkoposProofReportArtifact;
   activity: SkoposUiActivityViewsResult;

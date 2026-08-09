@@ -22,6 +22,19 @@ export type SkoposDecisionMode = 'fast' | 'balanced' | 'strict';
 
 export type SkoposPrivacyMode = 'local-only' | 'metadata-sync' | 'enterprise';
 
+export type SkoposStorageManagedClass =
+  | 'temporary'
+  | 'cache'
+  | 'diagnostic'
+  | 'taskEvidence'
+  | 'releaseEvidence';
+
+export interface SkoposStoragePolicyConfig {
+  softLimitMb: number;
+  hardLimitMb: number;
+  retentionDays: Record<SkoposStorageManagedClass, number>;
+}
+
 export type SkoposCommandName = 'dev' | 'build' | 'test' | 'typecheck' | 'lint';
 
 export type SkoposCommandMap = Partial<Record<SkoposCommandName, string>>;
@@ -63,4 +76,5 @@ export interface SkoposRootConfig {
     privacyMode: SkoposPrivacyMode;
     redactSecrets: boolean;
   };
+  storage?: SkoposStoragePolicyConfig;
 }

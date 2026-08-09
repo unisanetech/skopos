@@ -5,11 +5,11 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Architecture policy for product applications that have outgrown single-folder simplicity but do not need platform-grade ceremony.",
-  "updatedAt": "2026-06-24",
+  "updatedAt": "2026-08-09",
   "packId": "architecture.mid-app",
   "family": "architecture",
   "variant": "mid-app",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "displayName": "Mid-App Architecture",
   "description": "A portable architecture pack for small-to-mid product applications with multiple features, user workflows, runtime integrations, and enough shared behavior to need explicit boundaries.",
   "plainLanguageSummary": "Use this when a product app has several features and needs clear ownership without large-platform ceremony.",
@@ -31,12 +31,14 @@
   "qualityBar": [
     "Rules include examples, anti-patterns, brownfield guidance, greenfield guidance, drift checks, and proof fixtures.",
     "The pack is framework-agnostic and maps roles to local project names instead of forcing folder names.",
-    "Agents can explain what to do differently before editing code."
+    "Agents can explain what to do differently before editing code.",
+    "Incomplete heuristics remain advisory until a human confirms the finding."
   ],
   "agentUse": [
     "Load this pack after project bootstrap when architecture or file placement matters.",
     "Use accepted local names first, then apply this pack's ownership and dependency direction rules.",
-    "Escalate to normal or high-impact risk when changing boundaries, generated outputs, or verification strategys."
+    "Escalate to standard or high-impact risk when changing boundaries, generated outputs, or validation strategies.",
+    "Treat all example paths as role evidence, never as required folder names."
   ],
   "structureTree": {
     "title": "Mid-app structure tree",
@@ -57,6 +59,12 @@
           "routes",
           "src/server",
           "server",
+          "cmd",
+          "src/main",
+          "config/routes.rb",
+          "manage.py",
+          "Program.cs",
+          "Sources/*/App",
           "packages/*/src/app",
           "apps/*/src/app",
           "packages/*/src/routes",
@@ -85,6 +93,14 @@
           "domains",
           "src/use-cases",
           "use-cases",
+          "vertical-slices",
+          "slices",
+          "plugins",
+          "app/services",
+          "app/controllers",
+          "internal",
+          "crates",
+          "Sources",
           "packages/*/src/features",
           "apps/*/src/features",
           "packages/*/src/modules",
@@ -123,6 +139,11 @@
           "frameworks",
           "src/platform",
           "platform",
+          "ports",
+          "src/ports",
+          "app/gateways",
+          "internal/adapters",
+          "internal/platform",
           "packages/*/src/infrastructure",
           "apps/*/src/infrastructure",
           "packages/*/src/infra",
@@ -426,7 +447,7 @@
     {
       "id": "architecture.mid-app.composition-root-owns-wiring",
       "title": "Composition root owns runtime wiring",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "App startup, route registration, dependency assembly, provider selection, and environment interpretation must live in a composition root or infrastructure/adapters layer, not inside feature internals.",
       "rationale": "Feature code stays testable and portable when runtime choices are assembled at the edge.",
       "appliesTo": [
@@ -451,7 +472,7 @@
     {
       "id": "architecture.mid-app.feature-owns-product-behavior",
       "title": "Feature owns product behavior",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "A feature should own its user workflow, domain service, screen-level UI, validation, and local tests unless the behavior is genuinely cross-feature infrastructure.",
       "rationale": "Agents can make coherent changes when the behavior they need is locally discoverable.",
       "appliesTo": [
@@ -477,7 +498,7 @@
     {
       "id": "architecture.mid-app.shared-is-earned",
       "title": "Shared code is earned",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "Shared modules must represent stable cross-feature primitives, infrastructure adapters, or design-system components. Do not create shared buckets for speculative reuse.",
       "rationale": "Premature shared folders make agents choose generic placement and create second patterns.",
       "appliesTo": [
@@ -503,7 +524,7 @@
     {
       "id": "architecture.mid-app.import-direction-is-one-way",
       "title": "Import direction is one-way",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "Feature internals may depend on infrastructure, adapter, shared, or UI primitives, but those lower-level roles must not depend on feature internals, and features must not import private internals from sibling features.",
       "rationale": "Acyclic direction keeps refactors bounded and makes ownership clear.",
       "appliesTo": [
@@ -552,7 +573,7 @@
     {
       "id": "architecture.mid-app.boundary-data-is-validated",
       "title": "Boundary data is validated",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "External input should be parsed at transport, persistence, job, and integration boundaries before it reaches feature logic.",
       "rationale": "Feature code should work with known shapes; uncertainty belongs at the edge.",
       "appliesTo": [
@@ -576,7 +597,7 @@
       ]
     },
     {
-      "id": "architecture.mid-app.verification-strategys-are-declared",
+      "id": "architecture.mid-app.validation-lanes-are-declared",
       "title": "Validation lanes are declared",
       "severity": "should",
       "summary": "Projects should declare fast local checks, targeted feature checks, and slower release checks so agents know what proof is proportional to a change.",
@@ -597,13 +618,13 @@
         "Agent must guess which test proves a UI or API change"
       ],
       "checkIds": [
-        "architecture.mid-app.missing-verification-strategys"
+        "architecture.mid-app.missing-validation-lanes"
       ]
     },
     {
       "id": "architecture.mid-app.generated-artifacts-have-owners",
       "title": "Generated artifacts have owners",
-      "severity": "must",
+      "severity": "advisory",
       "summary": "Generated files must name their source or generator and should not be hand-edited as a shortcut.",
       "rationale": "Generated drift is one of the fastest ways for agents to create confusing false truth.",
       "appliesTo": [
@@ -646,11 +667,18 @@
     "architecture.mid-app.reverse-platform-import",
     "architecture.mid-app.deep-feature-import",
     "architecture.mid-app.unvalidated-boundary-input",
-    "architecture.mid-app.missing-verification-strategys",
+    "architecture.mid-app.missing-validation-lanes",
     "architecture.mid-app.generated-owner-missing"
   ],
   "proofFixtureIds": [
     "architecture.mid-app.good-product-app",
-    "architecture.mid-app.drift-cross-feature-and-shared-bucket"
+    "architecture.mid-app.drift-cross-feature-and-shared-bucket",
+    "architecture.mid-app.counterexample-vertical-slice",
+    "architecture.mid-app.counterexample-plugin",
+    "architecture.mid-app.counterexample-event-driven",
+    "architecture.mid-app.counterexample-rails-django",
+    "architecture.mid-app.counterexample-hexagonal",
+    "architecture.mid-app.counterexample-public-library",
+    "architecture.mid-app.counterexample-large-platform"
   ]
 }

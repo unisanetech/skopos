@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-09
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
@@ -17,6 +17,7 @@ relatedDocs:
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
   - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
+  - semantic-guards.md
 reviewCycle: when CLI behavior changes
 ---
 
@@ -24,6 +25,9 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-08-09`: Documented automatic risk/detail recommendation, the light fast path,
+  explainable capability selection, ownership suggestions, recovery-oriented CLI
+  output, and the read-only UI workflow.
 - `2026-08-05`: Documented the accepted fresh-session continuation direction: enrich
   the exact Task handoff with bounded agent-authored conversation context, validate it
   against live state, and use truthful host delivery or the manual prompt fallback.
@@ -69,8 +73,14 @@ skopos start "<goal>" . \
 ```
 
 Add more `--accept`, `--own`, `--constraint`, and `--non-goal` values as needed. Use
-standard or high-impact risk when work crosses Sessions, changes architecture or public
-behavior, or needs durable coordination.
+`--risk` only when the caller has already made the classification. Otherwise Skopos
+records an automatic recommendation from goal, ownership, affected Scopes, and proof
+subject. `task show` and the UI display both the recommendation and any override.
+
+Light Tasks use the fast path: focused Evidence, no tracked Task document, no snapshot,
+and direct `finish` closure. Standard work remains tracked. Architecture, public API,
+security, migration, multi-Scope, release, and project-integration work remains strict
+high-impact work.
 
 The default proof subject is `task-closure`: only the admitted Task-owned boundary is
 eligible for closure proof. When the requested result is explicitly an integration or
@@ -171,6 +181,16 @@ Skopos always keeps its current Task projection outside Task-bound Action Eviden
 Every Action executed against the live workspace must explicitly declare
 `workspaceMode: overlay-safe`; omission is invalid rather than an inferred default.
 
+To understand selection rather than guessing:
+
+```bash
+skopos impact <changed-path> --phase closure --risk standard --why
+skopos impact <changed-path> --collection guard-decisions --json
+skopos impact <changed-path> --collection action-decisions --json
+```
+
+Each loaded Guard and Action reports why it was selected or skipped.
+
 To integrate existing project commands without guessing authority:
 
 ```bash
@@ -230,6 +250,32 @@ advances an admitted Task only when it is ready, archives its tracked projection
 rechecks final Readiness. If anything blocks closure, the Task does not advance.
 High-impact snapshot and coordination requirements remain mandatory.
 
+If review discovers another path required by the same accepted goal, expand the Task
+explicitly instead of silently editing outside its boundary:
+
+```bash
+skopos task ownership add <task-id> \
+  --own <additional-path> \
+  --reason "<why the path belongs to the same Task>" \
+  --actor <id> \
+  --cwd . \
+  --json
+```
+
+The command preserves the original admission state, records adoption-time path state,
+refreshes selected Guards, Actions, Evidence requirements, and Memory obligations, and
+changes the proof-subject identity. Use a follow-up Task when the new work changes the
+goal, risk, public behavior, or named proof subject.
+
+You do not need to discover those paths manually. `skopos task show <task-id> --json`
+compares current changes with the admission baseline and returns an exact ownership-add
+suggestion when new external paths appear. The UI shows the same suggestion but remains
+read-only.
+
+Command failures report what happened, why Readiness is blocked, and the safest next
+help, coordination, Task, or verification command. JSON callers receive the same
+recovery fields in a `cli-failure` object.
+
 ## Parallel Sessions In One Checkout
 
 Each host tab uses a stable Session id. Before writing:
@@ -242,8 +288,11 @@ skopos coordination claim add exact-path <path> . --task <task-id> --session <id
 
 Use mutation begin/complete around cooperative edits and audit before integration.
 Stale ownership uses audited takeover. High-impact work creates an immutable Task
-snapshot before closure. Because direct writes can bypass the broker, current
-enforcement remains cooperative unless the host reports hooked or mediated operation.
+snapshot before closure. Snapshot creation always includes the Task's declared owned
+paths and may additionally include materializable coordination path claims; a resumed
+writer therefore cannot produce an empty structural snapshot merely because old claims
+were released. Because direct writes can bypass the broker, current enforcement remains
+cooperative unless the host reports hooked or mediated operation.
 
 ## Adopt An Existing Project
 

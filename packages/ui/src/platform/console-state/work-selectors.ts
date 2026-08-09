@@ -48,6 +48,10 @@ export interface TaskGuidanceContext {
   findingText: string;
   blockerText: string;
   proofText: string;
+  workflow: 'fast-path' | 'tracked' | 'strict';
+  nextCommand: string;
+  nextReason: string;
+  ownershipSuggestion?: NonNullable<SkoposUiConsoleState['currentTaskWorkflow']>['ownershipSuggestion'];
   openQuestions: NonNullable<SkoposUiConsoleState['taskQuestions']>['entries'];
 }
 
@@ -187,6 +191,12 @@ export const buildTaskGuidanceContext = (
     pendingDecisionItems,
     openQuestionCount: openQuestions.length,
   });
+  const currentWorkflow =
+    state.currentTaskWorkflow?.taskId === task.id
+      ? state.currentTaskWorkflow
+      : undefined;
+  const workflow = currentWorkflow?.workflow ?? task.admission?.workflow ??
+    (task.risk === 'light' ? 'fast-path' : task.risk === 'high-impact' ? 'strict' : 'tracked');
 
   return {
     percentComplete,
@@ -229,6 +239,18 @@ export const buildTaskGuidanceContext = (
         : task.selectedActions.length > 0
           ? `Run or review ${task.selectedActions.length} selected Action${task.selectedActions.length === 1 ? '' : 's'} before Readiness.`
           : 'Capture focused Evidence for the acceptance criteria before requesting Readiness.',
+    workflow,
+    nextCommand:
+      currentWorkflow?.nextCommand ??
+      (workflow === 'fast-path'
+        ? `skopos finish ${task.id} . --actor ${task.coordination.claimedBy?.actorId ?? '<id>'} --json`
+        : `skopos verify ${task.id} . --phase closure --json`),
+    nextReason:
+      currentWorkflow?.nextReason ??
+      (workflow === 'fast-path'
+        ? 'Finish performs the light Task closure check without a separate verification ceremony.'
+        : 'Tracked and strict work verifies Evidence before finish.'),
+    ownershipSuggestion: currentWorkflow?.ownershipSuggestion,
     openQuestions,
   };
 };

@@ -135,7 +135,22 @@ describe('canonical Action, Guard, and Evidence authority', () => {
 
     expect(selected.actions.map((entry) => entry.id)).toEqual(['quality.typecheck']);
     expect(selected.guards.map((entry) => entry.id)).toEqual(['quality.typecheck']);
-    expect(wrongPhase).toEqual({ guards: [], actions: [] });
+    expect(wrongPhase).toMatchObject({ guards: [], actions: [] });
+    expect(wrongPhase.explanation).toMatchObject({
+      guards: [
+        expect.objectContaining({
+          id: 'quality.typecheck',
+          status: 'skipped',
+          reason: expect.stringContaining('phase admission'),
+        }),
+      ],
+      actions: [
+        expect.objectContaining({
+          id: 'quality.typecheck',
+          status: 'skipped',
+        }),
+      ],
+    });
   });
 
   it('isolates global Action runs through Task-owned Evidence Links', () => {

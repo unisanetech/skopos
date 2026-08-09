@@ -1,0 +1,60 @@
+{
+  "snapshotId": "S-c4961bc34eb3",
+  "taskId": "T-88978226",
+  "sessionId": "r4-close-full-20260809",
+  "actorId": "codex-release-hardening",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "CONTRIBUTING.md",
+      "digest": "f63674fa42aa366a798c1f89045c14efde1cdee9636fc140a520dd8c32378709"
+    },
+    {
+      "path": "NOTICE",
+      "digest": "5c191a0118cda3fb63d1a4ab9c0973b03bb9797537b8dac5b3754c823fff47b2"
+    },
+    {
+      "path": "README.md",
+      "digest": "8ba11ee01101a697e4586a26cdcdfa789113ec014c301ad958d9a862467a403c"
+    },
+    {
+      "path": "SECURITY.md",
+      "digest": "1df7b0c298ae7a2a6fad4be5542de5e15af70c9c00f8d2d3af53922bc34f6732"
+    },
+    {
+      "path": "SUPPORT.md",
+      "digest": "fec67e403f7423d3631888877fa6957ecc08d7256f5627eaf7251be9cf8a2b86"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "digest": "77be47347fdd7f55bcede826ed65c98e74d397c020536813b4cc72f4791a6153"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "digest": "7bb309ee4a1ae20b4662a70a2fe2482d90f755a70efbbab570f296ad60b3eb60"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "cb1897050c4471ba67c7e74d03f0b65abbb1d59f9f6659f15e1b08ab9ff9d26b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/help-contract.test.ts",
+      "digest": "67fa303eddbe0ee55f96ef74b7a510346c8d23872c3a689411a3d9a259d79d02"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "0f77c4a0b5ecb2338da6a7fc95610521044afededee908cc0583f5cb3934fd25"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-surface.test.ts",
+      "digest": "cb2daf76ee2b6bed17b603b7f2df8aa0f396e9c880d66c1b0c903f71a2ac8efa"
+    },
+    {
+      "path": "packages/cli/src/cli/index.ts",
+      "digest": "e577e9b42ed8ad5a42541177a6ef3bbb77fe87c5e84e5685bea0b068a0625220"
+    }
+  ],
+  "digest": "c4961bc34eb3533ca320b4977d819e0ec912c80238e4f865687e4eabb2682fda",
+  "createdAt": "2026-08-09T02:11:38.763Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-88978226-S-c4961bc34eb3.json"
+}

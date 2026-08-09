@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-09
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
@@ -31,6 +31,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-09`: Added explainable automatic risk/detail admission, one canonical
+  progressive workflow projection, dynamic unowned-path suggestions, and read-only UI
+  guidance for exact next commands, ownership, Evidence, and closure.
 - `2026-08-05`: Added conversation-aware fresh-session continuation to the existing
   Task handoff lifecycle. The originating agent supplies bounded semantic context,
   Skopos supplies and validates authoritative live state, and host adapters optionally
@@ -146,10 +149,23 @@ in-progress Git mutation—continue to block Task recovery after Action reconcil
 
 Risk and detail scale one Task rather than creating different work objects:
 
-1. `light`: goal, owned surface, acceptance, focused Evidence; may remain local
-2. `standard`: tracked when it crosses Sessions or carries durable obligations
-3. `high-impact`: always tracked; includes explicit sequencing, Guards, snapshots, and
-   closure conditions
+1. `light` projects the `fast-path`: goal, owned surface, acceptance, focused Evidence,
+   no tracked Task document, no immutable snapshot, and direct `finish` closure
+2. `standard` projects the `tracked` workflow when work crosses Sessions, changes
+   several paths, or carries durable obligations
+3. `high-impact` projects the `strict` workflow with explicit sequencing, Guards,
+   durable Task state, Memory review, snapshots, and closure conditions
+
+Admission recommends risk and detail from the goal, declared owned paths, affected
+non-workspace Scopes, and proof subject. The Task preserves the recommendation,
+signals, selected result, and selection source. An explicit caller override remains
+visible; `project-integration` always selects detailed high-impact work even when a
+lower override was requested.
+
+The fast path is not a second Task type. It uses the same acceptance, Guard, Action,
+Evidence, and Readiness authorities, so light work can expand or escalate without
+losing its history. `finish` performs the verification transaction directly for light
+work; standard and high-impact work keep explicit verification guidance.
 
 One Session may own at most one writing Task. One Task may have Child Tasks when work
 must be separately claimable.
@@ -243,3 +259,8 @@ CLI and MCP expose the same runtime authorities for expired Action recovery, aud
 Session Task recovery, and explicit Task disposition. The bundled UI is a read-only
 projection: it reports disposition kind, prior and next state, actor, timestamp,
 reason, and successor, but does not create an alternative mutation authority.
+
+For the current Task, the UI projects the selected workflow, admission reasons, exact
+next command, Evidence requirements, and changed paths outside declared ownership.
+Those paths are suggestions only. The CLI ownership command remains the mutation
+authority, and high-impact work always requires explicit reviewed adoption.

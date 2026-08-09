@@ -24,6 +24,7 @@ import {
 import { buildSkoposProjectKnowledgeGuidance } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
+  assessSkoposTaskWorkflowRuntime,
   prepareSkoposTaskRuntime,
   publishSkoposTaskAuthorityRuntime,
   writeSkoposTaskAuxiliaryArtifactsRuntime,
@@ -146,6 +147,19 @@ export const buildSkoposStartRuntime = async ({
     workspaceRoot,
     dryRun,
   });
+  const workflowAssessment = dryRun
+    ? undefined
+    : await assessSkoposTaskWorkflowRuntime({
+        cwd: workspaceRoot,
+        taskId: created.task.id,
+      });
+  const nextCommand = workflowAssessment?.nextCommand ??
+    (created.task.selectedActions[0]
+      ? `skopos actions run ${created.task.selectedActions[0].id} . --task ${created.task.id} --actor ${actorId ?? '<id>'} --json`
+      : `skopos finish ${created.task.id} . --actor ${actorId ?? '<id>'} --json`);
+  const nextReason = workflowAssessment?.nextReason ??
+    (created.task.selectedActions[0]?.reason ??
+      'No registered Action is selected; capture focused acceptance Evidence before finish.');
 
   await appendSkoposOperationalLogEntry({
     workspaceRoot,
@@ -185,6 +199,8 @@ export const buildSkoposStartRuntime = async ({
     workspaceRoot,
     goal: created.task.goal,
     summary,
+    nextCommand,
+    nextReason,
     actorId,
     scope: created.task.scope,
     codeAllowed,

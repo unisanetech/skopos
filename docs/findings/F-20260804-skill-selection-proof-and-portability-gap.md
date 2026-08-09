@@ -10,7 +10,7 @@ lifecycle: active
 authority: supporting
 provenance: observed
 view: current
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-09
 relatedDocs:
   - ../decisions/040-project-adapted-skill-packs-as-capability-projections.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -105,6 +105,16 @@ canonical Skill system, not a versioned migration.
     and durable blinded bundles. The later ecommerce canary audit changed Skill guidance
     and rubric source, so the 6-2 result is now historical for the current accepted
     identity; neither a new model comparison nor independent human review exists for it.
+14. Release-gate rerun `product-ui-craft-r2-full-20260809-r5` completed against the
+    exact currently accepted identity after a passing no-model preflight and candidate-
+    winning one-case smoke. All 16 workers and 8 blinded model reviews completed with
+    zero tie, invalid case, aborted case, authority regression, checkout reference,
+    cross-arm reference, or `NODE_PATH` contamination. Usage remained within every
+    declared ceiling: 2,952,942 input tokens, 702,318 fresh input tokens, and 156,797
+    output tokens. Model review favored Product UI Craft in 3 cases and the no-Skill
+    control in 5. The operations smoke result also reversed in the full run. The report
+    is therefore `inconclusive`, independent human review remains pending, and the
+    current source does not satisfy the material-improvement release gate.
 
 ## Impact
 
@@ -151,6 +161,13 @@ canonical Skill system, not a versioned migration.
 
 ## Changelog
 
+- `2026-08-09`: Preserved the exact current-source R2 result without post-outcome
+  tuning. Preflight passed, the one-case smoke favored Product UI Craft, and the full
+  24-call run completed safely and within budget, but blinded model review favored the
+  control 5-3. Human adjudication remains pending and cannot turn the machine result
+  into an automatic release pass. The MUST Finding stays active, catalog expansion
+  remains prohibited, and release gate R2 remains blocked pending an explicitly
+  approved next evidence cycle.
 - `2026-08-06`: Corrected the project-adaptation gap exposed by the isolated Unisane
   ecommerce canary. Ordinary screen composition now selects component architecture and
   reuse guidance; exact project component/token sources and mapped capabilities appear

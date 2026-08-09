@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "includeExtensions": [".md", ".mdx", ".txt", ".yaml", ".yml", ".json"],
+  "rules": [
+    {
+      "id": "replace-with-project-rule",
+      "description": "Replace these examples with reviewed project-specific truth.",
+      "retiredPatterns": ["retired/package/path", "starter preset"],
+      "allowedContextPatterns": [
+        "do not|must not|never|avoid|no longer|retired|deprecated|removed",
+        "historical|previously|used to|before the cutover|changelog|legacy",
+        "temporary|transition|pre-cutover|staging|until migration"
+      ]
+    }
+  ]
+}

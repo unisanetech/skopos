@@ -6,6 +6,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import {
   getSkoposCoordinationStatus,
+  openSkoposCoordinationSession,
+  reserveSkoposCoordinationTask,
   snapshotSkoposCoordinationTask,
 } from '../../../runtime/src/application/coordination/coordination.service.js';
 import { captureSkoposTaskPathStates } from '../../../verification/src/application/task-change-scope/task-change-scope.service.js';
@@ -154,6 +156,7 @@ describe('coordination-aware agent lifecycle', () => {
       cwd: root,
       taskId: started.task.id,
       sessionId: 'host-session-snapshot',
+      declaredOwnedPaths: started.task.changeScope.declaredOwnedPaths,
     });
     const directoryState = result.snapshot.paths.find(
       (entry) => entry.path === 'src/domain',
@@ -166,6 +169,39 @@ describe('coordination-aware agent lifecycle', () => {
       paths: ['src/domain'],
     });
     expect(changedState?.digest).not.toBe(directoryState?.digest);
+  });
+
+  it('snapshots declared ownership even when a resumed writer has no path claims', async () => {
+    const root = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: root,
+      goal: 'Snapshot declared ownership without coordination residue',
+      actor: 'agent-a',
+      risk: 'high-impact',
+      ownedPaths: ['src/existing.ts'],
+    });
+    await openSkoposCoordinationSession({
+      cwd: root,
+      actorId: 'agent-a',
+      host: 'codex',
+      sessionId: 'host-session-resumed',
+    });
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      taskId: started.task.id,
+      sessionId: 'host-session-resumed',
+    });
+
+    const result = await snapshotSkoposCoordinationTask({
+      cwd: root,
+      taskId: started.task.id,
+      sessionId: 'host-session-resumed',
+      declaredOwnedPaths: started.task.changeScope.declaredOwnedPaths,
+    });
+
+    expect(result.snapshot.paths).toEqual([
+      expect.objectContaining({ path: 'src/existing.ts' }),
+    ]);
   });
 });
 

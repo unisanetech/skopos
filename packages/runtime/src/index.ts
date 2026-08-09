@@ -28,6 +28,7 @@ export * from './application/instructions-sync/instructions-sync.service.js';
 export * from './application/instructions-scaffold/instructions-scaffold.service.js';
 export * from './application/start/start.service.js';
 export * from './application/understanding/understanding.service.js';
+export * from './application/storage/storage.service.js';
 export const skoposRuntimeCommands = [
   'init',
   'adopt',
@@ -56,4 +57,5 @@ export const skoposRuntimeCommands = [
   'guards',
   'understand',
   'integrations',
+  'storage',
 ] as const;

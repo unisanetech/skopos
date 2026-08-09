@@ -17,6 +17,7 @@ import {
   recoverSkoposCoordinationTask,
   releaseSkoposCoordinationTask,
   reserveSkoposCoordinationTask,
+  showSkoposTaskRuntime,
   snapshotSkoposCoordinationTask,
 } from '@skopos/runtime';
 
@@ -190,16 +191,22 @@ export const runCoordinationCommand = async (args: string[]): Promise<void> => {
     const [taskId, ...remaining] = rest;
     if (!taskId) throw new Error('Missing Task id for coordination snapshot.');
     const parsed = parseTaskArgs(remaining, false);
+    const task = await showSkoposTaskRuntime({
+      cwd: parsed.cwd,
+      taskId,
+    });
     const result = await snapshotSkoposCoordinationTask({
       cwd: parsed.cwd,
       taskId,
       sessionId: parsed.sessionId,
+      declaredOwnedPaths: task.changeScope.declaredOwnedPaths,
     });
     if (parsed.json) return writeJsonOutput(result);
     writeLines([
       'Skopos coordination task snapshot',
       `Task: ${result.snapshot.taskId}`,
       `Snapshot: ${result.snapshot.snapshotId}`,
+      `Paths: ${result.snapshot.paths.length}`,
       `Digest: ${result.snapshot.digest}`,
       `Artifact: ${result.snapshot.artifactPath}`,
     ]);

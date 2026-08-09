@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "id": "policy-pack.architecture.mid-app.drift-rules",
   "packId": "architecture.mid-app",
-  "updatedAt": "2026-06-24",
+  "updatedAt": "2026-08-09",
   "rules": [
     {
       "id": "architecture.mid-app.runtime-wiring-outside-features",
-      "severity": "must",
+      "severity": "advisory",
       "target": "source imports and constructors",
       "strategy": "heuristic-now ast-later",
       "evidence": [
@@ -18,7 +18,7 @@
     },
     {
       "id": "architecture.mid-app.business-logic-in-shared-helper",
-      "severity": "must",
+      "severity": "advisory",
       "target": "shared/support/helper files",
       "strategy": "heuristic-now semantic-later",
       "evidence": [
@@ -30,7 +30,7 @@
     },
     {
       "id": "architecture.mid-app.generic-helper-bucket",
-      "severity": "must",
+      "severity": "advisory",
       "target": "shared utility folders",
       "strategy": "filesystem-heuristic",
       "evidence": [
@@ -42,7 +42,7 @@
     },
     {
       "id": "architecture.mid-app.cross-feature-private-import",
-      "severity": "must",
+      "severity": "advisory",
       "target": "imports",
       "strategy": "ast-later",
       "evidence": [
@@ -53,7 +53,7 @@
     },
     {
       "id": "architecture.mid-app.reverse-platform-import",
-      "severity": "must",
+      "severity": "advisory",
       "target": "imports",
       "strategy": "ast-later",
       "evidence": [
@@ -75,7 +75,7 @@
     },
     {
       "id": "architecture.mid-app.unvalidated-boundary-input",
-      "severity": "must",
+      "severity": "advisory",
       "target": "boundary handlers",
       "strategy": "manual-now ast-later",
       "evidence": [
@@ -98,7 +98,7 @@
     },
     {
       "id": "architecture.mid-app.generated-owner-missing",
-      "severity": "must",
+      "severity": "advisory",
       "target": "generated artifact folders",
       "strategy": "filesystem-and-doc-scan",
       "evidence": [

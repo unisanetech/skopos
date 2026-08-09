@@ -1,0 +1,11 @@
+{
+  "snapshotId": "S-e3b0c44298fc",
+  "taskId": "T-88978226",
+  "sessionId": "r4-close-20260809",
+  "actorId": "codex-release-hardening",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [],
+  "digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "createdAt": "2026-08-09T02:10:27.692Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-88978226-S-e3b0c44298fc.json"
+}

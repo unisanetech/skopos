@@ -31,6 +31,8 @@ import type {
   SkoposPolicyRoleMappingDecisionStatus,
   SkoposProjectLifecycle,
   SkoposProjectPolicySource,
+  SkoposRepositoryFamily,
+  SkoposRepositoryProfile,
   SkoposResolvedPolicyArtifact,
 } from '@skopos/model';
 
@@ -228,6 +230,7 @@ export const recommendSkoposPolicyPacksRuntime = async ({
     generatedAt: new Date().toISOString(),
     workspaceRoot,
     projectLifecycle,
+    repositoryProfile: projectSignals.repositoryProfile,
     defaultTaskRisk: policySource?.defaultTaskRisk ?? 'standard',
     recommendedTaskRisks: buildDefaultTaskRiskRules(),
     recommendations,
@@ -583,10 +586,18 @@ const buildPolicyRoleMapping = async ({
   if (simpleProjectFallback) {
     return simpleProjectFallback;
   }
+  const portableRoleNeedsReview =
+    pack.packId === 'architecture.mid-app' && required && matchedPaths.length === 0;
   const status: SkoposPolicyRoleMapping['status'] =
-    matchedPaths.length > 0 ? 'inferred' : required ? 'missing' : 'needs-review';
+    matchedPaths.length > 0
+      ? 'inferred'
+      : portableRoleNeedsReview
+        ? 'needs-review'
+        : required
+          ? 'missing'
+          : 'needs-review';
   const confidence: SkoposPolicyRoleMapping['confidence'] =
-    matchedAliases.length > 0 ? 'high' : required ? 'low' : 'medium';
+    matchedAliases.length > 0 ? 'high' : portableRoleNeedsReview ? 'medium' : required ? 'low' : 'medium';
 
   return {
     packId: pack.packId,
@@ -602,7 +613,9 @@ const buildPolicyRoleMapping = async ({
     reason:
       matchedPaths.length > 0
         ? `Matched ${role.label} through ${matchedAliases.length} local alias${matchedAliases.length === 1 ? '' : 'es'}.`
-        : required
+        : portableRoleNeedsReview
+          ? `No declared alias matched ${role.label}; review and confirm the repository's existing local convention instead of renaming folders.`
+          : required
           ? `No local path matched required role ${role.label}.`
           : `Optional role ${role.label} has no local mapping yet.`,
   };
@@ -861,7 +874,11 @@ const recommendPack = (
   projectSignals: ProjectPolicySignals,
 ): SkoposPolicyRecommendationEntry => {
   const lifecycleMatch = pack.projectLifecycles.includes(projectLifecycle);
-  const antiSignals = lifecycleMatch ? [] : pack.avoidWhen;
+  const signals = matchObservedPolicySignals(pack.appliesWhen, projectSignals);
+  const antiSignals = matchObservedPolicySignals(pack.avoidWhen, projectSignals);
+  const strongestSignal = strongestObservedConfidence(signals);
+  const strongestAntiSignal = strongestObservedConfidence(antiSignals);
+  const repositoryFamily = projectSignals.repositoryProfile.primaryFamily;
 
   if (accepted) {
     return {
@@ -870,14 +887,52 @@ const recommendPack = (
       family: pack.family,
       variant: pack.variant,
       displayName: pack.displayName,
-      confidence: 'high',
+      confidence: strongestSignal ?? 'low',
       recommendation: 'review',
       reason: `${pack.displayName} is already accepted. Review it only if the project profile or local policy changed.`,
       plainLanguageSummary: pack.plainLanguageSummary,
       qualityBar: pack.qualityBar,
       accepted: true,
-      signals: pack.appliesWhen,
-      antiSignals: [],
+      signals,
+      antiSignals,
+      sourcePath: pack.sourcePath,
+    };
+  }
+
+  if (repositoryFamily === 'unknown') {
+    return {
+      packId: pack.packId,
+      version: pack.version,
+      family: pack.family,
+      variant: pack.variant,
+      displayName: pack.displayName,
+      confidence: strongestSignal ?? 'low',
+      recommendation: 'review',
+      reason: 'Review manually because Skopos could not identify the repository family with enough evidence to recommend automatic application.',
+      plainLanguageSummary: pack.plainLanguageSummary,
+      qualityBar: pack.qualityBar,
+      accepted: false,
+      signals,
+      antiSignals,
+      sourcePath: pack.sourcePath,
+    };
+  }
+
+  if (strongestAntiSignal === 'high') {
+    return {
+      packId: pack.packId,
+      version: pack.version,
+      family: pack.family,
+      variant: pack.variant,
+      displayName: pack.displayName,
+      confidence: 'high',
+      recommendation: 'avoid',
+      reason: `${pack.displayName} is not recommended because high-confidence contrary evidence was observed: ${summarizeObservedSignals(antiSignals)}.`,
+      plainLanguageSummary: pack.plainLanguageSummary,
+      qualityBar: pack.qualityBar,
+      accepted: false,
+      signals,
+      antiSignals,
       sourcePath: pack.sourcePath,
     };
   }
@@ -889,52 +944,60 @@ const recommendPack = (
       family: pack.family,
       variant: pack.variant,
       displayName: pack.displayName,
-      confidence: 'medium',
+      confidence: 'low',
       recommendation: 'review',
       reason: `Review manually because the pack targets ${pack.projectLifecycles.join(', ')} while the inferred lifecycle is ${projectLifecycle}.`,
       plainLanguageSummary: pack.plainLanguageSummary,
       qualityBar: pack.qualityBar,
       accepted: false,
-      signals: pack.appliesWhen,
+      signals,
       antiSignals,
       sourcePath: pack.sourcePath,
     };
   }
 
-  if (pack.packId === 'stack.async-work' && !projectSignals.hasAsyncWorkSignals) {
+  if (
+    pack.packId === 'architecture.mid-app' &&
+    (!['application', 'service', 'mobile'].includes(repositoryFamily) ||
+      !signals.some((signal) =>
+        ['signal.multiple-product-features', 'signal.shared-runtime-boundaries'].includes(signal.id),
+      ))
+  ) {
     return {
       packId: pack.packId,
       version: pack.version,
       family: pack.family,
       variant: pack.variant,
       displayName: pack.displayName,
-      confidence: 'low',
+      confidence: strongestSignal ?? 'low',
       recommendation: 'review',
-      reason: 'Review only when the project is adding jobs, queues, cron, Redis, workers, webhooks, retries, or other background work. This scan found no async-work signals.',
+      reason: `${pack.displayName} needs human review because the observed ${repositoryFamily} repository evidence does not confirm both a compatible product shape and a substantive architecture boundary.`,
       plainLanguageSummary: pack.plainLanguageSummary,
       qualityBar: pack.qualityBar,
       accepted: false,
-      signals: [],
-      antiSignals: pack.avoidWhen,
+      signals,
+      antiSignals,
       sourcePath: pack.sourcePath,
     };
   }
 
-  if (pack.packId === 'architecture.mid-app' && projectSignals.simpleSourceProject) {
+  if (strongestAntiSignal || !strongestSignal) {
     return {
       packId: pack.packId,
       version: pack.version,
       family: pack.family,
       variant: pack.variant,
       displayName: pack.displayName,
-      confidence: 'medium',
+      confidence: strongestSignal ?? strongestAntiSignal ?? 'low',
       recommendation: 'review',
-      reason: 'Review manually because this looks like a small source package, not a product app with app shell, feature areas, and infrastructure adapters.',
+      reason: strongestAntiSignal
+        ? `${pack.displayName} has mixed applicability evidence and needs human review: ${summarizeObservedSignals(antiSignals)}.`
+        : `${pack.displayName} needs human review because no declared applicability signal was confirmed by the repository scan.`,
       plainLanguageSummary: pack.plainLanguageSummary,
       qualityBar: pack.qualityBar,
       accepted: false,
-      signals: pack.appliesWhen,
-      antiSignals: pack.avoidWhen,
+      signals,
+      antiSignals,
       sourcePath: pack.sourcePath,
     };
   }
@@ -945,31 +1008,302 @@ const recommendPack = (
     family: pack.family,
     variant: pack.variant,
     displayName: pack.displayName,
-    confidence: pack.appliesWhen.some((signal) => signal.confidence === 'high') ? 'high' : 'medium',
+    confidence: strongestSignal,
     recommendation: 'apply',
-    reason: `${pack.displayName} matches the inferred ${projectLifecycle} lifecycle and provides ${pack.rules.length} operational rule${pack.rules.length === 1 ? '' : 's'}.`,
+    reason: `${pack.displayName} matches observed ${repositoryFamily} repository evidence: ${summarizeObservedSignals(signals)}. Human acceptance is still required before enforcement.`,
     plainLanguageSummary: pack.plainLanguageSummary,
     qualityBar: pack.qualityBar,
     accepted: false,
-    signals: pack.appliesWhen,
-    antiSignals: [],
+    signals,
+    antiSignals,
     sourcePath: pack.sourcePath,
   };
 };
 
-interface ProjectPolicySignals {
+export interface ProjectPolicySignals {
   hasPackageJson: boolean;
   hasSourceRoot: boolean;
   hasWorkspaceManifest: boolean;
   hasAsyncWorkSignals: boolean;
+  hasRetryOrBackpressureSignals: boolean;
+  hasRecurringWorkSignals: boolean;
   hasAppArchitectureSignals: boolean;
+  hasSharedRuntimeBoundaries: boolean;
+  hasMultipleProductFeatures: boolean;
+  validationCommandCount: number;
+  hasMaintainabilityRisk: boolean;
+  isSingleScriptOrPrototype: boolean;
+  isPublicLibrary: boolean;
+  isLargePlatform: boolean;
+  hasDurableProjectSignals: boolean;
   simpleSourceProject: boolean;
   sourceFileCount: number;
+  repositoryProfile: SkoposRepositoryProfile;
 }
 
-const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<ProjectPolicySignals> => {
+const DURABLE_PROJECT_MANIFESTS = new Set([
+  'package.json',
+  'pyproject.toml',
+  'requirements.txt',
+  'pipfile',
+  'cargo.toml',
+  'go.mod',
+  'pom.xml',
+  'build.gradle',
+  'build.gradle.kts',
+  'gemfile',
+  'package.swift',
+  'pubspec.yaml',
+  'mix.exs',
+  'composer.json',
+  'cmakelists.txt',
+  'platformio.ini',
+]);
+
+const matchObservedPolicySignals = (
+  declaredSignals: SkoposLoadedPolicyPack['appliesWhen'],
+  projectSignals: ProjectPolicySignals,
+): SkoposLoadedPolicyPack['appliesWhen'] =>
+  declaredSignals.flatMap((signal) => {
+    const match = matchObservedPolicySignal(signal.id, projectSignals);
+    return match
+      ? [{ ...signal, confidence: match.confidence, evidence: match.evidence }]
+      : [];
+  });
+
+const matchObservedPolicySignal = (
+  signalId: string,
+  project: ProjectPolicySignals,
+): { confidence: 'low' | 'medium' | 'high'; evidence: string[] } | undefined => {
+  switch (signalId) {
+    case 'signal.multiple-product-features':
+      return project.hasMultipleProductFeatures
+        ? { confidence: 'high', evidence: ['Observed at least two feature, module, domain, route, page, screen, or controller areas.'] }
+        : undefined;
+    case 'signal.shared-runtime-boundaries':
+      return project.hasSharedRuntimeBoundaries
+        ? { confidence: 'high', evidence: ['Observed an infrastructure, adapter, gateway, platform, persistence, client, or integration boundary.'] }
+        : undefined;
+    case 'signal.validation-needs-lanes':
+    case 'signal.multiple-validation-costs':
+      return project.validationCommandCount >= 2
+        ? {
+            confidence: project.validationCommandCount >= 3 ? 'high' : 'medium',
+            evidence: [`Observed ${project.validationCommandCount} distinct validation or release scripts.`],
+          }
+        : undefined;
+    case 'signal.product-code-changing':
+      return project.sourceFileCount > 0
+        ? { confidence: 'high', evidence: [`Observed ${project.sourceFileCount} behavior-bearing source file${project.sourceFileCount === 1 ? '' : 's'}.`] }
+        : undefined;
+    case 'signal.maintainability-risk':
+      return project.hasMaintainabilityRisk
+        ? { confidence: 'medium', evidence: ['Observed a generic misc, helper, common, or utility source bucket that needs review.'] }
+        : undefined;
+    case 'signal.async-workflow':
+      return project.hasAsyncWorkSignals
+        ? { confidence: 'high', evidence: ['Observed queue, worker, job, webhook, scheduling, or background-work language in project paths, dependencies, or source.'] }
+        : undefined;
+    case 'signal.retry-or-backpressure':
+      return project.hasRetryOrBackpressureSignals
+        ? { confidence: 'high', evidence: ['Observed retry, idempotency, throttling, rate-limit, backpressure, or dead-letter behavior.'] }
+        : undefined;
+    case 'signal.recurring-work':
+      return project.hasRecurringWorkSignals
+        ? { confidence: 'medium', evidence: ['Observed recurring, cron, scheduled, delayed, or periodic work.'] }
+        : undefined;
+    case 'signal.long-running-agent-work':
+      return project.hasDurableProjectSignals && project.repositoryProfile.evidence.some((entry) => /Skopos|agent/i.test(entry))
+        ? { confidence: 'medium', evidence: ['Observed durable Skopos or agent-work project state.'] }
+        : undefined;
+    case 'anti.single-script-or-prototype':
+      return project.isSingleScriptOrPrototype
+        ? { confidence: 'high', evidence: ['Observed at most one source file and no package export, CLI binary, workspace, tests, or durable docs surface.'] }
+        : undefined;
+    case 'anti.public-library-first':
+      return project.isPublicLibrary
+        ? { confidence: 'high', evidence: ['Observed a library/public-export surface as the repository product.'] }
+        : undefined;
+    case 'anti.large-platform-runtime':
+      return project.isLargePlatform
+        ? { confidence: 'high', evidence: ['Observed a large multi-package platform with generated contracts, formal ownership, or many package-owned source areas.'] }
+        : undefined;
+    case 'anti.generated-or-vendored-code':
+    case 'anti.unrelated-style-cleanup':
+    case 'anti.quick-synchronous-work':
+    case 'anti.no-operational-owner':
+      return undefined;
+    case 'anti.no-durable-project':
+      return !project.hasDurableProjectSignals
+        ? { confidence: 'high', evidence: ['Observed no source, project manifest, tests, documentation, deployment, or release surface.'] }
+        : undefined;
+    default:
+      return undefined;
+  }
+};
+
+const strongestObservedConfidence = (
+  signals: SkoposLoadedPolicyPack['appliesWhen'],
+): 'low' | 'medium' | 'high' | undefined => {
+  if (signals.some((signal) => signal.confidence === 'high')) return 'high';
+  if (signals.some((signal) => signal.confidence === 'medium')) return 'medium';
+  return signals.some((signal) => signal.confidence === 'low') ? 'low' : undefined;
+};
+
+const summarizeObservedSignals = (
+  signals: SkoposLoadedPolicyPack['appliesWhen'],
+): string =>
+  signals
+    .map((signal) => (signal.evidence[0] ?? signal.summary).trim().replace(/[.!?]+$/, ''))
+    .join('; ');
+
+const detectRepositoryProfile = ({
+  entries,
+  packageJson,
+  relativeSourceFiles,
+  searchableText,
+  hasWorkspaceManifest,
+  hasAppArchitectureSignals,
+}: {
+  entries: string[];
+  packageJson: {
+    name?: string;
+    bin?: unknown;
+    exports?: unknown;
+    main?: string;
+    module?: string;
+    scripts?: Record<string, string>;
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    workspaces?: unknown;
+  } | null;
+  relativeSourceFiles: string[];
+  searchableText: string;
+  hasWorkspaceManifest: boolean;
+  hasAppArchitectureSignals: boolean;
+}): SkoposRepositoryProfile => {
+  const lowerEntries = new Set(entries.map((entry) => entry.toLowerCase()));
+  const paths = relativeSourceFiles.join('\n').toLowerCase();
+  const languages = detectRepositoryLanguages(lowerEntries, relativeSourceFiles);
+  const scores = new Map<Exclude<SkoposRepositoryFamily, 'unknown'>, { score: number; evidence: string[] }>();
+  const add = (family: Exclude<SkoposRepositoryFamily, 'unknown'>, score: number, evidence: string): void => {
+    const current = scores.get(family) ?? { score: 0, evidence: [] };
+    current.score += score;
+    if (!current.evidence.includes(evidence)) current.evidence.push(evidence);
+    scores.set(family, current);
+  };
+
+  if (hasWorkspaceManifest) add('platform-monorepo', 6, 'Observed a workspace or monorepo manifest.');
+  if (!hasWorkspaceManifest && lowerEntries.has('packages') && packageJson) {
+    add('platform-monorepo', 6, 'Observed a root package with multiple package-owned areas.');
+  }
+  if (packageJson?.bin || /(^|\/)(?:cmd|cli)\/|src\/(?:cli|main)\.(?:ts|js|py|rs|go|rb)/m.test(paths)) {
+    add('cli', 4, 'Observed a declared binary or CLI entrypoint.');
+  }
+  if (packageJson?.exports || (!hasAppArchitectureSignals && /(^|\/)lib\.(?:rs|go)$|(^|\/)src\/lib\./m.test(paths))) {
+    add('library', 4, 'Observed a public export or library entrypoint.');
+  }
+  if (lowerEntries.has('go.mod') && !/(^|\/)main\.go$/m.test(paths) && !hasAppArchitectureSignals) {
+    add('library', 4, 'Observed a Go module without an executable or application boundary.');
+  }
+  if (/\b(express|fastify|hono|koa|django|flask|rails|spring|aspnet|actix|axum|gin)\b/.test(searchableText) ||
+      /(^|\/)(?:controllers|routes|server|handlers)(?:\/|\.)/m.test(paths)) {
+    add('service', 4, 'Observed a server framework or service transport boundary.');
+  }
+  if (/\b(react|next|vue|svelte|angular)\b/.test(searchableText) || /(^|\/)(?:pages|screens|views)\//m.test(paths)) {
+    add('application', 4, 'Observed a user-facing application framework or screen/page structure.');
+  }
+  if (lowerEntries.has('androidmanifest.xml') || lowerEntries.has('pubspec.yaml') ||
+      /(^|\/)(?:android|ios)\/|\b(swiftui|uikit|jetpack compose|flutter)\b/m.test(`${paths}\n${searchableText}`)) {
+    add('mobile', 5, 'Observed an Android, iOS, SwiftUI, UIKit, or Flutter application surface.');
+  }
+  if (/\.ipynb$/m.test(paths) || /\b(pandas|numpy|scikit|sklearn|tensorflow|pytorch|torch|jupyter|mlflow)\b/.test(searchableText) ||
+      /(^|\/)(?:notebooks|models|pipelines)\//m.test(paths)) {
+    add('data-ml', 5, 'Observed notebooks, model/pipeline paths, or data and ML dependencies.');
+  }
+  if (/\.tf$/m.test(paths) || lowerEntries.has('ansible.cfg') || lowerEntries.has('pulumi.yaml') ||
+      /(^|\/)(?:terraform|k8s|kubernetes|helm|ansible)\//m.test(paths)) {
+    add('infrastructure', 5, 'Observed Terraform, Pulumi, Ansible, Kubernetes, or Helm infrastructure sources.');
+  }
+  if (lowerEntries.has('mkdocs.yml') || lowerEntries.has('mkdocs.yaml') || lowerEntries.has('docusaurus.config.js') ||
+      lowerEntries.has('docs')) {
+    add(
+      'documentation',
+      relativeSourceFiles.length === 0 ? 5 : 3,
+      relativeSourceFiles.length === 0
+        ? 'Observed a documentation-only project or documentation-site manifest.'
+        : 'Observed a durable project documentation area.',
+    );
+  }
+  if (lowerEntries.has('platformio.ini') || /(^|\/)(?:firmware|arduino|embedded)\//m.test(paths) ||
+      /\b(no_std|arduino|freertos|zephyr|platformio)\b/.test(searchableText)) {
+    add('embedded', 5, 'Observed firmware, embedded runtime, Arduino, PlatformIO, Zephyr, FreeRTOS, or no_std evidence.');
+  }
+
+  const ordered = [...scores.entries()].sort(
+    ([leftFamily, left], [rightFamily, right]) => right.score - left.score || leftFamily.localeCompare(rightFamily),
+  );
+  if (ordered.length === 0) {
+    return {
+      primaryFamily: 'unknown',
+      families: ['unknown'],
+      languages,
+      confidence: 'low',
+      evidence: ['No repository-family signal reached the conservative classification threshold.'],
+    };
+  }
+
+  const [primaryFamily, primary] = ordered[0]!;
+  const families = [
+    primaryFamily,
+    ...ordered
+      .filter(([family, value]) => family !== primaryFamily && value.score >= 4)
+      .map(([family]) => family),
+  ];
+  return {
+    primaryFamily,
+    families,
+    languages,
+    confidence: primary.score >= 5 ? 'high' : 'medium',
+    evidence: primary.evidence,
+  };
+};
+
+const detectRepositoryLanguages = (
+  entries: Set<string>,
+  sourceFiles: string[],
+): string[] => {
+  const languages = new Set<string>();
+  const paths = sourceFiles.map((path) => path.toLowerCase());
+  const has = (extensions: string[]): boolean => paths.some((path) => extensions.some((extension) => path.endsWith(extension)));
+  if (has(['.ts', '.tsx', '.mts', '.cts'])) languages.add('TypeScript');
+  if (has(['.js', '.jsx', '.mjs', '.cjs']) || entries.has('package.json')) languages.add('JavaScript');
+  if (has(['.py']) || entries.has('pyproject.toml') || entries.has('requirements.txt') || entries.has('pipfile')) languages.add('Python');
+  if (has(['.rs']) || entries.has('cargo.toml')) languages.add('Rust');
+  if (has(['.go']) || entries.has('go.mod')) languages.add('Go');
+  if (has(['.java', '.kt', '.kts']) || entries.has('pom.xml') || entries.has('build.gradle') || entries.has('build.gradle.kts')) languages.add(has(['.kt', '.kts']) ? 'Kotlin' : 'Java');
+  if (has(['.cs', '.fs', '.vb']) || [...entries].some((entry) => /\.(?:sln|csproj|fsproj|vbproj)$/.test(entry))) languages.add('.NET');
+  if (has(['.rb']) || entries.has('gemfile')) languages.add('Ruby');
+  if (has(['.swift']) || entries.has('package.swift')) languages.add('Swift');
+  if (has(['.dart']) || entries.has('pubspec.yaml')) languages.add('Dart');
+  if (has(['.php']) || entries.has('composer.json')) languages.add('PHP');
+  if (has(['.scala'])) languages.add('Scala');
+  if (has(['.ex', '.exs']) || entries.has('mix.exs')) languages.add('Elixir');
+  if (has(['.c', '.h'])) languages.add('C');
+  if (has(['.cc', '.cpp', '.hpp'])) languages.add('C++');
+  if (has(['.tf'])) languages.add('HCL');
+  return [...languages].sort();
+};
+
+export const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<ProjectPolicySignals> => {
   const entries = await readDirectoryNames(workspaceRoot);
   const packageJson = await readJsonIfExists<{
+    name?: string;
+    bin?: unknown;
+    exports?: unknown;
+    main?: string;
+    module?: string;
+    scripts?: Record<string, string>;
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
     workspaces?: unknown;
@@ -983,6 +1317,29 @@ const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<Proje
     '.cjs',
     '.mts',
     '.cts',
+    '.py',
+    '.rs',
+    '.go',
+    '.java',
+    '.kt',
+    '.kts',
+    '.cs',
+    '.fs',
+    '.vb',
+    '.rb',
+    '.swift',
+    '.dart',
+    '.php',
+    '.c',
+    '.cc',
+    '.cpp',
+    '.h',
+    '.hpp',
+    '.scala',
+    '.ex',
+    '.exs',
+    '.tf',
+    '.ipynb',
   ]);
   const sourceFileText = (
     await Promise.all(
@@ -993,9 +1350,10 @@ const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<Proje
     ...(packageJson?.dependencies ?? {}),
     ...(packageJson?.devDependencies ?? {}),
   });
+  const relativeSourceFiles = sourceFiles.map((filePath) => relative(workspaceRoot, filePath));
   const searchableText = [
     entries.join(' '),
-    sourceFiles.map((filePath) => relative(workspaceRoot, filePath)).join(' '),
+    relativeSourceFiles.join(' '),
     dependencyNames.join(' '),
     sourceFileText,
   ]
@@ -1011,21 +1369,88 @@ const analyzeProjectPolicySignals = async (workspaceRoot: string): Promise<Proje
     /\b(redis|bullmq|queue|queues|queued|worker|workers|cron|schedule|scheduler|webhook|retry|retries|inngest|temporal|background job|job queue)\b/.test(
       searchableText,
     );
+  const hasRetryOrBackpressureSignals =
+    /\b(retry|retries|idempoten|backpressure|rate.?limit|throttl|dead.?letter)\b/.test(searchableText);
+  const hasRecurringWorkSignals =
+    /\b(cron|schedule|scheduler|recurring|daily sync|delayed job|periodic)\b/.test(searchableText);
   const hasAppArchitectureSignals =
-    /\b(next|react|vue|svelte|express|fastify|hono|koa|router|routes|pages|server|app shell|controller|middleware)\b/.test(
+    /\b(next|react|vue|svelte|angular|express|fastify|hono|koa|django|flask|rails|spring|aspnet|actix|axum|gin|router|routes|pages|screens|server|app shell|controller|middleware)\b/.test(
       searchableText,
     );
+  const hasSharedRuntimeBoundaries =
+    /(^|\/)(infrastructure|infra|adapters|gateways|platform|clients|persistence|integrations)(\/|$)/m.test(
+      relativeSourceFiles.join('\n').toLowerCase(),
+    );
+  const featureAreaNames = new Set(
+    relativeSourceFiles
+      .map((path) => path.toLowerCase().match(/(?:^|\/)(?:features|modules|domains|use-cases)\/([^/]+)/)?.[1])
+      .filter((name): name is string => Boolean(name)),
+  );
+  const routeAreaNames = new Set(
+    relativeSourceFiles
+      .map((path) => path.toLowerCase().match(/(?:^|\/)(?:routes|pages|screens|controllers)\/([^/.]+)/)?.[1])
+      .filter((name): name is string => typeof name === 'string' && !['index', 'main', 'app'].includes(name)),
+  );
+  const validationCommandCount = Object.keys(packageJson?.scripts ?? {}).filter((name) =>
+    /^(typecheck|check-types|test|test:|lint|build|proof|e2e)/.test(name),
+  ).length;
+  const hasMaintainabilityRisk = relativeSourceFiles.some((path) =>
+    /(?:^|\/)(?:misc|helpers?|common|utils?)\.(?:ts|tsx|js|jsx|py|rb|go|rs|java|cs)$/.test(
+      path.toLowerCase(),
+    ),
+  );
+  const repositoryProfile = detectRepositoryProfile({
+    entries,
+    packageJson,
+    relativeSourceFiles,
+    searchableText,
+    hasWorkspaceManifest,
+    hasAppArchitectureSignals,
+  });
+  const hasDurableProjectSignals =
+    sourceFiles.length > 0 ||
+    entries.some((entry) =>
+      DURABLE_PROJECT_MANIFESTS.has(entry.toLowerCase()),
+    ) ||
+    entries.includes('docs');
+  const hasDurableManifestOrDocs =
+    entries.some((entry) => DURABLE_PROJECT_MANIFESTS.has(entry.toLowerCase())) ||
+    entries.includes('docs') ||
+    entries.includes('tests') ||
+    entries.includes('test');
+  const isSingleScriptOrPrototype =
+    repositoryProfile.primaryFamily === 'unknown' &&
+    sourceFiles.length <= 1 &&
+    !hasWorkspaceManifest &&
+    !packageJson?.bin &&
+    !packageJson?.exports &&
+    !hasDurableManifestOrDocs;
+  const isPublicLibrary = repositoryProfile.families.includes('library');
+  const isLargePlatform =
+    repositoryProfile.families.includes('platform-monorepo') &&
+    (relativeSourceFiles.filter((path) => /^(apps|packages)\/[^/]+\//.test(path)).length >= 12 ||
+      relativeSourceFiles.some((path) => /generated|contracts|ownership/i.test(path)));
 
   return {
     hasPackageJson: entries.includes('package.json'),
     hasSourceRoot: entries.includes('src'),
     hasWorkspaceManifest,
     hasAsyncWorkSignals,
+    hasRetryOrBackpressureSignals,
+    hasRecurringWorkSignals,
     hasAppArchitectureSignals,
+    hasSharedRuntimeBoundaries,
+    hasMultipleProductFeatures: featureAreaNames.size >= 2 || routeAreaNames.size >= 2,
+    validationCommandCount,
+    hasMaintainabilityRisk,
+    isSingleScriptOrPrototype,
+    isPublicLibrary,
+    isLargePlatform,
+    hasDurableProjectSignals,
     sourceFileCount: sourceFiles.length,
+    repositoryProfile,
     simpleSourceProject:
-      entries.includes('package.json') &&
-      entries.includes('src') &&
+      hasDurableProjectSignals &&
       sourceFiles.length <= 16 &&
       !hasWorkspaceManifest &&
       !hasAppArchitectureSignals &&

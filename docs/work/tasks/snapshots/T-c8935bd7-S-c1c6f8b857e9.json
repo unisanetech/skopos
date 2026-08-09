@@ -1,0 +1,160 @@
+{
+  "snapshotId": "S-c1c6f8b857e9",
+  "taskId": "T-c8935bd7",
+  "sessionId": "codex-progressive-work-v2",
+  "actorId": "codex-progressive-work",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "README.md",
+      "digest": "70b0f862a8e7a9f86757aff514cd0d646a6937b4f122dd3c31e6ecf71fb6e3ee"
+    },
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "e84a52f1fd07732a6236e90c2d9289280dc2fc58f55dc618d9982fd00429d311"
+    },
+    {
+      "path": "docs/architecture/action-extension-model.md",
+      "digest": "819f68bce1abd6a440970ee5e2547e95d3e74d3e443307afa7abf527656c9b4c"
+    },
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "e86154458e91fbe4634bbb5fe77119eed281e739c8d529330d91efc4def45b09"
+    },
+    {
+      "path": "docs/architecture/evidence-and-readiness-model.md",
+      "digest": "98eadcc71faafdd063670f68ab9c768f77e2ebc2236860067d84ce4821921deb"
+    },
+    {
+      "path": "docs/guides/developer-workflows.md",
+      "digest": "a5322e01460faf891df21ce5ffe004c626bcbb5e0defc9c5a5952515f0351de6"
+    },
+    {
+      "path": "docs/guides/semantic-guards.md",
+      "digest": "03654388079ad123ba33eba9f849c1d53cf2498005ae9cc516c19b55f46ad89c"
+    },
+    {
+      "path": "fixtures/repos",
+      "digest": "96fabb59b38fc663c889ad2171aff0fdc0e4dc67e179eac909c71575f4649258"
+    },
+    {
+      "path": "package.json",
+      "digest": "04bc8cfd50be0c58f397d4e337179b049282cc63f83996c20696ec7c8d864376"
+    },
+    {
+      "path": "packages/cli/src/__tests__",
+      "digest": "7ec8f6f396d513c245062319114840f810f572f8ab9605ea6ade791f876ecec7"
+    },
+    {
+      "path": "packages/cli/src/cli.ts",
+      "digest": "9c79d14c482529dc2dd8cd3949bb9204acbb26c74c9a9cc0c29d9113451864bc"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/impact.ts",
+      "digest": "0aa1c1a1e5c9ad082ebcb457d87359d182663da8f30d1346f3c7ff94ca6ff01e"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/router.ts",
+      "digest": "c91bcdacaee17c023cb0764a6d928fd27d9765edced9dc3fd32960262c37a916"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "a8258388e93c53b5e34abab3a9e5303b1545ebeb4bb60c1dc2016ec8a2f528f5"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/verification.ts",
+      "digest": "e67c4d2a00ae274383117604fa5c2d807a522996ac9041fbe3adbdd238906992"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "7c8afe8c9db3eac79e0530fdcde4c4f1e9ca8efa6c038fa4d5dd6b633bee11af"
+    },
+    {
+      "path": "packages/cli/src/cli/index.ts",
+      "digest": "e577e9b42ed8ad5a42541177a6ef3bbb77fe87c5e84e5685bea0b068a0625220"
+    },
+    {
+      "path": "packages/cli/src/cli/shared/error-guidance.ts",
+      "digest": "7c0385a93817df0418f68f51a11425b9f41f6c4c739aa85389f7a0e27afa9606"
+    },
+    {
+      "path": "packages/indexer/src/application/match-actions/match-actions.service.ts",
+      "digest": "d224d6fc568ff00f4099d51fdf0614526fbe0bd8f8ad5f964cf7fa84f8f09b61"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-impact-report.ts",
+      "digest": "9369cbfff36e7e59a76d2e9fee54b706601ae35e10bc31f64a0fe84efdb35ec1"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-start.ts",
+      "digest": "17c0c392b64ad5323218b50e39b23eb3751be7c225a4afab0bb100fc8fb4a0a2"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "ea8fe5ae8e077ecf7f1a8f633f835c28ac533b1e1181a41506f938b324b198f9"
+    },
+    {
+      "path": "packages/runtime/src/application/impact/impact.service.ts",
+      "digest": "82baac6d4d05765dc587ec6805111d5f1f6f188647aa181c0142ec659c68ed43"
+    },
+    {
+      "path": "packages/runtime/src/application/start/start.service.ts",
+      "digest": "dffda9f95842abe1ffee65b172394b6fea76513e709b8166a7d5546e611b54e8"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "cbf0628b126fcf41ebfe124d96bc44326644c129f9abdea5bbc1273d98ab8f52"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "72c0f94cd08cdd02dc012f424ab8c105e26f800b6fe909c7a33a4530a58dc78b"
+    },
+    {
+      "path": "packages/ui/package.json",
+      "digest": "f4be6ba52f8347a5f3426e39e1db1d2e5c271e2bef9cdb606de983b809f69e87"
+    },
+    {
+      "path": "packages/ui/src/__tests__",
+      "digest": "b7b78845013b2b199ec019d6087cb917b2c725aa1a44fbb5b669ee100361cf36"
+    },
+    {
+      "path": "packages/ui/src/application/build-console-state",
+      "digest": "1be8b179526b7b9a4063cd93884b46578e185db13a0a6a15249744bbbb9e271b"
+    },
+    {
+      "path": "packages/ui/src/contracts",
+      "digest": "1705ec4c2182afc64495dd5d9038617a79fbe32d376b51fb289594a52ef76c5d"
+    },
+    {
+      "path": "packages/ui/src/features/validation",
+      "digest": "9d18af8da79fd71e222c169ea875d99abafcc1bedcb4a5e7b312aff6a99884d7"
+    },
+    {
+      "path": "packages/ui/src/features/work",
+      "digest": "a7ad01d21fcd0990b7d3224b272eb55d67be95f35a755343ad6e2bb00c49f84e"
+    },
+    {
+      "path": "packages/ui/src/platform/console-state/work-selectors.ts",
+      "digest": "a7e6b1fd2a596a5ffdfc1701fe9dd4b7d568503519a39d46832da8627cedbff7"
+    },
+    {
+      "path": "packages/ui/src/screens/validation",
+      "digest": "ffd123371d8e0c991daa3abc32a3f17fba2f4a690fe710ca28aa183bd844313a"
+    },
+    {
+      "path": "packages/ui/src/screens/work",
+      "digest": "c0277498d8e49737cee088c2bc400a81ae77df0b473e1400d99f9cb29a010d33"
+    },
+    {
+      "path": "packages/verification/src/application/build-impact-report/build-impact-report.service.ts",
+      "digest": "b494b44fe8575757583f185435e4d7e2d3beb2f1f28246d477ff0cb13e3f37fa"
+    },
+    {
+      "path": "policy-packs/verification/semantic-drift",
+      "digest": "4603ca0fd50f74bca49f159bae268951dc19f5d22a725399abfe0cfa22763cbd"
+    }
+  ],
+  "digest": "c1c6f8b857e9d09e0d8319d5b1409aa1cc76e090cd5b311d9304935350006293",
+  "createdAt": "2026-08-09T04:48:49.027Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c8935bd7-S-c1c6f8b857e9.json"
+}

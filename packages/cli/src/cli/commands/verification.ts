@@ -63,6 +63,11 @@ export const runVerifyCommand = async (args: string[]): Promise<void> => {
     ...(result.blockers.length > 0
       ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
       : []),
+    'Next step:',
+    result.verificationStatus === 'pass'
+      ? `skopos finish ${result.taskId} . --actor <id> --json`
+      : `skopos task show ${result.taskId} . --json`,
+    `Why: ${result.verificationStatus === 'pass' ? 'Closure proof passed; finish can apply the final Readiness transaction.' : 'The Task workflow explains the first safe recovery step, including ownership or Evidence repair.'}`,
   ]);
 };
 
@@ -91,6 +96,10 @@ export const runReadinessCommand = async (args: string[]): Promise<void> => {
     ...(result.blockers.length > 0
       ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
       : []),
+    'Next step:',
+    result.readiness === 'ready'
+      ? `skopos finish ${result.taskId} . --actor ${parsed.actor ?? '<id>'} --json`
+      : `skopos verify ${result.taskId} . --phase closure --json`,
   ]);
 };
 
@@ -124,6 +133,10 @@ export const runFinishCommand = async (args: string[]): Promise<void> => {
     ...(result.blockers.length > 0
       ? ['Blockers:', ...result.blockers.map((blocker) => `- ${blocker}`)]
       : []),
+    'Next step:',
+    result.taskState === 'complete'
+      ? `skopos task show ${result.taskId} . --json`
+      : `skopos verify ${result.taskId} . --phase closure --json`,
   ]);
 };
 
@@ -261,6 +274,14 @@ export const buildCompactVerificationOutput = (
     ),
   },
   blockers: result.blockers,
+  nextCommand:
+    result.verificationStatus === 'pass'
+      ? `skopos finish ${result.taskId} . --actor <id> --json`
+      : `skopos task show ${result.taskId} . --json`,
+  nextReason:
+    result.verificationStatus === 'pass'
+      ? 'Closure proof passed; finish can apply the final Readiness transaction.'
+      : 'Reload the Task workflow for the first safe ownership or Evidence recovery step.',
 });
 
 export const buildPagedVerificationDetailOutput = (

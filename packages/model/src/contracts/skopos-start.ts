@@ -13,6 +13,8 @@ export interface SkoposStartRunResult {
   workspaceRoot: string;
   goal: string;
   summary: string;
+  nextCommand: string;
+  nextReason: string;
   actorId?: string;
   scope: SkoposResolvedScope;
   codeAllowed: boolean;

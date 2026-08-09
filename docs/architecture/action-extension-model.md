@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-03
+lastUpdated: 2026-08-09
 relatedDocs:
   - config-model.md
   - runtime-model.md
@@ -29,6 +29,9 @@ without creating another workflow authority.
 
 ## Changelog
 
+- `2026-08-09`: Added deterministic selected/skipped explanations for every loaded
+  Guard and Action, plus a portable Semantic Drift Guard template pack whose domain
+  patterns remain project configuration.
 - `2026-08-03`: Required `workspaceMode: overlay-safe` for live workspace Action
   execution and bound it into source-bound Evidence identity. Skopos rejects Action
   declarations that do not explicitly accept mixed-worktree overlay semantics.
@@ -282,3 +285,13 @@ Task -> applicable Actions and Guards -> Evidence -> Readiness
 Root commands are a discovery catalog, not an automatic closure checklist. Directly
 changed owners may require behavior and build proof; downstream dependents normally
 require compatibility type proof unless a Guard selects stronger Evidence.
+
+The impact report also retains non-selection explanations. A Guard records whether it
+was skipped for phase, risk, path, or Scope; an Action records which selected required
+Guards require it or that no such Guard matched. These explanations are diagnostic
+projection, not a second selector.
+
+Semantic checks remain project Actions. The bundled `verification.semantic-drift`
+pack provides reviewed configuration, checker, Action, Guard, and positive/negative
+fixture templates. Consuming projects replace the examples with accepted domain truth;
+Skopos core never learns or hard-codes their retired phrases.

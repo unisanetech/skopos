@@ -13,6 +13,7 @@ import { formatDateTime } from '../../../support/formatting/console-formatting.j
 export function TaskDetailInspectorAside({
   taskView,
   taskActions,
+  workflow,
 }: {
   taskView: SkoposUiConsoleTaskView;
   taskActions: Array<{
@@ -22,6 +23,11 @@ export function TaskDetailInspectorAside({
     runByActorId?: string;
     finishedAt?: string;
   }>;
+  workflow?: {
+    workflow: string;
+    readiness: string;
+    ownershipSuggestion?: { paths: string[] };
+  };
 }): React.JSX.Element {
   const task = taskView.task;
   const pendingSteps = task.steps.filter((item) => item.status !== 'complete');
@@ -37,6 +43,9 @@ export function TaskDetailInspectorAside({
               value: `${completeSteps.length} of ${task.steps.length} complete`,
             },
             { label: 'Open steps', value: String(pendingSteps.length) },
+            { label: 'Workflow', value: workflow?.workflow ?? task.admission?.workflow ?? task.risk },
+            { label: 'Workflow readiness', value: workflow?.readiness ?? task.state },
+            { label: 'Unowned changes', value: String(workflow?.ownershipSuggestion?.paths.length ?? 0) },
             { label: 'Child Tasks', value: String(task.childTasks.length) },
             {
               label: 'Claimed by',

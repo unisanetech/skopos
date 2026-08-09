@@ -1,0 +1,20 @@
+{
+  "snapshotId": "S-f6ce9540549e",
+  "taskId": "T-9548f1e7",
+  "sessionId": "snapshot-hardening-close-20260809",
+  "actorId": "codex-snapshot-hardening",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "faf105c05083af6a20be595a59529b4d65d6c06b6d13a05298cf498c382c6987"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "2398a4d0348e447cca94ad3e7a49c3ef2279356feac4c42ef86896e392c3a5b8"
+    }
+  ],
+  "digest": "f6ce9540549efdfbc6efdac5862163b942c0523493be7f8674c0e824f959f0e7",
+  "createdAt": "2026-08-09T02:17:43.805Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-9548f1e7-S-f6ce9540549e.json"
+}

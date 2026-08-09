@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-02
+lastUpdated: 2026-08-09
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -18,6 +18,8 @@ relatedDocs:
   - agent-native-operating-model.md
   - docs-governance.md
   - evidence-and-readiness-model.md
+  - policy-applicability-and-fixture-governance.md
+  - public-package-content-and-provenance.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
 reviewCycle: when owning truth changes
 ---
@@ -30,6 +32,13 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-09`: Declared separate repository-source and npm-tarball release
+  boundaries, exact public Skill runtime assets, private workspace tooling ownership,
+  and the requirement for explicit compatible provenance before copied UI source can
+  be publicly released.
+- `2026-08-09`: Routed repository-family detection, evidence-based policy
+  applicability, portable architecture roles, and active fixture governance to the
+  canonical applicability model.
 - `2026-08-02`: Made tracked Task projection Scope-relative and made reconstruction
   discover Tasks through the catalog of declared Memory roots.
 - `2026-07-31`: Made Task persistence concurrency-safe through coordination-backed

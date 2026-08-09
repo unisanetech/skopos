@@ -36,6 +36,7 @@ interface ParsedStartArgs extends ParsedPlanArgs {
   sessionId?: string;
   host?: string;
   leaseSeconds?: number;
+  risk?: 'light' | 'standard' | 'high-impact';
   proofSubjectKind?: 'task-closure' | 'project-integration';
 }
 
@@ -66,6 +67,7 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     sessionId: parsed.sessionId,
     host: parsed.host,
     leaseSeconds: parsed.leaseSeconds,
+    risk: parsed.risk,
     proofSubjectKind: parsed.proofSubjectKind,
   });
 
@@ -82,10 +84,13 @@ export const runStartCommand = async (args: string[]): Promise<void> => {
     `Scope: ${result.scope.scope.id}`,
     `Task: ${result.task.id} [${result.task.state}]`,
     `Risk/detail: ${result.task.risk} / ${result.task.detail}`,
+    `Workflow: ${result.task.admission?.workflow ?? 'legacy'}`,
+    `Risk recommendation: ${result.task.admission?.recommendedRisk ?? result.task.risk} / ${result.task.admission?.recommendedDetail ?? result.task.detail} (${result.task.admission?.selectionSource ?? 'legacy'})`,
     `Contract: ${result.task.contract.acceptanceCriteria.length} acceptance criteria, ${result.blockingQuestions.length} blocking decisions, ${result.task.evidenceRequirements.length} Evidence requirements, ${result.task.memoryObligations.length} Memory obligations`,
     `Selected capabilities: ${result.task.selectedActions.length} Actions, ${result.task.selectedGuardIds.length} Guards`,
     'Next step:',
-    result.recommendedAction?.title ?? 'Inspect the Task steps and begin the admitted work.',
+    result.nextCommand,
+    `Why: ${result.nextReason}`,
     '',
     ...buildProjectKnowledgeGuidanceLines(result.projectKnowledge),
   ];
@@ -239,6 +244,7 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
   let host: string | undefined;
   let leaseSeconds: number | undefined;
   let priority: number | undefined;
+  let risk: ParsedStartArgs['risk'];
   let proofSubjectKind: ParsedStartArgs['proofSubjectKind'];
   const valueFlags = new Map([
     ['--accept', acceptanceCriteria],
@@ -266,6 +272,7 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
       argument === '--host' ||
       argument === '--lease-seconds' ||
       argument === '--priority' ||
+      argument === '--risk' ||
       argument === '--proof-subject'
     ) {
       const nextValue = args[index + 1];
@@ -285,6 +292,9 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
         if (!Number.isInteger(priority) || priority < 0 || priority > 100) {
           throw new Error('--priority requires an integer from 0 to 100.');
         }
+      }
+      if (argument === '--risk') {
+        risk = parseTaskRisk(nextValue);
       }
       if (argument === '--proof-subject') {
         proofSubjectKind = parseProofSubjectKind(nextValue);
@@ -310,6 +320,10 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
       );
       continue;
     }
+    if (argument.startsWith('--risk=')) {
+      risk = parseTaskRisk(argument.slice('--risk='.length));
+      continue;
+    }
 
     remainingArgs.push(argument);
   }
@@ -325,8 +339,14 @@ const parseStartArgs = (args: string[]): ParsedStartArgs => {
     sessionId,
     host,
     leaseSeconds,
+    risk,
     proofSubjectKind,
   };
+};
+
+const parseTaskRisk = (value: string): NonNullable<ParsedStartArgs['risk']> => {
+  if (value === 'light' || value === 'standard' || value === 'high-impact') return value;
+  throw new Error('--risk requires light, standard, or high-impact.');
 };
 
 const parseProofSubjectKind = (
@@ -504,6 +524,8 @@ export const buildCompactStartOutput = (
   actorId: result.actorId,
   scopeId: result.scope.scope.id,
   codeAllowed: result.codeAllowed,
+  nextCommand: result.nextCommand,
+  nextReason: result.nextReason,
   task: buildCompactTaskOutput(result.task),
   blockingQuestionCount: result.blockingQuestions.length,
   recommendedAction: result.recommendedAction,

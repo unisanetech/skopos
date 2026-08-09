@@ -70,6 +70,17 @@ export const createDefaultSkoposConfig = ({
     privacyMode: 'local-only',
     redactSecrets: true,
   },
+  storage: {
+    softLimitMb: 512,
+    hardLimitMb: 1024,
+    retentionDays: {
+      temporary: 1,
+      cache: 14,
+      diagnostic: 30,
+      taskEvidence: 90,
+      releaseEvidence: 365,
+    },
+  },
 });
 
 const sanitizeCommandMap = (commands: SkoposCommandMap): SkoposCommandMap =>

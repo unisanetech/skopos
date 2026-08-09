@@ -60,3 +60,17 @@ Prefer small moves:
 4. document the proof lane before changing more call sites
 
 Do not rename the whole tree just to match example paths.
+
+## Portable role mappings
+
+The same principles can be valid in structures that look very different:
+
+- vertical slices: each slice owns behavior and tests; bootstrap owns composition
+- plugins: host contracts define the boundary; plugins expose intentional entrypoints
+- event-driven services: consumers are boundary entrypoints; broker code is an adapter
+- Rails and Django: framework conventions map to roles without being renamed
+- hexagonal systems: ports and adapters are already explicit boundaries
+
+Public libraries and large modular platforms are counterexamples to automatic application. They need policy suited to export compatibility or formal package ownership. See `../fixtures/counterexamples/**` for the proof cases.
+
+Filesystem, import, and semantic heuristics are advisory until a human confirms that a local convention actually violates the role principle.

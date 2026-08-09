@@ -6,6 +6,7 @@ import type {
   SkoposGuardMatch,
   SkoposActionPhase,
   SkoposTaskRisk,
+  SkoposImpactSelectionExplanation,
 } from '@skopos/model';
 
 export interface MatchSkoposRequiredActionsForImpactOptions {
@@ -19,6 +20,7 @@ export interface MatchSkoposRequiredActionsForImpactOptions {
 export interface SkoposImpactGuardSelection {
   guards: SkoposGuardMatch[];
   actions: SkoposActionRequirement[];
+  explanation: SkoposImpactSelectionExplanation;
 }
 
 export const matchSkoposRequiredActionsForImpact = ({
@@ -28,8 +30,11 @@ export const matchSkoposRequiredActionsForImpact = ({
   phase,
   risk,
 }: MatchSkoposRequiredActionsForImpactOptions): SkoposImpactGuardSelection => {
-  const matchedGuards = guards
-    .map((guard) => matchGuardToImpact(guard, changed, phase, risk))
+  const guardDecisions = guards.map((guard) =>
+    explainGuardSelection(guard, changed, phase, risk),
+  );
+  const matchedGuards = guardDecisions
+    .map((decision) => decision.match)
     .filter((guard): guard is SkoposGuardMatch => Boolean(guard))
     .sort((left, right) => left.id.localeCompare(right.id));
   const requiredActionIds = new Set(
@@ -51,46 +56,117 @@ export const matchSkoposRequiredActionsForImpact = ({
       );
     })
     .sort(sortActionRequirements);
+  const actionExplanations = actions
+    .map((action) => {
+      const requiredByGuardIds = matchedGuards
+        .filter(
+          (guard) =>
+            guard.strength === 'required' && guard.requiredActionIds.includes(action.id),
+        )
+        .map((guard) => guard.id)
+        .sort();
+      return {
+        id: action.id,
+        status: requiredByGuardIds.length > 0 ? 'selected' as const : 'skipped' as const,
+        reason:
+          requiredByGuardIds.length > 0
+            ? `Selected because required Guard${requiredByGuardIds.length === 1 ? '' : 's'} ${requiredByGuardIds.join(', ')} matched.`
+            : 'Skipped because no selected required Guard requires this Action.',
+        requiredByGuardIds,
+      };
+    })
+    .sort((left, right) => left.id.localeCompare(right.id));
 
   return {
     guards: matchedGuards,
     actions: actionRequirements,
+    explanation: {
+      guards: guardDecisions
+        .map((decision) => decision.explanation)
+        .sort((left, right) => left.id.localeCompare(right.id)),
+      actions: actionExplanations,
+    },
   };
 };
 
-const matchGuardToImpact = (
+const explainGuardSelection = (
   guard: SkoposGuardManifest,
   changed: SkoposImpactEntry[],
   phase?: SkoposActionPhase,
   risk?: SkoposTaskRisk,
-): SkoposGuardMatch | null => {
+): {
+  match: SkoposGuardMatch | null;
+  explanation: SkoposImpactSelectionExplanation['guards'][number];
+} => {
   if (phase && guard.appliesTo.phases && !guard.appliesTo.phases.includes(phase)) {
-    return null;
+    return skippedGuard(
+      guard,
+      `Skipped because phase ${phase} is outside ${guard.appliesTo.phases.join(', ')}.`,
+    );
   }
   if (risk && guard.appliesTo.risks && !guard.appliesTo.risks.includes(risk)) {
-    return null;
+    return skippedGuard(
+      guard,
+      `Skipped because risk ${risk} is outside ${guard.appliesTo.risks.join(', ')}.`,
+    );
   }
-  const matchedPaths = changed
+  const pathMatches = changed.filter((entry) =>
+    guard.appliesTo.paths.some((pattern) => pathPatternMatches(entry.path, pattern)),
+  );
+  if (pathMatches.length === 0) {
+    return skippedGuard(guard, 'Skipped because no changed path matches this Guard.');
+  }
+  const matchedPaths = pathMatches
     .filter((entry) =>
-      guard.appliesTo.paths.some((pattern) => pathPatternMatches(entry.path, pattern)) &&
       guardAppliesToImpactScope(guard, entry),
     )
     .map((entry) => entry.path);
   if (matchedPaths.length === 0) {
-    return null;
+    return skippedGuard(
+      guard,
+      'Skipped because matching paths do not belong to a Scope governed by this Guard.',
+      pathMatches.map((entry) => entry.path),
+    );
   }
 
-  return {
+  const uniqueMatchedPaths = [...new Set(matchedPaths)];
+  const match: SkoposGuardMatch = {
     id: guard.id,
     title: guard.title,
     strength: guard.strength,
     sourcePath: guard.sourcePath,
-    reason: `Guard applies because ${[...new Set(matchedPaths)].join(', ')} changed.`,
-    matchedPaths: [...new Set(matchedPaths)],
+    reason: `Guard applies because ${uniqueMatchedPaths.join(', ')} changed.`,
+    matchedPaths: uniqueMatchedPaths,
     requiredActionIds: guard.requires.actionIds,
     evidence: guard.requires.evidence,
   };
+  return {
+    match,
+    explanation: {
+      id: guard.id,
+      status: 'selected',
+      reason: match.reason,
+      matchedPaths: uniqueMatchedPaths,
+    },
+  };
 };
+
+const skippedGuard = (
+  guard: SkoposGuardManifest,
+  reason: string,
+  matchedPaths: string[] = [],
+): {
+  match: null;
+  explanation: SkoposImpactSelectionExplanation['guards'][number];
+} => ({
+  match: null,
+  explanation: {
+    id: guard.id,
+    status: 'skipped',
+    reason,
+    matchedPaths: [...new Set(matchedPaths)],
+  },
+});
 
 const guardAppliesToImpactScope = (
   guard: SkoposGuardManifest,

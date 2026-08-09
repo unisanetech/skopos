@@ -29,6 +29,7 @@ import { runUiCommand } from './commands/ui.js';
 import { runActionsCommand } from './commands/actions.js';
 import { runEvidenceCommand } from './commands/evidence.js';
 import { runIntegrationsCommand } from './commands/integrations.js';
+import { runStorageCommand } from './commands/storage.js';
 import type { SkoposCliCommandHandler } from './types.js';
 
 export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> = {
@@ -60,4 +61,5 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   ui: runUiCommand,
   understand: runUnderstandCommand,
   integrations: runIntegrationsCommand,
+  storage: runStorageCommand,
 };

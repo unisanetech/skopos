@@ -1,0 +1,80 @@
+{
+  "snapshotId": "S-aa2546dd3907",
+  "taskId": "T-ed0b3be0",
+  "sessionId": "release-storage-hardening-20260809",
+  "actorId": "codex-storage-release",
+  "baseRevision": "e4947ea846ecf76722ce3c9f8d49ce7b53e0761f",
+  "paths": [
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "1ff606f90f1847e3068b001d21ccc2d1f4fd89a93f19f4d0709447b891d61433"
+    },
+    {
+      "path": "docs/architecture/artifact-model.md",
+      "digest": "dfbdfcf84c3ad3015c5f3a8ee0162bc15d30421eed97349624495dcb305519d6"
+    },
+    {
+      "path": "docs/architecture/storage-lifecycle-and-privacy.md",
+      "digest": "804a444699a6e1b9d0b1a1240b227fcfab3aff0c3314526641894ca81ddf74f9"
+    },
+    {
+      "path": "docs/guides/storage-and-privacy.md",
+      "digest": "22dbb359a321f579a7eab4f6b14b7b3db63f0b68271d34db26b32a05f967e491"
+    },
+    {
+      "path": "package.json",
+      "digest": "c76f510eaf20bd9dcbee69a47097c8e3d0314e9ec26f079e90da21cc1f6da15d"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "13c45eb55355358d57dc672a0ebf8b8980c5bb74fc19878f1c2ca0bec2ccfa66"
+    },
+    {
+      "path": "packages/cli/src/__tests__/storage-lifecycle.test.ts",
+      "digest": "0286a0629dc735bf15b6a18adc6ade26d6dbce2309f1fa4c68a040f87c2ce80b"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/storage.ts",
+      "digest": "ad9d023b61543e59fd2bb1e60bd7201bc419e4076acb76b7b36e627725498f05"
+    },
+    {
+      "path": "packages/cli/src/cli/index.ts",
+      "digest": "fa172b1a857b742583d5b116fee771dc740a20b3ce572381035521ffe6620aee"
+    },
+    {
+      "path": "packages/cli/src/cli/registry.ts",
+      "digest": "de600d79647820df25612b17a9dd2637f70a3daba33143f086e6d3352a9a729c"
+    },
+    {
+      "path": "packages/config/src/application/create-default-config/create-default-config.service.ts",
+      "digest": "5dfa956b3165c62fddacd2e9aac65ccbf74affd33bbbac6334350041fca58fb5"
+    },
+    {
+      "path": "packages/config/src/contracts/skopos-root-config.schema.ts",
+      "digest": "df5d185925c8aae325b477477f9196234e19aca9eae574e730efcb5e583faa66"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-root-config.ts",
+      "digest": "c02b197e52b2dedec394291621a4991b2c80ee65dcd6b08111c55e6a66b2af9b"
+    },
+    {
+      "path": "packages/runtime/src/application/storage",
+      "digest": "52c314bc6ea7dc86ef03d27ad630ca86405b36c2e6f73cf82c892313cb36fda0"
+    },
+    {
+      "path": "packages/runtime/src/application/storage/storage.service.ts",
+      "digest": "3281f388e0228d1e4d46b38f5531dfbdbc74f889667ec9511f34dc93c6b3b918"
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "digest": "a82c420417f02cd0bf8f9cbcd0c228bfd92ceffaaee363082fb96d6e285c5cb6"
+    },
+    {
+      "path": "skopos.config.yaml",
+      "digest": "837dec03ced8514cccd60b5dd7d9590460d7fe5142ca8e123cee3d2bca3a6fb7"
+    }
+  ],
+  "digest": "aa2546dd3907e788446f230f8f34c9be4b2be0fbda643f462ce34f78a034fbaf",
+  "createdAt": "2026-08-09T00:57:01.788Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-ed0b3be0-S-aa2546dd3907.json"
+}
