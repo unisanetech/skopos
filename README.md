@@ -14,9 +14,10 @@ tools, and talks with the developer. Skopos gives that agent a durable operating
 for the parts that should survive beyond one chat.
 
 > **Current status:** Skopos is pre-release and is not yet published for public use.
-> The working source passes important automated packaging and clean-install checks, but
-> there is no immutable release candidate yet. Product Interface Design is required and remains
-> included; its latest full paired evaluation did not pass the efficacy gate. See
+> The remote source passes the current cross-platform security, package, and lifecycle
+> workflow, but there is no approved immutable release candidate yet. Product Interface
+> Design is required and remains included; its latest full paired evaluation ended 4–4
+> and did not pass the efficacy gate. See
 > [Current status](#current-status) for details.
 
 ## The Problem Skopos Solves
@@ -302,22 +303,26 @@ Skopos is **pre-release**. It has not launched or been published as a public pac
 
 The working source implements the first-release model for Project Memory, Scopes,
 Plans, Tasks, Sessions, Work Queue, Actions, Guards, Evidence, Readiness, coordination,
-adoption, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed focused
-typecheck, clean packed-install, package-content, storage-lifecycle, responsive UI, and
-accessibility checks. Those results are working-tree evidence, not certification of an
-immutable public candidate.
+adoption, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed the
+cross-platform Node 22/24 matrix on Ubuntu, macOS, and Windows, plus production audit,
+secret scanning, license review, SBOM generation, clean packed installation, package
+content, lifecycle, storage, responsive UI, and accessibility checks. These results
+are strong preparation Evidence; final certification must still bind every gate to
+one unchanged approved candidate.
 
-The latest complete paired run belongs to the superseded Product UI Craft identity: it
-was safe and contained, but the Skill won 3 of 8 cases while the no-Skill control won
-5. Product Interface Design `0.3.0` has deterministic selection proof and 21 concise
-Bad-to-Better patterns, but no efficacy result yet. That is a real release blocker, not a launch-quality result. Product
-Interface Design will not be removed to bypass the gate. A new, separately approved
-efficacy and blind-review cycle is required, alongside the
+Product Interface Design `0.3.0` has deterministic selection proof, 21 concise
+Bad-to-Better patterns, external packed portability, and a complete safe paired run.
+That frozen run ended evenly: the Skill won 4 cases and the no-Skill control won 4.
+It therefore did not demonstrate material improvement, and no independent blind human
+adjudication is complete. This is a real release blocker, not a launch-quality result.
+Product Interface Design will not be removed to bypass the gate. A materially improved,
+separately approved efficacy cycle and independent review are required, alongside the
 remaining [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
 and [Product Interface Design efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
 
-Before publication, Skopos must also complete the security, package, CI, trusted
-publishing, clean-clone, and immutable-candidate gates in the
+Before publication, Skopos must also configure the external npm scope, protected
+GitHub environment, one-time first-package bootstrap, OIDC trust, and final
+clean-clone/immutable-candidate gates in the
 [first public release Plan](docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md).
 
 There is no prototype compatibility promise or old-state migration contract. Until the

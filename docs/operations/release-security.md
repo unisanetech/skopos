@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-07
+lastUpdated: 2026-08-10
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../decisions/031-bundled-cli-release-contract.md
@@ -74,6 +74,7 @@ Run:
 
 ```bash
 pnpm release:security:validate
+pnpm release:publish:validate
 pnpm release:check
 pnpm typecheck
 ```
@@ -82,6 +83,23 @@ The first command verifies immutable action pins, complete-history checkout, the
 Gitleaks version and checksum, SBOM and license commands, the six-job matrix, the Node
 engine contract, and fail-closed license-policy fixtures. It does not claim that remote
 CI passed.
+
+The publication validator separately proves the manual-only trigger, exact-tag and
+`main` ancestry checks, protected-environment binding, OIDC permission, immutable
+Actions, no-cache frozen build, complete proof commands, candidate digest, `next` tag,
+and separation between certification, first-package bootstrap, and normal OIDC modes.
+It does not publish and cannot prove that GitHub or npm external settings are correct.
+
+## Publication Authentication Boundary
+
+Normal package publication uses npm trusted publishing from the GitHub-hosted
+`publish.yml` workflow and does not receive an npm token. npm currently requires a
+package to exist before its trusted publisher can be configured, so the first-ever
+`@skopos/cli` publication uses one short-expiry granular bootstrap token inside the
+manually approved `npm-release` environment. The token must be removed and revoked
+immediately after the first registry verification, then the package must be switched
+to the exact OIDC trust binding and traditional tokens disallowed. The complete
+operator sequence lives in [the release runbook](release-runbook.md).
 
 ## Release Decision
 

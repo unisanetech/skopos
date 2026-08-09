@@ -1,0 +1,40 @@
+{
+  "snapshotId": "S-e043d5d9147b",
+  "taskId": "T-ef9b3d3a",
+  "sessionId": "release-controls-20260810",
+  "actorId": "codex",
+  "baseRevision": "280384860703cb6a79e7e7ab164b9a00170cd03c",
+  "paths": [
+    {
+      "path": ".github/workflows/publish.yml",
+      "digest": "bd3e751cdd42caf7e89cde6620bc99bc21dde7b14d112c6a94aafffed41ee565"
+    },
+    {
+      "path": "README.md",
+      "digest": "01a5d79d328b4a2422507203478a8d25602855a3c39863720fafeddf80aed99e"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "digest": "28d33605d28b229d49b0e29016cb039bcf4a80ce4fea57370a336400c58c9ed9"
+    },
+    {
+      "path": "docs/operations/release-security.md",
+      "digest": "8dec72cabeed294a45e8b5e727cbc07aa303e61832457173f1e71760727cada3"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "871a75a68ca2c6ebfe23eb5090c7e6bc1353fb6cb266e29013973f0a872197a1"
+    },
+    {
+      "path": "package.json",
+      "digest": "d52908905a26c71acd386bd13c394151c8ec53145f076d600f548bb75bbe7b6d"
+    },
+    {
+      "path": "scripts/release/validate-publish-workflow.mjs",
+      "digest": "8da74f209e9137f30b1f00b6b3035d0fa6f2ea608ff604232f40861a2da74a27"
+    }
+  ],
+  "digest": "e043d5d9147bdfc935a708f65124d4c4dffe85435dcf884745fc8485793aca57",
+  "createdAt": "2026-08-09T19:24:33.555Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-ef9b3d3a-S-e043d5d9147b.json"
+}

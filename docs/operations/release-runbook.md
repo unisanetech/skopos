@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-10
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - release-security.md
@@ -80,6 +80,44 @@ source licensing, a test run, or this runbook is not approval to publish.
 
 ## Trusted Release Sequence
 
+The protected GitHub workflow is `.github/workflows/publish.yml`. It is manual-only,
+accepts one exact tag, defaults to certification without publication, refuses dispatch
+from anything except `main`, and always uses the `npm-release` environment.
+
+### One-Time First-Package Bootstrap
+
+npm trusted publishing cannot create a brand-new package: npm requires the package to
+exist before a trusted publisher can be configured. Staged publishing has the same
+first-package restriction. Therefore `@skopos/cli@0.1.0` needs one explicit bootstrap;
+describing its first publication as pure OIDC would be incorrect.
+
+After every R1–R6 gate and the exact release Task receive human approval:
+
+1. make the GitHub repository public so npm provenance can bind the public package to
+   public source
+2. confirm npm account 2FA, create or verify the `skopos` npm organization, and confirm
+   the publishing user can create public packages in that scope
+3. create the GitHub `npm-release` environment before running the workflow; restrict it
+   to release tags, require manual approval, prevent self-review when a second qualified
+   reviewer exists, and disable administrator bypass where the repository plan permits
+4. create one short-expiry granular npm token with bypass-2FA solely for the first
+   package bootstrap; place it only in the protected environment as
+   `NPM_BOOTSTRAP_TOKEN`
+5. dispatch `publish.yml` from `main` with the approved tag and
+   `mode=bootstrap-publish`
+6. after registry verification, immediately delete the environment secret and revoke
+   the token
+7. configure the package's npm trusted publisher with GitHub owner `Croodo`, repository
+   `skopos`, workflow filename `publish.yml`, environment `npm-release`, and allowed
+   action `npm publish`
+8. set package publishing access to require 2FA and disallow traditional tokens
+
+The bootstrap is not permission to weaken any product or candidate gate. It is a
+one-time registry constraint handled in the same GitHub-hosted, protected, exact-tag
+workflow. Every later version uses `mode=oidc-publish` and no npm token.
+
+### Workflow Contract
+
 The protected GitHub workflow must:
 
 1. check out the approved tag and verify it resolves to the approved commit
@@ -87,7 +125,8 @@ The protected GitHub workflow must:
 3. run the complete certified validation matrix
 4. rebuild and compare the package identity and file manifest with the approved
    candidate
-5. publish `@skopos/cli@0.1.0` using npm OIDC trusted publishing and `--tag next`
+5. publish the first package through the bounded bootstrap above, or an existing
+   package through npm OIDC trusted publishing, always with `--tag next`
 6. record npm integrity, provenance, repository binding, maintainers, and dist tags
 7. install `@skopos/cli@next` through real-registry `npx`, `npm exec`, and `pnpm dlx`
    in clean projects

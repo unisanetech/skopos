@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-10
 relatedDocs:
   - P-e7e888e6-canonical-product-convergence.md
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -21,6 +21,16 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-10`: Reconciled the Plan with remote `main` after release workflow
+  `31330288352` passed security, audit, licenses, SBOM, package boundary, lifecycle,
+  Ubuntu, macOS, Windows, Node 22.13, and Node 24. Package metadata, version reporting,
+  public support documents, and the runtime matrix are implemented. Added a
+  manual-only exact-tag publication workflow and executable contract. npm registry
+  checks confirmed that `@skopos/cli` does not yet exist, the local npm client is not
+  authenticated, and no visible `skopos` organization membership is available. The
+  repository is still private and has no `npm-release` environment. Official npm
+  behavior also requires a one-time temporary-token bootstrap before OIDC trust can be
+  configured for a brand-new package. None of these facts authorize publication.
 - `2026-08-09`: Completed Product Interface Design `0.3.0` smoke and full machine
   evaluation from frozen inputs. Smoke passed 1-0; the eight-case result split 4-4 and
   is `inconclusive`, despite clean validity, authority, containment, and budget proof.
@@ -74,21 +84,29 @@ into one ordered program and may close only after their relevant gates are satis
 
 ## Current Baseline
 
-The stabilized source has already passed focused typecheck, test, proof, clean-clone,
-packed-install, release-check, responsive, and accessibility lanes. That baseline is
-valuable but is not yet public-release approval.
+Remote `main` has passed focused typecheck, test, proof, clean-clone, packed-install,
+release-check, package-content, responsive, accessibility, security, audit, license,
+SBOM, and the six-job supported-runtime matrix. Package metadata, installed CLI version
+reporting, security/support/contribution docs, and a fail-closed release runbook exist.
+This baseline is valuable but is not public-release approval, and any later source
+change requires a new exact-commit run.
 
-Known release blockers at Plan creation are:
+Current release blockers are:
 
-1. local `main` has unpublished convergence history and is not an immutable remote
-   candidate
-2. the canonical convergence Plan and Product Interface Design Finding remain active
-3. the production dependency audit reports critical and high vulnerabilities
-4. real npm-registry `npx`, `npm exec`, and `pnpm dlx` proof does not yet exist
-5. package metadata, CLI version reporting, security/support docs, CI, and trusted
-   publishing automation are incomplete
-6. public status documents do not yet describe one synchronized release truth
-7. npm scope ownership and protected publisher configuration are not yet certified
+1. Product Interface Design `0.3.0` ended its current-source paired run 4–4; material
+   improvement and independent blind human adjudication are not certified
+2. the canonical convergence Plan and release-blocking Skill Finding remain active,
+   and the 17 final product questions do not yet have one release scorecard
+3. the GitHub repository is private, so npm public-package provenance cannot bind to
+   public source; the `npm-release` environment and its protection rules do not exist
+4. the local npm client is not authenticated, `@skopos/cli` does not exist, and
+   ownership or creation rights for the `@skopos` scope are not certified
+5. npm cannot configure trusted publishing for a package that does not yet exist; the
+   exact first release therefore needs one temporary-token GitHub bootstrap followed
+   immediately by token revocation, OIDC trust configuration, and token disallowance
+6. final clean-clone certification and real-registry `npx`, `npm exec`, and `pnpm dlx`
+   proof must run from the unchanged approved candidate; registry proof is possible
+   only after explicit publication approval
 
 ## Ordered Workstreams
 
@@ -187,10 +205,11 @@ Tasks:
 
 1. add protected pull-request CI for build, typecheck, tests, proof, audit, packed smoke,
    and supported runtime matrix
-2. add a GitHub-hosted, OIDC trusted-publishing workflow with a manually approved
-   release environment
+2. retain the GitHub-hosted manual publication workflow and create its manually
+   approved `npm-release` environment
 3. verify npm `@skopos` ownership, package creation rights, exact repository binding,
-   allowed workflow, protected tags, and publisher permissions
+   workflow filename, environment, allowed action, protected tags, and publisher
+   permissions
 4. ensure only the tagged commit can produce the published artifact
 5. preserve provenance and record registry integrity after publication
 
@@ -199,6 +218,8 @@ Exit gate:
 - no long-lived npm write token is required
 - the publish workflow is protected, reproducible, least-privileged, and proven in a
   non-publishing dry run
+- the first-package bootstrap uses only a short-expiry environment-scoped token, then
+  removes and revokes it before normal OIDC-only publication becomes authoritative
 
 ### R6 — Immutable Candidate Certification
 

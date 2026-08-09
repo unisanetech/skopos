@@ -17,6 +17,7 @@
     "release:check": "pnpm --filter @skopos/cli exec -- vitest run src/__tests__/package-boundaries.test.ts src/__tests__/release-surface.test.ts",
     "release:smoke": "pnpm build && pnpm --filter @skopos/cli exec -- vitest run src/__tests__/release-surface.test.ts src/__tests__/release-install-smoke.test.ts",
     "release:security:validate": "node scripts/release/validate-release-security.mjs",
+    "release:publish:validate": "node scripts/release/validate-publish-workflow.mjs",
     "proof": "pnpm --filter @skopos/cli exec -- vitest run --maxWorkers=1 src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/adoption-matrix.test.ts",
     "proof:external-continuation": "node --import tsx packages/cli/src/benchmarks/external-skill-portability.ts",
     "proof:product-interface-design-efficacy": "node --import tsx packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
