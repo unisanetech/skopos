@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "design-context-evaluation.product-interface-design-v2-promotion",
+  "status": "evaluated-inconclusive",
+  "libraryId": "product-interface-design",
+  "libraryVersion": "0.2.0",
+  "comparison": {
+    "control": "Accepted Product Interface Design core only",
+    "candidate": "The same core plus the exact resolved Context Brief",
+    "freezeRule": "Product facts and behavior remain equal; prompts do not prescribe visual styling or name source products.",
+    "promotionRule": "This holdout is distinct from the development matrix. Machine comparison is diagnostic; independent blind human review and real-project proof remain required."
+  },
+  "evaluationHistory": [
+    {
+      "runId": "product-interface-design-context-v2-promotion-full-20260810-r1",
+      "identity": "Product Interface Design 0.4.0 plus Design Context 0.2.0",
+      "result": "inconclusive",
+      "candidateWins": 2,
+      "controlWins": 4,
+      "invalidCases": 0,
+      "abortedCases": 0,
+      "authorityRegressions": 0
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "deployment-change-review",
+      "taskPrompt": "Create a responsive workspace for reviewing one production change, its deployment state, checks, recent activity, rollout decision, and available recovery.",
+      "selectors": {
+        "domain": [
+          "developer-platforms"
+        ],
+        "experience": [
+          "application-workbench"
+        ]
+      }
+    },
+    {
+      "caseId": "ai-feedback-synthesis",
+      "taskPrompt": "Create an interface for delegating a bounded customer-feedback synthesis, inspecting sources and uncertainty, correcting scope, and approving any external sharing.",
+      "selectors": {
+        "domain": [
+          "ai-assisted-products"
+        ],
+        "experience": [
+          "ai-assisted-delegated-work"
+        ]
+      }
+    },
+    {
+      "caseId": "commerce-source-recovery",
+      "taskPrompt": "Create a setup flow for reconnecting an interrupted inventory source, preserving validated information, reviewing permissions, recovering failures, and confirming the first synchronized item.",
+      "selectors": {
+        "domain": [
+          "commerce-operations"
+        ],
+        "experience": [
+          "setup-onboarding"
+        ]
+      }
+    },
+    {
+      "caseId": "financial-access-change",
+      "taskPrompt": "Create a review and approval flow for changing payout access, showing previous and proposed authority, requester context, verification, consequences, failure, and recovery.",
+      "selectors": {
+        "domain": [
+          "financial-high-trust"
+        ],
+        "experience": [
+          "review-approval-transaction"
+        ]
+      }
+    },
+    {
+      "caseId": "developer-incident-handoff",
+      "taskPrompt": "Create an operational incident handoff surface with current health, freshness, affected scope, meaningful changes, ownership, recovery actions, and update subscription.",
+      "selectors": {
+        "domain": [
+          "developer-platforms"
+        ],
+        "experience": [
+          "monitoring-operational-status"
+        ]
+      }
+    },
+    {
+      "caseId": "commerce-return-resolution",
+      "taskPrompt": "Create a responsive return-resolution workflow that preserves order context, customer impact, evidence, decision, saved progress, failure, and recovery across compact and expanded layouts.",
+      "selectors": {
+        "domain": [
+          "commerce-operations"
+        ],
+        "experience": [
+          "mobile-task-transformation"
+        ]
+      }
+    }
+  ],
+  "requiredCapture": [
+    "source",
+    "desktop and mobile renders",
+    "interaction states",
+    "overflow",
+    "automated accessibility results",
+    "errors and recovery",
+    "token and elapsed-time telemetry",
+    "correction history",
+    "randomized blind-review bundle"
+  ],
+  "pilotPreparation": [
+    {
+      "pilotId": "skopos-application",
+      "status": "awaiting-bounded-task",
+      "authorityRule": "Preserve Skopos components, tokens, terminology, and product behavior."
+    },
+    {
+      "pilotId": "non-skopos-established-system",
+      "status": "awaiting-project-and-human-authorization",
+      "authorityRule": "Use an established project design system and keep adopter-specific guidance outside Skopos core."
+    }
+  ]
+}

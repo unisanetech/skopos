@@ -358,6 +358,80 @@ describe('paired Skill evaluation', () => {
     }
   });
 
+  it('allows a custom no-Skill control only when the comparison declares it explicitly', async () => {
+    const evaluationRoot = await mkdtemp(join(tmpdir(), 'skopos-paired-no-skill-'));
+    const matrixPath =
+      'skill-packs/ui/product-interface-design/design-context/evaluations/release.matrix.json';
+    const matrixDigest = await buildSkoposSkillSourceDigest({
+      cwd: skoposRoot,
+      sourcePaths: [matrixPath],
+    });
+    const contextCounts: number[] = [];
+    try {
+      const result = await runSkoposSkillPairedEvaluationRuntime({
+        cwd: skoposRoot,
+        pack: 'ui.product-interface-design',
+        binding: 'skopos.ui.product-interface-design',
+        suite: 'ui-product-interface-design-core',
+        runId: 'paired-no-skill-fixture',
+        evaluationRoot,
+        operatingModel: await buildOperatingModel(),
+        environment: fixtureEnvironment('smoke', matrixDigest.digest),
+        comparison: {
+          comparisonId: 'ui-product-interface-design-release-core',
+          controlKind: 'no-skill',
+          sourcePaths: [matrixPath],
+          cases: [{
+            caseId: 'release-core-fixture',
+            title: 'Release core fixture',
+            taskPrompt: 'Improve one bounded product interface.',
+            projectTemplatePath: 'evaluations/templates/operations-workbench',
+            controlModuleIds: [],
+            candidateModuleIds: ['interface-design.structure'],
+            candidateAdditionalContext: [],
+            rubricDimensions: ['user-task clarity'],
+          }],
+        },
+        dryRun: true,
+        worker: {
+          execute: async (input) => {
+            contextCounts.push(input.additionalContext.length);
+            const artifactPath = `${input.workspaceRoot}/result.json`;
+            await writeFile(artifactPath, '{}\n');
+            return {
+              status: 'completed', summary: `${input.additionalContext.length} context entries.`,
+              artifactPaths: [artifactPath], measuredInputTokens: 100,
+              measuredCachedInputTokens: 50, measuredOutputTokens: 20, toolCalls: 1,
+              correctionTurns: 0, supervisionEvents: 0, durationMs: 10,
+              authorityViolationIds: [],
+            };
+          },
+        },
+        reviewer: {
+          review: async (input) => {
+            const winner = input.alternatives.find((entry) => entry.summary.startsWith('1'))?.label;
+            if (!winner) throw new Error('Expected the Skill-backed candidate.');
+            return {
+              status: 'completed', winner, reason: 'Candidate has the explicit Skill context.',
+              dimensionScores: { 'user-task clarity': { A: 2, B: 3 } },
+              measuredInputTokens: 20, measuredCachedInputTokens: 10,
+              measuredOutputTokens: 10, durationMs: 5,
+            };
+          },
+        },
+      });
+
+      expect(result.artifact).toMatchObject({
+        suiteId: 'ui-product-interface-design-release-core',
+        candidateWins: 1,
+        controlWins: 0,
+      });
+      expect(contextCounts.sort()).toEqual([0, 1]);
+    } finally {
+      await rm(evaluationRoot, { recursive: true, force: true });
+    }
+  });
+
   it('rejects a stale comparison identity before starting a worker', async () => {
     await expect(runSkoposSkillPairedEvaluationRuntime({
       cwd: skoposRoot,

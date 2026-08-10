@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "design-context-evaluation.product-interface-design-v1-candidate",
-  "status": "prepared-not-executed",
+  "status": "evaluated-inconclusive",
   "libraryId": "product-interface-design",
   "libraryVersion": "0.1.0",
   "comparison": {
@@ -10,6 +10,18 @@
     "freezeRule": "Product facts and behavior remain equal; prompts do not prescribe visual styling or name source products.",
     "promotionRule": "Machine comparison is diagnostic. Independent blind human review and real-project proof remain required."
   },
+  "evaluationHistory": [
+    {
+      "runId": "product-interface-design-context-r2-full-20260810-r2",
+      "identity": "Product Interface Design 0.3.0 plus Design Context 0.1.0",
+      "result": "inconclusive",
+      "candidateWins": 2,
+      "controlWins": 4,
+      "invalidCases": 0,
+      "abortedCases": 0,
+      "authorityRegressions": 0
+    }
+  ],
   "cases": [
     {
       "caseId": "developer-workbench",

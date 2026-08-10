@@ -21,7 +21,11 @@ import { describe, expect, it } from 'vitest';
 
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 const packId = 'ui.product-interface-design';
-const packVersion = '0.3.0';
+const packVersion = '0.5.0';
+const librarySourcePath = join(
+  skoposRoot,
+  'skill-packs/ui/product-interface-design/design-context/library.json',
+);
 const generatedAt = '2026-08-09T18:00:00.000Z';
 const asOf = '2026-08-09';
 const projectAuthority: SkoposSkillContextProjectAuthority = {
@@ -33,10 +37,8 @@ const projectAuthority: SkoposSkillContextProjectAuthority = {
 };
 
 const loadLibrary = async (): Promise<SkoposSkillContextLibrary> => {
-  const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
-  const pack = packs.find((candidate) => candidate.packId === packId);
-  if (!pack?.loadedContextLibrary) throw new Error('Expected a bound context Library.');
-  return pack.loadedContextLibrary;
+  const source = JSON.parse(await readFile(librarySourcePath, 'utf8'));
+  return parseSkoposSkillContextLibrary(source);
 };
 
 const resolve = ({
@@ -76,21 +78,20 @@ const resolve = ({
   });
 
 describe('generic Skill Context resolution for Product Interface Design', () => {
-  it('loads the reviewed Library through the pack-owned portable binding', async () => {
+  it('keeps the reviewed Library valid but outside the first public pack binding', async () => {
     const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
     const pack = packs.find((candidate) => candidate.packId === packId);
+    const library = await loadLibrary();
 
-    expect(pack?.contextLibrary).toEqual({
-      path: 'design-context/library.json',
-      maximumMeasuredTokens: 420,
-    });
-    expect(pack?.loadedContextLibrary).toMatchObject({
+    expect(pack?.contextLibrary).toBeUndefined();
+    expect(pack?.loadedContextLibrary).toBeUndefined();
+    expect(library).toMatchObject({
       libraryId: 'product-interface-design',
       namespace: 'design-context',
-      version: '0.1.0',
+      version: '0.3.0',
     });
-    expect(pack?.loadedContextLibrary?.records).toHaveLength(13);
-    expect(pack?.loadedContextLibrary?.sourceNotes).toHaveLength(10);
+    expect(library.records).toHaveLength(14);
+    expect(library.sourceNotes).toHaveLength(10);
   });
 
   it('freezes a neutral evaluation matrix without claiming efficacy', async () => {
@@ -98,7 +99,7 @@ describe('generic Skill Context resolution for Product Interface Design', () => 
       await readFile(
         join(
           skoposRoot,
-          'skill-packs/ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
+          'skill-packs/ui/product-interface-design/design-context/evaluations/release.matrix.json',
         ),
         'utf8',
       ),
@@ -108,8 +109,8 @@ describe('generic Skill Context resolution for Product Interface Design', () => 
       pilotPreparation: Array<{ status: string }>;
     };
 
-    expect(matrix.status).toBe('prepared-not-executed');
-    expect(matrix.cases).toHaveLength(6);
+    expect(matrix.status).toBe('evaluated-blocked');
+    expect(matrix.cases).toHaveLength(8);
     expect(matrix.cases.every((entry) => Object.keys(entry.selectors).length === 2)).toBe(true);
     expect(matrix.cases.map((entry) => entry.taskPrompt).join(' ')).not.toMatch(
       /Linear|Vercel|Stripe|Shopify|Atlassian|Microsoft|Apple|Material|Wise/,
@@ -328,14 +329,17 @@ describe('generic Skill Context resolution for Product Interface Design', () => 
 
     expect(rendered).toContain(brief.identity.combinedDigest);
     expect(rendered).toContain(brief.libraryDigest);
-    expect(rendered).toContain('Prioritize consequence visibility');
+    expect(rendered).toContain('isolate the proposed change and money-moving consequence');
     expect(rendered).toContain('Do not copy:');
+    expect(rendered.match(/Project adaptation:/g)).toHaveLength(1);
+    expect(rendered.match(/Deliberate difference:/g)).toHaveLength(1);
+    expect(rendered.match(/Do not copy:/g)).toHaveLength(1);
     expect(rendered).toContain(
       `${brief.budget.measuredTokens}/${brief.budget.maximumMeasuredTokens}`,
     );
   });
 
-  it('loads the same Library after copying the pack without source-checkout access', async () => {
+  it('keeps a copied deferred Library deterministic without activating it in the pack', async () => {
     const sourceLibrary = await loadLibrary();
     const temporaryRoot = await mkdtemp(join(tmpdir(), 'skopos-context-pack-'));
     const targetPack = join(
@@ -352,19 +356,22 @@ describe('generic Skill Context resolution for Product Interface Design', () => 
       expect(packed?.sourcePath).toBe(
         'skill-packs/ui/product-interface-design/pack.json',
       );
-      expect(packed?.loadedContextLibrary?.contentDigest).toBe(
-        sourceLibrary.contentDigest,
+      expect(packed?.contextLibrary).toBeUndefined();
+      expect(packed?.loadedContextLibrary).toBeUndefined();
+      const copiedLibrary = parseSkoposSkillContextLibrary(JSON.parse(
+        await readFile(join(targetPack, 'design-context/library.json'), 'utf8'),
+      ));
+      expect(copiedLibrary.contentDigest).toBe(sourceLibrary.contentDigest);
+      expect(copiedLibrary.records.map((record) => record.id)).toEqual(
+        sourceLibrary.records.map((record) => record.id),
       );
-      expect(
-        packed?.loadedContextLibrary?.records.map((record) => record.id),
-      ).toEqual(sourceLibrary.records.map((record) => record.id));
       const sourceBrief = resolve({
         library: sourceLibrary,
         selectors: { domain: ['developer-platforms'] },
         taskId: 'T-packed-equivalence',
       });
       const packedBrief = resolve({
-        library: packed!.loadedContextLibrary!,
+        library: copiedLibrary,
         selectors: { domain: ['developer-platforms'] },
         taskId: 'T-packed-equivalence',
       });

@@ -184,7 +184,7 @@ describe('Product Interface Design Design Context contract', () => {
       generatedAt: '2026-08-09T12:00:00.000Z',
       taskId: 'T-contract-proof',
       packId: 'ui.product-interface-design',
-      packVersion: '0.3.0',
+      packVersion: '0.5.0',
       libraryId: fixture.library.libraryId,
       libraryVersion: fixture.library.version,
       libraryDigest: fixture.library.contentDigest,

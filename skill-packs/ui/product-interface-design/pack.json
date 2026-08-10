@@ -9,7 +9,7 @@
   "packId": "ui.product-interface-design",
   "family": "interface-design",
   "variant": "product-interface-design",
-  "version": "0.3.0",
+  "version": "0.5.0",
   "displayName": "Product Interface Design",
   "description": "Design, implement, and review clear, responsive, accessible product interfaces using the project's existing design system.",
   "plainLanguageSummary": "Use this for product screens that need better structure, behavior, or rendered finish without replacing project-owned design truth.",
@@ -46,10 +46,6 @@
   "selection": {
     "maximumMeasuredTokens": 2200,
     "maximumModules": 3
-  },
-  "contextLibrary": {
-    "path": "design-context/library.json",
-    "maximumMeasuredTokens": 420
   },
   "modules": [
     {

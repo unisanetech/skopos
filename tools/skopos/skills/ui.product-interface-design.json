@@ -5,10 +5,10 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product Interface Design skill pack.",
-  "updatedAt": "2026-08-09T17:53:52.471Z",
+  "updatedAt": "2026-08-10T11:40:36.418Z",
   "bindingId": "skopos.ui.product-interface-design",
   "packId": "ui.product-interface-design",
-  "packVersion": "0.3.0",
+  "packVersion": "0.5.0",
   "lifecycle": "accepted",
   "sourceBindings": {
     "brand-doctrine": [
@@ -46,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-09T17:53:52.471Z",
-    "acceptedBy": "codex",
-    "reason": "Accept the reviewed Design Context Library including generic explicit-justification rules for saturated signals after focused proof.",
+    "acceptedAt": "2026-08-10T11:40:36.418Z",
+    "acceptedBy": "codex-release-finalization",
+    "reason": "Accept the final 0.5.0 three-module Product Interface Design core identity for deterministic release-gate evaluation; this does not certify efficacy, and Design Context remains unbound and excluded.",
     "identity": {
-      "packSourceDigest": "sha256:23bb0187b971079c5ec6ad5cb08402c8399766682612058e61538e157780a20c",
-      "bindingSourceDigest": "sha256:ee2683f22a3e13438e0fec1a902bb76a08207d44e00850251f50b9c94a3d39b5",
+      "packSourceDigest": "sha256:cbd4969882f38d88e717e56aa680629a46e1dbda490c8b273758c89ddcd6efb2",
+      "bindingSourceDigest": "sha256:1e124c2e2291357c45375f6a443e547a711c447e758c92f40701c25511f70cb1",
       "projectSourceDigest": "sha256:4226d6dde6af8034e35eb8dcac1a538c7115d0896baf868ff57748191ea5cb77",
       "capabilityCatalogDigest": "sha256:416b78023d732ea17df231090d22e05bb9069ed14cc916113d8a989556d0124c",
       "evaluationSourceDigest": "sha256:ef99367deaa60ad4c606be01aaf7935932b3a9ce63f940602afa1ac8dbc66396",
-      "combinedDigest": "sha256:1c651b3bd15ba8fa20bdc68725c8492a90bf1a9d73f911334aa8b2b1d0c08f6f"
+      "combinedDigest": "sha256:d11ae3f87ccbe17004c8d83c18978a60837011f46966669bcd592cab9719ee56"
     }
   }
 }

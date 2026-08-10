@@ -37,14 +37,19 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       const packedSkillAssets = await listRelativeFiles(
         join(packedPackageRoot, 'dist', 'skill-packs'),
       );
-      expect(packedSkillAssets).toEqual(sourceSkillAssets);
-      expect(packedSkillAssets).toHaveLength(40);
+      const deferredDesignContextAssets = sourceSkillAssets.filter((path) =>
+        path.includes('/design-context/'),
+      );
+      expect(deferredDesignContextAssets).toHaveLength(4);
+      expect(packedSkillAssets).toEqual(
+        sourceSkillAssets.filter((path) => !path.includes('/design-context/')),
+      );
+      expect(packedSkillAssets).toHaveLength(38);
       expect(packedSkillAssets).toContain('ui/product-interface-design/pack.json');
       expect(packedSkillAssets).toContain('ui/product-interface-design/evaluations/core.suite.json');
-      expect(packedSkillAssets).toContain('ui/product-interface-design/design-context/library.json');
-      expect(packedSkillAssets).toContain(
-        'ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
-      );
+      for (const internalAsset of deferredDesignContextAssets) {
+        expect(packedSkillAssets).not.toContain(internalAsset);
+      }
 
       const packedText = await readTextSurface(packedPackageRoot);
       for (const prohibited of [

@@ -166,6 +166,21 @@ canonical Skill system, not a versioned migration.
     independent human adjudication, and real-project pilots have not run. This closes
     executable preparation only; it does not close this Finding, prove usefulness, or
     satisfy R2.
+19. The prepared comparison contract was exercised through three fresh Design Context
+    identities without tuning against a consumed holdout. The first and second
+    six-case full runs each ended 2 candidate wins to 4 control wins. The third
+    successor lost its one-case smoke 0-1, so its full run correctly did not start.
+    All runs were valid, contained, within declared budgets, and free of authority
+    regression. The exact public Product Interface Design `0.5.0` three-module core
+    then lost a fresh no-Skill smoke 0-1 because its output gave contradictory
+    scheduling guidance and weaker recovery and ownership than the control. Its full
+    run and independent human adjudication did not start. The core remains required
+    and accepted for deterministic selection at 8/8 fixtures and combined digest
+    `sha256:d11ae3f87ccbe17004c8d83c18978a60837011f46966669bcd592cab9719ee56`,
+    but efficacy is not certified. Design Context is now unbound and its four
+    development assets are excluded from the first public tarball. This is the
+    documented rollback boundary, not removal of Product Interface Design and not a
+    release pass.
 
 ## Impact
 
@@ -212,6 +227,11 @@ canonical Skill system, not a versioned migration.
 
 ## Changelog
 
+- `2026-08-10`: Recorded three failed Design Context behavioral gates and the failed
+  exact `0.5.0` core smoke. Kept the required three-module core, applied the independent
+  Design Context rollback boundary, and stopped before full core execution, human
+  review, pilots, or release certification. R2 remains blocked on current-source
+  material improvement.
 - `2026-08-10`: Made the frozen Design Context matrix executable without changing or
   re-accepting Product Interface Design guidance. The generic paired runtime can now
   bind exact comparison sources, give both arms explicit common modules, and add exact

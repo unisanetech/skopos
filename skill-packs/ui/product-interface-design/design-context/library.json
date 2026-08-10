@@ -5,10 +5,10 @@
   "status": "active",
   "authority": "canonical",
   "summary": "A small reviewed library of transferable product-interface principles with explicit provenance, limits, freshness, and originality constraints.",
-  "updatedAt": "2026-08-09",
+  "updatedAt": "2026-08-10",
   "libraryId": "product-interface-design",
   "namespace": "design-context",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "consumerPackIds": [
     "ui.product-interface-design"
   ],
@@ -128,7 +128,7 @@
         ]
       },
       "problem": "Equal-weight panels and decorative containers can hide the primary technical object.",
-      "guidance": "Center one work object, recede orientation and metadata, align comparable facts, and reveal detail progressively.",
+      "guidance": "Center one technical work object; keep active orientation, scope, freshness, decisive change, evidence, action, and recovery visible while secondary metadata recedes progressively.",
       "failureModes": [
         "Copying a recognizable developer-tool shell or mistaking compact dark styling for expert usability."
       ],
@@ -159,7 +159,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:b9679e80fd71415d075f4fb7950c6a73454208baf9869fa52a9dd5edda1369be"
+      "contentDigest": "sha256:fb4c0632fbfb0ec5857e2f12315cb404d1be8e399105acf573d6077f66bb2734"
     },
     {
       "id": "design-context.domain-guide.ai-assisted-products",
@@ -181,7 +181,7 @@
         ]
       },
       "problem": "Opaque capability, memory, or authority encourages overreliance and makes correction difficult.",
-      "guidance": "Show what AI can access and do, preserve user state, expose sources or uncertainty when relevant, and make correction or reversal easy.",
+      "guidance": "Show the AI goal, accessible scope, included and excluded sources, uncertainty, current stage, and external effect; preserve user state and keep correction, rejection, and reversal easy.",
       "failureModes": [
         "Anthropomorphic certainty, invisible memory, or autonomous action without meaningful control."
       ],
@@ -211,7 +211,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2026-11-09"
       },
-      "contentDigest": "sha256:773cbfdb3bdf998419bda5fa546da767d14252a9b48fd0789436c476380e784f"
+      "contentDigest": "sha256:79d7a8c14cc2dbbd343742262b87434a43b0cf0a16c20249c472f70dfad8526b"
     },
     {
       "id": "design-context.domain-guide.commerce-operations",
@@ -233,7 +233,7 @@
         ]
       },
       "problem": "Duplicated content, jargon, and disconnected actions slow global operators and increase mistakes.",
-      "guidance": "Use plain consistent terms, meet operators in the current object context, prioritize the next business action, and break complex work into recoverable steps.",
+      "guidance": "Keep the current merchant object and business consequence visible; preserve validated data, use consistent terms, show interruption and progress truthfully, and make the next recoverable action explicit.",
       "failureModes": [
         "Repeating the same content across containers or hiding business consequences behind generic labels."
       ],
@@ -263,7 +263,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:955c3840bedeb5b1a56e7023d43c3c81c97ed8dc6bb02c7cbb735781cdba3988"
+      "contentDigest": "sha256:a2b8e8667a59a70c920c946576a160303c1c730e0fa11339bb5d71d4969456d2"
     },
     {
       "id": "design-context.domain-guide.financial-high-trust",
@@ -285,7 +285,7 @@
         ]
       },
       "problem": "Visual novelty can obscure amount, party, timing, permission, confidence, or reversibility.",
-      "guidance": "Prioritize consequence visibility, review, confidence, permission, and auditability over ornament.",
+      "guidance": "Before action, isolate the proposed change and money-moving consequence, limit, requester, independent verification, duration or revocation, and audit result; favor legible confidence over ornament.",
       "failureModes": [
         "Weak contrast, ambiguous totals, hidden permissions, or dramatic motion around irreversible actions."
       ],
@@ -316,7 +316,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:49ef8f309ec5fabfa3203fbdfbd80a254ecc8d4d0b37e91656be4929f8c2bb3a"
+      "contentDigest": "sha256:67cb917dac95e53289f0965bdaf7e42f155fc2a669793cd88ef4bc9bbccf12f3"
     },
     {
       "id": "design-context.experience-guide.application-workbench",
@@ -338,7 +338,7 @@
         ]
       },
       "problem": "Equal-weight regions make work compete with navigation, filters, and metadata.",
-      "guidance": "Keep the primary object central, make orientation stable but quiet, and place persistent context beside rather than over the work.",
+      "guidance": "Keep the primary object central, active orientation stable but quiet, and health, evidence, state, and actions beside rather than over the work; preserve those roles when panes recompose.",
       "failureModes": [
         "Carding every region, duplicating headers, or making inspectors block the task without reason."
       ],
@@ -369,7 +369,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:741c139e91357c72741e2438e181b6fbbe655b662df4e2b03c56b2fc0316f3a2"
+      "contentDigest": "sha256:fd6e21b92a5de6a63a6b921fd3e9c8cb7fe1800f5607293558d5e095bda758ef"
     },
     {
       "id": "design-context.experience-guide.setup-onboarding",
@@ -391,7 +391,7 @@
         ]
       },
       "problem": "Feature tours and premature configuration delay value and hide required decisions.",
-      "guidance": "Explain the immediate outcome, ask only for necessary choices, show progress truthfully, and defer optional configuration.",
+      "guidance": "Explain the immediate outcome, preserved information, current step, necessary permission, and next action; show interruption, retry, progress, and first confirmation truthfully while deferring optional setup.",
       "failureModes": [
         "Long tours, unexplained permissions, irreversible defaults, or celebratory screens before success."
       ],
@@ -422,7 +422,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:82cbe6701b9e13c28b3098a655d064a213b30e048545a0f523cbd96d794aa684"
+      "contentDigest": "sha256:9be18234d09d1f2ea7765b9d39f213d7e3f268999acfc0f9c6e0d2dbbd2ac8f4"
     },
     {
       "id": "design-context.experience-guide.review-approval-transaction",
@@ -444,7 +444,7 @@
         ]
       },
       "problem": "Generic confirmation UI can omit the exact object, change, authority, or recovery path.",
-      "guidance": "Place decisive facts and differences near the action, name the consequence with a verb, and separate review from execution when risk warrants it.",
+      "guidance": "Place the exact before-and-after difference, decisive evidence, consequence, and recovery before the action; name the outcome with a verb and separate review from execution when risk warrants it.",
       "failureModes": [
         "Vague confirm labels, hidden changes, accidental double action, or success without an audit trail."
       ],
@@ -474,7 +474,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:0bb99d96c5cb1068ec37e9e5a266e0b3cfe1af0f92339197d1e36a6151a56e15"
+      "contentDigest": "sha256:f8c461d353a8187c485649c08d8764089601f4840eb264b05dd13da3a5db8645"
     },
     {
       "id": "design-context.experience-guide.monitoring-operational-status",
@@ -496,7 +496,7 @@
         ]
       },
       "problem": "Dense dashboards can give every metric urgency while hiding freshness and causal context.",
-      "guidance": "Lead with health and meaningful change, expose freshness, connect anomalies to scope and action, and disclose raw detail on demand.",
+      "guidance": "Lead with health, freshness, affected scope, and meaningful change; connect chronology to ownership, recovery, and follow-up while disclosing raw detail on demand.",
       "failureModes": [
         "Vanity metrics, constant red urgency, stale status without timestamps, or charts without decisions."
       ],
@@ -527,7 +527,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:bc7bfa6e026332ec0229d9fe75603f96fb81578ffce0ff9d93115f2c8be31558"
+      "contentDigest": "sha256:d371962507585f16337c318c9cd9a07b0dcc06da6907fcab9f2fc26e296e2799"
     },
     {
       "id": "design-context.experience-guide.ai-assisted-delegated-work",
@@ -549,7 +549,7 @@
         ]
       },
       "problem": "A chat-like surface alone does not explain working scope, progress, evidence, or authority.",
-      "guidance": "Keep the goal and current state visible, separate proposal from action, show relevant evidence, and provide pause, correction, approval, and reversal in proportion to risk.",
+      "guidance": "Keep goal, bounded scope, source evidence, uncertainty, and current stage visible; separate proposal from action and provide inspect, correct, pause, reject, approve, and reverse in proportion to risk.",
       "failureModes": [
         "False familiarity, hidden tools or memory, vague progress, and irreversible delegated action."
       ],
@@ -579,7 +579,7 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2026-11-09"
       },
-      "contentDigest": "sha256:0fb9d454fe2d0459217bb06e4ccfb8291cd74907c805570174d800919fb34edb"
+      "contentDigest": "sha256:2330a6516b75f4fbfe719a944be09b27feb5b3ffe224c86822634e3903a0b30b"
     },
     {
       "id": "design-context.experience-guide.mobile-task-transformation",
@@ -601,7 +601,7 @@
         ]
       },
       "problem": "Shrinking desktop regions creates tiny controls, nested scroll, hidden state, and broken reading order.",
-      "guidance": "Recompose around the primary task, sequence supporting context, use platform-appropriate controls, and preserve state through each transformation.",
+      "guidance": "Recompose around the primary task, sequence evidence before action, preserve state and recovery, use platform-appropriate controls, and keep fixed or sticky regions from obscuring content.",
       "failureModes": [
         "Compressed multi-column layouts, unexplained icon-only actions, or destructive controls detached from context."
       ],
@@ -632,7 +632,66 @@
         "reviewedAt": "2026-08-09",
         "reviewAfter": "2027-02-09"
       },
-      "contentDigest": "sha256:0348c829982a0a50885f300954ab04bf150ec054c093e08b6863449df2d0c991"
+      "contentDigest": "sha256:dd8eae9b990721075394bb54393b428bf4109c556506fae676e21beba1e93d41"
+    },
+    {
+      "id": "design-context.design-signal.acceptance-completeness",
+      "kind": "signal",
+      "typeId": "design-context.design-signal",
+      "title": "Evidence Before Reduction",
+      "purpose": "Prevent simplification from deleting required context, states, and recovery.",
+      "applicability": {
+        "selectors": {
+          "experience": [
+            "application-workbench",
+            "setup-onboarding",
+            "review-approval-transaction",
+            "monitoring-operational-status",
+            "ai-assisted-delegated-work",
+            "mobile-task-transformation"
+          ]
+        },
+        "positiveSignals": [
+          "The Task creates or materially revises a rendered workflow with decisions, state, evidence, or recovery."
+        ],
+        "negativeSignals": [
+          "The Task is a purely decorative adjustment with no product-state or interaction obligation."
+        ]
+      },
+      "problem": "Agents may trade required evidence and interaction for a quiet happy path.",
+      "guidance": "Before simplifying, preserve every task-required object, orientation cue, decisive fact, state, action, error, and recovery; render meaningful default content before enhancement and make interactions real at each required viewport.",
+      "failureModes": [
+        "Missing orientation, decisive facts, real actions, visible failures, or recovery."
+      ],
+      "constraints": {
+        "accessibility": [
+          "Keep required states and actions perceivable and operable."
+        ],
+        "trust": [
+          "Keep consequence, authority, freshness, and recovery visible."
+        ],
+        "responsive": [
+          "Keep evidence before action and do not obscure required content."
+        ],
+        "originality": [
+          "Use project-owned objects and language."
+        ]
+      },
+      "operationalCost": "Requires visible-state, interaction, recovery, and equivalent cross-viewport proof.",
+      "sourceNoteIds": [
+        "design-context.source-note.govuk-accessibility"
+      ],
+      "facets": {
+        "maturity": "established",
+        "guidance": "prefer"
+      },
+      "freshness": {
+        "state": "active",
+        "createdAt": "2026-08-10",
+        "reviewedAt": "2026-08-10",
+        "reviewAfter": "2027-02-10"
+      },
+      "contentDigest": "sha256:a2540ca946a250024cdf89c8c54eb9ea3f22a3f505b928f1b9079e3d56b1f7b1"
     },
     {
       "id": "design-context.design-signal.quiet-structural-hierarchy",
@@ -1079,5 +1138,5 @@
       "contentDigest": "sha256:3caf7713422421a752d5a1ab1a56b3a1038c16259b36db0b79893d0055bfb1c7"
     }
   ],
-  "contentDigest": "sha256:289701e134e2de5582aae2368a41f05a0190b03b3ab1237696046a61596801d5"
+  "contentDigest": "sha256:23c6857039cb19df8e95d1fd29ca5a10e69ca61c2641deeb3dac3115493fb107"
 }

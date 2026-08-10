@@ -63,7 +63,7 @@ describe('Product Interface Design showcase', () => {
   it('labels the rendered gallery as qualitative rather than promotion Evidence', () => {
     const gallery = renderShowcaseGallery({
       runId: 'showcase-test',
-      packVersion: '0.3.0',
+      packVersion: '0.5.0',
       results: [{
         scenario: scenarios[0]!,
         summary: 'Created a new interface.',

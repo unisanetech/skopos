@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "id": "design-context-evaluation.product-interface-design-v3-release",
+  "status": "evaluated-blocked",
+  "libraryId": "product-interface-design",
+  "libraryVersion": "0.3.0",
+  "comparison": {
+    "control": "Accepted Product Interface Design core only",
+    "candidate": "The same core plus the exact resolved Context Brief",
+    "deltaHypothesis": "A compact positive Context Brief improves acceptance completeness, product-specific decisions, responsive evidence order, and recoverable first-render behavior without increasing authority violations, correction, or bounded cost.",
+    "freezeRule": "Product facts and behavior remain equal; prompts do not prescribe visual styling or name source products.",
+    "promotionRule": "These eight scenarios were authored after the two earlier matrices became development evidence. They are a one-use release holdout; machine comparison, independent blind human review, and real-project proof must all agree before promotion.",
+    "leakageRule": "Do not revise guidance from these outcomes and rerun these cases as release Evidence. Any successor identity requires a separately authored holdout."
+  },
+  "evaluationHistory": [
+    {
+      "runId": "product-interface-design-context-v3-release-smoke-20260810-r1",
+      "identity": "Product Interface Design 0.5.0 plus Design Context 0.3.0",
+      "comparison": "core-plus-context-vs-core",
+      "result": "smoke-control-win",
+      "candidateWins": 0,
+      "controlWins": 1,
+      "invalidCases": 0,
+      "abortedCases": 0,
+      "authorityRegressions": 0
+    },
+    {
+      "runId": "product-interface-design-v05-release-core-smoke-20260810-r3",
+      "identity": "Product Interface Design 0.5.0 public three-module core",
+      "comparison": "core-vs-no-skill",
+      "result": "smoke-control-win",
+      "candidateWins": 0,
+      "controlWins": 1,
+      "invalidCases": 0,
+      "abortedCases": 0,
+      "authorityRegressions": 0
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "api-key-rotation-review",
+      "taskPrompt": "Create a review flow for rotating one production API key, showing affected environments, current and proposed authority, dependent services, verification, rollout timing, failure, and rollback before execution.",
+      "selectors": {
+        "domain": ["developer-platforms"],
+        "experience": ["review-approval-transaction"]
+      }
+    },
+    {
+      "caseId": "ai-knowledge-publication",
+      "taskPrompt": "Create an interface for asking AI to prepare a support knowledge update, reviewing included and excluded sources, uncertainty, proposed changes, external publication scope, correction, rejection, approval, and reversal.",
+      "selectors": {
+        "domain": ["ai-assisted-products"],
+        "experience": ["ai-assisted-delegated-work"]
+      }
+    },
+    {
+      "caseId": "warehouse-transfer-exception",
+      "taskPrompt": "Create an operations workspace for resolving one interrupted warehouse transfer, preserving shipment and inventory context, showing validation evidence, current ownership, available decisions, customer impact, and recovery.",
+      "selectors": {
+        "domain": ["commerce-operations"],
+        "experience": ["application-workbench"]
+      }
+    },
+    {
+      "caseId": "treasury-beneficiary-approval",
+      "taskPrompt": "Create a high-trust approval flow for adding a treasury beneficiary, isolating the new payment authority, limits, requester, independent verification, activation timing, revocation, failure, and audit outcome.",
+      "selectors": {
+        "domain": ["financial-high-trust"],
+        "experience": ["review-approval-transaction"]
+      }
+    },
+    {
+      "caseId": "service-degradation-response",
+      "taskPrompt": "Create an operational response surface for one degrading service, showing health and freshness, affected scope, recent meaningful changes, owner handoff, mitigation choices, rollback, update subscription, and recovery confirmation.",
+      "selectors": {
+        "domain": ["developer-platforms"],
+        "experience": ["monitoring-operational-status"]
+      }
+    },
+    {
+      "caseId": "catalog-import-resume",
+      "taskPrompt": "Create a setup flow for resuming an interrupted catalog import, preserving validated mapping and source details, reviewing permissions and conflicts, showing truthful progress, recovering failure, and confirming the first imported product.",
+      "selectors": {
+        "domain": ["commerce-operations"],
+        "experience": ["setup-onboarding"]
+      }
+    },
+    {
+      "caseId": "ai-research-source-correction",
+      "taskPrompt": "Create a research workspace for correcting an AI-generated market brief, with stable orientation, included and excluded sources, claim-level evidence and uncertainty, current generation state, edit and rerun controls, approval boundary, and preserved work.",
+      "selectors": {
+        "domain": ["ai-assisted-products"],
+        "experience": ["application-workbench"]
+      }
+    },
+    {
+      "caseId": "payout-hold-mobile-review",
+      "taskPrompt": "Create a responsive review workflow for a held vendor payout, preserving amount, recipient, reason, verification evidence, deadline, release or reject consequence, failed action recovery, and audit confirmation across compact and expanded layouts.",
+      "selectors": {
+        "domain": ["financial-high-trust"],
+        "experience": ["mobile-task-transformation"]
+      }
+    }
+  ],
+  "requiredCapture": [
+    "source",
+    "desktop and mobile renders",
+    "meaningful default render",
+    "interaction states",
+    "overflow and content obstruction",
+    "automated accessibility results",
+    "errors and recovery",
+    "token and elapsed-time telemetry",
+    "correction history",
+    "randomized blind-review bundle"
+  ],
+  "pilotPreparation": [
+    {
+      "pilotId": "skopos-application",
+      "status": "awaiting-bounded-task",
+      "authorityRule": "Preserve Skopos components, tokens, terminology, and product behavior."
+    },
+    {
+      "pilotId": "non-skopos-established-system",
+      "status": "awaiting-project-and-human-authorization",
+      "authorityRule": "Use an established project design system and keep adopter-specific guidance outside Skopos core."
+    }
+  ]
+}

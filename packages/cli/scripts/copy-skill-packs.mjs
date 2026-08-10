@@ -10,9 +10,9 @@ const workspaceRoot = join(packageRoot, '..', '..');
 const source = join(workspaceRoot, 'skill-packs');
 const destination = join(packageRoot, 'dist', 'skill-packs');
 
-// Public runtime contract. Product Interface Design stays in the package; only the files
-// required to select, explain, fixture-check, and run its user-invoked evaluations
-// may cross the npm boundary.
+// Public runtime contract. Product Interface Design's accepted three-module core stays
+// in the package. Design Context remains repository-owned development evidence until a
+// later exact identity clears its efficacy, human-review, and project-pilot gates.
 const publicSkillAssetPaths = [
   'ui/product-interface-design/evaluations/core.suite.json',
   'ui/product-interface-design/evaluations/templates/complete-service-flow/index.html',
@@ -47,13 +47,18 @@ const publicSkillAssetPaths = [
   'ui/product-interface-design/fixtures/negative-backend.fixture.json',
   'ui/product-interface-design/fixtures/positive-hierarchy.fixture.json',
   'ui/product-interface-design/fixtures/visual-restraint-review.fixture.json',
-  'ui/product-interface-design/design-context/library.json',
-  'ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
   'ui/product-interface-design/guidance/behavior.md',
   'ui/product-interface-design/guidance/finish.md',
   'ui/product-interface-design/guidance/structure.md',
   'ui/product-interface-design/pack.json',
   'ui/product-interface-design/rubrics/product-interface-review.json',
+].sort();
+
+const internalSkillAssetPaths = [
+  'ui/product-interface-design/design-context/library.json',
+  'ui/product-interface-design/design-context/evaluations/candidate.matrix.json',
+  'ui/product-interface-design/design-context/evaluations/promotion.matrix.json',
+  'ui/product-interface-design/design-context/evaluations/release.matrix.json',
 ].sort();
 
 const listFiles = async (root, current = root) => {
@@ -71,11 +76,12 @@ const listFiles = async (root, current = root) => {
 };
 
 const sourceAssetPaths = await listFiles(source);
-if (JSON.stringify(sourceAssetPaths) !== JSON.stringify(publicSkillAssetPaths)) {
-  const approved = new Set(publicSkillAssetPaths);
+const reviewedSourceAssetPaths = [...publicSkillAssetPaths, ...internalSkillAssetPaths].sort();
+if (JSON.stringify(sourceAssetPaths) !== JSON.stringify(reviewedSourceAssetPaths)) {
+  const approved = new Set(reviewedSourceAssetPaths);
   const actual = new Set(sourceAssetPaths);
   const unexpected = sourceAssetPaths.filter((path) => !approved.has(path));
-  const missing = publicSkillAssetPaths.filter((path) => !actual.has(path));
+  const missing = reviewedSourceAssetPaths.filter((path) => !actual.has(path));
   throw new Error(
     `Public Skill asset contract changed. Review the npm boundary before building. ` +
       `Unexpected: ${unexpected.join(', ') || 'none'}. Missing: ${missing.join(', ') || 'none'}.`,

@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-07-25
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-10
 relatedDocs:
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -26,6 +26,17 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-10`: Exercised the fail-closed promotion boundary instead of treating
+  deterministic completeness as usefulness. Two fresh six-case Design Context full
+  comparisons each ended 2–4, and a third successor lost its one-case smoke. The
+  exact Product Interface Design `0.5.0` core also lost its fresh no-Skill smoke, so no
+  full release run or human adjudication started. The required three-module Product
+  Interface Design core remains accepted at combined digest
+  `sha256:d11ae3f87ccbe17004c8d83c18978a60837011f46966669bcd592cab9719ee56`
+  with 8/8 fixtures, but it is not efficacy-certified. Design Context is unbound and
+  excluded from the first public tarball; its generic infrastructure and failed
+  evidence remain for a separately planned redesign. R2 and public release remain
+  blocked.
 - `2026-08-09`: Implemented the first generic Skill Context consumer without adding a
   Product Interface Design module or design vocabulary to core. The pack-owned Design
   Context Library now carries four Domain Guides, six Experience Guides, three Design

@@ -35,7 +35,7 @@ describe('Product Interface Design skill pack', () => {
     expect(pack).toMatchObject({
       displayName: 'Product Interface Design',
       family: 'interface-design',
-      version: '0.3.0',
+      version: '0.5.0',
       selection: {
         maximumMeasuredTokens: 2200,
         maximumModules: 3,
@@ -47,6 +47,8 @@ describe('Product Interface Design skill pack', () => {
       { id: 'interface-design.behavior', path: 'guidance/behavior.md' },
     ]);
     expect(pack?.modules.every((module) => module.measuredTokens > 0)).toBe(true);
+    expect(pack?.contextLibrary).toBeUndefined();
+    expect(pack?.loadedContextLibrary).toBeUndefined();
     expect(pack?.modules.every((module) => module.positiveSignals.length > 0)).toBe(true);
     expect(
       pack?.modules.every((module) =>
@@ -106,7 +108,7 @@ describe('Product Interface Design skill pack', () => {
     expect(finishGuidance).toContain('canvas and persistent');
     expect(finishGuidance).toMatch(/Let type, space, alignment, and order carry hierarchy/);
     expect(finishGuidance).toContain('Large regions earn space');
-    expect(finishGuidance).toContain('Keep icons coherent and subordinate');
+    expect(finishGuidance).toMatch(/Keep icons\s+coherent and subordinate/);
     expect(finishGuidance).toContain('## Bad to Better');
     expect(finishGuidance).toContain('Card every section');
     expect(finishGuidance).toContain('Add a local hex');
@@ -159,7 +161,7 @@ describe('Product Interface Design skill pack', () => {
     expect(
       bindings.find((binding) => binding.packId === 'ui.product-interface-design'),
     ).toMatchObject({
-      packVersion: '0.3.0',
+      packVersion: '0.5.0',
       lifecycle: 'accepted',
     });
   });

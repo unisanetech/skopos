@@ -9,9 +9,13 @@ Project architecture and bound components override generic advice.
    appearance, or one screen. Missing conformance proof means unverified, not passed.
 3. From the narrowest container, decide what stays, moves, reorders, collapses, becomes
    contextual, or changes interaction. Never merely shrink or hide desktop UI. Give
-   scrolling one clear owner.
+   scrolling one clear owner, place evidence before consequential actions, and ensure
+   sticky controls never cover task content.
 4. Prove applicable loading, empty, partial, error, permission, success, disabled,
    selected, and retry states. Keep interaction states distinct.
+5. Keep the meaningful initial state in authored markup or the project's proven
+   server-rendered path. JavaScript may enhance and transition it, but a delayed,
+   blocked, or failed client module must not leave only shell or navigation visible.
 
 ## Bad to Better
 
@@ -23,6 +27,7 @@ Project architecture and bound components override generic advice.
 | Control | Clickable styled `div` | Native or project control with keyboard and focus behavior. |
 | Dialog | Leave focus behind it | Move focus in, make background inert, support Escape, restore focus. |
 | Naming | `SettingsPageCard` | Name the role: `PermissionSummary` or `RetryNotice`. |
+| First render | Populate the whole task after a client script starts | Render meaningful task content first; enhance it with real transitions. |
 
 Framework guidance is conditional. In React, add a narrow client boundary only for
 state, events, lifecycle, or browser APIs. Bad: make a route client-rendered for one

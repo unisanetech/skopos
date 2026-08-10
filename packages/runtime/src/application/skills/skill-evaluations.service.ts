@@ -42,6 +42,7 @@ export interface SkoposSkillPairedComparisonCase
 
 export interface SkoposSkillPairedComparison {
   comparisonId: string;
+  controlKind?: 'explicit-modules' | 'no-skill';
   sourcePaths: string[];
   cases: SkoposSkillPairedComparisonCase[];
 }
@@ -428,9 +429,14 @@ const assertComparison = (comparison: SkoposSkillPairedComparison): void => {
       throw new Error(`Duplicate paired comparison case: ${evaluationCase.caseId}.`);
     }
     caseIds.add(evaluationCase.caseId);
-    if (evaluationCase.controlModuleIds.length === 0) {
+    if (evaluationCase.controlModuleIds.length === 0 && comparison.controlKind !== 'no-skill') {
       throw new Error(
         `Paired comparison ${evaluationCase.caseId} requires explicit control modules.`,
+      );
+    }
+    if (evaluationCase.controlModuleIds.length > 0 && comparison.controlKind === 'no-skill') {
+      throw new Error(
+        `Paired comparison ${evaluationCase.caseId} declares no-skill control with control modules.`,
       );
     }
     if (evaluationCase.candidateModuleIds.length === 0) {

@@ -310,6 +310,13 @@ export const resolveSkoposSkillContextBriefRuntime = (
 export const renderSkoposSkillContextBriefRuntime = (
   brief: SkoposSkillContextBrief,
 ): string => {
+  const adaptations = uniqueSorted(brief.principles.map((principle) => principle.adaptation));
+  const deliberateDifferences = uniqueSorted(
+    brief.principles.map((principle) => principle.deliberateDifference),
+  );
+  const originalityBoundaries = uniqueSorted(
+    brief.principles.flatMap((principle) => principle.doNotCopy),
+  );
   const lines = [
     `Context Brief ${brief.identity.combinedDigest}`,
     `Library: ${brief.libraryId}@${brief.libraryVersion} (${brief.libraryDigest})`,
@@ -317,14 +324,16 @@ export const renderSkoposSkillContextBriefRuntime = (
     'Apply these selected principles through project-owned components, tokens, terminology, and behavior:',
   ];
   for (const principle of brief.principles) {
-    lines.push(
-      `- ${principle.guidance}`,
-      `  Adaptation: ${principle.adaptation}`,
-      `  Deliberate difference: ${principle.deliberateDifference}`,
-      ...(principle.doNotCopy.length > 0
-        ? [`  Do not copy: ${principle.doNotCopy.join('; ')}`]
-        : []),
-    );
+    lines.push(`- ${principle.guidance}`);
+  }
+  if (adaptations.length > 0) {
+    lines.push('', `Project adaptation: ${adaptations.join(' ')}`);
+  }
+  if (deliberateDifferences.length > 0) {
+    lines.push(`Deliberate difference: ${deliberateDifferences.join(' ')}`);
+  }
+  if (originalityBoundaries.length > 0) {
+    lines.push(`Do not copy: ${originalityBoundaries.join('; ')}`);
   }
   if (brief.unresolvedProjectContextGaps.length > 0) {
     lines.push(

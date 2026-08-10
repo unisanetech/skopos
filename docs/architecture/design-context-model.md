@@ -9,8 +9,8 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: target
-implementationStatus: phase-4-deterministic-foundation-implemented
-lastUpdated: 2026-08-09
+implementationStatus: deterministic-foundation-retained-behavioral-promotion-blocked
+lastUpdated: 2026-08-10
 relatedDocs:
   - 00-architecture.md
   - agent-native-operating-model.md
@@ -34,6 +34,16 @@ authority.
 
 ## Changelog
 
+- `2026-08-10`: Applied the documented rollback boundary after three exact behavioral
+  gates failed to show material improvement. Design Context `0.1.0` and `0.2.0` each
+  finished a six-case full comparison at 2 candidate wins and 4 control wins; `0.3.0`
+  then lost its one-case release smoke. All runs were valid, contained, within budget,
+  and free of authority regression, so the result is an efficacy failure rather than
+  an infrastructure or safety failure. The generic Skill Context contract and the
+  repository-owned Library remain deterministic development work, but Product
+  Interface Design `0.5.0` no longer binds the Library and the first public tarball
+  excludes all four `design-context/**` assets. Activation and public packaging require
+  a new accepted plan, fresh holdout, independent human review, and real-project proof.
 - `2026-08-09`: Added the first reviewed pack-owned Library, a generic deterministic
   resolver, compact Context Brief identity, project-authority precedence, expiry and
   retirement exclusion, Task-wide budget suppression, exact selector invalidation,
@@ -98,9 +108,10 @@ The implementation boundary is intentionally asymmetric:
    vocabulary without importing design semantics or changing a core project primitive.
 
 The synthetic Phase 1 contract fixture remains outside the pack as a generic-boundary
-regression. The reviewed production Library now lives inside the Product Interface
-Design pack and therefore participates in the pack's exact source digest, packed asset
-boundary, and explicit re-acceptance lifecycle.
+regression. The reviewed candidate Library remains under Product Interface Design
+source ownership for development and audit, but it is not bound by the accepted
+`0.5.0` pack, does not enter the accepted pack digest, and is excluded from the first
+public npm tarball after failing behavioral promotion.
 
 Design Context is not:
 

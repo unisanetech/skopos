@@ -1,21 +1,27 @@
 ---
-title: Product Interface Design 0.3.0 Independent Human Review
-status: active
+title: Historical Product Interface Design 0.3.0 Independent Human Review
+status: superseded
 owner: skopos-skills
 id: SKOPOS-GUIDE-PRODUCT-INTERFACE-DESIGN-INDEPENDENT-HUMAN-REVIEW
 scope: skopos
 role: guide
-lifecycle: durable
+lifecycle: historical
 authority: supporting
 provenance: observed
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-10
 relatedDocs:
   - ../findings/F-20260804-skill-selection-proof-and-portability-gap.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
 ---
 
-# Product Interface Design 0.3.0 Independent Human Review
+# Historical Product Interface Design 0.3.0 Independent Human Review
+
+> Do not use this protocol to approve the first public release. It applies only to the
+> superseded `0.3.0` identity. Product Interface Design `0.5.0` failed its release
+> smoke before a full bundle existed, so independent human adjudication is not yet an
+> eligible next step. A future exact identity must first clear its machine smoke and
+> full-run gates, then receive a new label-safe guide.
 
 This guide is the handoff for a person who did not author the Skill, run the evaluation,
 or inspect its candidate/control mapping. Review only the generated A/B bundles. Do not

@@ -21,6 +21,14 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-10`: Exercised the mandatory Product Interface Design release gate against
+  fresh holdouts. Two Design Context six-case full comparisons ended 2–4, a third
+  Design Context successor lost its one-case smoke 0–1, and the exact public `0.5.0`
+  three-module core lost its fresh no-Skill smoke 0–1. All runs were valid and free of
+  authority, containment, and budget failure, so R2 is blocked on demonstrated
+  efficacy. The full core run and independent human review did not start. The required
+  core remains in the product; Design Context is unbound and its four development
+  assets are excluded from the 38-file public Skill-pack boundary.
 - `2026-08-10`: Reconciled the Plan with remote `main` after release workflow
   `31330288352` passed security, audit, licenses, SBOM, package boundary, lifecycle,
   Ubuntu, macOS, Windows, Node 22.13, and Node 24. Package metadata, version reporting,
@@ -93,8 +101,9 @@ change requires a new exact-commit run.
 
 Current release blockers are:
 
-1. Product Interface Design `0.3.0` ended its current-source paired run 4–4; material
-   improvement and independent blind human adjudication are not certified
+1. The exact public Product Interface Design `0.5.0` core lost its fresh no-Skill smoke
+   0–1, so its full comparison and independent blind human adjudication did not start;
+   the mandatory material-improvement gate is not certified
 2. the canonical convergence Plan and release-blocking Skill Finding remain active,
    and the 17 final product questions do not yet have one release scorecard
 3. the GitHub repository is private, so npm public-package provenance cannot bind to

@@ -35,7 +35,7 @@ const bindingPath = 'tools/skopos/skills/ui.product-interface-design.json';
 const packPath = 'skill-packs/ui/product-interface-design/pack.json';
 const suitePath = 'skill-packs/ui/product-interface-design/evaluations/core.suite.json';
 const contextMatrixPath =
-  'skill-packs/ui/product-interface-design/design-context/evaluations/candidate.matrix.json';
+  'skill-packs/ui/product-interface-design/design-context/evaluations/release.matrix.json';
 const contextLibraryPath =
   'skill-packs/ui/product-interface-design/design-context/library.json';
 const rubricPath = 'skill-packs/ui/product-interface-design/rubrics/product-interface-review.json';
@@ -49,18 +49,21 @@ const coreFullCaseIds = [
   'operations-workbench', 'transaction-trust', 'discovery-coordination', 'documentation-workspace',
   'responsive-transformation', 'failure-recovery', 'product-character', 'complete-service-flow',
 ];
-const contextSmokeCaseIds = ['developer-workbench'];
+const contextSmokeCaseIds = ['api-key-rotation-review'];
 const contextFullCaseIds = [
-  'developer-workbench', 'ai-delegated-work', 'commerce-onboarding',
-  'financial-review', 'developer-monitoring', 'commerce-mobile-transformation',
+  'api-key-rotation-review', 'ai-knowledge-publication', 'warehouse-transfer-exception',
+  'treasury-beneficiary-approval', 'service-degradation-response', 'catalog-import-resume',
+  'ai-research-source-correction', 'payout-hold-mobile-review',
 ];
 const contextTemplateCases: Record<string, string> = {
-  'developer-workbench': 'documentation-workspace',
-  'ai-delegated-work': 'discovery-coordination',
-  'commerce-onboarding': 'complete-service-flow',
-  'financial-review': 'transaction-trust',
-  'developer-monitoring': 'operations-workbench',
-  'commerce-mobile-transformation': 'responsive-transformation',
+  'api-key-rotation-review': 'documentation-workspace',
+  'ai-knowledge-publication': 'discovery-coordination',
+  'warehouse-transfer-exception': 'operations-workbench',
+  'treasury-beneficiary-approval': 'transaction-trust',
+  'service-degradation-response': 'failure-recovery',
+  'catalog-import-resume': 'complete-service-flow',
+  'ai-research-source-correction': 'product-character',
+  'payout-hold-mobile-review': 'responsive-transformation',
 };
 const contextRubricDimensions = [
   'task-archetype and reference fit',
@@ -142,19 +145,19 @@ const execute = args.has('--execute');
 const authorized = args.has('--authorized');
 const comparisonArg = process.argv.find((value) => value.startsWith('--comparison='))
   ?.slice('--comparison='.length);
-if (comparisonArg && comparisonArg !== 'core' && comparisonArg !== 'design-context') {
+if (comparisonArg && comparisonArg !== 'core' && comparisonArg !== 'core-release' && comparisonArg !== 'design-context') {
   throw new Error(`Unknown evaluation comparison: ${comparisonArg}`);
 }
-const comparisonMode = (comparisonArg ?? 'core') as 'core' | 'design-context';
+const comparisonMode = (comparisonArg ?? 'core') as 'core' | 'core-release' | 'design-context';
 const stageArg = process.argv.find((value) => value.startsWith('--stage='))?.slice('--stage='.length);
 if (stageArg && stageArg !== 'smoke' && stageArg !== 'full') throw new Error(`Unknown evaluation stage: ${stageArg}`);
 const stage = (stageArg ?? 'smoke') as 'smoke' | 'full';
-const smokeCaseIds = comparisonMode === 'design-context' ? contextSmokeCaseIds : coreSmokeCaseIds;
-const fullCaseIds = comparisonMode === 'design-context' ? contextFullCaseIds : coreFullCaseIds;
+const smokeCaseIds = comparisonMode === 'core' ? coreSmokeCaseIds : contextSmokeCaseIds;
+const fullCaseIds = comparisonMode === 'core' ? coreFullCaseIds : contextFullCaseIds;
 const selectedCaseIds = stage === 'smoke' ? smokeCaseIds : fullCaseIds;
 const runIdArg = process.argv.find((value) => value.startsWith('--run-id='));
 const runId = runIdArg?.slice('--run-id='.length) ??
-  `product-interface-design${comparisonMode === 'design-context' ? '-context' : ''}-${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}`;
+  `product-interface-design${comparisonMode === 'design-context' ? '-context' : comparisonMode === 'core-release' ? '-release-core' : ''}-${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}`;
 const isolatedRoot = join(tmpdir(), `skopos-${runId}`);
 const artifactBaseRoot = process.env.SKOPOS_ARTIFACT_ROOT ? resolve(process.env.SKOPOS_ARTIFACT_ROOT) : skoposRoot;
 const evidenceRoot = join(artifactBaseRoot, '.skopos/evaluations', runId);
@@ -165,7 +168,9 @@ const main = async (): Promise<void> => {
   await Promise.all([mkdir(isolatedRoot, { recursive: true }), mkdir(evidenceRoot, { recursive: true })]);
   const comparison = comparisonMode === 'design-context'
     ? await buildDesignContextComparison()
-    : undefined;
+    : comparisonMode === 'core-release'
+      ? await buildReleaseCoreComparison()
+      : undefined;
   const identities = await buildIdentities(stage, selectedCaseIds);
   const preflight = await runPreflight();
   const matrix = { cases: selectedCaseIds.length, workerCalls: selectedCaseIds.length * 2,
@@ -360,6 +365,49 @@ const buildDesignContextComparison = async (): Promise<SkoposSkillPairedComparis
   return {
     comparisonId: 'ui-product-interface-design-context',
     sourcePaths: [contextMatrixPath, contextLibraryPath, suitePath],
+    cases,
+  };
+};
+
+const buildReleaseCoreComparison = async (): Promise<SkoposSkillPairedComparison> => {
+  const [matrixSource, suiteSource] = await Promise.all([
+    readFile(join(skoposRoot, contextMatrixPath), 'utf8'),
+    readFile(join(skoposRoot, suitePath), 'utf8'),
+  ]);
+  const matrix = JSON.parse(matrixSource) as {
+    status: string;
+    cases: Array<{ caseId: string; taskPrompt: string }>;
+  };
+  if (matrix.status !== 'prepared-not-executed') {
+    throw new Error(`Unexpected release matrix status: ${matrix.status}.`);
+  }
+  if (matrix.cases.map(({ caseId }) => caseId).join('\n') !== contextFullCaseIds.join('\n')) {
+    throw new Error('Release matrix cases no longer match the frozen runner order.');
+  }
+  const suite = JSON.parse(suiteSource) as {
+    cases: Array<{ caseId: string; title: string; projectTemplatePath: string }>;
+  };
+  const templates = new Map(suite.cases.map((entry) => [entry.caseId, entry]));
+  const moduleIds = ['interface-design.structure', 'interface-design.behavior', 'interface-design.finish'];
+  const cases = matrix.cases.map((entry) => {
+    const templateCaseId = contextTemplateCases[entry.caseId];
+    const template = templateCaseId ? templates.get(templateCaseId) : undefined;
+    if (!template) throw new Error(`No frozen template mapping exists for ${entry.caseId}.`);
+    return {
+      caseId: entry.caseId,
+      title: template.title,
+      taskPrompt: entry.taskPrompt,
+      projectTemplatePath: template.projectTemplatePath,
+      controlModuleIds: [],
+      candidateModuleIds: moduleIds,
+      candidateAdditionalContext: [],
+      rubricDimensions: contextRubricDimensions,
+    };
+  });
+  return {
+    comparisonId: 'ui-product-interface-design-release-core',
+    controlKind: 'no-skill',
+    sourcePaths: [contextMatrixPath, suitePath],
     cases,
   };
 };
@@ -750,7 +798,7 @@ const selectedTemplatePaths = async (caseIds: string[]): Promise<string[]> => {
   };
   const casesById = new Map(suite.cases.map((entry) => [entry.caseId, entry]));
   return [...new Set(caseIds.map((caseId) => {
-    const sourceCaseId = comparisonMode === 'design-context'
+    const sourceCaseId = comparisonMode !== 'core'
       ? contextTemplateCases[caseId]
       : caseId;
     const evaluationCase = sourceCaseId ? casesById.get(sourceCaseId) : undefined;
@@ -761,7 +809,9 @@ const selectedTemplatePaths = async (caseIds: string[]): Promise<string[]> => {
 
 const evaluationSourcePaths = (): string[] => comparisonMode === 'design-context'
   ? [contextMatrixPath, contextLibraryPath, suitePath]
-  : [suitePath];
+  : comparisonMode === 'core-release'
+    ? [contextMatrixPath, suitePath]
+    : [suitePath];
 
 const digestSelectedTemplates = async (caseIds: string[]): Promise<string> => {
   const templatePaths = await selectedTemplatePaths(caseIds);

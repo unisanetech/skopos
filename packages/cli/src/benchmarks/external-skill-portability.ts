@@ -1067,7 +1067,7 @@ const writeProjectCapabilityBinding = async ({
     updatedAt: '2026-08-05',
     bindingId: `${kind}.ui.product-interface-design`,
     packId: 'ui.product-interface-design',
-    packVersion: '0.3.0',
+    packVersion: '0.5.0',
     lifecycle: 'candidate',
     sourceBindings,
     actionBindings: {

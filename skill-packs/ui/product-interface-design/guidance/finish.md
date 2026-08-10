@@ -8,9 +8,12 @@ Build success is not visual proof.
 2. Give each region one main containment treatment: spacing, divider, surface, border,
    or elevation. Let type, space, alignment, and order carry hierarchy; ration color.
 3. Large regions earn space through task evidence. Start from component defaults and
-   semantic tokens. Keep icons coherent and subordinate to content.
+   semantic tokens. Build product character from real domain objects, language,
+   evidence, action geometry, and justified assets—not a fashionable shell. Keep icons
+   coherent and subordinate to content.
 4. Compare equivalent wide, intermediate, and narrow states. Review order, density,
-   layers, contrast, overflow, scroll ownership, focus, transformation, and states.
+   layers, contrast, overflow, scroll ownership, focus, transformation, states, and
+   whether the captured default view actually proves the task.
 
 ## Bad to Better
 

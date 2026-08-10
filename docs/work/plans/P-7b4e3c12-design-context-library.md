@@ -9,8 +9,8 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-implementationStatus: phases-1-through-4-implemented-phase-5-runner-preflight-passed
-lastUpdated: 2026-08-09
+implementationStatus: phases-1-through-4-implemented-phase-5-blocked-deferred-from-first-release
+lastUpdated: 2026-08-10
 relatedDocs:
   - ../../architecture/design-context-model.md
   - ../../decisions/D-a61f2d9c-design-context-as-progressive-product-knowledge.md
@@ -37,31 +37,33 @@ owns the architectural choice.
 
 ## Current State
 
-1. Product Interface Design `0.3.0` exposes Structure, Behavior, and Finish.
-2. Deterministic selection and budget fixtures pass for the current exact source.
-3. Candidate-only showcases demonstrate useful range but are not efficacy Evidence.
-4. The frozen paired machine evaluation finished 4-4 and remains inconclusive.
-5. The current Task-wide complete selection measures 1,530 tokens against a 1,800-token
+1. Product Interface Design `0.5.0` exposes exactly Structure, Behavior, and Finish.
+2. All 8 deterministic fixtures pass for the exact accepted source at combined digest
+   `sha256:d11ae3f87ccbe17004c8d83c18978a60837011f46966669bcd592cab9719ee56`.
+3. The complete three-module selection measures 1,572 tokens against a 1,800-token
    standard-Task ceiling.
-6. Phase 1 now provides a generic, project-agnostic Skill Context contract in core and
+4. Phase 1 now provides a generic, project-agnostic Skill Context contract in core and
    pack-owned Design Context record-type declarations and frozen fixtures.
-7. The contract validates namespace, type rules, applicability, provenance,
+5. The contract validates namespace, type rules, applicability, provenance,
    relationships, freshness, exact digests, budget shape, and Context Brief
    originality fields without a model or network call.
-8. The pack now contains a reviewed `0.1.0` production Library with four Domain
+6. The repository contains a reviewed `0.3.0` development Library with four Domain
    Guides, six Experience Guides, three Design Signals, and ten Source Notes.
-9. A generic runtime resolver deterministically produces exact Context Briefs with
+7. A generic runtime resolver deterministically produces exact Context Briefs with
    project precedence, expiry, retirement, ambiguity, selection-limit, budget, and
    consumer-boundary explanations.
-10. Focused deterministic proof covers the complete initial domain and experience
+8. Focused deterministic proof covers the complete initial domain and experience
     matrix, explicit justification for saturated signals, copied-pack loading, and a
     clean packed CLI installation without source-checkout access.
-11. The six-case Library-backed behavioral matrix now has a generic digest-bound
-    paired-comparison runner. Its no-model preflight resolves all six exact Context
-    Briefs, gives both arms the same three accepted core modules, gives only the
-    candidate its Brief, verifies browser and isolation readiness, and preserves the
-    accepted `0.3.0` identity at 8/8 fixtures. Workers and reviewers remain explicitly
-    unexecuted, so no efficacy or pilot result is claimed.
+9. Two successive six-case full comparisons each ended 2 candidate wins to 4 control
+    wins. A third, fresh eight-case candidate then lost its one-case smoke 0-1, so its
+    full run did not start. All three gates were valid, contained, within budget, and
+    free of authority regression; they failed efficacy rather than infrastructure.
+10. The exact public `0.5.0` three-module core then lost its fresh no-Skill smoke 0-1.
+    Its full run and independent human adjudication did not start.
+11. Product Interface Design no longer binds the Library. The first public tarball
+    validates but excludes all four `design-context/**` development assets. Design
+    Context activation, public packaging, pilots, and human acceptance are deferred.
 12. Live Task projection is intentionally not activated until explicit domain and
     experience selectors have one canonical Task input path. Goal-text inference is
     rejected as unsafe and nondeterministic product authority.
@@ -266,9 +268,10 @@ Implementation record: focused source-bound tests cover all four domains, all si
 experiences, irrelevant and public-page Tasks, ambiguous and explicit multi-domain
 selection, project precedence, expiry, retirement, budget pressure, identity changes,
 consumer ownership, capability locality, saturated-signal justification, and
-copied-pack equivalence. These selector tests use no model or network call. The clean
-tarball install and external portability smoke also passes against the exact packed
-asset boundary.
+copied-pack equivalence. These selector tests use no model or network call. Repository
+tests parse the development Library directly, while the public copy step recognizes it
+as an explicitly reviewed internal source set and excludes it from the tarball. Packed
+install proof therefore covers the accepted three-module core, not Design Context.
 
 ### Phase 5 — Behavioral evaluation
 
@@ -288,18 +291,15 @@ Exit only if the exact candidate meets the existing material-improvement thresho
 introduces no important regression. An inconclusive result triggers diagnosis, not
 automatic expansion.
 
-Preparation record: `design-context/evaluations/candidate.matrix.json` freezes six
-neutral combined-domain/experience briefs, equal-arm rules, capture requirements, and
-pilot placeholders. The generic paired-evaluation runtime accepts an optional
-digest-bound comparison definition, so the control and candidate can share the exact
-accepted core while the candidate alone receives its rendered Context Brief. The
-Product Interface Design benchmark exposes this as
-`pnpm proof:product-interface-design-context-efficacy`; a passing no-model preflight
-records six resolved Briefs and validates exact source identity, templates, browser,
-toolchain, and containment without starting a worker or reviewer. The matrix status
-remains `prepared-not-executed`; this is not Evidence of quality, efficacy, human
-adjudication, or release readiness. Model smoke and full execution still require
-separate explicit authorization.
+Evaluation record: the generic paired-evaluation runtime successfully kept comparison
+sources digest-bound, arms isolated, briefs candidate-only, labels blind, and source
+identity exact. Design Context `0.1.0` and `0.2.0` each completed their six-case full
+comparison at 2 candidate wins and 4 control wins. Successor `0.3.0` then lost its
+fresh one-case smoke 0-1, so the full comparison correctly did not start. The exact
+public Product Interface Design `0.5.0` core also lost a fresh no-Skill smoke 0-1.
+Per the stop rule, independent human review and real-project pilots did not start. The
+machine gates therefore block Phase 5; this Plan records the failure instead of tuning
+against a consumed holdout or reinterpreting deterministic completeness as usefulness.
 
 ### Phase 6 — Real-project pilots
 
@@ -364,6 +364,12 @@ originality, or project conformance:
 
 Rollback never requires restoring a previous Product Interface Design name or module
 model.
+
+Implementation record: the rollback boundary is active. Product Interface Design
+retains its required three-module core, while its unproven Design Context Library is
+unbound from `pack.json` and excluded from the first public tarball. The generic
+resolver, bounded comparison contract, Library source, and failed evidence remain for
+audit and a separately accepted redesign; none is presented as release-certified.
 
 ## Completion Evidence
 

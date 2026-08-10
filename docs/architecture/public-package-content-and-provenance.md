@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-10
 relatedDocs:
   - 00-architecture.md
   - ../decisions/031-bundled-cli-release-contract.md
@@ -36,20 +36,24 @@ the private workspace root and must not appear in the installed package manifest
 
 ## Product Interface Design Runtime Assets
 
-Product Interface Design `0.3.0` is an owner-authorized Unisane capability and must not
+Product Interface Design `0.5.0` is an owner-authorized Unisane capability and must not
 be removed. Its public runtime files are fail-closed in
-`packages/cli/scripts/copy-skill-packs.mjs`. The allowlist contains exactly 40 files
+`packages/cli/scripts/copy-skill-packs.mjs`. The allowlist contains exactly 38 files
 under these roles:
 
 1. `pack.json` for selection and authority metadata
 2. `guidance/**` for selected agent context
-3. `design-context/library.json` for the reviewed, pack-owned Context Library
-4. `design-context/evaluations/candidate.matrix.json` for the frozen behavioral-
-   evaluation inputs
-5. `fixtures/**` for deterministic applicability checks
-6. `rubrics/**` for review dimensions
-7. `evaluations/core.suite.json` and `evaluations/templates/**` for explicit,
+3. `fixtures/**` for deterministic applicability checks
+4. `rubrics/**` for review dimensions
+5. `evaluations/core.suite.json` and `evaluations/templates/**` for explicit,
    user-invoked evaluation runs
+
+The four repository-owned `design-context/**` files are an explicitly reviewed
+internal source set, not public runtime assets. They are excluded because three exact
+behavioral gates failed to prove material improvement. The accepted `0.5.0` pack has
+no Context Library binding, so excluding those files cannot create an incomplete
+runtime. Reintroducing them requires new efficacy, human-review, pilot, and package-
+boundary evidence.
 
 Evaluation templates stay in the runtime package because the installed runtime reads
 the suite and copies its declared project template for an evaluation. Removing those
@@ -98,6 +102,10 @@ Before publication, the release gate must show:
 
 ## Changelog
 
+- `2026-08-10`: Kept the required Product Interface Design three-module core in the
+  package while excluding four unproven Design Context development assets. The copy
+  step now validates the complete 42-file source inventory as 38 public files plus four
+  named internal files, and copies only the public set.
 - `2026-08-09`: Recorded the copyright owner's explicit Apache-2.0 authorization for
   the Unisane UI source copied into Skopos, its theme/token baseline, and corresponding
   bundled object code; the previously blocking provenance criterion is resolved.
