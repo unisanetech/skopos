@@ -124,19 +124,30 @@ export const verifySkoposTaskRuntime = async ({
   const validActionIds = new Set(
     actionEvidence.filter((entry) => entry.status === 'pass').map((entry) => entry.id),
   );
-  const currentPathStates = await captureSkoposTaskPathStates({
-    workspaceRoot,
-    paths: impact.changedPaths,
-  });
-  const currentSourceStateDigest = digestSkoposTaskPathStates(currentPathStates);
-  const validObservations = observations.filter(
-    (observation) =>
-      digestSkoposTaskPathStates(
-        observation.sourcePathStates.filter(
-          (entry) => !taskProjectionPaths.includes(entry.path),
-        ),
-      ) === currentSourceStateDigest,
+  const observationValidity = await Promise.all(
+    observations.map(async (observation) => {
+      const recordedSourcePaths = observation.sourcePathStates
+        .filter((entry) => !taskProjectionPaths.includes(entry.path))
+        .map((entry) => entry.path);
+      const currentObservationSources = await captureSkoposTaskPathStates({
+        workspaceRoot,
+        paths: recordedSourcePaths,
+      });
+      return {
+        observation,
+        valid:
+          digestSkoposTaskPathStates(currentObservationSources) ===
+          digestSkoposTaskPathStates(
+            observation.sourcePathStates.filter(
+              (entry) => !taskProjectionPaths.includes(entry.path),
+            ),
+          ),
+      };
+    }),
   );
+  const validObservations = observationValidity
+    .filter((entry) => entry.valid)
+    .map((entry) => entry.observation);
   const matchedGuardIds = new Set(impact.matchedGuards.map((guard) => guard.id));
   const acceptanceCoverage = task.evidenceRequirements
     .filter((requirement) => requirement.phase === phase)
