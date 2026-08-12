@@ -148,22 +148,15 @@ export const verifySkoposTaskRuntime = async ({
   );
   const observationValidity = await Promise.all(
     observations.map(async (observation) => {
-      const recordedSourcePaths = observation.sourcePathStates
-        .filter((entry) => !taskProjectionPaths.includes(entry.path))
-        .map((entry) => entry.path);
       const currentObservationSources = await captureSkoposTaskPathStates({
         workspaceRoot,
-        paths: recordedSourcePaths,
+        paths: observation.sourcePathStates.map((entry) => entry.path),
       });
       return {
         observation,
         valid:
           digestSkoposTaskPathStates(currentObservationSources) ===
-          digestSkoposTaskPathStates(
-            observation.sourcePathStates.filter(
-              (entry) => !taskProjectionPaths.includes(entry.path),
-            ),
-          ),
+          observation.sourceStateDigest,
       };
     }),
   );

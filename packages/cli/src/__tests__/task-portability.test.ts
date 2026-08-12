@@ -896,6 +896,106 @@ describe('tracked Task portability', () => {
     ).toMatchObject({ status: 'covered' });
   });
 
+  it('keeps finished observation Evidence valid when Git collapses a dirty rename after commit', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Keep rename proof stable across Task closure and commit',
+      actor: 'agent-a',
+      risk: 'standard',
+      acceptanceCriteria: ['The renamed source remains covered after commit.'],
+      ownedPaths: ['src'],
+    });
+
+    await rename(
+      join(workspaceRoot, 'src/index.ts'),
+      join(workspaceRoot, 'src/renamed.ts'),
+    );
+    let task = started.task;
+    for (const step of task.steps.filter((entry) => entry.kind !== 'verification')) {
+      task = await completeSkoposTaskStepRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        stepId: step.id,
+        actor: 'agent-a',
+      });
+    }
+    await recordSkoposObservationEvidenceRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      requirementId: 'acceptance-1',
+      statement: 'The dirty rename preserves the source bytes and intended behavior.',
+      actor: 'agent-a',
+    });
+
+    const readiness = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+    expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
+    expect(readiness).toMatchObject({ readiness: 'ready', taskState: 'complete' });
+
+    await execFileAsync('git', ['add', '.'], { cwd: workspaceRoot });
+    await execFileAsync('git', ['commit', '-m', 'commit source rename'], {
+      cwd: workspaceRoot,
+    });
+    const afterCommit = await verifySkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      phase: 'closure',
+    });
+    expect(
+      afterCommit.acceptanceCoverage.find(
+        (entry) => entry.requirementId === 'acceptance-1',
+      ),
+    ).toMatchObject({ status: 'covered' });
+
+    await writeFile(
+      join(workspaceRoot, 'src/renamed.ts'),
+      'export const value = 2;\n',
+      'utf8',
+    );
+    const afterMutation = await verifySkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      phase: 'closure',
+    });
+    expect(
+      afterMutation.acceptanceCoverage.find(
+        (entry) => entry.requirementId === 'acceptance-1',
+      ),
+    ).toMatchObject({ status: 'missing' });
+
+    await writeFile(
+      join(workspaceRoot, 'src/renamed.ts'),
+      'export const value = 1;\n',
+      'utf8',
+    );
+    const afterRestore = await verifySkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      phase: 'closure',
+    });
+    expect(
+      afterRestore.acceptanceCoverage.find(
+        (entry) => entry.requirementId === 'acceptance-1',
+      ),
+    ).toMatchObject({ status: 'covered' });
+
+    await rm(join(workspaceRoot, 'src/renamed.ts'));
+    const afterDeletion = await verifySkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      phase: 'closure',
+    });
+    expect(
+      afterDeletion.acceptanceCoverage.find(
+        (entry) => entry.requirementId === 'acceptance-1',
+      ),
+    ).toMatchObject({ status: 'missing' });
+  }, 20_000);
+
   it('does not advance an active Task while implementation steps remain unfinished', async () => {
     const workspaceRoot = await createWorkspace();
     const started = await buildSkoposStartRuntime({
