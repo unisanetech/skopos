@@ -43,6 +43,8 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(certifyBlock, /p\.version!==tag\|\|p\.publishConfig/u);
   assert.match(certifyBlock, /pnpm release:security:validate/u);
   assert.match(certifyBlock, /pnpm release:publish:validate/u);
+  assert.match(certifyBlock, /pnpm release:scorecard:validate/u);
+  assert.match(certifyBlock, /pnpm release:reconstruct:validate/u);
   assert.match(certifyBlock, /pnpm typecheck/u);
   assert.match(certifyBlock, /pnpm test/u);
   assert.match(certifyBlock, /pnpm proof/u);
@@ -79,6 +81,8 @@ for (const weakened of [
   workflow.replace('    needs: certify\n', ''),
   workflow.replace('          - oidc-publish\n', ''),
   workflow.replace('${{ secrets.NPM_BOOTSTRAP_TOKEN }}', '${{ secrets.NPM_TOKEN }}'),
+  workflow.replace('          pnpm release:scorecard:validate\n', ''),
+  workflow.replace('        run: pnpm release:reconstruct:validate\n', '        run: echo skipped-reconstruction\n'),
   workflow.replace('sha256sum --check --strict skopos-cli.sha256', 'echo skipped-digest-check'),
   workflow.replaceAll('--tag next', '--tag latest'),
 ]) {

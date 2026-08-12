@@ -3,6 +3,7 @@ export * from './application/adoption/adoption.service.js';
 export * from './application/agent-native/agent-native-operating-model.service.js';
 export * from './application/shared/current-task-state.js';
 export * from './application/task/task.service.js';
+export * from './application/task/task-split.service.js';
 export * from './application/task/task-paths.js';
 export * from './application/work-queue/work-queue.service.js';
 export * from './application/verification/verification.service.js';

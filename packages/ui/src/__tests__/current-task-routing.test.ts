@@ -1,4 +1,4 @@
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -64,5 +64,26 @@ const createWorkspace = async (): Promise<string> => {
     actor: 'fixture-init',
     scaffoldInstructions: false,
   });
+  await mkdir(join(workspaceRoot, 'tools', 'skopos'), { recursive: true });
+  await writeFile(
+    join(workspaceRoot, 'tools', 'skopos', 'scopes.yaml'),
+    [
+      'schemaVersion: 1',
+      'scopes:',
+      '  - id: ui-task-routing',
+      '    title: UI Task Routing',
+      '    kind: workspace',
+      '    path: .',
+      '    memoryRoot: docs',
+      '    codeRoots: [.]',
+      '    parent: null',
+      '    profile: fixture.workspace',
+      '    dependsOn: []',
+      '    owners: [fixture]',
+      '    aliases: [fixture]',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
   return workspaceRoot;
 };

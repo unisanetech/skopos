@@ -1,0 +1,32 @@
+{
+  "snapshotId": "S-d973bac23a9e",
+  "taskId": "T-c9e6b576",
+  "sessionId": "release-reconcile-close-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md",
+      "digest": "8844c0340373141dc4eba765e80533d748942e13e9afcb2c8a0b2e3ec83fa367"
+    },
+    {
+      "path": "docs/findings/F-20260811-topology-aware-task-scope-resolution-gap.md",
+      "digest": "6c46c73922fc24ce79ad55d24de6c42d8414cc7c9c0f71dbd9d62c664303ea2e"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "7aedc93173277d1d670d18c4c3f6318612c5f248ef35e0282eb4fa27d054972e"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "47e3f5da76ded4231443927d66c43cd45cc63b833c077a987d419ea06db39578"
+    },
+    {
+      "path": "package.json",
+      "digest": "e07c53569f3bec3aa375dd05f9b463624ab92e3adb4d49a7458ee2324bce35ff"
+    }
+  ],
+  "digest": "d973bac23a9e5bf45fdbbe807f1b4124790c638c05de9dcdc98e0ff9aadedfe3",
+  "createdAt": "2026-08-11T02:44:54.677Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c9e6b576-S-d973bac23a9e.json"
+}

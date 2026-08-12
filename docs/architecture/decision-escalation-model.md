@@ -9,11 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-31
+lastUpdated: 2026-08-11
 relatedDocs:
   - evidence-and-readiness-model.md
   - config-model.md
   - ../domains/product/positioning.md
+  - ../decisions/D-20260803-evidence-based-ask-back-classification.md
+  - ../decisions/D-20260811-topology-aware-task-scope-authority.md
+  - ../findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md
 reviewCycle: when owning truth changes
 ---
 
@@ -23,6 +26,10 @@ Skopos should force agents to ask humans when a choice should not be guessed.
 
 ## Changelog
 
+- `2026-08-11`: Required public-contract and Scope ask-backs to use evidence-based
+  subject-and-intent classification. Presentation-only work is not a public API change,
+  and deterministic narrowest-Scope selection is a recommendation or automatic result
+  rather than a repeated question.
 - `2026-07-31`: Replaced prototype workflow-router terminology with the canonical
   Task, Session, Verify, and Readiness execution contract.
 - `2026-07-28`: Bound question and recommendation state to the exact Task and
@@ -119,11 +126,17 @@ The current bootstrap slice uses this model to emit:
 
 The current planning slice also uses this model to emit:
 
-1. scope confirmation when a plan is too broad
-2. public API confirmation when a goal implies contract changes
+1. Scope confirmation when Task facts leave more than one credible authority boundary,
+   no declared Scope owns the intended surface, or the work intentionally spans Scopes
+2. public API confirmation when both a public contract subject and intent to change
+   externally consumed semantics are present; public presentation alone does not qualify
 3. migration confirmation when a goal implies destructive change
 4. provider confirmation when a goal implies vendor or integration choice
 5. security confirmation when a goal touches auth, privacy, or permission behavior
+
+When the narrowest valid Scope is deterministic from explicit Scope, target path, and
+owned paths, Skopos selects it and explains why. It does not ask the user to confirm a
+decision the project topology already made.
 
 ## Current Execution Application
 
@@ -134,3 +147,6 @@ The current Task model extends this contract beyond bootstrap and planning:
 3. contract-changing work is confirmed during `skopos start`
 4. Session context projects the highest-priority blocking decision and current Task
 5. Verify and Readiness prevent closure while required decisions or Evidence remain open
+6. every Task-local question receives a terminal disposition before Task completion;
+   non-blocking questions may permit implementation but do not remain `open` in a
+   terminal Task

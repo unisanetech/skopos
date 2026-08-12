@@ -35,6 +35,43 @@ export interface SkoposObservationEvidenceArtifact
   sourcePathStates: SkoposTaskPathState[];
 }
 
+export type SkoposBrowserEvidenceCaptureKind =
+  | 'screenshot'
+  | 'accessibility'
+  | 'dom-measurement';
+
+export interface SkoposBrowserEvidenceArtifact
+  extends SkoposArtifactEnvelope<'browser-evidence'> {
+  workspaceRoot: string;
+  taskId: string;
+  requirementId?: string;
+  guardIds: string[];
+  url: string;
+  viewport: {
+    width: number;
+    height: number;
+    deviceScaleFactor?: number;
+  };
+  conditions: string[];
+  interaction: string;
+  capture: {
+    kind: SkoposBrowserEvidenceCaptureKind;
+    path?: string;
+    measurement?: string;
+    digest: string;
+  };
+  browser: string;
+  environment: {
+    platform: string;
+    architecture: string;
+    nodeVersion: string;
+  };
+  observedByActorId: string;
+  observedAt: string;
+  sourceStateDigest: string;
+  sourcePathStates: SkoposTaskPathState[];
+}
+
 export interface SkoposVerificationArtifact extends SkoposArtifactEnvelope<'verification'> {
   workspaceRoot: string;
   taskId: string;

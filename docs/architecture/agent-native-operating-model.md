@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
@@ -31,6 +31,14 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-11`: Completed the approved Codex delivery lifecycle. The origin releases
+  writing authority and becomes an explicit reviewer; the Codex adapter creates real
+  child tasks only after user approval, binds returned thread identities to Skopos
+  Sessions, waits for results, and falls back truthfully when host delivery is absent.
+- `2026-08-11`: Implemented reviewed work splitting and linked child Tasks. Split
+  proposals validate ownership partitions, dependency order, Scope selection, and
+  parent acceptance mappings; exact apply creates tracked children; and `task assign`
+  binds each child to one fresh or live Session without pretending to launch a host.
 - `2026-08-09`: Added explainable automatic risk/detail admission, one canonical
   progressive workflow projection, dynamic unowned-path suggestions, and read-only UI
   guidance for exact next commands, ownership, Evidence, and closure.
@@ -170,6 +178,65 @@ work; standard and high-impact work keep explicit verification guidance.
 One Session may own at most one writing Task. One Task may have Child Tasks when work
 must be separately claimable.
 
+### Work splitting and multi-Session assignment
+
+Skopos never silently decomposes agent work. The agent or user authors a bounded child
+specification containing a stable key, goal, owned paths, optional Scope, acceptance,
+dependencies, and parent acceptance mappings. The lifecycle is:
+
+```text
+claimed parent Task
+  -> validate a non-authoritative split proposal
+  -> review the exact proposal digest
+  -> release any live parent writer reservation
+  -> apply the digest and create linked tracked children
+  -> transition the originating Session to reviewer mode
+  -> assign each child to a separate Session
+  -> complete child proof
+  -> wait for and review canonical child state
+  -> derive parent acceptance and Readiness from successful children
+```
+
+Sibling child ownership must not overlap. Proposed dependency keys must exist and be
+acyclic. The proposal is invalidated by any parent Task mutation before apply. Apply
+uses fresh collision-resistant Task ids, writes both sides of every relationship, and
+rolls back newly prepared children when the parent link cannot publish. The parent
+becomes blocked and unclaimed while children execute.
+
+Each child remains a normal Task with its own Scope, ownership, Guards, Actions,
+Evidence, coordination, handoff, and closure. A child mapped to a parent acceptance
+requirement satisfies that requirement only after the child reaches `complete`;
+missing, active, blocked, cancelled, or superseded children block parent closure.
+Child mutation synchronizes current state and actor information to the parent, and the
+Work Queue continues to derive dependency blocking from canonical Task ids.
+
+Linked child tracked documents and immutable Task snapshots are automatically
+attributed to the parent integration proof. They do not require manual ownership
+expansion when the parent reviews or closes. The attribution is exact by linked Task
+id; artifacts from unrelated Tasks retain their existing mutation attribution or
+remain external and cannot silently enter the parent proof subject.
+
+`task assign` opens or heartbeats the named Session, enforces one writing Task for that
+Session, reserves the Task, claims every declared owned resource, and publishes the
+actor claim. Host adapters may create a fresh chat before calling it. Unsupported hosts
+receive the exact CLI command and prompt; generated assignment is not reported as host
+delivery.
+
+For an approved Codex split, activation still only generates host-neutral assignment
+instructions. The Codex adapter owns the real delivery sequence: create one task in the
+same Project, inject the exact bounded prompt, bind the returned Codex thread identity
+as the child's Skopos Session id, send the binding follow-up, wait for completion, and
+return control to the originating reviewer. The adapter records a real delivery only
+after those host calls succeed. Missing or failed capabilities preserve the exact
+prompt and follow-up as a manual fallback and report the failed stage.
+
+The originating Session does not silently become read-only or reopen as a writer. It
+releases reservations and claims, completes or reconciles mutations and contamination,
+and uses the audited coordination transition to enter `reviewer` mode. Session context
+preserves and explains that mode. Returning to `writer` uses the same actor-bound,
+live-Session transition and must pass the same no-authority/no-contamination checks
+before any Task reservation or claim. CLI and MCP call the same runtime authority.
+
 Task claim ownership and work disposition are independent. Releasing an actor claim
 does not change Task state. A separate reasoned disposition operation applies one of
 these transitions:
@@ -256,9 +323,10 @@ completion. Unsupported capabilities fall back to a reviewed copy-and-paste prom
 generation is never reported as delivery.
 
 CLI and MCP expose the same runtime authorities for expired Action recovery, audited
-Session Task recovery, and explicit Task disposition. The bundled UI is a read-only
-projection: it reports disposition kind, prior and next state, actor, timestamp,
-reason, and successor, but does not create an alternative mutation authority.
+Session Task recovery, writer/reviewer Session transition, and explicit Task
+disposition. The bundled UI is a read-only projection: it reports disposition kind,
+prior and next state, actor, timestamp, reason, and successor, but does not create an
+alternative mutation authority.
 
 For the current Task, the UI projects the selected workflow, admission reasons, exact
 next command, Evidence requirements, and changed paths outside declared ownership.

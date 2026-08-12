@@ -1,6 +1,6 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 
 import {
   buildSkoposDocumentCatalog,
@@ -13,6 +13,8 @@ import type {
   SkoposActionRunArtifact,
   SkoposReadinessArtifact,
   SkoposReadinessTarget,
+  SkoposBrowserEvidenceArtifact,
+  SkoposBrowserEvidenceCaptureKind,
   SkoposObservationEvidenceArtifact,
   SkoposTaskActionEvidenceLink,
   SkoposTaskArtifact,
@@ -62,11 +64,30 @@ export const verifySkoposTaskRuntime = async ({
 }): Promise<SkoposVerificationArtifact> => {
   const workspaceRoot = resolve(cwd);
   const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const linkedChildren = await Promise.all(
+    task.childTasks.map(async (reference) => {
+      try {
+        return {
+          reference,
+          task: await showSkoposTaskRuntime({
+            cwd: workspaceRoot,
+            taskId: reference.taskId,
+          }),
+        };
+      } catch (error) {
+        return {
+          reference,
+          error: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }),
+  );
   const mutationAttributions = await loadTaskMutationAttributions(workspaceRoot);
   const taskChanges = await resolveSkoposTaskChangedPaths({
     workspaceRoot,
     changeScope: task.changeScope,
     currentTaskId: task.id,
+    linkedChildTaskIds: task.childTasks.map((child) => child.taskId),
     mutationAttributions,
     generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
@@ -101,10 +122,11 @@ export const verifySkoposTaskRuntime = async ({
   );
   const requiredActions = dedupeActions(impact.requiredActions);
   const requiredActionIds = new Set(requiredActions.map((action) => action.id));
-  const [manifests, runs, observations, actionLinks, memoryCatalog] = await Promise.all([
+  const [manifests, runs, observations, browserReceipts, actionLinks, memoryCatalog] = await Promise.all([
     loadSkoposActionManifests({ cwd: workspaceRoot }),
     loadActionRuns(workspaceRoot),
     loadObservationEvidence(workspaceRoot, task.taskIdentity),
+    loadBrowserEvidence(workspaceRoot, task.taskIdentity),
     loadTaskActionEvidenceLinks(workspaceRoot, task.taskIdentity),
     buildSkoposDocumentCatalog({ cwd: workspaceRoot }),
   ]);
@@ -148,6 +170,21 @@ export const verifySkoposTaskRuntime = async ({
   const validObservations = observationValidity
     .filter((entry) => entry.valid)
     .map((entry) => entry.observation);
+  const browserReceiptValidity = await Promise.all(
+    browserReceipts.map(async (receipt) => {
+      const currentReceiptSources = await captureSkoposTaskPathStates({
+        workspaceRoot,
+        paths: receipt.sourcePathStates.map((entry) => entry.path),
+      });
+      return {
+        receipt,
+        valid: digestSkoposTaskPathStates(currentReceiptSources) === receipt.sourceStateDigest,
+      };
+    }),
+  );
+  const validBrowserReceipts = browserReceiptValidity
+    .filter((entry) => entry.valid)
+    .map((entry) => entry.receipt);
   const matchedGuardIds = new Set(impact.matchedGuards.map((guard) => guard.id));
   const acceptanceCoverage = task.evidenceRequirements
     .filter((requirement) => requirement.phase === phase)
@@ -155,12 +192,19 @@ export const verifySkoposTaskRuntime = async ({
       isApplicableAcceptanceRequirement(requirement.guardIds, matchedGuardIds),
     )
     .map((requirement) => {
+      const mappedChildren = linkedChildren.filter((entry) =>
+        (entry.reference.parentAcceptanceRequirementIds ?? []).includes(requirement.id),
+      );
+      const childrenCovered =
+        requirement.id.startsWith('acceptance-') &&
+        mappedChildren.length > 0 &&
+        mappedChildren.every((entry) => entry.task?.state === 'complete');
       const applicableActionIds = selectApplicableAcceptanceActionIds(
         requirement.actionIds,
         requiredActionIds,
       );
       const actionsCovered = applicableActionIds.every((id) => validActionIds.has(id));
-      const hasLinkedObservation = validObservations.some(
+      const hasLinkedObservation = [...validObservations, ...validBrowserReceipts].some(
         (observation) =>
           observation.requirementId === requirement.id ||
           requirement.guardIds.some((id) => observation.guardIds.includes(id)),
@@ -172,27 +216,38 @@ export const verifySkoposTaskRuntime = async ({
             (matched.evidence === 'source-bound-action' ||
               validObservations.some((observation) =>
                 observation.guardIds.includes(id),
-              )),
+              ) || validBrowserReceipts.some((receipt) => receipt.guardIds.includes(id))),
         );
       });
-      const covered =
-        requirement.evidence === 'agent-observation'
+      const covered = childrenCovered ||
+        (requirement.evidence === 'agent-observation'
           ? hasLinkedObservation && guardsCovered
           : actionsCovered &&
             guardsCovered &&
-            applicableActionIds.length + requirement.guardIds.length > 0;
+            applicableActionIds.length + requirement.guardIds.length > 0);
       return {
         requirementId: requirement.id,
         acceptanceCriterion: requirement.acceptanceCriterion,
         status: covered ? 'covered' as const : 'missing' as const,
         actionIds: applicableActionIds,
         guardIds: requirement.guardIds,
-        summary: covered
-          ? 'Acceptance criterion is linked to valid source-bound Evidence.'
+        summary: childrenCovered
+          ? `Acceptance criterion is satisfied by completed linked child Tasks: ${mappedChildren.map((entry) => entry.reference.taskId).join(', ')}.`
+          : covered
+            ? 'Acceptance criterion is linked to valid source-bound Evidence.'
           : 'Acceptance criterion lacks valid linked Evidence.',
       };
     });
   const blockers = [
+    ...(phase === 'closure'
+      ? linkedChildren.flatMap((entry) =>
+          entry.error
+            ? [`Linked child Task ${entry.reference.taskId} cannot be loaded: ${entry.error}`]
+            : entry.task?.state !== 'complete'
+              ? [`Linked child Task ${entry.reference.taskId} is ${entry.task?.state ?? entry.reference.state}; parent closure requires successful child completion.`]
+              : [],
+        )
+      : []),
     ...(phase === 'closure'
       ? task.memoryObligations
           .filter((obligation) => obligation.status === 'open')
@@ -229,7 +284,8 @@ export const verifySkoposTaskRuntime = async ({
           guard.strength === 'required' &&
           guard.evidence === 'agent-observation' &&
           guard.requiredActionIds.length === 0 &&
-          !validObservations.some((observation) => observation.guardIds.includes(guard.id)),
+          !validObservations.some((observation) => observation.guardIds.includes(guard.id)) &&
+          !validBrowserReceipts.some((receipt) => receipt.guardIds.includes(guard.id)),
       )
       .map((guard) => `Guard ${guard.id} requires recorded observation Evidence.`),
     ...acceptanceCoverage
@@ -368,6 +424,7 @@ export const recordSkoposObservationEvidenceRuntime = async ({
     workspaceRoot,
     changeScope: task.changeScope,
     currentTaskId: task.id,
+    linkedChildTaskIds: task.childTasks.map((child) => child.taskId),
     mutationAttributions: await loadTaskMutationAttributions(workspaceRoot),
     generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
@@ -408,6 +465,179 @@ export const recordSkoposObservationEvidenceRuntime = async ({
     dryRun,
   });
   return artifact;
+};
+
+export const recordSkoposBrowserEvidenceRuntime = async ({
+  cwd,
+  taskId,
+  requirementId,
+  guardIds = [],
+  url,
+  viewport,
+  conditions = [],
+  interaction,
+  captureKind,
+  capturePath,
+  measurement,
+  browser,
+  actor,
+  dryRun = false,
+}: {
+  cwd: string;
+  taskId: string;
+  requirementId?: string;
+  guardIds?: string[];
+  url: string;
+  viewport: { width: number; height: number; deviceScaleFactor?: number };
+  conditions?: string[];
+  interaction: string;
+  captureKind: SkoposBrowserEvidenceCaptureKind;
+  capturePath?: string;
+  measurement?: string;
+  browser: string;
+  actor?: string;
+  dryRun?: boolean;
+}): Promise<SkoposBrowserEvidenceArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  const actorId = actor?.trim() || process.env.SKOPOS_ACTOR?.trim();
+  if (!actorId) throw new Error('Browser Evidence requires --actor <id> or SKOPOS_ACTOR.');
+  const normalizedUrl = validateBrowserEvidenceUrl(url);
+  const normalizedInteraction = interaction.trim();
+  if (!normalizedInteraction) throw new Error('Browser Evidence requires a performed interaction or inspected state.');
+  const normalizedBrowser = browser.trim();
+  if (!normalizedBrowser) throw new Error('Browser Evidence requires browser identity.');
+  if (!Number.isInteger(viewport.width) || viewport.width <= 0 ||
+      !Number.isInteger(viewport.height) || viewport.height <= 0) {
+    throw new Error('Browser Evidence viewport width and height must be positive integers.');
+  }
+  if (viewport.deviceScaleFactor !== undefined &&
+      (!Number.isFinite(viewport.deviceScaleFactor) || viewport.deviceScaleFactor <= 0)) {
+    throw new Error('Browser Evidence device scale factor must be positive.');
+  }
+  if (!requirementId && guardIds.length === 0) {
+    throw new Error('Browser Evidence must cover an acceptance requirement or Guard.');
+  }
+  if (requirementId &&
+      !task.evidenceRequirements.some((requirement) => requirement.id === requirementId)) {
+    throw new Error(`Task ${task.id} has no Evidence requirement ${requirementId}.`);
+  }
+  if (guardIds.length > 0) {
+    const guards = await loadSkoposGuardManifests({ cwd: workspaceRoot });
+    const guardById = new Map(guards.map((guard) => [guard.id, guard]));
+    for (const guardId of new Set(guardIds)) {
+      const guard = guardById.get(guardId);
+      if (!guard) throw new Error(`Project has no registered Guard ${guardId}.`);
+      if (guard.requires.evidence !== 'agent-observation') {
+        throw new Error(
+          `Guard ${guardId} requires ${guard.requires.evidence} Evidence and cannot be satisfied by a browser receipt.`,
+        );
+      }
+    }
+  }
+  const capture = await buildBrowserEvidenceCapture({
+    workspaceRoot,
+    captureKind,
+    capturePath,
+    measurement,
+  });
+  const sourcePathStates = await captureSkoposTaskPathStates({
+    workspaceRoot,
+    paths: excludeTrackedTaskDocuments(
+      task.changeScope.declaredOwnedPaths,
+      resolveSkoposTrackedTaskProjectionPaths(task.trackedDocumentPath),
+    ),
+  });
+  const observedAt = new Date().toISOString();
+  const artifact: SkoposBrowserEvidenceArtifact = {
+    schemaVersion: 1,
+    id: `${task.id}.browser.${cryptoSafeId(observedAt, requirementId ?? guardIds.join('-'))}.${randomUUID().replaceAll('-', '').slice(0, 8)}`,
+    type: 'browser-evidence',
+    status: 'generated',
+    authority: 'generated',
+    generatedAt: observedAt,
+    updatedAt: observedAt,
+    summary: `${normalizedInteraction} at ${normalizedUrl} (${viewport.width}x${viewport.height}).`,
+    workspaceRoot,
+    taskId,
+    requirementId,
+    guardIds: [...new Set(guardIds)].sort(),
+    url: normalizedUrl,
+    viewport,
+    conditions: [...new Set(conditions.map((entry) => entry.trim()).filter(Boolean))].sort(),
+    interaction: normalizedInteraction,
+    capture,
+    browser: normalizedBrowser,
+    environment: {
+      platform: process.platform,
+      architecture: process.arch,
+      nodeVersion: process.version,
+    },
+    observedByActorId: actorId,
+    observedAt,
+    sourceStateDigest: digestSkoposTaskPathStates(sourcePathStates),
+    sourcePathStates,
+  };
+  await writeJsonArtifact({
+    artifactPath: join(
+      resolveSkoposTaskDirectory(workspaceRoot, task.taskIdentity),
+      'evidence',
+      `${artifact.id}.json`,
+    ),
+    artifact,
+    dryRun,
+  });
+  return artifact;
+};
+
+const validateBrowserEvidenceUrl = (value: string): string => {
+  const normalized = value.trim();
+  if (normalized.startsWith('/')) return normalized;
+  try {
+    const parsed = new URL(normalized);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw new Error();
+    return parsed.toString();
+  } catch {
+    throw new Error('Browser Evidence URL must be an http(s) URL or a route beginning with /.');
+  }
+};
+
+const buildBrowserEvidenceCapture = async ({
+  workspaceRoot,
+  captureKind,
+  capturePath,
+  measurement,
+}: {
+  workspaceRoot: string;
+  captureKind: SkoposBrowserEvidenceCaptureKind;
+  capturePath?: string;
+  measurement?: string;
+}): Promise<SkoposBrowserEvidenceArtifact['capture']> => {
+  const normalizedMeasurement = measurement?.trim();
+  if (Boolean(capturePath) === Boolean(normalizedMeasurement)) {
+    throw new Error('Browser Evidence requires exactly one capture path or measurement.');
+  }
+  if (capturePath) {
+    const absolutePath = resolve(workspaceRoot, capturePath);
+    const projectPath = relative(workspaceRoot, absolutePath).replaceAll('\\', '/');
+    if (!projectPath || projectPath === '..' || projectPath.startsWith('../')) {
+      throw new Error('Browser Evidence capture path must stay inside the workspace.');
+    }
+    const content = await readFile(absolutePath);
+    return {
+      kind: captureKind,
+      path: projectPath,
+      digest: createHash('sha256').update(content).digest('hex'),
+    };
+  }
+  if (captureKind !== 'dom-measurement' && captureKind !== 'accessibility') {
+    throw new Error('Inline Browser Evidence measurements require dom-measurement or accessibility capture kind.');
+  }
+  return {
+    kind: captureKind,
+    measurement: normalizedMeasurement,
+    digest: createHash('sha256').update(normalizedMeasurement!).digest('hex'),
+  };
 };
 
 const loadTaskMutationAttributions = async (
@@ -478,6 +708,11 @@ export const assessSkoposTaskReadinessRuntime = async ({
     unfinishedPreVerificationSteps.length > 0
       ? `Task ${task.id} has unfinished pre-verification steps: ${unfinishedPreVerificationSteps.map((step) => step.id).join(', ')}.`
       : undefined;
+  const openQuestions = task.questions.filter((question) => question.status === 'open');
+  const questionBlocker =
+    target === 'close' && openQuestions.length > 0
+      ? `Task ${task.id} has open decision questions: ${openQuestions.map((question) => question.id).join(', ')}. Resolve each with skopos decide <question-id> <option-id> . --actor <id>.`
+      : undefined;
   const closeAdvanceFromActive =
     target === 'close' && advance && task.state === 'active';
   const closeAdvanceFromVerifying =
@@ -499,6 +734,7 @@ export const assessSkoposTaskReadinessRuntime = async ({
     ),
     ...(snapshotBlocker ? [snapshotBlocker] : []),
     ...(stepBlocker ? [stepBlocker] : []),
+    ...(questionBlocker ? [questionBlocker] : []),
     ...(stateBlocker ? [stateBlocker] : []),
   ];
   const now = new Date().toISOString();
@@ -836,6 +1072,25 @@ const loadObservationEvidence = async (
     return artifacts.filter(
       (artifact): artifact is SkoposObservationEvidenceArtifact =>
         artifact.type === 'observation-evidence',
+    );
+  } catch {
+    return [];
+  }
+};
+
+const loadBrowserEvidence = async (
+  workspaceRoot: string,
+  taskIdentity: Parameters<typeof resolveSkoposTaskDirectory>[1],
+): Promise<SkoposBrowserEvidenceArtifact[]> => {
+  const root = join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'evidence');
+  try {
+    const entries = await readdir(root);
+    const artifacts = await Promise.all(
+      entries.filter((entry) => entry.endsWith('.json')).map(async (entry) =>
+        JSON.parse(await readFile(join(root, entry), 'utf8')) as SkoposBrowserEvidenceArtifact),
+    );
+    return artifacts.filter(
+      (artifact): artifact is SkoposBrowserEvidenceArtifact => artifact.type === 'browser-evidence',
     );
   } catch {
     return [];

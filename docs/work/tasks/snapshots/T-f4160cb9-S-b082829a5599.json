@@ -1,0 +1,32 @@
+{
+  "snapshotId": "S-b082829a5599",
+  "taskId": "T-f4160cb9",
+  "sessionId": "019fef8a-a069-7b41-bb25-aea57e17e680-recovery",
+  "actorId": "codex-launch-contract",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/task-splitting.test.ts",
+      "digest": "7fdcd2cd9b5b2fd3def48fb672f55dab9f25402f7d4bc6e76b700f33b084da29"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "949bc4c7432ac8dbce2f28b0495b17fd13ef0c94986467beb0753091e04d1249"
+    },
+    {
+      "path": "packages/instructions/src/application/sync-codex-wrapper-adapter/sync-codex-wrapper-adapter.service.ts",
+      "digest": "c482b9c0d94afcb74961b533e98d2bfd941a281fe5f81da95da938f934b4dbfa"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "084fdc45f1d7047f883601a104ca3073ab9aebe899a5c004adddd2da71e57d0e"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task-split.service.ts",
+      "digest": "d4cb33732d7a4433314369c5678c1b0cbdc7072bb1e571d26fa46448de0347eb"
+    }
+  ],
+  "digest": "b082829a559966192619eac9b22ed9a53d64429f3a95c13f8b8ca17261e44de5",
+  "createdAt": "2026-08-11T06:51:41.069Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-f4160cb9-S-b082829a5599.json"
+}

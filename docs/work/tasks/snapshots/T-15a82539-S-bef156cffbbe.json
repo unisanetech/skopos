@@ -1,0 +1,84 @@
+{
+  "snapshotId": "S-bef156cffbbe",
+  "taskId": "T-15a82539",
+  "sessionId": "parent-child-implementation-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "133f5edad057c7149a0441c13609322cb36fc0a8b1c4361cdd609d7674407097"
+    },
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "3f8d28b2ce65d7c5dc65f980638bd62c3d8b194180cbe4c4bc8382cb6e3f19a2"
+    },
+    {
+      "path": "docs/architecture/evidence-and-readiness-model.md",
+      "digest": "9b79e3bc71c55b14212db18c7dcbbcbee06be79a0c6257df716cd2c1d0caa508"
+    },
+    {
+      "path": "docs/guides/developer-workflows.md",
+      "digest": "87fa0c387d5a51c69ce3fe4706ad154ea71f2e3a7cba0aff3561083b1accf648"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "c36eb628d189bc6003767c175b870d9b28478b757558f0f816fd08d9e143f334"
+    },
+    {
+      "path": "packages/cli/src/__tests__/mcp-server-contract.test.ts",
+      "digest": "72b315c25d480d356e5a7cb2e6c758f5eddb4d95d5ba7e449aaaebdcbcbcb39a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-ownership-expansion.test.ts",
+      "digest": "bb8bf56dbcf4650ce0ebb161339cd2be688e2edda1a81cc9db12b620334e67f7"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-splitting.test.ts",
+      "digest": "006ff1ba844cfa324744cd1655f6ddaf5d9fe02e420c9ba71671e82d27f42ce1"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "3d3f21a084b9e92850d009ccc037e9523efa7c1446f66b83ceae9db0725d090b"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "9e2199b3206f1007013e10428178ffbe6679f63a69fb277e5bc3f0264d318b59"
+    },
+    {
+      "path": "packages/mcp",
+      "digest": "6341f16bfac8ce01cd1059d3dc8297a65d4e53f0c256e70fffe59bf290660a66"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "fea07c9350920cd772d09b7c3ed00dd88a85be69b9755af7bd55fbdb780e98bb"
+    },
+    {
+      "path": "packages/runtime/src/application/start",
+      "digest": "7eab0844dfbce30280e84217cfc51332d5368082b6a036a727b58755583f6fd2"
+    },
+    {
+      "path": "packages/runtime/src/application/task",
+      "digest": "6b6ffd3c32278417c36a1f7b33e889ea49367374ca4a0fcf2c05d6363e97f970"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "f9e9db5a19a70c04bd5f8ee6eb2b75f3bf37d570ea25c106f217cba31515667b"
+    },
+    {
+      "path": "packages/runtime/src/application/work-queue",
+      "digest": "ce5e58ce52fe205c1e6dee896a30ee8d0fed8c9a218c0b1751178bb4e937df26"
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "digest": "967abd99bd302134191bde33acc86b4c064de2c7376ef8f74906bf798055ce51"
+    },
+    {
+      "path": "packages/ui",
+      "digest": "4662046cfb4bf71f3b56659669c43240330fc6d486a6b8ab2ed775cca547ab8c"
+    }
+  ],
+  "digest": "bef156cffbbe2365035b106ab3a5f9f22325394974e22a9ab7241915471ff08c",
+  "createdAt": "2026-08-11T03:31:25.461Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-15a82539-S-bef156cffbbe.json"
+}

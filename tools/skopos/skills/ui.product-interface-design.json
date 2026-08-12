@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product Interface Design skill pack.",
-  "updatedAt": "2026-08-10T11:40:36.418Z",
+  "updatedAt": "2026-08-12T15:10:32.646Z",
   "bindingId": "skopos.ui.product-interface-design",
   "packId": "ui.product-interface-design",
   "packVersion": "0.5.0",
@@ -46,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-10T11:40:36.418Z",
-    "acceptedBy": "codex-release-finalization",
-    "reason": "Accept the final 0.5.0 three-module Product Interface Design core identity for deterministic release-gate evaluation; this does not certify efficacy, and Design Context remains unbound and excluded.",
+    "acceptedAt": "2026-08-12T15:10:32.646Z",
+    "acceptedBy": "codex-root",
+    "reason": "Recompute the exact accepted project-source identity after the reviewed public website and release-control changes; do not change the pack, selector, binding boundary, or efficacy claim.",
     "identity": {
       "packSourceDigest": "sha256:cbd4969882f38d88e717e56aa680629a46e1dbda490c8b273758c89ddcd6efb2",
-      "bindingSourceDigest": "sha256:1e124c2e2291357c45375f6a443e547a711c447e758c92f40701c25511f70cb1",
-      "projectSourceDigest": "sha256:4226d6dde6af8034e35eb8dcac1a538c7115d0896baf868ff57748191ea5cb77",
+      "bindingSourceDigest": "sha256:b11b6b9cf1789a92d631ada5d90c77a76caef9759dfe05d73ac5bebbcc1ba7a8",
+      "projectSourceDigest": "sha256:52aed08c6d25a2f76bf3ce6f7a65105180b3c5631f3bdf4a69a5bdfd68968191",
       "capabilityCatalogDigest": "sha256:416b78023d732ea17df231090d22e05bb9069ed14cc916113d8a989556d0124c",
       "evaluationSourceDigest": "sha256:ef99367deaa60ad4c606be01aaf7935932b3a9ce63f940602afa1ac8dbc66396",
-      "combinedDigest": "sha256:d11ae3f87ccbe17004c8d83c18978a60837011f46966669bcd592cab9719ee56"
+      "combinedDigest": "sha256:638ebf5f84d51eff1210d8bf1041b2194d1bb0dc1644d5a91e7290b25b09eccb"
     }
   }
 }

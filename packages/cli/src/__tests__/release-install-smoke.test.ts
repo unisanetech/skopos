@@ -125,6 +125,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(help).toContain('skopos discuss handoff deliver');
       expect(help).toContain('skopos storage status');
       expect(help).toContain('skopos storage prune');
+      expect(help).toContain('skopos evidence record-browser');
       expect(help).not.toContain('skopos mission');
       expect(help).not.toContain('skopos trust');
       expect(help).not.toContain('skopos done');
@@ -203,6 +204,274 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         ],
       );
       expect(session.currentTaskId).toBe(started.task?.id);
+
+      await Promise.all([
+        mkdir(join(projectDirectory, 'apps', 'storefront', 'src'), { recursive: true }),
+        mkdir(join(projectDirectory, 'docs', 'scopes', 'storefront'), { recursive: true }),
+        mkdir(join(projectDirectory, 'packages', 'shared', 'src'), { recursive: true }),
+        mkdir(join(projectDirectory, 'docs', 'scopes', 'shared'), { recursive: true }),
+      ]);
+      await Promise.all([
+        writeFile(
+          join(projectDirectory, 'tools', 'skopos', 'scopes.yaml'),
+          packedScopeRegistry,
+          'utf8',
+        ),
+        writeFile(
+          join(projectDirectory, 'apps', 'storefront', 'src', 'page.ts'),
+          'export {};\n',
+          'utf8',
+        ),
+        writeFile(
+          join(projectDirectory, 'docs', 'scopes', 'storefront', '00-start-here.md'),
+          packedStorefrontMemory,
+          'utf8',
+        ),
+        writeFile(
+          join(projectDirectory, 'packages', 'shared', 'src', 'model.ts'),
+          'export {};\n',
+          'utf8',
+        ),
+        writeFile(
+          join(projectDirectory, 'docs', 'scopes', 'shared', '00-start-here.md'),
+          packedSharedMemory,
+          'utf8',
+        ),
+      ]);
+      const scopedStart = runJson<{
+        scopeId?: string;
+        task?: { id?: string };
+      }>(projectDirectory, [
+        'start',
+        'Change the packed storefront fixture',
+        '.',
+        '--own',
+        'apps/storefront/src/page.ts',
+        '--actor',
+        'packed-scope-smoke',
+        '--json',
+      ]);
+      expect(scopedStart.scopeId).toBe('storefront');
+      const scopedExpanded = runJson<{
+        scopeId?: string;
+        ownershipExpansionCount?: number;
+      }>(projectDirectory, [
+        'task',
+        'ownership',
+        'add',
+        scopedStart.task?.id ?? '',
+        '--own',
+        'packages/shared/src/model.ts',
+        '--reason',
+        'The packed storefront Task requires its declared shared dependency.',
+        '--actor',
+        'packed-scope-smoke',
+        '--cwd',
+        '.',
+        '--json',
+      ]);
+      expect(scopedExpanded).toMatchObject({
+        scopeId: 'storefront',
+        ownershipExpansionCount: 1,
+      });
+      expect(
+        runFailure(projectDirectory, [
+          'start',
+          'Mix unrelated packed Scope ownership',
+          '.',
+          '--own',
+          'apps/storefront/src/page.ts',
+          '--own',
+          'src/index.ts',
+          '--actor',
+          'packed-scope-smoke',
+          '--dry-run',
+          '--json',
+        ]),
+      ).toContain('Owned paths span multiple declared Scopes');
+
+      await mkdir(join(projectDirectory, 'proof'), { recursive: true });
+      await writeFile(join(projectDirectory, 'proof', 'packed-browser.png'), 'packed browser capture', 'utf8');
+      const packedBrowserTask = runJson<{ task?: { id?: string } }>(projectDirectory, [
+        'start',
+        'Verify the packed responsive storefront',
+        '.',
+        '--accept',
+        'The storefront renders within the mobile viewport',
+        '--own',
+        'apps/storefront/src/page.ts',
+        '--risk',
+        'light',
+        '--actor',
+        'packed-browser-smoke',
+        '--json',
+      ]);
+      await writeFile(
+        join(projectDirectory, 'apps', 'storefront', 'src', 'page.ts'),
+        'export const responsive = true;\n',
+        'utf8',
+      );
+      const packedBrowserReceipt = runJson<{
+        type?: string;
+        url?: string;
+        viewport?: { width?: number; height?: number };
+        capture?: { kind?: string; path?: string; digest?: string };
+        sourceStateDigest?: string;
+      }>(projectDirectory, [
+        'evidence',
+        'record-browser',
+        packedBrowserTask.task?.id ?? '',
+        '.',
+        '--requirement',
+        'acceptance-1',
+        '--url',
+        '/checkout',
+        '--viewport',
+        '390x844@2',
+        '--interaction',
+        'Loaded checkout and measured the rendered mobile surface.',
+        '--capture',
+        'proof/packed-browser.png',
+        '--capture-kind',
+        'screenshot',
+        '--browser',
+        'Chromium packed smoke',
+        '--actor',
+        'packed-browser-smoke',
+        '--json',
+      ]);
+      expect(packedBrowserReceipt).toMatchObject({
+        type: 'browser-evidence-summary',
+        url: '/checkout',
+        viewport: { width: 390, height: 844 },
+        capture: { kind: 'screenshot', path: 'proof/packed-browser.png' },
+      });
+      expect(packedBrowserReceipt.capture?.digest).toMatch(/^[a-f0-9]{64}$/u);
+      expect(packedBrowserReceipt.sourceStateDigest).toMatch(/^[a-f0-9]{64}$/u);
+
+      const packedQuestionTask = runJson<{
+        taskPath?: string;
+        questionsPath?: string;
+        task?: {
+          id?: string;
+          state?: string;
+          steps?: Array<{ id: string; kind: string }>;
+          questions?: Array<Record<string, unknown>>;
+        };
+        questions?: { entries?: Array<Record<string, unknown>> };
+      }>(projectDirectory, [
+        'start',
+        'Change the public API endpoint contract',
+        '.',
+        '--accept',
+        'The packed Task preserves terminal question correctness',
+        '--own',
+        'src/index.ts',
+        '--risk',
+        'standard',
+        '--actor',
+        'packed-question-smoke',
+        '--full',
+        '--json',
+      ]);
+      expect(packedQuestionTask.task?.state).toBe('blocked');
+      const nonBlockingQuestions = (packedQuestionTask.questions?.entries ?? []).map(
+        (question) => ({ ...question, blocking: false }),
+      );
+      await Promise.all([
+        writeFile(
+          packedQuestionTask.taskPath ?? '',
+          `${JSON.stringify({
+            ...packedQuestionTask.task,
+            state: 'active',
+            questions: nonBlockingQuestions,
+          }, null, 2)}\n`,
+          'utf8',
+        ),
+        writeFile(
+          packedQuestionTask.questionsPath ?? '',
+          `${JSON.stringify({
+            ...packedQuestionTask.questions,
+            entries: nonBlockingQuestions,
+          }, null, 2)}\n`,
+          'utf8',
+        ),
+      ]);
+      for (const step of packedQuestionTask.task?.steps?.filter(
+        (entry) => entry.kind !== 'verification',
+      ) ?? []) {
+        runJson(projectDirectory, [
+          'task',
+          'step',
+          'complete',
+          packedQuestionTask.task?.id ?? '',
+          step.id,
+          '.',
+          '--actor',
+          'packed-question-smoke',
+          '--json',
+        ]);
+      }
+      runJson(projectDirectory, [
+        'evidence',
+        'record-observation',
+        packedQuestionTask.task?.id ?? '',
+        '.',
+        '--requirement',
+        'acceptance-1',
+        '--statement',
+        'The packed fixture observes terminal question correctness.',
+        '--actor',
+        'packed-question-smoke',
+        '--json',
+      ]);
+      const packedQuestionBlocked = runJson<{
+        readiness?: string;
+        blockers?: string[];
+      }>(projectDirectory, [
+        'finish',
+        packedQuestionTask.task?.id ?? '',
+        '.',
+        '--actor',
+        'packed-question-smoke',
+        '--json',
+      ]);
+      expect(packedQuestionBlocked.readiness).toBe('blocked');
+      expect(packedQuestionBlocked.blockers?.join('\n')).toContain(
+        'open decision questions: plan.public-api-change',
+      );
+      runJson(projectDirectory, [
+        'task',
+        'question',
+        'dispose',
+        packedQuestionTask.task?.id ?? '',
+        'plan.public-api-change',
+        '--disposition',
+        'dismissed',
+        '--reason',
+        'The packed fixture explicitly dismisses the no-longer-relevant question.',
+        '--cwd',
+        '.',
+        '--actor',
+        'packed-question-smoke',
+        '--json',
+      ]);
+      const packedQuestionFinished = runJson<{
+        taskState?: string;
+        blockers?: string[];
+      }>(projectDirectory, [
+        'finish',
+        packedQuestionTask.task?.id ?? '',
+        '.',
+        '--actor',
+        'packed-question-smoke',
+        '--json',
+      ]);
+      expect(
+        packedQuestionFinished.blockers,
+        packedQuestionFinished.blockers?.join('\n'),
+      ).toEqual([]);
+      expect(packedQuestionFinished.taskState).toBe('complete');
 
       const installedPackage = JSON.parse(
         await readFile(
@@ -457,6 +726,71 @@ const packCli = (packDirectory: string): string => {
   if (!path) throw new Error(`Packed CLI tarball was not reported:\n${output}`);
   return isAbsolute(path) ? path : join(workspaceRoot, path);
 };
+
+const packedScopeRegistry = [
+  'schemaVersion: 1',
+  'scopes:',
+  '  - id: workspace',
+  '    title: Release Smoke Workspace',
+  '    kind: workspace',
+  '    path: .',
+  '    memoryRoot: docs',
+  '    codeRoots: [.]',
+  '    parent: null',
+  '    profile: fixture.workspace',
+  '    dependsOn: []',
+  '    owners: [fixture]',
+  '    aliases: [skopos-release-smoke]',
+  '  - id: storefront',
+  '    title: Storefront',
+  '    kind: application',
+  '    path: apps/storefront',
+  '    memoryRoot: docs/scopes/storefront',
+  '    codeRoots: [apps/storefront]',
+  '    parent: workspace',
+  '    profile: fixture.application',
+  '    dependsOn: [shared]',
+  '    owners: [fixture]',
+  '    aliases: [storefront-app]',
+  '  - id: shared',
+  '    title: Shared',
+  '    kind: package',
+  '    path: packages/shared',
+  '    memoryRoot: docs/scopes/shared',
+  '    codeRoots: [packages/shared]',
+  '    parent: workspace',
+  '    profile: fixture.package',
+  '    dependsOn: []',
+  '    owners: [fixture]',
+  '    aliases: [shared-package]',
+  '',
+].join('\n');
+
+const packedStorefrontMemory = [
+  '---',
+  'title: Storefront Memory',
+  'status: active',
+  'owner: fixture',
+  'id: STOREFRONT-MEMORY',
+  'scope: storefront',
+  'role: router',
+  'lifecycle: durable',
+  'authority: canonical',
+  'provenance: declared',
+  'view: current',
+  'lastUpdated: 2026-08-11',
+  '---',
+  '',
+  '# Storefront Memory',
+  '',
+  'Packed Scope fixture.',
+  '',
+].join('\n');
+
+const packedSharedMemory = packedStorefrontMemory
+  .replaceAll('Storefront', 'Shared')
+  .replaceAll('STOREFRONT', 'SHARED')
+  .replace('scope: storefront', 'scope: shared');
 
 const runChecked = (command: string, args: string[], cwd: string): string => {
   try {

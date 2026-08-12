@@ -12,14 +12,14 @@ view: exception
 risk: high-impact
 proofSubject: task-closure
 proofBaseline: baseline-78bf6ed0197ce5ec
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 ---
 
 # Task: Make routine Skopos work lightweight while preserving strict high-impact readiness
 
 ## Changelog
 
-- `2026-08-09`: Synchronized Task state `cancelled` from Skopos.
+- `2026-08-11`: Synchronized Task state `cancelled` from Skopos.
 
 ## Goal
 
@@ -43,6 +43,10 @@ Make routine Skopos work lightweight while preserving strict high-impact readine
 - Preserve current high-impact snapshot and readiness enforcement
 - Do not absorb unrelated dirty-worktree changes
 
+## Admission And Workflow
+
+- Legacy Task admission; workflow derives from risk `high-impact`.
+
 ## Owned Paths
 
 - `README.md`
@@ -61,9 +65,13 @@ Make routine Skopos work lightweight while preserving strict high-impact readine
 - `packages/runtime/src/application/task/task.service.ts`
 - `packages/verification/src/application/build-impact-report/build-impact-report.service.ts`
 
+## Ownership Expansions
+
+- None recorded.
+
 ## Steps
 
-- [ ] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, pending) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
+- [ ] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, skipped) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
 - [ ] **Resolve plan decisions** (implementation, pending) — Answer the recommended ask-back questions before implementation so the agent does not guess on high-impact choices.
 - [ ] **Record Task risk and detail before editing** (implementation, pending) — Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.
 - [ ] **Review the current pattern in Skopos Workspace** (implementation, pending) — Use the compact references to confirm the current scope, command surface, and docs entrypoints before editing code.
@@ -105,7 +113,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "type": "task",
   "status": "active",
   "generatedAt": "2026-08-09T03:56:26.977Z",
-  "updatedAt": "2026-08-09T03:56:59.833Z",
+  "updatedAt": "2026-08-11T01:51:36.579Z",
   "planIds": [],
   "childTasks": [],
   "state": "cancelled",
@@ -167,7 +175,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "kind": "decision",
       "title": "Should this change stay at workspace scope, or should it be narrowed to one declared Scope?",
       "detail": "Wide-scope Plans in monorepos drift faster and make Readiness less precise.",
-      "status": "pending"
+      "status": "skipped"
     },
     {
       "id": "step-resolve-decisions",
@@ -349,7 +357,13 @@ This machine-readable block is the durable source used to rebuild local Skopos s
         }
       ],
       "blocking": false,
-      "status": "open"
+      "status": "dismissed",
+      "disposition": {
+        "kind": "dismissed",
+        "reason": "Historical Task was cancelled before terminal question invariants. Cancellation makes this non-blocking Scope suggestion inapplicable; no answer is inferred.",
+        "actorId": "codex",
+        "recordedAt": "2026-08-11T01:51:36.579Z"
+      }
     }
   ],
   "recommendations": [
@@ -361,7 +375,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "actionKind": "resolve-question",
       "linkedQuestionId": "plan.scope-confirmation",
       "blocking": false,
-      "status": "open"
+      "status": "dismissed"
     },
     {
       "id": "run-quality.typecheck",

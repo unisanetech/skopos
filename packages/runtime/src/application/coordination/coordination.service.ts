@@ -29,6 +29,7 @@ import {
   type SkoposTaskReservation,
   type SkoposTaskRecoveryOperation,
   type SkoposTaskSnapshotResult,
+  type SkoposTransitionCoordinationSessionResult,
 } from '@skopos/model';
 import { captureSkoposTaskPathStates } from '@skopos/verification';
 
@@ -68,6 +69,14 @@ export interface EnsureSkoposCoordinationSessionOptions
 export interface CloseSkoposCoordinationSessionOptions {
   cwd: string;
   sessionId: string;
+}
+
+export interface TransitionSkoposCoordinationSessionOptions {
+  cwd: string;
+  sessionId: string;
+  actorId: string;
+  mode: 'writer' | 'reviewer';
+  reason: string;
 }
 
 export interface ReserveSkoposCoordinationTaskOptions {
@@ -232,10 +241,11 @@ export const openSkoposCoordinationSession = async ({
 export const heartbeatSkoposCoordinationSession = async ({
   cwd,
   sessionId,
-  leaseSeconds = DEFAULT_LEASE_SECONDS,
+  leaseSeconds,
 }: HeartbeatSkoposCoordinationSessionOptions): Promise<SkoposHeartbeatCoordinationSessionResult> => {
   const workspaceRoot = resolve(cwd);
-  const leaseMs = validateLeaseSeconds(leaseSeconds) * 1000;
+  const effectiveLeaseSeconds = leaseSeconds ?? DEFAULT_LEASE_SECONDS;
+  const leaseMs = validateLeaseSeconds(effectiveLeaseSeconds) * 1000;
   const databasePath = await ensureCoordinationDatabase(workspaceRoot);
   const now = Date.now();
   const db = openDatabase(databasePath);
@@ -248,16 +258,25 @@ export const heartbeatSkoposCoordinationSession = async ({
           `Coordination Session ${sessionId} is ${current.state}; stale or closed Sessions cannot renew silently.`,
         );
       }
+      const requestedExpiry = now + leaseMs;
+      const leaseExpiresAtMs =
+        leaseSeconds === undefined
+          ? Math.max(Date.parse(current.leaseExpiresAt), requestedExpiry)
+          : requestedExpiry;
       db.prepare(
         `UPDATE sessions
          SET heartbeat_at_ms = ?, lease_expires_at_ms = ?
          WHERE session_id = ?`,
-      ).run(now, now + leaseMs, sessionId);
+      ).run(now, leaseExpiresAtMs, sessionId);
       recordEvent(db, {
         kind: 'session-heartbeat',
         sessionId,
         actorId: current.actorId,
-        details: { leaseSeconds },
+        details: {
+          leaseSeconds: effectiveLeaseSeconds,
+          preservedLongerLease:
+            leaseSeconds === undefined && leaseExpiresAtMs > requestedExpiry,
+        },
         now,
       });
       return readSession(db, sessionId);
@@ -275,7 +294,7 @@ export const ensureSkoposCoordinationSession = async ({
   sessionId = randomUUID(),
   processId = process.pid,
   mode = 'writer',
-  leaseSeconds = DEFAULT_LEASE_SECONDS,
+  leaseSeconds,
 }: EnsureSkoposCoordinationSessionOptions): Promise<SkoposEnsureCoordinationSessionResult> => {
   const workspaceRoot = resolve(cwd);
   assertNonEmpty(actorId, 'Coordination Session requires --actor <id>.');
@@ -284,7 +303,8 @@ export const ensureSkoposCoordinationSession = async ({
   if (!SKOPOS_COORDINATION_SESSION_MODES.includes(mode)) {
     throw new Error(`Unknown coordination Session mode: ${mode}.`);
   }
-  const leaseMs = validateLeaseSeconds(leaseSeconds) * 1000;
+  const effectiveLeaseSeconds = leaseSeconds ?? DEFAULT_LEASE_SECONDS;
+  const leaseMs = validateLeaseSeconds(effectiveLeaseSeconds) * 1000;
   const databasePath = await ensureCoordinationDatabase(workspaceRoot);
   const git = await readGitIdentity(workspaceRoot);
   const now = Date.now();
@@ -312,16 +332,26 @@ export const ensureSkoposCoordinationSession = async ({
             `Coordination Session ${sessionId} identity mismatch: expected host ${session.host} and mode ${session.mode}.`,
           );
         }
+        const requestedExpiry = now + leaseMs;
+        const leaseExpiresAtMs =
+          leaseSeconds === undefined
+            ? Math.max(existing.lease_expires_at_ms, requestedExpiry)
+            : requestedExpiry;
         db.prepare(
           `UPDATE sessions
            SET process_id = ?, heartbeat_at_ms = ?, lease_expires_at_ms = ?
            WHERE session_id = ?`,
-        ).run(processId, now, now + leaseMs, sessionId);
+        ).run(processId, now, leaseExpiresAtMs, sessionId);
         recordEvent(db, {
           kind: 'session-heartbeat',
           sessionId,
           actorId: session.actorId,
-          details: { leaseSeconds, source: 'lifecycle-ensure' },
+          details: {
+            leaseSeconds: effectiveLeaseSeconds,
+            preservedLongerLease:
+              leaseSeconds === undefined && leaseExpiresAtMs > requestedExpiry,
+            source: 'lifecycle-ensure',
+          },
           now,
         });
         return { created: false, session: readSession(db, sessionId) };
@@ -361,6 +391,118 @@ export const ensureSkoposCoordinationSession = async ({
       enforcementLevel: 'cooperative',
       preventiveSafety: false,
       ...result,
+    };
+  } finally {
+    db.close();
+  }
+};
+
+export const transitionSkoposCoordinationSession = async ({
+  cwd,
+  sessionId,
+  actorId,
+  mode,
+  reason,
+}: TransitionSkoposCoordinationSessionOptions): Promise<SkoposTransitionCoordinationSessionResult> => {
+  const workspaceRoot = resolve(cwd);
+  assertNonEmpty(actorId, 'Session mode transition requires --actor <id>.');
+  assertNonEmpty(reason, 'Session mode transition requires an explicit reason.');
+  if (mode !== 'writer' && mode !== 'reviewer') {
+    throw new Error(
+      `Session mode transition supports only writer and reviewer modes, not ${mode}.`,
+    );
+  }
+  const databasePath = await ensureCoordinationDatabase(workspaceRoot);
+  const now = Date.now();
+  const db = openDatabase(databasePath);
+  try {
+    const result = transaction(db, () => {
+      markExpiredSessionsStale(db, now);
+      const session = readSession(db, sessionId);
+      if (session.state !== 'live') {
+        throw new Error(
+          `Coordination Session ${sessionId} is ${session.state}; only live Sessions may transition modes.`,
+        );
+      }
+      if (session.actorId !== actorId.trim()) {
+        throw new Error(
+          `Coordination Session ${sessionId} belongs to actor ${session.actorId}, not ${actorId.trim()}.`,
+        );
+      }
+      if (session.mode !== 'writer' && session.mode !== 'reviewer') {
+        throw new Error(
+          `Coordination Session ${sessionId} is ${session.mode}; only writer and reviewer Sessions may use this transition.`,
+        );
+      }
+      if (session.mode === mode) {
+        throw new Error(`Coordination Session ${sessionId} is already ${mode}.`);
+      }
+
+      const reservation = db
+        .prepare('SELECT task_id FROM task_reservations WHERE session_id = ?')
+        .get(sessionId) as { task_id?: string } | undefined;
+      if (reservation?.task_id) {
+        throw new Error(
+          `Coordination Session ${sessionId} still reserves Task ${reservation.task_id}; release writing authority before transitioning to ${mode}.`,
+        );
+      }
+      const claimCount = (
+        db.prepare('SELECT COUNT(*) AS count FROM resource_claims WHERE session_id = ?')
+          .get(sessionId) as { count: number }
+      ).count;
+      if (claimCount > 0) {
+        throw new Error(
+          `Coordination Session ${sessionId} still owns ${claimCount} resource claim(s); release writing authority before transitioning to ${mode}.`,
+        );
+      }
+      const unresolvedMutationCount = (
+        db.prepare(
+          `SELECT COUNT(*) AS count FROM mutation_ledger
+           WHERE session_id = ? AND status IN ('open', 'contaminated')`,
+        ).get(sessionId) as { count: number }
+      ).count;
+      if (unresolvedMutationCount > 0) {
+        throw new Error(
+          `Coordination Session ${sessionId} has ${unresolvedMutationCount} unresolved mutation(s); complete or reconcile them before transitioning to ${mode}.`,
+        );
+      }
+      const openContaminationCount = (
+        db.prepare(
+          `SELECT COUNT(*) AS count FROM contamination
+           WHERE session_id = ? AND state = 'open'`,
+        ).get(sessionId) as { count: number }
+      ).count;
+      if (openContaminationCount > 0) {
+        throw new Error(
+          `Coordination Session ${sessionId} has ${openContaminationCount} open contamination issue(s); reconcile them before transitioning to ${mode}.`,
+        );
+      }
+
+      const priorMode = session.mode;
+      db.prepare('UPDATE sessions SET mode = ? WHERE session_id = ?').run(mode, sessionId);
+      recordEvent(db, {
+        kind: 'session-mode-transitioned',
+        sessionId,
+        actorId: session.actorId,
+        details: {
+          priorMode,
+          mode,
+          reason: reason.trim(),
+        },
+        now,
+      });
+      return {
+        priorMode,
+        session: readSession(db, sessionId),
+      };
+    });
+    return {
+      workspaceRoot,
+      databasePath,
+      priorMode: result.priorMode,
+      session: result.session,
+      reason: reason.trim(),
+      transitionedAt: toIso(now),
     };
   } finally {
     db.close();

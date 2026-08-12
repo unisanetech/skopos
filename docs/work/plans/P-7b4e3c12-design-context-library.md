@@ -1,16 +1,16 @@
 ---
 title: Design Context Library Delivery Plan
-status: active
+status: historical
 owner: skopos-core
 id: P-7b4e3c12
 scope: skopos
 role: plan
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: target
-implementationStatus: phases-1-through-4-implemented-phase-5-blocked-deferred-from-first-release
-lastUpdated: 2026-08-10
+view: transition
+implementationStatus: closed-by-first-release-boundary
+lastUpdated: 2026-08-11
 relatedDocs:
   - ../../architecture/design-context-model.md
   - ../../decisions/D-a61f2d9c-design-context-as-progressive-product-knowledge.md
@@ -21,6 +21,15 @@ reviewCycle: per phase or when the consumer boundary changes
 ---
 
 # Design Context Library Delivery Plan
+
+## Closure
+
+- `2026-08-11`: Closed this active delivery direction under the accepted Product
+  Interface Design first-release boundary. The implemented schema, resolver, fixtures,
+  and negative evaluation history remain durable evidence. Design Context stays
+  unbound and excluded from the first public tarball; no activation, packaging,
+  efficacy, pilot, or human-review work is required for `0.1.0`. Reopening it requires
+  a new explicit Decision rather than automatic Work Queue continuation.
 
 ## Outcome
 

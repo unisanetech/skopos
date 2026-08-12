@@ -1,16 +1,16 @@
 ---
 title: First-Version Skill Capability Hard-Cut And Judgment-Pack Plan
-status: active
+status: historical
 owner: skopos-core
 id: SKOPOS-PLAN-P-20260804-SKILL-CAPABILITY-HARD-CUT
 scope: skopos
 role: plan
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: target
-implementationStatus: planned
-lastUpdated: 2026-08-09
+view: transition
+implementationStatus: closed-by-first-release-boundary
+lastUpdated: 2026-08-11
 relatedDocs:
   - ../../decisions/040-project-adapted-skill-packs-as-capability-projections.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
@@ -27,6 +27,11 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-11`: Closed the active Skill-expansion delivery direction under the
+  accepted first-release boundary. The exact Product Interface Design `0.5.0` pack is
+  publishable with efficacy explicitly uncertified; Design Context stays unbound and
+  broader catalog expansion stays prohibited. Historical implementation and
+  evaluation evidence remains valid, but this Plan no longer yields release Tasks.
 - `2026-08-09`: Corrected the Product Interface Design smoke/showcase boundary after
   repeated fixed-case renders were mistakenly presented as evidence of creative range.
   The existing one-case paired smoke remains a pipeline canary only. A new explicitly

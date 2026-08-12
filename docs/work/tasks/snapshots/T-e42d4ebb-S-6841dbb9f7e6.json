@@ -1,0 +1,40 @@
+{
+  "snapshotId": "S-6841dbb9f7e6",
+  "taskId": "T-e42d4ebb",
+  "sessionId": "019fef8a-9e9c-7813-85f8-d1ddcce8965c",
+  "actorId": "codex-reviewer-lifecycle",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/coordination-broker.test.ts",
+      "digest": "f86378c3370eb455c37ba2186137909e8c16922d356c7e57b3953d1eb145f1de"
+    },
+    {
+      "path": "packages/cli/src/__tests__/coordination-lifecycle.test.ts",
+      "digest": "c755c2fed31f6957c35cd4538d793f74116528c10fc488d66030450a758fca72"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/coordination.ts",
+      "digest": "87da55d6f4dce2e50557b9b9b67b36dfd1a7ea9f500aa7f5b12d36c3f1102bc4"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-coordination.ts",
+      "digest": "40449dae7f7fc9abc6dbd382c2c713db41d9be3d0e06b84c1248b1fccd78c308"
+    },
+    {
+      "path": "packages/runtime/src/application/coordination/coordination.service.ts",
+      "digest": "192e9e21d3927f0577db189e1531163615663afd51b540902dc207de64e824c6"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "cfef929c2e9b1a33570e3511c882773b047e74d4d2f2302b42d465f417b187ab"
+    },
+    {
+      "path": "packages/runtime/src/application/start/start.service.ts",
+      "digest": "dd8feb794b839f94835bc56363b7369772d5e7c502bac616f48c61f6aceac91c"
+    }
+  ],
+  "digest": "6841dbb9f7e687ad6b6d4d43a32dd84ca7f7e40d72f68ca6d30a306b5cad2dfd",
+  "createdAt": "2026-08-11T06:51:53.114Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-e42d4ebb-S-6841dbb9f7e6.json"
+}

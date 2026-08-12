@@ -1,0 +1,13 @@
+import { cn } from "@/lib/utils";
+import { SiteShell } from "@/patterns/site/site-shell";
+import { ClosingSection, PageAction, PageFrame, PageSection, pageType, SummaryStrip } from "@/patterns/site/page-layout";
+import type { PublicPageContent } from "./public-page-content";
+
+export function PublicPageScreen({ content }: { content: PublicPageContent }) {
+  return <SiteShell><article className="bg-[var(--skopos-paper)]">
+    <header><PageSection><PageFrame className="flex min-h-[clamp(520px,calc(100vh-64px),760px)] flex-col justify-end px-[var(--page-gutter)] py-[clamp(72px,8vw,112px)] md:px-[clamp(38px,5.5vw,78px)]"><h1 className={cn(pageType.hero, "max-w-[980px]")}>{content.title}</h1><p className="mt-8 max-w-[740px] text-[clamp(1rem,1.3vw,1.2rem)] leading-[1.65] text-[var(--skopos-muted)]">{content.description}</p></PageFrame></PageSection></header>
+    <SummaryStrip items={content.summary} />
+    <PageSection><PageFrame>{content.sections.map((section, index) => <section key={`${section.number}-${section.title}`} className={cn("grid border-b border-[var(--skopos-rule-light)] md:grid-cols-[180px_1fr]", index === content.sections.length - 1 && "border-b-0")}><div className="px-[var(--page-gutter)] pt-[clamp(54px,6vw,82px)] font-mono text-[clamp(3.5rem,7vw,6.5rem)] leading-none font-light tracking-[-0.07em] text-[#b8b5ae] md:px-[clamp(32px,4vw,52px)]">{section.number}</div><div className="border-t border-[var(--skopos-rule-light)] px-[var(--page-gutter)] py-[clamp(54px,6vw,82px)] md:border-t-0 md:border-l md:px-[clamp(38px,5vw,68px)]">{section.status && <span className="font-mono text-[10px] font-bold tracking-[0.1em] text-[#777] uppercase">{section.status}</span>}<h2 className={cn(pageType.section, section.status && "mt-6")}>{section.title}</h2><p className="mt-6 max-w-[800px] leading-[1.65] text-[var(--skopos-muted)]">{section.description}</p>{section.points && <ul className="mt-8 grid list-none border-t border-[var(--skopos-rule-light)] p-0 md:grid-cols-2">{section.points.map((point) => <li key={point} className="border-b border-[var(--skopos-rule-light)] py-4 pr-5"><code className="text-[13px]">{point}</code></li>)}</ul>}</div></section>)}</PageFrame></PageSection>
+    <ClosingSection title={content.closing.title} description={content.closing.description}><PageAction href={content.closing.primaryHref} primary light>{content.closing.primaryLabel}</PageAction>{content.closing.secondaryHref && content.closing.secondaryLabel && <PageAction href={content.closing.secondaryHref} light>{content.closing.secondaryLabel}</PageAction>}</ClosingSection>
+  </article></SiteShell>;
+}

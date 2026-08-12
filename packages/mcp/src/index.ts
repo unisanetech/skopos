@@ -1,5 +1,7 @@
 import {
   assessSkoposTaskReadinessRuntime,
+  applySkoposTaskSplitRuntime,
+  assignSkoposTaskToSessionRuntime,
   applySkoposCapabilityIntegrationsRuntime,
   applySkoposTaskDispositionRuntime,
   approveSkoposCapabilityIntegrationsRuntime,
@@ -12,8 +14,10 @@ import {
   proposeSkoposCapabilityIntegrationsRuntime,
   recoverSkoposActionRunRuntime,
   recoverSkoposCoordinationTask,
+  proposeSkoposTaskSplitRuntime,
   runSkoposActionRuntime,
   showSkoposTaskRuntime,
+  transitionSkoposCoordinationSession,
   verifySkoposTaskRuntime,
   buildSkoposDiscussionHandoffRuntime,
   showSkoposDiscussionHandoffRuntime,
@@ -29,6 +33,9 @@ export const skoposMcpToolIds = [
   'skopos_work_queue',
   'skopos_task_start',
   'skopos_task_show',
+  'skopos_task_split_propose',
+  'skopos_task_split_apply',
+  'skopos_task_assign',
   'skopos_action_run',
   'skopos_action_recover',
   'skopos_task_disposition',
@@ -36,6 +43,7 @@ export const skoposMcpToolIds = [
   'skopos_verify',
   'skopos_readiness',
   'skopos_coordination_status',
+  'skopos_coordination_session_transition',
   'skopos_coordination_task_recover',
   'skopos_handoff_create',
   'skopos_handoff_refresh',
@@ -94,6 +102,30 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
     cwd: cwdProperty,
     taskId: { type: 'string' },
   }, ['cwd', 'taskId']),
+  tool('skopos_task_split_propose', 'Validate and persist a review-required parent/child Task split without changing Task authority.', {
+    cwd: cwdProperty,
+    parentTaskId: { type: 'string' },
+    childrenJson: { type: 'string', description: 'JSON-encoded array of SkoposTaskSplitChildDraft entries.' },
+    actor: { type: 'string' },
+    reason: { type: 'string' },
+    dryRun: { type: 'boolean' },
+  }, ['cwd', 'parentTaskId', 'childrenJson', 'actor', 'reason']),
+  tool('skopos_task_split_apply', 'Explicitly approve one exact split proposal and create linked child Task authorities.', {
+    cwd: cwdProperty,
+    parentTaskId: { type: 'string' },
+    proposalDigest: { type: 'string' },
+    actor: { type: 'string' },
+    reason: { type: 'string' },
+    dryRun: { type: 'boolean' },
+  }, ['cwd', 'parentTaskId', 'proposalDigest', 'actor', 'reason']),
+  tool('skopos_task_assign', 'Assign one existing Task to a fresh or live Session, reserve it, and claim its owned resources.', {
+    cwd: cwdProperty,
+    taskId: { type: 'string' },
+    actor: { type: 'string' },
+    sessionId: { type: 'string' },
+    host: { type: 'string' },
+    leaseSeconds: { type: 'number' },
+  }, ['cwd', 'taskId', 'actor', 'sessionId']),
   tool('skopos_action_run', 'Run one registered project Action and capture source-bound Evidence.', {
     cwd: cwdProperty,
     actionId: { type: 'string' },
@@ -136,6 +168,13 @@ export const skoposMcpTools: SkoposMcpToolDefinition[] = [
   tool('skopos_coordination_status', 'Inspect live Sessions, Task reservations, claims, mutations, and contamination.', {
     cwd: cwdProperty,
   }, ['cwd']),
+  tool('skopos_coordination_session_transition', 'Safely transition one live Session between writer and reviewer modes after writing authority is released.', {
+    cwd: cwdProperty,
+    sessionId: { type: 'string' },
+    actor: { type: 'string' },
+    mode: { type: 'string', description: 'Target Session mode: writer or reviewer.' },
+    reason: { type: 'string' },
+  }, ['cwd', 'sessionId', 'actor', 'mode', 'reason']),
   tool('skopos_coordination_task_recover', 'Audit and resume or release a stale Task reservation from a live replacement Session.', {
     cwd: cwdProperty,
     taskId: { type: 'string' },
@@ -212,6 +251,33 @@ export const callSkoposMcpTool = async (
       });
     case 'skopos_task_show':
       return showSkoposTaskRuntime({ cwd, taskId: requiredString(input, 'taskId') });
+    case 'skopos_task_split_propose':
+      return proposeSkoposTaskSplitRuntime({
+        cwd,
+        parentTaskId: requiredString(input, 'parentTaskId'),
+        children: JSON.parse(requiredString(input, 'childrenJson')),
+        actor: requiredString(input, 'actor'),
+        reason: requiredString(input, 'reason'),
+        dryRun: input.dryRun === true,
+      });
+    case 'skopos_task_split_apply':
+      return applySkoposTaskSplitRuntime({
+        cwd,
+        parentTaskId: requiredString(input, 'parentTaskId'),
+        proposalDigest: requiredString(input, 'proposalDigest'),
+        actor: requiredString(input, 'actor'),
+        reason: requiredString(input, 'reason'),
+        dryRun: input.dryRun === true,
+      });
+    case 'skopos_task_assign':
+      return assignSkoposTaskToSessionRuntime({
+        cwd,
+        taskId: requiredString(input, 'taskId'),
+        actor: requiredString(input, 'actor'),
+        sessionId: requiredString(input, 'sessionId'),
+        host: optionalString(input, 'host'),
+        leaseSeconds: optionalNumber(input, 'leaseSeconds'),
+      });
     case 'skopos_action_run':
       return runSkoposActionRuntime({
         cwd,
@@ -270,6 +336,14 @@ export const callSkoposMcpTool = async (
       });
     case 'skopos_coordination_status':
       return getSkoposCoordinationStatus({ cwd });
+    case 'skopos_coordination_session_transition':
+      return transitionSkoposCoordinationSession({
+        cwd,
+        sessionId: requiredString(input, 'sessionId'),
+        actorId: requiredString(input, 'actor'),
+        mode: requiredString(input, 'mode') as 'writer' | 'reviewer',
+        reason: requiredString(input, 'reason'),
+      });
     case 'skopos_coordination_task_recover':
       return recoverSkoposCoordinationTask({
         cwd,
@@ -346,4 +420,12 @@ const optionalString = (
 ): string | undefined => {
   const value = input[key];
   return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+};
+
+const optionalNumber = (
+  input: Record<string, unknown>,
+  key: string,
+): number | undefined => {
+  const value = input[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 };

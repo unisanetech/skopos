@@ -19,8 +19,19 @@ describe('planner ask-back classification', () => {
     ['Replace Stripe billing provider with Adyen', 'plan.vendor-choice'],
     ['Drop the obsolete customer_id column from the billing schema', 'plan.destructive-migration'],
     ['Change authorization permissions for administrator access', 'plan.security-privacy-change'],
+    ['Add a public API endpoint for account recovery', 'plan.public-api-change'],
+    ['Rename the CLI output flag', 'plan.public-api-change'],
+    ['Change the SDK response schema', 'plan.public-api-change'],
   ])('retains %s as a concrete %s decision', (goal, questionId) => {
     expect(questionIds(goal)).toContain(questionId);
+  });
+
+  it.each([
+    'Refine public homepage typography',
+    'Change the public website hero copy',
+    'Add a footer to the public landing page',
+  ])('does not classify presentation work as a public contract change: %s', (goal) => {
+    expect(questionIds(goal)).not.toContain('plan.public-api-change');
   });
 
   it('offers truthful no-change outcomes for conditional destructive and security concerns', () => {
@@ -37,6 +48,14 @@ describe('planner ask-back classification', () => {
         .find((question) => question.id === 'plan.security-privacy-change')
         ?.options.map((option) => option.id),
     ).toContain('no-security-change');
+  });
+
+  it('offers a truthful no-contract-change outcome for classified contract wording', () => {
+    expect(
+      plan('Change the SDK response schema').decisionQuestions
+        .find((question) => question.id === 'plan.public-api-change')
+        ?.options.map((option) => option.id),
+    ).toContain('no-public-contract-change');
   });
 
   it('returns identical questions from identical admitted facts', () => {

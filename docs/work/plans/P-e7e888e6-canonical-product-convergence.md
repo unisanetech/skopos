@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: convergence-and-release-proof-in-progress
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-11
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
@@ -27,6 +27,10 @@ relatedDocs:
   - ../../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../../findings/archive/F-20260803-evidence-reuse-and-agent-transport-economy-gap.md
   - ../../findings/archive/F-20260803-action-hermeticity-and-effect-classification-gap.md
+  - ../../decisions/D-20260811-topology-aware-task-scope-authority.md
+  - ../../findings/F-20260811-topology-aware-task-scope-resolution-gap.md
+  - ../../findings/F-20260811-task-question-closure-invariant-gap.md
+  - ../../findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md
   - ../../patterns/PAT-20260803-mixed-worktree-proof-scope-amplification.md
 reviewCycle: per phase
 ---
@@ -35,6 +39,36 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-11`: Recorded the first north-star continuation cohort from the real Codex
+  child-Task orchestration: three eligible fresh Codex Sessions completed three bounded
+  Tasks without user restatement or known authority conflict, with linked closure
+  Evidence (`3 / 3`). This is a Codex-only operational baseline, not Claude parity or
+  general efficacy proof. Reconciled the historical-doc gate: superseded Decisions and
+  prototype Plans are archived with historical/transition metadata; the remaining
+  active Plans own current release, convergence, and homepage work.
+
+- `2026-08-11`: Completed the dependency-gated Codex host-delivery integration.
+  Approved splits now expose truthful undelivered assignments, capable Codex adapters
+  create real child tasks and bind returned thread identities, the origin remains an
+  explicit reviewer through shared CLI/MCP transition authority, and unsupported host
+  capabilities retain an exact manual fallback without claiming delivery.
+- `2026-08-11`: Completed the operational parent/child Task slice. Review-only split
+  proposals are revision- and digest-bound; apply creates linked tracked children with
+  non-overlapping ownership, dependencies, and parent acceptance mappings; child state
+  drives parent Readiness; and host-neutral assignment reserves each child for one
+  independent Session. Automatic host chat launch and remote coordination remain
+  explicit host/later boundaries.
+- `2026-08-11`: Completed the self-hosting hardening that was originally allowed to
+  follow the first release. Repeated or semantically divergent ownership now emits one
+  exact bounded-child recommendation; browser proof has a source-bound public receipt
+  with packed-install coverage; and explicit project-wide convention intent creates a
+  durable Pattern or Standard Memory obligation without false positives for one-off
+  polish. The topology and iteration Findings are resolved before release.
+- `2026-08-11`: Audited the self-hosted public-homepage build as a real agent workflow.
+  Accepted project-generic topology-aware Task Scope authority; recorded MUST gaps for
+  operational Scope binding and terminal question consistency; and recorded a SHOULD
+  gap for ask-back proportionality, semantic Task drift, source-bound browser Evidence,
+  and durable convention Memory. The two MUST gaps now block public release.
 - `2026-08-06`: Reconciled the Plan header with the implemented canonical product
   surface and current release work. The product remains pre-release until the active
   Skill-efficacy Finding and complete clean-clone, packed-install, and release proof
@@ -170,6 +204,30 @@ reviewCycle: per phase
 - `2026-07-28`: Created the clean pre-release implementation Plan for converging
   Skopos on the accepted Project Memory, Task, Action, Guard, Evidence, Readiness, and
   same-working-directory coordination contract.
+
+## 2026-08-11 Self-Hosting Audit Direction
+
+The homepage build exercised Skopos through repeated implementation, browser review,
+ownership expansion, Evidence capture, closure, and recovery. The audit confirmed that
+Task-local proof and dirty-worktree isolation work, but exposed three product gaps:
+
+1. Scope detection and Scope authority can disagree after a narrow-scope decision
+2. terminal Tasks can retain open non-blocking questions
+3. small agent iterations are fully audited but not always proportional, semantically
+   bounded, or backed by first-class browser Evidence
+
+All three observed gaps are now resolved before public release. The two MUST Findings
+passed their generic project-topology and Task-question matrices. The proportionality
+Finding also closed: subject-and-intent ask-back classification is operational,
+semantic drift produces explicit bounded follow-up guidance, browser proof is a
+first-class source-bound receipt, and durable convention intent creates Pattern or
+Standard Memory obligations. Skopos recommends a split rather than silently creating
+or moving work because the user or agent still owns intent judgment.
+
+The accepted Scope authority is project-generic. Proof must cover single projects,
+monorepo applications and packages, nested Scopes, declared dependencies, ambiguous
+paths, and unrelated multi-Scope work. No Skopos repository path or homepage-specific
+rule may enter core resolution.
 
 ## Objective
 
@@ -781,7 +839,9 @@ compact.
 
 1. implement Task admission and lifecycle
 2. implement Plan references without one-to-one duplication
-3. implement parent/child Tasks
+3. implement parent/child Tasks — completed with reviewed split proposal/apply,
+   one-child explicit start, dependency-aware Work Queue projection, child-to-parent
+   state synchronization, compositional acceptance coverage, and clean reconstruction
 4. implement tracked versus local Task policy
 5. compile Work Queue from tracked sources and local active state
 6. make `next` Session-aware
@@ -845,6 +905,12 @@ decisions, Evidence requirements, and handoff material under one Task authority.
 13. every supported Task disposition has one deterministic Work Queue meaning
 14. default output retains blockers and next action while large detail remains
     progressively retrievable
+
+Status: the parent/child execution authority is implemented. Focused proof covers
+review-only proposal behavior, stale proposal rejection, sibling ownership overlap,
+two independent writer Sessions, one-Task-per-Session enforcement, dependency-aware
+Work Queue behavior, parent closure blocking and unblocking, acceptance derivation,
+and reconstruction of active and historical Task families after local state deletion.
 
 ## Phase 7 — Same-Workspace Session Coordination
 
@@ -977,6 +1043,9 @@ Make Skopos automatic and consistent across supported coding agents.
     path, Evidence, queue, and impact collections through fields and cursors
 23. report Evidence reuse as linked, stale, rejected, or executed without requiring an
     agent to infer the outcome from repeated Action calls
+24. expose the audited writer/reviewer Session transition through CLI and MCP while
+    keeping real task creation, returned-identity binding, waiting, and result delivery
+    inside capable host adapters
 
 ### Exit Criteria
 
@@ -990,6 +1059,15 @@ Make Skopos automatic and consistent across supported coding agents.
 7. compact responses meet declared byte and token budgets at representative p50 and
    p95 fixture sizes
 8. every host can retrieve complete detail progressively without one unbounded payload
+
+Status: the Codex child-delivery slice is implemented without changing package
+boundaries. Core split activation generates exact assignments and reports them as not
+delivered. After explicit approval, the Codex adapter creates real tasks, injects the
+bounded prompts, binds returned thread identities to child Sessions, waits for results,
+and returns the origin to canonical child review. Failed or unavailable host stages
+retain the exact manual prompt and follow-up. The originating Session uses the shared
+audited CLI/MCP transition to remain a reviewer until it intentionally reacquires
+writer mode.
 
 ## Phase 9 — Unisane Replacement Pilot
 
@@ -1190,6 +1268,11 @@ completes:
 2. without known Scope or Memory drift
 3. without overwriting another Session
 4. with full acceptance-linked Evidence
+
+The recording contract and current baseline live in
+`docs/operations/fresh-session-continuation-metric.md`. The first recorded cohort is
+`3 / 3` from real Codex child-Task delivery on `2026-08-11`; it is deliberately scoped
+to Codex and does not satisfy the separate Claude-parity or Unisane-adopter gates.
 
 ### Supporting Measures
 

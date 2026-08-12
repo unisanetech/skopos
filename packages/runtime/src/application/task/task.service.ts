@@ -3,6 +3,10 @@ import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, posix, relative, resolve } from 'node:path';
 
 import { buildSkoposDocumentCatalog } from '@skopos/indexer';
+import {
+  resolveSkoposScopeExpansion,
+  type SkoposScopeExpansionKind,
+} from '@skopos/query';
 import type {
   SkoposDocumentKnowledgeEntry,
   SkoposPlanResult,
@@ -19,8 +23,10 @@ import type {
   SkoposTaskRunResult,
   SkoposTaskWorkflowAssessment,
   SkoposTaskState,
+  SkoposTaskQuestionDispositionKind,
   SkoposTaskQuestionArtifact,
   SkoposTaskRecommendationArtifact,
+  SkoposChildTaskReference,
   SkoposTaskStep,
 } from '@skopos/model';
 import {
@@ -54,6 +60,8 @@ export interface CreateSkoposTaskRuntimeOptions {
   detail?: SkoposTaskDetail;
   priority?: number;
   dependencyTaskIds?: string[];
+  taskId?: string;
+  parentTaskId?: string;
   proofSubjectKind?: SkoposProofSubjectKind;
   dryRun?: boolean;
 }
@@ -71,13 +79,21 @@ export const prepareSkoposTaskRuntime = async ({
   detail,
   priority = 0,
   dependencyTaskIds = [],
+  taskId: requestedTaskId,
+  parentTaskId,
   proofSubjectKind = 'task-closure',
   dryRun = false,
 }: CreateSkoposTaskRuntimeOptions): Promise<SkoposTaskRunResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
   const now = new Date().toISOString();
-  const taskId = `T-${randomUUID().replaceAll('-', '').slice(0, 8)}`;
+  const taskId = requestedTaskId ?? `T-${randomUUID().replaceAll('-', '').slice(0, 8)}`;
+  if (!/^T-[a-z0-9]+$/iu.test(taskId)) {
+    throw new Error(`Invalid Task id: ${taskId}.`);
+  }
+  if (parentTaskId === taskId) {
+    throw new Error('A Task cannot be its own parent.');
+  }
   const taskIdentity = buildSkoposTaskIdentity({
     workspace: await resolveSkoposWorkspaceIdentity(workspaceRoot),
     taskId,
@@ -144,6 +160,8 @@ export const prepareSkoposTaskRuntime = async ({
     scope: plan.scope,
     risk: resolvedRisk,
     ownedPaths,
+    goal: plan.goal,
+    contract,
   });
   const taskState = hasBlockingQuestions ? 'blocked' : 'active';
   const trackedDocumentPath = resolveTrackedTaskDocumentPath({
@@ -172,6 +190,7 @@ export const prepareSkoposTaskRuntime = async ({
     taskIdentity,
     trackedDocumentPath,
     planIds,
+    ...(parentTaskId ? { parentTaskId } : {}),
     childTasks: [],
     state: taskState,
     detail: resolvedDetail,
@@ -343,8 +362,8 @@ export const reconstructTrackedSkoposTasksRuntime = async ({
     .filter(
       (document) =>
         document.role === 'task' &&
-        document.lifecycle === 'active' &&
-        /(?:^|\/)work\/tasks\/T-[a-z0-9]+.*\.md$/iu.test(document.path),
+        (document.lifecycle === 'active' || document.lifecycle === 'historical') &&
+        /(?:^|\/)work\/(?:tasks|archive\/tasks)\/T-[a-z0-9]+.*\.md$/iu.test(document.path),
     )
     .map((document) => resolve(workspaceRoot, document.path))
     .sort((left, right) => left.localeCompare(right));
@@ -449,6 +468,7 @@ export const assessSkoposTaskWorkflowRuntime = async ({
     workspaceRoot,
     changeScope: task.changeScope,
     currentTaskId: task.id,
+    linkedChildTaskIds: task.childTasks.map((child) => child.taskId),
     generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
   const projectionPaths = new Set(
@@ -471,9 +491,8 @@ export const assessSkoposTaskWorkflowRuntime = async ({
         shellQuote(actorId),
       ].join(' ')
     : undefined;
-  const openQuestions = task.questions.filter(
-    (question) => question.blocking && question.status === 'open',
-  );
+  const openQuestions = task.questions.filter((question) => question.status === 'open');
+  const blockingOpenQuestions = openQuestions.filter((question) => question.blocking);
   const pendingAction = task.selectedActions.find((action) =>
     task.steps.some(
       (step) => step.id === `action-${action.id}` && step.status !== 'complete',
@@ -486,13 +505,25 @@ export const assessSkoposTaskWorkflowRuntime = async ({
   const workflow = task.admission?.workflow ??
     (task.risk === 'light' ? 'fast-path' : task.risk === 'high-impact' ? 'strict' : 'tracked');
 
-  if (terminal) {
+  if (terminal && openQuestions.length === 0) {
     return {
       taskId: task.id,
       workflow,
       readiness: 'ready-for-closure',
       nextCommand: `skopos task show ${shellQuote(task.id)} . --json`,
       nextReason: `Task ${task.id} is ${task.state}; inspect its durable result instead of mutating it.`,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (terminal && openQuestions.length > 0) {
+    const question = openQuestions[0]!;
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'blocked',
+      nextCommand: `skopos decide ${shellQuote(question.id)} <option-id> . --actor ${shellQuote(actorId)}`,
+      nextReason: `Task ${task.id} is ${task.state}, but terminal state cannot retain an open decision. ${question.whyItMatters}`,
       evidence: workflowEvidence(task),
     };
   }
@@ -514,14 +545,33 @@ export const assessSkoposTaskWorkflowRuntime = async ({
     };
   }
 
-  if (openQuestions.length > 0) {
-    const question = openQuestions[0]!;
+  if (blockingOpenQuestions.length > 0) {
+    const question = blockingOpenQuestions[0]!;
     return {
       taskId: task.id,
       workflow,
       readiness: 'blocked',
       nextCommand: `skopos decide ${shellQuote(question.id)} <option-id> . --actor ${shellQuote(actorId)}`,
       nextReason: question.whyItMatters,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  const incompleteChild = task.childTasks.find((child) => child.state !== 'complete');
+  if (incompleteChild) {
+    const cancelled = ['cancelled', 'superseded'].includes(incompleteChild.state);
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'blocked',
+      nextCommand: cancelled
+        ? `skopos task show ${shellQuote(incompleteChild.taskId)} . --json`
+        : incompleteChild.claimedByActorId
+          ? `skopos task show ${shellQuote(incompleteChild.taskId)} . --json`
+          : `skopos task assign ${shellQuote(incompleteChild.taskId)} . --actor <actor-id> --session-id <session-id> --host <host> --json`,
+      nextReason: cancelled
+        ? `Linked child Task ${incompleteChild.taskId} ended ${incompleteChild.state}; repair or replace that child before parent closure.`
+        : `Linked child Task ${incompleteChild.taskId} is ${incompleteChild.state}; every blocking child must complete before parent closure.`,
       evidence: workflowEvidence(task),
     };
   }
@@ -544,6 +594,18 @@ export const assessSkoposTaskWorkflowRuntime = async ({
       readiness: 'work-in-progress',
       nextCommand: `skopos task step complete ${shellQuote(task.id)} ${shellQuote(pendingStep.id)} . --actor ${shellQuote(actorId)}`,
       nextReason: `Complete “${pendingStep.title}” before closure.`,
+      evidence: workflowEvidence(task),
+    };
+  }
+
+  if (openQuestions.length > 0) {
+    const question = openQuestions[0]!;
+    return {
+      taskId: task.id,
+      workflow,
+      readiness: 'blocked',
+      nextCommand: `skopos decide ${shellQuote(question.id)} <option-id> . --actor ${shellQuote(actorId)}`,
+      nextReason: `Implementation may proceed without this answer, but Task closure requires an explicit disposition. ${question.whyItMatters}`,
       evidence: workflowEvidence(task),
     };
   }
@@ -635,6 +697,65 @@ export const releaseSkoposTaskRuntime = async ({
     },
   });
 
+export const linkSkoposChildTasksRuntime = async ({
+  cwd,
+  parentTaskId,
+  children,
+  expectedParentUpdatedAt,
+  actor,
+}: {
+  cwd: string;
+  parentTaskId: string;
+  children: SkoposChildTaskReference[];
+  expectedParentUpdatedAt: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  if (children.length === 0) {
+    throw new Error('A Task split must link at least one child Task.');
+  }
+  const childIds = children.map((child) => child.taskId);
+  if (new Set(childIds).size !== childIds.length) {
+    throw new Error('A Task split cannot link the same child Task more than once.');
+  }
+  return mutateTask({
+    cwd,
+    taskId: parentTaskId,
+    actor,
+    mutate: (task, actorId, now) => {
+      assertTaskActor(task, actorId);
+      if (!['active', 'ready', 'blocked'].includes(task.state)) {
+        throw new Error(
+          `Parent Task ${task.id} is ${task.state}; split active, ready, or blocked work instead.`,
+        );
+      }
+      if ((task.updatedAt ?? task.generatedAt ?? '') !== expectedParentUpdatedAt) {
+        throw new Error(
+          `Parent Task ${task.id} changed after the split proposal was generated; propose the split again.`,
+        );
+      }
+      const existingIds = new Set(task.childTasks.map((child) => child.taskId));
+      const duplicate = children.find((child) => existingIds.has(child.taskId));
+      if (duplicate) {
+        throw new Error(`Parent Task ${task.id} already links child ${duplicate.taskId}.`);
+      }
+      return {
+        ...task,
+        childTasks: [...task.childTasks, ...children],
+        state: 'blocked',
+        recommendations: task.recommendations.map((recommendation) =>
+          recommendation.actionKind === 'start-child-task' && recommendation.status === 'open'
+            ? { ...recommendation, status: 'complete' as const }
+            : recommendation,
+        ),
+        coordination: {
+          lastUpdatedBy: actorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+  });
+};
+
 export const expandSkoposTaskOwnershipRuntime = async ({
   cwd,
   taskId,
@@ -687,6 +808,35 @@ export const expandSkoposTaskOwnershipRuntime = async ({
   const declaredOwnedPaths = [
     ...new Set([...existing.changeScope.declaredOwnedPaths, ...addedPaths]),
   ].sort((left, right) => left.localeCompare(right));
+  const scopeExpansion = await resolveSkoposScopeExpansion({
+    cwd: workspaceRoot,
+    currentScope: existing.scope,
+    paths: declaredOwnedPaths,
+  });
+  if (scopeExpansion.kind === 'unrelated' || !scopeExpansion.authority) {
+    const splitCommands = Object.entries(scopeExpansion.pathsByScope).map(
+      ([scopeId, paths]) =>
+        [
+          'skopos start',
+          shellQuote(existing.goal),
+          '.',
+          '--scope',
+          shellQuote(scopeId),
+          ...paths.flatMap((path) => ['--own', shellQuote(path)]),
+          '--actor',
+          shellQuote(actorId),
+        ].join(' '),
+    );
+    throw new Error(
+      `Task ${taskId} ownership expansion spans unrelated declared Scopes: ${scopeExpansion.affectedScopeIds.join(', ')}. ` +
+      `Start independent child Tasks (${splitCommands.join(' ; ')}) or start an explicitly scoped workspace/project-integration Task.`,
+    );
+  }
+  const nextScope = scopeExpansion.authority;
+  const expansionClassification = scopeExpansion.kind as Exclude<
+    SkoposScopeExpansionKind,
+    'unrelated'
+  >;
   const [impact, baselinePaths, inferredMemoryObligations] = await Promise.all([
     buildSkoposImpactReport({
       cwd: workspaceRoot,
@@ -701,9 +851,11 @@ export const expandSkoposTaskOwnershipRuntime = async ({
     }),
     inferSkoposTaskMemoryObligationsRuntime({
       cwd: workspaceRoot,
-      scope: existing.scope,
+      scope: nextScope,
       risk: existing.risk,
       ownedPaths: declaredOwnedPaths,
+      goal: existing.goal,
+      contract: existing.contract,
     }),
   ]);
 
@@ -725,12 +877,6 @@ export const expandSkoposTaskOwnershipRuntime = async ({
         ...task.changeScope,
         declaredOwnedPaths,
       };
-      const existingSteps = new Map(task.steps.map((step) => [step.id, step]));
-      const existingRecommendations = new Map(
-        task.recommendations
-          .filter((entry) => entry.actionKind === 'run-action' && entry.actionId)
-          .map((entry) => [entry.actionId!, entry]),
-      );
       const existingMemoryObligations = new Map(
         task.memoryObligations.map((entry) => [entry.id, entry]),
       );
@@ -739,13 +885,24 @@ export const expandSkoposTaskOwnershipRuntime = async ({
           (entry) => existingMemoryObligations.get(entry.id) ?? entry,
         ),
         ...task.memoryObligations.filter(
-          (entry) => !inferredMemoryObligations.some((candidate) => candidate.id === entry.id),
+          (entry) =>
+            entry.status === 'complete' &&
+            !inferredMemoryObligations.some((candidate) => candidate.id === entry.id),
         ),
       ].sort((left, right) => left.id.localeCompare(right.id));
       const selectedActions = impact.requiredActions;
       const selectedGuards = impact.matchedGuards;
+      const splitRecommendation = buildTaskSplitRecommendation({
+        task,
+        addedPaths,
+        impact,
+        affectedScopeIds: scopeExpansion.affectedScopeIds,
+        nextScopeId: nextScope.scope.id,
+        actorId: resolvedActorId,
+      });
       return {
         ...task,
+        scope: nextScope,
         proofSubject: {
           ...task.proofSubject,
           baselineId: buildProofSubjectBaselineId(changeScope),
@@ -759,6 +916,10 @@ export const expandSkoposTaskOwnershipRuntime = async ({
             actorId: resolvedActorId,
             recordedAt: now,
             baselinePaths,
+            classification: expansionClassification,
+            priorScopeId: task.scope.scope.id,
+            nextScopeId: nextScope.scope.id,
+            affectedScopeIds: scopeExpansion.affectedScopeIds,
           },
         ],
         selectedActions,
@@ -778,32 +939,31 @@ export const expandSkoposTaskOwnershipRuntime = async ({
         ],
         steps: [
           ...task.steps.filter((step) => !step.id.startsWith('action-')),
-          ...selectedActions.map(
-            (action) =>
-              existingSteps.get(`action-${action.id}`) ?? {
-                id: `action-${action.id}`,
-                kind: 'action' as const,
-                title: action.title,
-                detail: action.reason,
-                status: 'pending' as const,
-              },
-          ),
+          ...selectedActions.map((action) => ({
+            id: `action-${action.id}`,
+            kind: 'action' as const,
+            title: action.title,
+            detail: action.reason,
+            status: 'pending' as const,
+          })),
         ],
         recommendations: [
-          ...task.recommendations.filter((entry) => entry.actionKind !== 'run-action'),
-          ...selectedActions.map(
-            (action) =>
-              existingRecommendations.get(action.id) ?? {
-                id: `run-${action.id}`,
-                title: action.title,
-                summary: action.reason,
-                priority: 'medium' as const,
-                actionKind: 'run-action' as const,
-                actionId: action.id,
-                blocking: false,
-                status: 'open' as const,
-              },
+          ...task.recommendations.filter(
+            (entry) =>
+              entry.actionKind !== 'run-action' &&
+              entry.id !== TASK_SPLIT_RECOMMENDATION_ID,
           ),
+          ...(splitRecommendation ? [splitRecommendation] : []),
+          ...selectedActions.map((action) => ({
+            id: `run-${action.id}`,
+            title: action.title,
+            summary: action.reason,
+            priority: 'medium' as const,
+            actionKind: 'run-action' as const,
+            actionId: action.id,
+            blocking: false,
+            status: 'open' as const,
+          })),
         ],
         memoryObligations,
         coordination: {
@@ -823,6 +983,96 @@ export const expandSkoposTaskOwnershipRuntime = async ({
       });
     },
   });
+};
+
+const TASK_SPLIT_RECOMMENDATION_ID = 'start-bounded-child-task';
+const REPEATED_EXPANSION_SPLIT_THRESHOLD = 3;
+
+const buildTaskSplitRecommendation = ({
+  task,
+  addedPaths,
+  impact,
+  affectedScopeIds,
+  nextScopeId,
+  actorId,
+}: {
+  task: SkoposTaskArtifact;
+  addedPaths: string[];
+  impact: SkoposImpactReport;
+  affectedScopeIds: string[];
+  nextScopeId: string;
+  actorId: string;
+}): SkoposTaskArtifact['recommendations'][number] | undefined => {
+  const existing = task.recommendations.find(
+    (entry) => entry.id === TASK_SPLIT_RECOMMENDATION_ID,
+  );
+  if (existing && existing.status !== 'open') return existing;
+
+  const expansionCount = (task.ownershipExpansions?.length ?? 0) + 1;
+  const admissionScopeIds = new Set(task.admission?.signals.affectedScopeIds ?? []);
+  const introducedScopeIds = affectedScopeIds.filter(
+    (scopeId) => !admissionScopeIds.has(scopeId),
+  );
+  const admissionCategories = new Set(task.admission?.signals.impactCategories ?? []);
+  const introducedCategories = [
+    ...new Set(
+      impact.changed
+        .map((entry) => entry.category)
+        .filter((category) => !admissionCategories.has(category)),
+    ),
+  ];
+  const repeatedExpansion = expansionCount >= REPEATED_EXPANSION_SPLIT_THRESHOLD;
+  const semanticDivergence =
+    introducedScopeIds.length > 0 || introducedCategories.length > 0;
+  if (!existing && !repeatedExpansion && !semanticDivergence) return undefined;
+
+  const priorSuggestedPaths = existing?.ownedPaths ?? [];
+  const expansionPaths = repeatedExpansion
+    ? (task.ownershipExpansions ?? []).flatMap((entry) => entry.paths)
+    : [];
+  const ownedPaths = [
+    ...new Set([...priorSuggestedPaths, ...expansionPaths, ...addedPaths]),
+  ].sort((left, right) => left.localeCompare(right));
+  const reasons = [
+    ...(repeatedExpansion
+      ? [`ownership expanded ${expansionCount} times`]
+      : []),
+    ...(introducedScopeIds.length > 0
+      ? [`new declared Scopes appeared (${introducedScopeIds.join(', ')})`]
+      : []),
+    ...(introducedCategories.length > 0
+      ? [`new impact categories appeared (${introducedCategories.join(', ')})`]
+      : []),
+  ];
+  const childGoal = `Continue ${task.goal} as bounded follow-up work`;
+  const reason = `The Task may be drifting from its admitted subject because ${reasons.join(' and ')}.`;
+  const command = [
+    'skopos task child start',
+    shellQuote(task.id),
+    shellQuote(childGoal),
+    '.',
+    '--scope',
+    shellQuote(nextScopeId),
+    ...ownedPaths.flatMap((path) => ['--own', shellQuote(path)]),
+    '--reason',
+    shellQuote(reason),
+    '--actor',
+    shellQuote(actorId),
+  ].join(' ');
+
+  return {
+    id: TASK_SPLIT_RECOMMENDATION_ID,
+    title: 'Start a bounded child Task',
+    summary: `${reason} Keep this Task intact and move the suggested paths into focused follow-up work.`,
+    priority: semanticDivergence ? 'high' : 'medium',
+    actionKind: 'start-child-task',
+    command,
+    ownedPaths,
+    scopeId: nextScopeId,
+    reason,
+    blocking: false,
+    status: 'open',
+  };
 };
 
 export const applySkoposTaskDispositionRuntime = async ({
@@ -869,6 +1119,32 @@ export const applySkoposTaskDispositionRuntime = async ({
       const priorState = task.state;
       const nextState = resolveTaskDispositionState(task, disposition);
       const claimsWork = disposition === 'resume' || disposition === 'return-from-verification';
+      const terminalQuestionDisposition =
+        disposition === 'cancel'
+          ? {
+              status: 'dismissed' as const,
+              disposition: {
+                kind: 'dismissed' as const,
+                reason: `Task cancelled: ${normalizedReason}`,
+                actorId,
+                recordedAt: now,
+              },
+            }
+          : disposition === 'supersede'
+            ? {
+                status: 'promoted' as const,
+                disposition: {
+                  kind: 'promoted' as const,
+                  reason: `Task superseded: ${normalizedReason}`,
+                  actorId,
+                  recordedAt: now,
+                  target: {
+                    kind: 'task' as const,
+                    ref: successorTaskId!,
+                  },
+                },
+              }
+            : undefined;
       return {
         ...task,
         state: nextState,
@@ -884,12 +1160,189 @@ export const applySkoposTaskDispositionRuntime = async ({
         ...(disposition === 'supersede'
           ? { supersededByTaskId: successorTaskId }
           : {}),
+        ...(terminalQuestionDisposition
+          ? {
+              questions: task.questions.map((question) =>
+                question.status === 'open'
+                  ? { ...question, ...terminalQuestionDisposition }
+                  : question,
+              ),
+              steps: task.steps.map((step) =>
+                step.kind === 'decision' && step.status !== 'complete'
+                  ? { ...step, status: 'skipped' as const }
+                  : step,
+              ),
+              recommendations: task.recommendations.map((recommendation) =>
+                recommendation.linkedQuestionId && recommendation.status === 'open'
+                  ? {
+                      ...recommendation,
+                      status:
+                        disposition === 'cancel'
+                          ? 'dismissed' as const
+                          : 'complete' as const,
+                    }
+                  : recommendation,
+              ),
+            }
+          : {}),
         coordination: {
           ...(claimsWork ? { claimedBy: { actorId, claimedAt: now } } : {}),
           lastUpdatedBy: actorId,
           lastUpdatedAt: now,
         },
       };
+    },
+    afterPersist: async (updated) => {
+      await Promise.all([
+        writeJsonArtifact({
+          artifactPath: resolveSkoposTaskQuestionsPath(
+            resolve(cwd),
+            updated.taskIdentity,
+          ),
+          artifact: buildTaskQuestionProjection(updated),
+        }),
+        writeJsonArtifact({
+          artifactPath: resolveSkoposTaskRecommendationsPath(
+            resolve(cwd),
+            updated.taskIdentity,
+          ),
+          artifact: buildTaskRecommendationProjection(updated),
+        }),
+      ]);
+    },
+  });
+};
+
+export const disposeSkoposTaskQuestionRuntime = async ({
+  cwd,
+  taskId,
+  questionId,
+  disposition,
+  reason,
+  targetPath,
+  actor,
+}: {
+  cwd: string;
+  taskId: string;
+  questionId: string;
+  disposition: Exclude<SkoposTaskQuestionDispositionKind, 'answered'>;
+  reason: string;
+  targetPath?: string;
+  actor?: string;
+}): Promise<SkoposTaskArtifact> => {
+  const workspaceRoot = resolve(cwd);
+  const normalizedReason = reason.trim();
+  const normalizedTargetPath = targetPath?.trim();
+  if (!normalizedReason) {
+    throw new Error('Question disposition requires a non-empty reason.');
+  }
+  if (disposition === 'promoted' && !normalizedTargetPath) {
+    throw new Error('Promoting a Task question requires --target <path>.');
+  }
+  if (disposition === 'dismissed' && normalizedTargetPath) {
+    throw new Error('A dismissed Task question does not accept --target.');
+  }
+  if (normalizedTargetPath && !isWorkspaceRelativePath(normalizedTargetPath)) {
+    throw new Error('Question promotion target must be a workspace-relative path.');
+  }
+  if (normalizedTargetPath) {
+    const catalog = await buildSkoposDocumentCatalog({ cwd: workspaceRoot });
+    const normalized = normalizeProjectPath(normalizedTargetPath);
+    const target = catalog.documents.find((document) => document.path === normalized);
+    if (
+      !target ||
+      !['decision', 'finding', 'plan'].includes(target.role) ||
+      target.authority !== 'canonical' ||
+      !['active', 'durable'].includes(target.lifecycle)
+    ) {
+      throw new Error(
+        `Question promotion target ${normalizedTargetPath} must be active canonical Decision, Finding, or Plan Memory.`,
+      );
+    }
+  }
+
+  return mutateTask({
+    cwd: workspaceRoot,
+    taskId,
+    actor,
+    mutate: (task, actorId, now) => {
+      const terminal = ['complete', 'cancelled', 'superseded'].includes(task.state);
+      if (!terminal) assertTaskActor(task, actorId);
+      const question = task.questions.find((entry) => entry.id === questionId);
+      if (!question) {
+        throw new Error(`Task ${task.id} has no decision question ${questionId}.`);
+      }
+      if (question.status !== 'open') {
+        if (question.status === disposition) {
+          return task;
+        }
+        throw new Error(
+          `Task question ${questionId} already has terminal disposition ${question.status}.`,
+        );
+      }
+      const disposedQuestion = {
+        ...question,
+        status: disposition,
+        disposition: {
+          kind: disposition,
+          reason: normalizedReason,
+          actorId,
+          recordedAt: now,
+          ...(normalizedTargetPath
+            ? {
+                target: {
+                  kind: 'document' as const,
+                  ref: normalizeProjectPath(normalizedTargetPath),
+                },
+              }
+            : {}),
+        },
+      };
+      return {
+        ...task,
+        questions: task.questions.map((entry) =>
+          entry.id === questionId ? disposedQuestion : entry,
+        ),
+        steps: task.steps.map((step) =>
+          step.id === `decision-${questionId}`
+            ? { ...step, status: 'skipped' as const }
+            : step,
+        ),
+        recommendations: task.recommendations.map((recommendation) =>
+          recommendation.linkedQuestionId === questionId
+            ? {
+                ...recommendation,
+                status:
+                  disposition === 'dismissed'
+                    ? 'dismissed' as const
+                    : 'complete' as const,
+              }
+            : recommendation,
+        ),
+        coordination: {
+          ...task.coordination,
+          lastUpdatedBy: actorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+    afterPersist: async (updated) => {
+      await Promise.all([
+        writeJsonArtifact({
+          artifactPath: resolveSkoposTaskQuestionsPath(
+            workspaceRoot,
+            updated.taskIdentity,
+          ),
+          artifact: buildTaskQuestionProjection(updated),
+        }),
+        writeJsonArtifact({
+          artifactPath: resolveSkoposTaskRecommendationsPath(
+            workspaceRoot,
+            updated.taskIdentity,
+          ),
+          artifact: buildTaskRecommendationProjection(updated),
+        }),
+      ]);
     },
   });
 };
@@ -1114,6 +1567,12 @@ export const moveSkoposTaskToVerificationRuntime = async ({
       if (unfinished.length > 0) {
         throw new Error(
           `Task ${task.id} has unfinished pre-verification steps: ${unfinished.map((step) => step.id).join(', ')}.`,
+        );
+      }
+      const openQuestions = task.questions.filter((question) => question.status === 'open');
+      if (openQuestions.length > 0) {
+        throw new Error(
+          `Task ${task.id} has open decision questions: ${openQuestions.map((question) => question.id).join(', ')}. Resolve each with skopos decide <question-id> <option-id> . --actor ${actorId}.`,
         );
       }
       return {
@@ -1341,11 +1800,15 @@ export const inferSkoposTaskMemoryObligationsRuntime = async ({
   scope,
   risk,
   ownedPaths,
+  goal = '',
+  contract,
 }: {
   cwd: string;
   scope: SkoposResolvedScope;
   risk: SkoposTaskRisk;
   ownedPaths: string[];
+  goal?: string;
+  contract?: SkoposTaskContractDeclaration;
 }): Promise<SkoposTaskMemoryObligation[]> => {
   const workspaceRoot = resolve(cwd);
   const catalog = await buildSkoposDocumentCatalog({ cwd: workspaceRoot });
@@ -1382,7 +1845,59 @@ export const inferSkoposTaskMemoryObligationsRuntime = async ({
     });
   }
 
+  const conventionRole = classifyDurableConventionIntent({ goal, contract });
+  if (conventionRole && !obligations.some((entry) => entry.role === conventionRole)) {
+    const scopeMemoryRoot = normalizeProjectPath(scope.scope.memoryRoot ?? 'docs');
+    const conventionDocument = eligibleDocuments
+      .filter(
+        (document) =>
+          document.role === conventionRole &&
+          (document.metadata?.scope === scope.scope.id ||
+            isPathInside(document.path, scopeMemoryRoot)),
+      )
+      .sort(compareMemoryCandidates)[0];
+    obligations.push({
+      id: conventionDocument
+        ? buildMemoryObligationId(conventionRole, conventionDocument.path)
+        : `memory-${conventionRole}-convention-${shortDigest(scope.scope.id)}`,
+      role: conventionRole,
+      reason: conventionDocument
+        ? `This Task establishes a durable project convention; review and synchronize the existing ${conventionRole} Memory at ${conventionDocument.path}.`
+        : `This Task establishes a durable project convention; create or adopt canonical ${conventionRole} Memory for Scope ${scope.scope.id} instead of leaving the convention only in implementation history.`,
+      status: 'open',
+      targetPath: conventionDocument?.path,
+    });
+  }
+
   return obligations.sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const classifyDurableConventionIntent = ({
+  goal,
+  contract,
+}: {
+  goal: string;
+  contract?: SkoposTaskContractDeclaration;
+}): 'pattern' | 'standard' | undefined => {
+  const intent = [
+    goal,
+    ...(contract?.acceptanceCriteria ?? []),
+    ...(contract?.constraints ?? []),
+  ].join(' ').toLowerCase();
+  const durableVerb = /\b(?:adopt|codify|define|enforce|establish|introduce|standardize|standardise)\b/u.test(intent) ||
+    /\bmake\b[\s\S]{0,32}\bdefault\b/u.test(intent);
+  const durableSubject = /\b(?:convention|design system|guideline|naming scheme|pattern|standard)\b/u.test(intent) ||
+    /\b(?:project|repository|repo|workspace)[ -]wide\b/u.test(intent) ||
+    /\bacross (?:the )?(?:project|repository|repo|workspace)\b/u.test(intent);
+  const explicitlyLocal = /\b(?:one-off|single|local-only|this one|only this)\b/u.test(intent) ||
+    /\b(?:adjust|fix|polish|resize|tweak)\b[\s\S]{0,36}\b(?:color|copy|spacing|component|screen|page)\b/u.test(intent);
+  const explicitlyDurableScope = /\b(?:project|repository|repo|workspace)[ -]wide\b/u.test(intent) ||
+    /\bacross (?:the )?(?:project|repository|repo|workspace)\b/u.test(intent) ||
+    /\bfrom now on\b/u.test(intent);
+  if (!durableVerb || !durableSubject || (explicitlyLocal && !explicitlyDurableScope)) {
+    return undefined;
+  }
+  return /\b(?:convention|pattern)\b/u.test(intent) ? 'pattern' : 'standard';
 };
 
 const isDurableMemoryDocument = (
@@ -1546,7 +2061,7 @@ const mutateTask = async ({
   if (!actorId) {
     throw new Error('Task mutation requires --actor <id> or SKOPOS_ACTOR.');
   }
-  return withSkoposTaskMutationTransaction(
+  const updated = await withSkoposTaskMutationTransaction(
     { cwd: workspaceRoot, taskId },
     async () => {
       const existing = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
@@ -1593,6 +2108,80 @@ const mutateTask = async ({
       return updated;
     },
   );
+  if (updated.parentTaskId) {
+    await synchronizeParentChildReference({
+      workspaceRoot,
+      childTask: updated,
+      actorId,
+    });
+  }
+  return updated;
+};
+
+const synchronizeParentChildReference = async ({
+  workspaceRoot,
+  childTask,
+  actorId,
+}: {
+  workspaceRoot: string;
+  childTask: SkoposTaskArtifact;
+  actorId: string;
+}): Promise<void> => {
+  const parentTaskId = childTask.parentTaskId;
+  if (!parentTaskId) return;
+  await mutateTask({
+    cwd: workspaceRoot,
+    taskId: parentTaskId,
+    actor: actorId,
+    mutate: (parent, _resolvedActorId, now) => {
+      const childIndex = parent.childTasks.findIndex(
+        (reference) => reference.taskId === childTask.id,
+      );
+      if (childIndex < 0) {
+        throw new Error(
+          `Child Task ${childTask.id} names parent ${parent.id}, but the parent does not link it.`,
+        );
+      }
+      const childTasks = parent.childTasks.map((reference, index) =>
+        index === childIndex
+          ? {
+              ...reference,
+              title: childTask.title,
+              goal: childTask.goal,
+              scopeId: childTask.scope.scope.id,
+              state: childTask.state,
+              claimedByActorId: childTask.coordination.claimedBy?.actorId,
+              ownedPaths: [...childTask.changeScope.declaredOwnedPaths],
+              dependencyTaskIds: [...childTask.dependencyTaskIds],
+            }
+          : reference,
+      );
+      const hasUnsuccessfulChild = childTasks.some(
+        (reference) => reference.state !== 'complete',
+      );
+      const hasBlockingQuestion = parent.questions.some(
+        (question) => question.blocking && question.status === 'open',
+      );
+      const nextState =
+        ['complete', 'cancelled', 'superseded'].includes(parent.state)
+          ? parent.state
+          : hasUnsuccessfulChild || hasBlockingQuestion
+            ? 'blocked'
+            : parent.state === 'blocked'
+              ? 'ready'
+              : parent.state;
+      return {
+        ...parent,
+        childTasks,
+        state: nextState,
+        coordination: {
+          ...parent.coordination,
+          lastUpdatedBy: actorId,
+          lastUpdatedAt: now,
+        },
+      };
+    },
+  });
 };
 
 export const writeSkoposTrackedTaskDocumentRuntime = async ({
@@ -1637,8 +2226,8 @@ const renderTrackedTaskDocument = (task: SkoposTaskArtifact): string => {
     'provenance: accepted',
     `view: ${terminal ? 'exception' : 'current'}`,
     `risk: ${task.risk}`,
-    `proofSubject: ${task.proofSubject.kind}`,
-    `proofBaseline: ${task.proofSubject.baselineId}`,
+    `proofSubject: ${task.proofSubject?.kind ?? 'task-closure'}`,
+    `proofBaseline: ${task.proofSubject?.baselineId ?? `baseline-legacy-${task.id.slice(2)}`}`,
     `lastUpdated: ${date}`,
     ...(task.parentTaskId ? [`parentTaskId: ${task.parentTaskId}`] : []),
     ...(task.planIds.length > 0 ? ['relatedPlans:', ...task.planIds.map((id) => `  - ${id}`)] : []),

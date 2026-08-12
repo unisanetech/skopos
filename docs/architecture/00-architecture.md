@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -33,6 +33,23 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-11`: Completed the Codex host-delivery boundary for linked children. An
+  approved split produces truthful undelivered assignments; the Codex adapter may
+  create real tasks, bind returned thread identities as Sessions, and wait for results
+  while the originating Session remains an explicit reviewer. CLI and MCP now share
+  the audited writer/reviewer transition authority.
+- `2026-08-11`: Completed linked parent/child Task execution. Reviewed split proposals
+  are digest-bound, child ownership and dependencies are validated before mutation,
+  parent closure derives from successful child completion, and existing children can
+  be assigned to independent host-neutral Sessions without claiming host chat launch.
+- `2026-08-11`: Made post-admission ownership topology-aware and added a
+  non-blocking bounded-child recommendation when repeated expansion or a newly
+  introduced Scope/impact category indicates semantic Task drift. The recommendation
+  is canonical, auditable, and host-visible; agents retain the judgment to accept or
+  decline the split.
+- `2026-08-10`: Declared `apps/web` as the independent public product website,
+  separate from the internal supervision UI and core package family, with app-owned
+  registry source and no Skopos runtime dependency.
 - `2026-08-09`: Added the Design Context model for bounded, current, and
   provenance-backed product-design knowledge. Design Context remains a supporting
   Skill-system capability rather than a new Skill, package, runtime authority, or live
@@ -73,6 +90,21 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 Dependencies point inward. Tool surfaces do not own domain behavior, and runtime does
 not duplicate package logic.
+
+## Application Surfaces
+
+Skopos has two deliberately separate application surfaces:
+
+1. `packages/ui` is the private, local supervision console projected from compiled
+   Skopos state and bundled through the CLI.
+2. `apps/web` is the independently deployable public product website. It owns public
+   narrative, marketing compositions, metadata, assets, and reviewed app-local
+   Unisane UI registry source.
+
+The public website is not part of the core SDK package family, does not import the
+internal console, and has no dependency on Skopos runtime or compiled local project
+state. Its initial Next.js route is static-first; backend, authentication, analytics,
+and hosting-provider contracts require separate Decisions.
 
 ## Canonical Operating Loop
 
@@ -118,10 +150,26 @@ missing or unsafe `memoryRoot` is an invalid authority declaration and fails clo
 
 Task admission creates an open Memory obligation when declared ownership overlaps
 existing canonical durable Memory. High-impact Tasks receive a Scope-level durable
-Memory review obligation even when no Memory document is explicitly owned. Skopos
-points at existing truth and blocks closure until the agent records either
+Memory review obligation even when no Memory document is explicitly owned. A
+standard-risk Task also receives a `pattern` or `standard` obligation when its goal and
+contract explicitly establish, adopt, codify, enforce, or standardize a project-wide
+convention. One-off fixes, polish, copy, color, spacing, and local implementation do not
+qualify without explicit durable project scope. Skopos selects existing canonical
+same-role Scope Memory when available and otherwise requires the agent to create or
+adopt durable Memory—it does not invent a document. Ownership expansion recomputes the
+obligation from the preserved Task goal and contract.
+
+Skopos points at existing truth and blocks closure until the agent records either
 `memory-updated` or `reviewed-no-change`; it never creates a duplicate Architecture,
 Standard, Guide, Decision, Finding, or Pattern automatically.
+
+Task decomposition uses one canonical parent/child relationship. A proposal is local,
+review-required, and bound to the exact parent revision. Applying its digest creates
+tracked children, records each child's owned paths, dependencies, and mapped parent
+acceptance requirements, then blocks the parent until every child completes
+successfully. Child state and claim changes synchronize back to the tracked parent.
+Completed and other terminal Task projections remain reconstructable from historical
+Task Memory after local `.skopos/tasks/**` state is deleted.
 
 ## Extension Boundary
 
@@ -161,6 +209,31 @@ Enforcement is reported honestly:
 
 Only hooked or mediated environments may claim preventive safety. The current host
 baseline is cooperative and therefore reports `preventiveSafety: false`.
+
+`task assign` is the host-neutral bridge from a linked child to a coding-agent tab. It
+opens or reuses one Session, reserves exactly one writing Task, claims its declared
+resources, and publishes the Task actor claim as one operation. It does not create a
+Codex or Claude conversation by itself; a capable host adapter may create the tab and
+invoke the same authority, while other hosts use the returned assignment command and
+prompt.
+
+Split activation therefore has three explicit delivery states:
+
+1. core generates an exact child title, bounded prompt, returned-identity binding
+   follow-up, review command, and manual fallback with `deliveryStatus: not-attempted`
+2. after explicit user approval, a capable Codex host adapter creates the real task in
+   the same Project, injects the prompt, uses the returned thread identity as the
+   child's Skopos Session id, sends the binding follow-up, and waits for the result
+3. when any required host capability is unavailable or fails, the adapter reports the
+   failed stage and preserves the same prompt and follow-up for reviewed manual copy
+
+The originating Session releases its parent Task reservation and resource claims,
+reconciles open mutations and contamination, then explicitly transitions from
+`writer` to `reviewer`. The transition is actor-bound, live-Session-only, audited, and
+exposed through both CLI and `skopos_coordination_session_transition` MCP authority.
+Returning to `writer` uses the same fail-closed transition before the Session may
+reserve or claim work. Host task APIs remain adapter capabilities; they do not move
+into runtime core.
 
 ## Core Invariants
 

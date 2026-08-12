@@ -1,17 +1,18 @@
 ---
 title: Skill Selection, Proof, And Portability Are Not Ready For Catalog Expansion
-status: active
+status: resolved
 severity: MUST
 owner: skopos-core
 id: SKOPOS-F-20260804-SKILL-SELECTION-PROOF-AND-PORTABILITY-GAP
 scope: skopos
 role: finding
-lifecycle: active
+lifecycle: historical
 authority: supporting
 provenance: observed
-view: current
-lastUpdated: 2026-08-09
+view: transition
+lastUpdated: 2026-08-11
 relatedDocs:
+  - ../decisions/D-20260811-product-interface-design-first-release-boundary.md
   - ../decisions/040-project-adapted-skill-packs-as-capability-projections.md
   - ../work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
   - ../architecture/agent-native-operating-model.md
@@ -20,6 +21,17 @@ reviewCycle: per Skill capability phase
 ---
 
 # Skill Selection, Proof, And Portability Are Not Ready For Catalog Expansion
+
+## Resolution
+
+- `2026-08-11`: The first-release boundary is accepted without falsifying the failed
+  efficacy result. Product Interface Design `0.5.0` is publishable because its exact
+  selection, identity, authority, containment, budget, packed-install, and binding
+  gates pass. Efficacy certification remains `no`, independent human efficacy remains
+  `no`, and the release must make neither claim. No additional efficacy work blocks
+  `0.1.0`. Broad Skill-catalog expansion is prohibited unless a later explicit
+  Decision reopens it with fresh proof. This bounded release policy resolves the
+  Finding as a first-release blocker; it does not convert the lost smoke into a pass.
 
 ## Summary
 
@@ -194,7 +206,11 @@ canonical Skill system, not a versioned migration.
 6. Skopos cannot yet claim that Skills reduce search, rework, user corrections, or false
    closure across different project shapes.
 
-## Required Resolution
+## Historical Required Resolution
+
+The following list defined the former mandatory efficacy path. It is retained as
+historical evidence and is superseded for `0.1.0` by the accepted bounded-release
+Decision above.
 
 1. Retain the implemented complete Task signal envelope and structured eligibility stage.
 2. Retain module-local context, Action, Guard, rubric, and failure-signal binding.
@@ -209,7 +225,7 @@ canonical Skill system, not a versioned migration.
 8. Pilot validated guidance in Skopos and one non-Skopos project.
 9. Add later packs only after the existing UI pack proves value and bounded cost.
 
-## Exit Criteria
+## Historical Exit Criteria
 
 1. Negative Tasks inject zero Skill context.
 2. Every selection and suppression has structured evidence and a bounded cost.

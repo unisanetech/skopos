@@ -80,6 +80,35 @@ const renderCodexManifest = (projectionModel?: SkoposHostProjectionModel): strin
       summary:
         'Wrapper-mediated discussion-memory adapter for Codex hosts using the shared skopos discuss runtime.',
       actorBinding: buildHostActorBinding(),
+      childTaskLaunch: {
+        requiresExplicitUserApproval: true,
+        taskTitle: {
+          format: '<ProjectShort>: <bounded child title>',
+          maxCharacters: 56,
+          projectShortSource:
+            'Title-cased canonical project.name; a future explicit project short name may override it.',
+          collisionSuffix: 'Use a compact scope or ordinal suffix only when generated titles collide.',
+          excludes: ['Task ids', 'redundant project prefixes', 'generic leading verbs when clarity remains'],
+        },
+        requiredHostCapabilities: [
+          'create-task',
+          'inject-initial-prompt',
+          'return-thread-identity',
+          'send-follow-up',
+          'wait-for-result',
+        ],
+        sessionIdSource: 'returned-codex-thread-identity',
+        sessionLeaseSeconds: 3600,
+        deliveryStatus: 'not-attempted-until-host-call-succeeds',
+        workflow: [
+          'Read the reviewed Task split activation and ask for explicit user approval before creating Codex tasks.',
+          'Create one real Codex task per approved child in the same project directory and inject the assignment prompt exactly.',
+          'Use each returned Codex thread identity as that child\'s Skopos Session id and send the generated session-binding follow-up.',
+          'Wait for every child result, then run each assignment reviewCommand and review canonical child Task state from Skopos.',
+        ],
+        manualFallback:
+          'If any required Codex host capability is unavailable or fails, report the failed stage and retain the generated prompt and follow-up for manual copy. Prompt generation is not delivery.',
+      },
       projectModel: projectionModel
         ? {
             path: '.skopos/index/enforcement.json',
@@ -206,8 +235,29 @@ const { raw, payload } = await readInput();
 const projectDir = resolveProjectDir(payload);
 const messageInput = typeof payload.message === 'string' ? payload.message : raw;
 
+const sessionLeaseSeconds = (() => {
+  const requested = payload.leaseSeconds ?? process.env.SKOPOS_SESSION_LEASE_SECONDS ?? 3600;
+  const parsed = Number(requested);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    process.stderr.write('Codex Session lease must be a positive number of seconds.\\n');
+    process.exit(1);
+  }
+  return String(parsed);
+})();
+
+const buildSessionContextArgs = () => [
+  'session',
+  'context',
+  projectDir,
+  '--host',
+  'codex',
+  '--lease-seconds',
+  sessionLeaseSeconds,
+  '--json',
+];
+
 const exactTaskId = () => {
-  const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'codex', '--json']);
+  const contextResult = runSkopos(projectDir, buildSessionContextArgs());
   const context = parseJsonOutput(contextResult);
   if (contextResult.status !== 0 || typeof context.currentTaskId !== 'string') {
     process.stderr.write(contextResult.stderr || 'Skopos could not resolve one exact current Task for continuation.\\n');
@@ -240,7 +290,7 @@ let result;
 
 switch (eventName) {
   case 'session-start': {
-    const contextArgs = ['session', 'context', projectDir, '--host', 'codex', '--json'];
+    const contextArgs = buildSessionContextArgs();
     if (typeof payload.sessionId === 'string' && payload.sessionId.trim().length > 0) {
       contextArgs.push('--session-id', payload.sessionId.trim());
     }
@@ -276,7 +326,7 @@ switch (eventName) {
     }
 
     runSkopos(projectDir, ['discuss', 'checkpoint', projectDir, '--json']);
-    const contextResult = runSkopos(projectDir, ['session', 'context', projectDir, '--host', 'codex', '--json']);
+    const contextResult = runSkopos(projectDir, buildSessionContextArgs());
     const context = parseJsonOutput(contextResult);
     if (contextResult.status !== 0) {
       process.stdout.write(
@@ -369,4 +419,28 @@ Use the generated entrypoint at \`${ENTRYPOINT_RELATIVE_PATH}\` from an external
 The wrapper should read JSON from \`session-start\` and use the returned \`additionalContext\` field as compact resume context. The agent should follow the Task risk and detail selected by Skopos and should not claim completion until close Readiness is ready. Do not replay raw discussion journals into the prompt.
 
 Fresh Codex task creation, initial-prompt injection, origin identification and messaging, and completion reporting require the Codex host task API. The wrapper reports those host capabilities but does not pretend that rendering a prompt delivered it. After explicit user intent, the host must verify and render, create the fresh task in the same project directory, inject the exact prompt, accept the handoff for the receiving Session, and record the real host outcome. If any host call fails, report that stage as failed and retain the reviewed manual-copy prompt.
+
+## Approved child Task launch
+
+An applied Task split produces host-neutral child assignments with bounded prompts,
+the parent Task and reviewer actor, required host capabilities, exact assignment and
+Session-context command templates, a one-hour Session lease, and a manual fallback.
+The originating Codex agent must not create tasks until the user explicitly approves
+the reviewed split. After approval it must:
+
+1. create one real Codex task for each approved child in the same project directory
+2. use the assignment \`title\` exactly as the Codex task title and inject the generated
+   child prompt exactly; the title follows \`<ProjectShort>: <bounded child title>\`, is
+   at most 56 characters, and keeps the Task id in metadata and prompt instead
+3. use the returned Codex thread identity as the child Skopos Session id
+4. send the generated session-binding follow-up, preserving \`--lease-seconds 3600\`
+   on assignment and every later Session-context refresh
+5. wait for every child result
+6. run each assignment \`reviewCommand\` and review canonical child Task state before
+   parent integration or closure
+
+If create, prompt injection, identity return, follow-up, or wait is unsupported or
+fails, report that exact stage and use the assignment's manual fallback. A generated
+prompt or activation artifact remains \`not-attempted\`; it is never evidence of host
+delivery.
 `;

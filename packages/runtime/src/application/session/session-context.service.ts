@@ -68,11 +68,16 @@ export const buildSkoposSessionContextRuntime = async ({
     );
   } else if (sessionId && actorId && !dryRun) {
     try {
+      const initialStatus = await getSkoposCoordinationStatus({ cwd: workspaceRoot });
+      const existingSession = initialStatus.sessions.find(
+        (candidate) => candidate.sessionId === sessionId,
+      );
       const ensured = await ensureSkoposCoordinationSession({
         cwd: workspaceRoot,
         actorId,
         host,
         sessionId,
+        mode: existingSession?.mode ?? 'writer',
         leaseSeconds,
       });
       const status = await getSkoposCoordinationStatus({ cwd: workspaceRoot });
@@ -536,16 +541,22 @@ export const renderSkoposSessionAdditionalContext = (
   }
   if (context.coordination) {
     lines.push(
-      `Coordination: ${context.coordination.enforcementLevel}; Session ${context.coordination.session.sessionId} is ${context.coordination.session.state}; preventive safety: no.`,
+      `Coordination: ${context.coordination.enforcementLevel}; Session ${context.coordination.session.sessionId} is ${context.coordination.session.state} in ${context.coordination.session.mode} mode; preventive safety: no.`,
     );
     if (context.coordination.reservation) {
       lines.push(
         `Reserved Task: ${context.coordination.reservation.taskId}; resource claims: ${context.coordination.claims.length}.`,
       );
-    } else {
+    } else if (context.coordination.session.mode === 'writer') {
       lines.push(
         'No writing Task is reserved. Pass this Session id to `skopos start --session-id <id> --host <host>` before editing.',
       );
+    } else if (context.coordination.session.mode === 'reviewer') {
+      lines.push(
+        'Reviewer mode preserves this Session without writing authority. Use `skopos coordination session transition . --session <id> --actor <id> --mode writer --reason <text>` before reserving or claiming Task work.',
+      );
+    } else {
+      lines.push('Read-only mode preserves this Session without writing authority.');
     }
   }
 

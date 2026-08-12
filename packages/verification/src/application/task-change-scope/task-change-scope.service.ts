@@ -27,6 +27,7 @@ export interface ResolveSkoposTaskChangedPathsOptions {
   workspaceRoot: string;
   changeScope: SkoposTaskChangeScope;
   currentTaskId?: string;
+  linkedChildTaskIds?: string[];
   mutationAttributions?: SkoposTaskPathMutationAttribution[];
   generatedOutputPaths?: string[];
 }
@@ -82,6 +83,7 @@ export const resolveSkoposTaskChangedPaths = async ({
   workspaceRoot,
   changeScope,
   currentTaskId,
+  linkedChildTaskIds = [],
   mutationAttributions = [],
   generatedOutputPaths = [],
 }: ResolveSkoposTaskChangedPathsOptions): Promise<SkoposTaskChangedPaths> => {
@@ -133,6 +135,20 @@ export const resolveSkoposTaskChangedPaths = async ({
         kind: 'task-attributed',
         reason: 'generated-output',
         ...(currentTaskId ? { attributedTaskId: currentTaskId } : {}),
+      });
+      continue;
+    }
+
+    if (
+      currentTaskId &&
+      linkedChildTaskIds.some((taskId) => isTaskOwnedProjection(current.path, taskId))
+    ) {
+      changedPaths.push(current.path);
+      pathAttributions.push({
+        path: current.path,
+        kind: 'task-attributed',
+        reason: 'linked-child-projection',
+        attributedTaskId: currentTaskId,
       });
       continue;
     }

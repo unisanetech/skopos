@@ -33,6 +33,9 @@ describe('MCP recovery and disposition contract', () => {
     expect(skoposMcpToolIds).toEqual(expect.arrayContaining([
       'skopos_action_recover',
       'skopos_task_disposition',
+      'skopos_task_split_propose',
+      'skopos_task_split_apply',
+      'skopos_task_assign',
       'skopos_coordination_task_recover',
       'skopos_handoff_create',
       'skopos_handoff_refresh',
@@ -63,6 +66,26 @@ describe('MCP recovery and disposition contract', () => {
       'operation',
       'reason',
     ]);
+    expect(definitions.skopos_task_split_propose?.inputSchema.required).toEqual([
+      'cwd',
+      'parentTaskId',
+      'childrenJson',
+      'actor',
+      'reason',
+    ]);
+    expect(definitions.skopos_task_split_apply?.inputSchema.required).toEqual([
+      'cwd',
+      'parentTaskId',
+      'proposalDigest',
+      'actor',
+      'reason',
+    ]);
+    expect(definitions.skopos_task_assign?.inputSchema.required).toEqual([
+      'cwd',
+      'taskId',
+      'actor',
+      'sessionId',
+    ]);
   });
 
   it('dispatches Task disposition to the shared runtime state machine', async () => {
@@ -71,6 +94,7 @@ describe('MCP recovery and disposition contract', () => {
       cwd: root,
       goal: 'Prove MCP disposition parity',
       actor: 'mcp-agent',
+      risk: 'light',
       ownedPaths: ['src/input.ts'],
     });
 

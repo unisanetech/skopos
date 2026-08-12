@@ -1,0 +1,44 @@
+{
+  "snapshotId": "S-74f9daceae2a",
+  "taskId": "T-69b903ff",
+  "sessionId": "browser-evidence-close-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/evidence-and-readiness-model.md",
+      "digest": "c606e4a87ca1236080c7c14713074900aa00eecd3627db4a44007cc32983debc"
+    },
+    {
+      "path": "docs/findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md",
+      "digest": "b7768aba23141edf918a6d22d72328d0252b244fd88c1c4cc35e6d4ec444ad37"
+    },
+    {
+      "path": "packages/cli/src/__tests__/browser-evidence.test.ts",
+      "digest": "e1f3876b8239f518b245a3eac5b641ec0a4894e407568a27ac3b9188964aa8fb"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "129274e0bc4a4000a5cd7b73e765af9c7555492cae54df4f03e91939192c5ffb"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/evidence.ts",
+      "digest": "f0989c468d43f7c2674da039e5f906a89022b8d5315728251762437a248eaab1"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "67b6339d34a535c57efb094fe01cf3254ed28a3326d6b069e365d3082023ed60"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-verification.ts",
+      "digest": "41121cff101a5388bb723be03aeedb603344d72bca7ff0602b953bcbc84dbf41"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "0dcdbb4032ffa678f668746ff99735e12740920a5ea630163cbfc3a2d7ced61a"
+    }
+  ],
+  "digest": "74f9daceae2a82fc162767ae421b367a4d61bd1f5882efd4408fc0d466cc13bb",
+  "createdAt": "2026-08-11T02:35:28.430Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-69b903ff-S-74f9daceae2a.json"
+}

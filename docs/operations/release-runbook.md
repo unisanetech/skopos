@@ -27,16 +27,21 @@ authorize publication. The first release is only `@skopos/cli@0.1.0` under the n
 
 Do not tag or publish when any of these is true:
 
-1. Product Interface Design's current-source efficacy and independent blind-review gate is not
-   passed.
+1. Product Interface Design's accepted identity, deterministic selection, authority,
+   containment, bounded-cost, packed-install, or project-binding gate is not passed,
+   or a release surface claims efficacy. Material and independent human efficacy are
+   explicitly unproven and are not first-`next` release blockers under the accepted
+   release boundary.
 2. A critical or high vulnerability, suspected secret, incompatible license, private
    adopter data, or unexplained package file remains.
 3. The candidate working tree is dirty, the candidate commit is not pushed, or proof
    comes from more than one source identity.
 4. A release-blocking Finding, policy drift, Task question, missing Evidence, or failed
    runtime-matrix job remains.
-5. npm scope ownership, protected GitHub environment, or OIDC trusted publishing has
-   not been verified.
+5. npm scope ownership, the protected GitHub environment, the exact one-time bootstrap
+   controls, or the post-bootstrap OIDC transition have not been verified. The trusted
+   publisher itself cannot exist until npm has created the first package; claiming it
+   is already configured would contradict npm's first-package constraint.
 6. The requested action would publish from a developer laptop or require a long-lived
    npm write token.
 
@@ -48,15 +53,21 @@ Do not tag or publish when any of these is true:
 4. Create a clean clone with no copied `.skopos/**` state.
 5. Install the frozen lockfile and run the release matrix without a release build
    cache.
-6. Build one tarball, record its SHA-256 digest, and use only that artifact for the
+6. Run `pnpm release:scorecard:validate` to fail closed unless every non-candidate
+   product gate is already `Yes`, including real Claude host parity and final Unisane
+   replacement certification.
+7. From the fresh checkout with no `.skopos/**` state, run
+   `pnpm release:reconstruct:validate` to rebuild Project Memory and registered
+   capabilities from tracked truth without changing tracked files.
+8. Build one tarball, record its SHA-256 digest, and use only that artifact for the
    remaining certification.
-7. Inspect `npm pack --json` output and every extracted file. Reject development
+9. Inspect `npm pack --json` output and every extracted file. Reject development
    scripts, workspace references, private paths, source-checkout dependencies,
    credentials, unexpected brands, or undeclared runtime assets.
-8. Install that tarball into fresh projects on the supported Node and operating-system
+10. Install that tarball into fresh projects on the supported Node and operating-system
    matrix and exercise version, help, init, Session, Task, Action, Evidence, Readiness,
    storage, Product Interface Design portability, and the bundled UI.
-9. Produce a scorecard that maps each R1–R6 gate to the candidate SHA, tarball digest,
+11. Produce a scorecard that maps each R1–R6 gate to the candidate SHA, tarball digest,
    workflow run, and immutable evidence.
 
 Any source, dependency, lockfile, documentation, or package-content change after the

@@ -17,6 +17,11 @@ import {
   type SkoposActionManifest,
 } from '../../../model/src/index.js';
 import { selectSkoposContextDocuments } from '../../../query/src/application/build-context/build-context.service.js';
+import {
+  resolveSkoposScopeExpansionFromState,
+  resolveSkoposScopeForPathFromState,
+} from '../../../query/src/application/resolve-scope/resolve-scope.service.js';
+import { loadSkoposQueryState } from '../../../query/src/application/shared/load-query-state.js';
 import { buildSkoposImpactReport } from '../../../verification/src/index.js';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -304,6 +309,10 @@ describe('declared Scope registry', () => {
           ]),
         }),
       );
+      const state = await loadSkoposQueryState({ cwd: root });
+      expect(
+        resolveSkoposScopeForPathFromState(state, 'packages/api/src/router.ts').scope,
+      ).toMatchObject({ id: 'example-api', kind });
     }
 
     await writeFile(
@@ -312,6 +321,80 @@ describe('declared Scope registry', () => {
       'utf8',
     );
     await expect(loadSkoposScopeRegistry({ cwd: root })).rejects.toThrow();
+  });
+
+  it('classifies dependency, common-ancestor, explicit workspace, and unrelated expansion', async () => {
+    const root = await createWorkspace();
+    let state = await loadSkoposQueryState({ cwd: root });
+    const apiScope = resolveSkoposScopeForPathFromState(
+      state,
+      'packages/api/src/router.ts',
+    );
+    const modelScope = resolveSkoposScopeForPathFromState(
+      state,
+      'packages/model/src/model.ts',
+    );
+
+    expect(
+      resolveSkoposScopeExpansionFromState(state, apiScope, [
+        'packages/api/src/router.ts',
+        'packages/model/src/model.ts',
+      ]),
+    ).toMatchObject({
+      kind: 'declared-dependency',
+      affectedScopeIds: ['example-api', 'example-model'],
+      authority: { scope: { id: 'example-api' } },
+    });
+    expect(
+      resolveSkoposScopeExpansionFromState(state, modelScope, [
+        'packages/model/src/model.ts',
+        'packages/api/src/router.ts',
+      ]),
+    ).toMatchObject({
+      kind: 'unrelated',
+      affectedScopeIds: ['example-api', 'example-model'],
+    });
+
+    await writeFile(
+      join(root, 'tools/skopos/scopes.yaml'),
+      genericScopeRegistryYaml.replace(
+        '    parent: example\n    profile: core.domain',
+        '    parent: example-product\n    profile: core.domain',
+      ),
+      'utf8',
+    );
+    state = await loadSkoposQueryState({ cwd: root });
+    const nestedApiScope = resolveSkoposScopeForPathFromState(
+      state,
+      'packages/api/src/router.ts',
+    );
+    expect(
+      resolveSkoposScopeExpansionFromState(state, nestedApiScope, [
+        'packages/api/src/router.ts',
+        'packages/model/src/model.ts',
+      ]),
+    ).toMatchObject({
+      kind: 'common-ancestor',
+      authority: {
+        matchedBy: 'topology',
+        scope: { id: 'example-product' },
+      },
+    });
+
+    const workspaceScope = {
+      query: 'example',
+      matchedBy: 'id' as const,
+      scope: state.scopesLite.scopes.find((scope) => scope.id === 'example')!,
+    };
+    expect(
+      resolveSkoposScopeExpansionFromState(state, workspaceScope, [
+        'packages/api/src/router.ts',
+        'packages/model/src/model.ts',
+      ]),
+    ).toMatchObject({
+      kind: 'explicit-multi-scope',
+      authority: { scope: { id: 'example' } },
+    });
   });
 
   it('selects role-diverse accepted workspace context instead of filename-first decisions', () => {

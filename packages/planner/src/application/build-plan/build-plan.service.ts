@@ -31,7 +31,6 @@ export const buildSkoposPlan = ({
     goal: normalizedGoal,
     scopeTitle,
     scopeKind: context.scope.scope.kind,
-    scanSummary,
     config,
   });
   const risks = buildRisks({
@@ -98,7 +97,6 @@ interface BuildDecisionQuestionsInput {
   goal: string;
   scopeTitle: string;
   scopeKind: SkoposContextBundle['scope']['scope']['kind'];
-  scanSummary: SkoposScanSummary;
   config: SkoposRootConfig;
 }
 
@@ -106,43 +104,11 @@ const buildDecisionQuestions = ({
   goal,
   scopeTitle,
   scopeKind,
-  scanSummary,
   config,
 }: BuildDecisionQuestionsInput): SkoposDecisionQuestion[] => {
   const questions: SkoposDecisionQuestion[] = [];
   const normalizedGoal = goal.toLowerCase();
   const configuredDecisionTypes = new Set(config.decisions.askFor);
-
-  if (
-    scanSummary.repoMode === 'monorepo' &&
-    scopeKind === 'workspace' &&
-    scanSummary.packageCount > 1
-  ) {
-    questions.push({
-      id: 'plan.scope-confirmation',
-      category: 'scope',
-      escalation: 'recommend-and-ask',
-      question:
-        'Should this change stay at workspace scope, or should it be narrowed to one declared Scope?',
-      whyItMatters:
-        'Wide-scope Plans in monorepos drift faster and make Readiness less precise.',
-      recommendedOptionId: 'narrow-scope-first',
-      options: [
-        {
-          id: 'narrow-scope-first',
-          label: 'Narrow scope first',
-          rationale:
-            'Recommended because one declared Scope keeps context, checks, and docs impact easier to control.',
-        },
-        {
-          id: 'keep-workspace-scope',
-          label: 'Keep workspace scope',
-          rationale:
-            'Useful when the change truly spans multiple Scopes and you intend to coordinate a cross-Scope rollout.',
-        },
-      ],
-    });
-  }
 
   if (
     configuredDecisionTypes.has('architecture-shift') &&
@@ -183,7 +149,7 @@ const buildDecisionQuestions = ({
 
   if (
     configuredDecisionTypes.has('public-api-change') &&
-    matchesAny(normalizedGoal, ['api', 'endpoint', 'route', 'public', 'contract', 'sdk', 'schema'])
+    hasPublicContractChangeIntent(normalizedGoal)
   ) {
     questions.push({
       id: 'plan.public-api-change',
@@ -201,10 +167,10 @@ const buildDecisionQuestions = ({
             'Recommended because contract decisions should be explicit before implementation starts.',
         },
         {
-          id: 'internal-only-change',
-          label: 'Keep change internal',
+          id: 'no-public-contract-change',
+          label: 'No public contract change',
           rationale:
-            'Use this when the goal should not affect public behavior or external consumers.',
+            'Use when the wording does not actually change an API, CLI, SDK, schema, or other external contract.',
         },
       ],
     });
@@ -317,6 +283,15 @@ const removeOperationalHomonyms = (goal: string): string =>
     /\b(provider protocol|session context|token budget|workspace scope|scope confirmation)\b/g,
     ' ',
   );
+
+const hasPublicContractChangeIntent = (goal: string): boolean => {
+  const classifiedGoal = removeOperationalHomonyms(goal);
+  const publicContractTarget =
+    /\b(api|cli|command|contract|endpoint|export|flag|interface|protocol|route|schema|sdk)\b/;
+  const changeIntent =
+    /\b(add|break|change|create|delete|deprecate|expose|implement|migrate|modify|publish|remove|rename|replace|version)\b/;
+  return publicContractTarget.test(classifiedGoal) && changeIntent.test(classifiedGoal);
+};
 
 const hasDestructiveMigrationIntent = (goal: string): boolean => {
   const classifiedGoal = removeOperationalHomonyms(goal);

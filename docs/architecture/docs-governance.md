@@ -10,9 +10,10 @@ authority: canonical
 provenance: declared
 view: target
 implementationStatus: partial
-lastUpdated: 2026-08-02
+lastUpdated: 2026-08-11
 relatedDocs:
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../decisions/D-20260811-topology-aware-task-scope-authority.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
   - ../patterns/README.md
   - artifact-model.md
@@ -27,6 +28,9 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-08-11`: Accepted topology-aware Task Scope authority. Task admission now has a
+  project-generic narrowest-owner target contract, while multi-Scope work requires an
+  explicit common ancestor, parent/child structure, or integration boundary.
 - `2026-08-05`: Certified the complete adoption boundary with one canonical four-lane
   matrix. Assessment-only intake remains below `agent-ready`; healthy greenfield and
   brownfield projects complete reviewed proposal, execution, strict verification, and
@@ -182,6 +186,33 @@ Rules:
     colocated Memory invalidates compiled query state
 13. Task projection follows the Task's declared Scope; workspace Tasks use the
     workspace root without imposing that root on child Scopes
+
+### Task Scope Authority
+
+A declared Scope is an execution authority boundary, not only a documentation label.
+Task admission resolves the narrowest valid owner from explicit Scope identity, target
+path, initial owned paths, deepest matching `codeRoots`, ancestry, and dependency
+edges. Goal language may support the choice but never replaces declared topology.
+
+Rules:
+
+1. one matching Scope owns the Task, its Task projection, and its Memory obligations
+2. deterministic narrow selection does not require a human ask-back
+3. ambiguous candidates fail closed with a bounded response naming the candidates and
+   exact explicit-Scope or split-Task recovery; a host question is allowed only when
+   its answer can operationally change authority
+4. unrelated Scopes require parent/child Tasks or explicit multi-Scope authority
+5. resolving `narrow-scope-first` must rebind the Task or report the exact blocker
+6. pre-mutation Scope rebinding may replace authority atomically; post-mutation
+   widening preserves existing baselines, records reviewed new-path state, and changes
+   or supersedes the proof subject before refreshing dependents and capabilities
+7. an ownership addition outside the current Scope is classified before adoption and
+   cannot silently widen authority
+8. the resolver is project-generic and contains no Skopos repository paths or product
+   names
+
+The complete target and proof matrix are defined by
+`D-20260811-topology-aware-task-scope-authority`.
 
 ## Canonical Relative Grammar
 

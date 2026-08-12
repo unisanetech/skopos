@@ -1,0 +1,44 @@
+{
+  "snapshotId": "S-36c890432f73",
+  "taskId": "T-b225439d",
+  "sessionId": "homepage-build-snapshot",
+  "actorId": "codex-homepage-build",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "apps/web",
+      "digest": "93ac5f76c3d84c7cbed36f57c9fd6d3458024013148482d1cae62cbbf4363fe4"
+    },
+    {
+      "path": "design-qa.md",
+      "digest": "e6680bd133b195b89724e66ce3c0ee13eb4ea36cf943918eb0fd355104201913"
+    },
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "165ba87d6a96c48b8c22ca0a81511764e36d1fa6edc68daeed928789c085edb3"
+    },
+    {
+      "path": "docs/scopes/skopos-web",
+      "digest": "43ba098a6994b0b7d16637195903604b03697a5ff2491929936a86479196c9ca"
+    },
+    {
+      "path": "docs/work/plans/P-7dde6750-design-and-deliver-the-public-skopos-homepage.md",
+      "digest": "24ef24d44c6769046f9b643595e2044145d65ccafa5323bbbfd7ec1d324e01dd"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "e366d6c0d01f8dfb163d15c2e4297f7a1176db077b4e56bd592fcac348fbec7d"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "digest": "d5391f61e12a40ea2673d09affe5f8d5f1905b16572ef937c863236b4c44de22"
+    },
+    {
+      "path": "tools/skopos/scopes.yaml",
+      "digest": "d5421e42b80bb9a25b8f5dc9fda8bebc756aba01a85ec30522c54166ba69a324"
+    }
+  ],
+  "digest": "36c890432f737e3a545b4d6a141395fb3fe079048c2dc7e6a0d2e6802838dd09",
+  "createdAt": "2026-08-10T14:32:41.433Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-b225439d-S-36c890432f73.json"
+}

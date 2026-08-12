@@ -1,0 +1,20 @@
+{
+  "snapshotId": "S-cf9f5fb2dfa1",
+  "taskId": "T-a5d2f7e5",
+  "sessionId": "observation-rename-fix-closure",
+  "actorId": "codex-root",
+  "baseRevision": "451c4c5729c59a4899fbfe54cb7efa3d951de8da",
+  "paths": [
+    {
+      "path": "packages/cli/src/__tests__/observation-evidence-revalidation.test.ts",
+      "digest": "0079a0fe837deb477ea0aa7874bbdc3a7f59a6f8213da40fc659c0dfcf197fc6"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "e2daa772bf2793517b01f218a558e70e7c123553b14f62b623d0ad7b58eb7cd1"
+    }
+  ],
+  "digest": "cf9f5fb2dfa102cf9f9087aca0175a53d2dbf3736fb6b6a96a15d585a3a89907",
+  "createdAt": "2026-08-12T15:35:59.180Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-a5d2f7e5-S-cf9f5fb2dfa1.json"
+}

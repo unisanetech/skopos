@@ -1,0 +1,48 @@
+{
+  "snapshotId": "S-595a74679211",
+  "taskId": "T-f4805476",
+  "sessionId": "web-parent-closure-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "apps/web/package.json",
+      "digest": "db8db6e5fe8451803ab563a0e73a3fc9c5cb8a4af9525afba3c3128d3a9585dc"
+    },
+    {
+      "path": "apps/web/src/app/layout.tsx",
+      "digest": "fa249ed1d5d032adf61d0dffff0061fb02c30b30a26429eb00eb1308c1f9948d"
+    },
+    {
+      "path": "docs/findings/F-20260811-public-web-build-and-cli-release-gate-coupling.md",
+      "digest": "f576e046d1b4aba91f0ade934140ed3dbcc319b38206eff37b067f16fe885da3"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-02176c1d-add-and-run-one-independent-web-deployment-verification-.md",
+      "digest": "cfcb068e853c4d88a413eaf76e0afe55c2d02077eb3f5e80ac8159d518dd2226"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-660d5b70-resolve-the-web-build-finding-and-reconcile-stale-releas.md",
+      "digest": "d959bd7ddca7e209828c6f18c0a83a314dccdd0c21b59a4f4fa8752a3ebe4966"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-75133dbb-self-host-geist-for-the-public-site-and-prove-the-produc.md",
+      "digest": "0ef6492b6b8429827dfb5b1bf94e3b9e0406c1ef5f35d8baf51a5a6ebbb4f9eb"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "c63c0af2dad986178a590abefca0c85c61f942a690939ae5553e3df60fa1fc86"
+    },
+    {
+      "path": "package.json",
+      "digest": "5cfeb1fe387c53e976600a5367d03b367d4b1c1cd67dbab9cb6ec3c525407f10"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "digest": "e50028c9bfdf1f8902817150b34c0badb38c11c936664f7f56f5a5f8f557ae71"
+    }
+  ],
+  "digest": "595a74679211cc1c0da3297a887fe12f1aac50c6f6816231c48bcdd57a7846b7",
+  "createdAt": "2026-08-11T06:21:13.076Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-f4805476-S-595a74679211.json"
+}

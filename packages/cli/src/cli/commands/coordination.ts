@@ -19,6 +19,7 @@ import {
   reserveSkoposCoordinationTask,
   showSkoposTaskRuntime,
   snapshotSkoposCoordinationTask,
+  transitionSkoposCoordinationSession,
 } from '@skopos/runtime';
 
 import { writeJsonOutput, writeLines } from '../shared/output.js';
@@ -83,6 +84,31 @@ export const runCoordinationCommand = async (args: string[]): Promise<void> => {
       `Session: ${result.session.sessionId}`,
       `State: ${result.session.state}`,
       `Lease expires: ${result.session.leaseExpiresAt}`,
+    ]);
+    return;
+  }
+
+  if (family === 'session' && operation === 'transition') {
+    const parsed = parseFlags(rest, ['session', 'actor', 'mode', 'reason']);
+    const mode = requireFlag(parsed.flags, 'mode');
+    if (mode !== 'writer' && mode !== 'reviewer') {
+      throw new Error(`Unknown Session transition mode: ${mode}.`);
+    }
+    const result = await transitionSkoposCoordinationSession({
+      cwd: parsed.cwd,
+      sessionId: requireFlag(parsed.flags, 'session'),
+      actorId: requireFlag(parsed.flags, 'actor'),
+      mode,
+      reason: requireFlag(parsed.flags, 'reason'),
+    });
+    if (parsed.json) return writeJsonOutput(result);
+    writeLines([
+      'Skopos coordination session transition',
+      `Session: ${result.session.sessionId}`,
+      `Mode: ${result.priorMode} -> ${result.session.mode}`,
+      `Actor: ${result.session.actorId}`,
+      `Reason: ${result.reason}`,
+      `Transitioned: ${result.transitionedAt}`,
     ]);
     return;
   }
@@ -287,6 +313,7 @@ export const runCoordinationCommand = async (args: string[]): Promise<void> => {
     'Usage: skopos coordination status [target] [--json]\n' +
       '       skopos coordination session open [target] --actor <id> --host <name> [--session <id>] [--mode <writer|read-only|reviewer>] [--lease-seconds <n>] [--json]\n' +
       '       skopos coordination session heartbeat [target] --session <id> [--lease-seconds <n>] [--json]\n' +
+      '       skopos coordination session transition [target] --session <id> --actor <id> --mode <writer|reviewer> --reason <text> [--json]\n' +
       '       skopos coordination session close [target] --session <id> [--json]\n' +
       '       skopos coordination task reserve <task-id> [target] --session <id> [--json]\n' +
       '       skopos coordination task release <task-id> [target] --session <id> --reason <text> [--json]\n' +

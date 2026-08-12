@@ -1,0 +1,16 @@
+{
+  "snapshotId": "S-375c3c13b28e",
+  "taskId": "T-05afc623",
+  "sessionId": "codex-web-phase1",
+  "actorId": "codex-root",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "apps/web/src",
+      "digest": "4294f2d0c6b73ed4487756599c065e4084549612167ad5b4db41caa38c0a29cb"
+    }
+  ],
+  "digest": "375c3c13b28eb95c160cb2c975d7659efb54fa5535750822abac3eb961678cf1",
+  "createdAt": "2026-08-11T20:32:31.848Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-05afc623-S-375c3c13b28e.json"
+}

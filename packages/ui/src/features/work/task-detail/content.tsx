@@ -288,6 +288,44 @@ export function TaskContractCard({
             </div>
           </div>
         </div>
+        {task.parentTaskId || task.childTasks.length > 0 ? (
+          <div>
+            <p className="text-label-small text-on-surface-variant">Linked work</p>
+            <div className="mt-2 border-y border-outline-weak">
+              {task.parentTaskId ? (
+                <Link
+                  to="/tasks/$taskId"
+                  params={{ taskId: task.parentTaskId }}
+                  className="flex items-center justify-between gap-3 px-3 py-3 text-body-small hover:bg-surface-container"
+                >
+                  <span>Parent Task</span>
+                  <code className="font-mono">{task.parentTaskId}</code>
+                </Link>
+              ) : null}
+              {task.childTasks.map((child, index) => (
+                <Link
+                  key={child.taskId}
+                  to="/tasks/$taskId"
+                  params={{ taskId: child.taskId }}
+                  className={`grid gap-1 px-3 py-3 hover:bg-surface-container md:grid-cols-[minmax(0,1fr)_auto] ${index > 0 || task.parentTaskId ? 'border-t border-outline-weak' : ''}`}
+                >
+                  <span className="min-w-0">
+                    <span className="block text-body-medium font-medium text-on-surface">
+                      {child.title}
+                    </span>
+                    <span className="mt-0.5 block text-body-small text-on-surface-variant">
+                      {child.scopeId} · {(child.ownedPaths ?? []).length} owned path{(child.ownedPaths ?? []).length === 1 ? '' : 's'}
+                    </span>
+                  </span>
+                  <StatusPill
+                    value={child.state}
+                    tone={toneForTaskState(child.state)}
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <div className="grid gap-5 lg:grid-cols-3">
           <ContractList
             title="Selected Actions"

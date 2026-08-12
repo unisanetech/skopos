@@ -9,18 +9,73 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-10
+lastUpdated: 2026-08-12
 relatedDocs:
   - P-e7e888e6-canonical-product-convergence.md
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
   - ../../decisions/031-bundled-cli-release-contract.md
+  - ../../decisions/D-20260811-product-interface-design-first-release-boundary.md
   - ../../findings/F-20260804-skill-selection-proof-and-portability-gap.md
+  - ../../operations/first-public-release-scorecard.md
+  - ../../decisions/D-20260811-topology-aware-task-scope-authority.md
+  - ../../findings/F-20260811-topology-aware-task-scope-resolution-gap.md
+  - ../../findings/F-20260811-task-question-closure-invariant-gap.md
+  - ../../findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md
+  - ../../findings/F-20260811-public-web-build-and-cli-release-gate-coupling.md
 ---
 
 # First Public Release Preparation And Certification
 
 ## Changelog
 
+- `2026-08-12`: Reconciled the release-control boundary without claiming new product
+  proof. The accepted Product Interface Design boundary no longer contradicts the
+  runbook hard stops. The protected publication workflow now fails closed on the
+  accepted non-candidate scorecard gates before certification and reconstructs
+  Project Memory and registered capabilities from a fresh checkout. Real Claude
+  parity and final Unisane replacement remain explicit blockers; candidate-bound
+  reconstruction, adoption, packed-install, and full-matrix gates are earned only by
+  the frozen-candidate workflow.
+- `2026-08-11`: Reconciled the local pre-freeze truth. The north-star continuation
+  operation now records a source-linked `3 / 3` real Codex baseline without treating
+  it as Claude parity or general efficacy. The superseded-decision/prototype-document
+  gate is closed after confirming historical routing and metadata. The canonical
+  score is now `11 yes / 6 no`; real Claude parity, final Unisane replacement, and the
+  four exact-candidate certification answers remain release blockers.
+
+- `2026-08-11`: Accepted Product Interface Design `0.5.0` as publishable for the first
+  `next` release without claiming certified efficacy. Its deterministic selection,
+  identity, containment, budget, packed-install, and binding gates remain required and
+  pass; its lost `0-1` smoke and missing independent human efficacy remain explicit
+  limitations. Removed further efficacy work from the release critical path, retained
+  the ban on broader Skill-catalog expansion, resolved the former release-blocking
+  Finding, and added the current binary release scorecard.
+- `2026-08-11`: Resolved the independent public-web build Finding. The website now
+  self-hosts Geist Sans and Geist Mono through the reviewed `geist@1.7.2` package,
+  builds through Next.js's supported Webpack production path in the restricted proof
+  environment, and exposes `pnpm web:verify` for typecheck, 9 focused tests, and the
+  static production build. This does not join website deployment to CLI publication.
+  Reconciled the current blocker list by removing the already-resolved topology,
+  terminal-question, and ask-back-classification defects.
+- `2026-08-11`: Pulled the self-hosting follow-up hardening into the pre-release
+  baseline. Topology-aware ownership now remains coherent after expansion and
+  reconstruction; Task drift emits exact bounded-child guidance; browser Evidence is
+  a source-bound public CLI receipt with clean packed-install proof; and durable
+  project-wide convention intent creates Pattern or Standard Memory obligations.
+  These changes close the topology and iteration Findings. They do not authorize npm
+  publication: the mandatory Product Interface Design efficacy gate, immutable
+  committed-candidate certification, registry bootstrap, and other explicit release
+  controls remain unchanged.
+- `2026-08-11`: Separated the hosted `@skopos/web` lifecycle from the bundled CLI
+  release gate after a root build entered Next.js and failed on a build-time Google
+  Fonts fetch. Root SDK/CLI checks now exclude the web app; explicit web commands own
+  its independent deployment proof. The unresolved font-fetch reliability gap is not
+  treated as CLI package Evidence or as a broader web-completion Decision.
+- `2026-08-11`: Added two self-hosted product-trust blockers before public release:
+  topology-aware Task Scope authority must become operational across generic project
+  layouts, and terminal Task state must not retain open questions. Also required the
+  public-contract and Scope ask-back classifier to stop treating presentation-only or
+  deterministic narrow-Scope work as a mandatory human decision.
 - `2026-08-10`: Exercised the mandatory Product Interface Design release gate against
   fresh holdouts. Two Design Context six-case full comparisons ended 2–4, a third
   Design Context successor lost its one-case smoke 0–1, and the exact public `0.5.0`
@@ -70,7 +125,7 @@ and the initial post-release response. It does not replace:
    `P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md`
 3. the bundled first-package contract in
    `docs/decisions/031-bundled-cli-release-contract.md`
-4. the open Product Interface Design proof debt in
+4. the accepted Product Interface Design first-release boundary and historical proof in
    `docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md`
 
 Those sources remain authoritative. This Plan compiles their release-critical outcomes
@@ -82,10 +137,10 @@ into one ordered program and may close only after their relevant gates are satis
 2. The first version is `0.1.0`.
 3. The first publication uses the `next` dist tag, never `latest`.
 4. Internal SDK packages and `@skopos/ui` remain private.
-5. Product Interface Design is included in the first release.
-6. Product Interface Design must pass current-source paired efficacy proof and independent
-   blind human adjudication; it cannot be removed, disabled, or described as proven
-   without that Evidence.
+5. Product Interface Design `0.5.0` is included in the first release.
+6. Product Interface Design must retain its passing deterministic selection, identity,
+   authority, containment, budget, packed-install, and project-binding proof. Certified
+   efficacy remains `no` and must not be claimed, but it is not a first-release blocker.
 7. No Task created from this Plan may publish, tag, promote, deprecate, or unpublish a
    package without a separate explicit human-approved release Task.
 8. A changed candidate invalidates release certification and must be proved again.
@@ -101,21 +156,23 @@ change requires a new exact-commit run.
 
 Current release blockers are:
 
-1. The exact public Product Interface Design `0.5.0` core lost its fresh no-Skill smoke
-   0–1, so its full comparison and independent blind human adjudication did not start;
-   the mandatory material-improvement gate is not certified
-2. the canonical convergence Plan and release-blocking Skill Finding remain active,
-   and the 17 final product questions do not yet have one release scorecard
-3. the GitHub repository is private, so npm public-package provenance cannot bind to
+1. the canonical convergence Plan remains active and the current release scorecard has
+   six `no` answers
+2. the GitHub repository is private, so npm public-package provenance cannot bind to
    public source; the `npm-release` environment and its protection rules do not exist
-4. the local npm client is not authenticated, `@skopos/cli` does not exist, and
+3. the local npm client is not authenticated, `@skopos/cli` does not exist, and
    ownership or creation rights for the `@skopos` scope are not certified
-5. npm cannot configure trusted publishing for a package that does not yet exist; the
+4. npm cannot configure trusted publishing for a package that does not yet exist; the
    exact first release therefore needs one temporary-token GitHub bootstrap followed
    immediately by token revocation, OIDC trust configuration, and token disallowance
-6. final clean-clone certification and real-registry `npx`, `npm exec`, and `pnpm dlx`
+5. final clean-clone certification and real-registry `npx`, `npm exec`, and `pnpm dlx`
    proof must run from the unchanged approved candidate; registry proof is possible
    only after explicit publication approval
+The hosted website is a parallel product track, not part of the first npm artifact.
+Its former build-time Google Fonts dependency is resolved through local Geist assets,
+and `pnpm web:verify` owns its current typecheck, focused-test, and static production
+build gate. Hosting-provider configuration and actual deployment remain separate web
+work and do not block an otherwise valid CLI candidate.
 
 ## Ordered Workstreams
 
@@ -141,27 +198,27 @@ Exit gate:
 - license and SBOM review complete
 - supported runtime matrix explicit and green
 
-### R2 — Product Interface Design Efficacy
+### R2 — Product Interface Design Release Boundary
 
-Purpose: certify the required first-release Skill on its exact shipped identity.
+Purpose: ship the exact bounded Skill honestly without making an unsupported efficacy
+claim.
 
 Tasks:
 
-1. freeze the exact accepted pack, binding, fixtures, rubric, environment, and source
-   identity
-2. run the economical smoke gate
-3. run isolated paired candidate-versus-control evaluation on current source
-4. complete independent blind human adjudication
-5. prove material targeted improvement without authority, safety, latency, token, or
-   project-adaptation regression
-6. rerun packed external-project portability and containment proof
-7. close the active efficacy Finding only when every exit criterion has Evidence
+1. freeze the exact accepted pack, binding, deterministic fixtures, and source identity
+2. retain passing selection, identity, authority, containment, and budget proof
+3. retain packed external-project portability and project-binding proof
+4. disclose that efficacy and independent human efficacy are not certified
+5. prohibit broader Skill-catalog expansion without a later explicit Decision
 
 Exit gate:
 
-- the required Skill improves the targeted outcomes on current source
-- human and machine review agree the result is safe and material
-- the exact certified identity is the identity included in the release tarball
+- the exact accepted identity is the identity included in the release tarball
+- deterministic, safety, containment, budget, and portability gates pass
+- no release or marketing surface claims certified efficacy
+
+Status: **passed by accepted release boundary**. Product Interface Design is
+publishable; efficacy certification remains `no` and is a disclosed limitation.
 
 ### R3 — Canonical Product And Adoption Closure
 
@@ -264,7 +321,7 @@ that Task after the final scorecard is reviewed.
 1. check out the protected release tag in the trusted GitHub workflow
 2. install the frozen lockfile without a release build cache
 3. run the certified build, typecheck, test, proof, audit, release-check, release-smoke,
-   host-parity, adoption, Skill-efficacy, responsive, and accessibility lanes
+   host-parity, adoption, deterministic Skill, responsive, and accessibility lanes
 4. pack and compare the artifact identity with the reviewed manifest
 5. publish `@skopos/cli@0.1.0` to `next` through OIDC
 6. verify registry metadata, integrity, provenance, and dist tags
@@ -296,7 +353,7 @@ Promotion to `latest` requires a separate human-approved Task and all of the fol
 1. no unresolved critical/high vulnerability or security incident
 2. no data-loss, destructive, or false-closure defect
 3. registry install proof remains green on the supported matrix
-4. early-adopter continuation and Product Interface Design outcomes meet recorded thresholds
+4. early-adopter continuation and safety outcomes meet recorded thresholds
 5. no release-blocking documentation, support, or package-metadata gap
 6. rollback and patch procedures have been exercised or reviewed
 

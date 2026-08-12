@@ -190,6 +190,70 @@ describe('task-owned change scope', () => {
     });
   });
 
+  it('attributes linked child projections to the parent without absorbing unrelated Task artifacts', async () => {
+    const workspaceRoot = await createGitWorkspace();
+    const changeScope = await captureSkoposTaskChangeScope({ workspaceRoot });
+    await Promise.all([
+      mkdir(join(workspaceRoot, 'docs/work/archive/tasks'), { recursive: true }),
+      mkdir(join(workspaceRoot, 'docs/work/tasks/snapshots'), { recursive: true }),
+    ]);
+    await Promise.all([
+      writeFile(
+        join(workspaceRoot, 'docs/work/archive/tasks/T-child-finished.md'),
+        'linked child result\n',
+        'utf8',
+      ),
+      writeFile(
+        join(workspaceRoot, 'docs/work/tasks/snapshots/T-child-S-proof.json'),
+        '{"state":"complete"}\n',
+        'utf8',
+      ),
+      writeFile(
+        join(workspaceRoot, 'docs/work/archive/tasks/T-unrelated-finished.md'),
+        'unrelated Task result\n',
+        'utf8',
+      ),
+    ]);
+
+    await expect(
+      resolveSkoposTaskChangedPaths({
+        workspaceRoot,
+        changeScope,
+        currentTaskId: 'T-parent',
+        linkedChildTaskIds: ['T-child'],
+      }),
+    ).resolves.toEqual({
+      changedPaths: [
+        'docs/work/archive/tasks/T-child-finished.md',
+        'docs/work/tasks/snapshots/T-child-S-proof.json',
+      ],
+      ignoredPreExistingPaths: [],
+      excludedOtherTaskPaths: [],
+      externalUnattributedPaths: [
+        'docs/work/archive/tasks/T-unrelated-finished.md',
+      ],
+      pathAttributions: [
+        {
+          path: 'docs/work/archive/tasks/T-child-finished.md',
+          kind: 'task-attributed',
+          reason: 'linked-child-projection',
+          attributedTaskId: 'T-parent',
+        },
+        {
+          path: 'docs/work/archive/tasks/T-unrelated-finished.md',
+          kind: 'external-unattributed',
+          reason: 'unattributed-post-admission-change',
+        },
+        {
+          path: 'docs/work/tasks/snapshots/T-child-S-proof.json',
+          kind: 'task-attributed',
+          reason: 'linked-child-projection',
+          attributedTaskId: 'T-parent',
+        },
+      ],
+    });
+  });
+
   it('retains deletion of an owned path in the Task proof subject', async () => {
     const workspaceRoot = await createGitWorkspace();
     const changeScope = await captureSkoposTaskChangeScope({

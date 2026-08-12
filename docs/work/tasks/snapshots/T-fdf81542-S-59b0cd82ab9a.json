@@ -1,0 +1,88 @@
+{
+  "snapshotId": "S-59b0cd82ab9a",
+  "taskId": "T-fdf81542",
+  "sessionId": "topology-closure",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/docs-governance.md",
+      "digest": "80943bad5f4dd3106f587967592ba842e18127c48288a803fbbb6522d0315b88"
+    },
+    {
+      "path": "docs/decisions/D-20260811-topology-aware-task-scope-authority.md",
+      "digest": "973eadc8cd39eeb15d4f3ead275e95f96beec54d11e637fcda5cb7d9e02b28ec"
+    },
+    {
+      "path": "docs/findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md",
+      "digest": "bbbcee383589fb0d61579fe79be0d254ec82cbc7b398eb997b620a7730ced943"
+    },
+    {
+      "path": "docs/findings/F-20260811-task-question-closure-invariant-gap.md",
+      "digest": "aa2051fd5a8aed2f0ab71ba4e96a96a2008391b545d5ae888af264ff3f444551"
+    },
+    {
+      "path": "docs/findings/F-20260811-topology-aware-task-scope-resolution-gap.md",
+      "digest": "10edc50031b6035a7e195c8ca75faf87672ce745f7d2e92a71e4caccf2ada89e"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "e559c18101046664aedb4b154b32978e727bfa0f450eb29cad334f433c5eb46b"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "b75152189fe4025b5054574e9802d8ff4e072519258d3bd8fd3d493c77b776c5"
+    },
+    {
+      "path": "packages/cli/src/__tests__/planner-question-classification.test.ts",
+      "digest": "8726ffe79974dd0f4a12137ebe6afb13a706c30268a1079cfb6ae9ae8b94835a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/progressive-workflow.test.ts",
+      "digest": "047a3aeec4c4c0a4e060d33582f7c62e06b511e8c807a51de471503128c0ac38"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "58cf6c36e3e1a3436a4a7b3a772f90ef755fa6f14b49c01679d2cf55a3ec24d9"
+    },
+    {
+      "path": "packages/cli/src/__tests__/scope-registry.test.ts",
+      "digest": "d81e001e5d3b46c0d8593496fe6a8d6b6a0ceaf9819ca0d9e6f79a9f08c1f382"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "2c98145190ca8418821187c3c8afc14f54ea2817a8e9d8866cb3530f9b14b321"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-scope-lite.ts",
+      "digest": "7450c8b649a3f943afc2424c48f3948785999e8d13a6984c03f83ef35028683e"
+    },
+    {
+      "path": "packages/planner/src/application/build-plan/build-plan.service.ts",
+      "digest": "29ed90052c75d72dd00cbe3ce4da72bbfd60c0ff14a23ce1aa73c330ffd2e26c"
+    },
+    {
+      "path": "packages/query/src/application/resolve-scope/resolve-scope.service.ts",
+      "digest": "c2513bc73ecd1909e30a7b9587188f1c23b3b78ce0326cb7b1ae0ad07aef879a"
+    },
+    {
+      "path": "packages/runtime/src/application/decide/decide.service.ts",
+      "digest": "edd2a7ede7035b2ba0d592a48b2124c2f472ba4e290b4ce0fb75385fc40f35ca"
+    },
+    {
+      "path": "packages/runtime/src/application/start/start.service.ts",
+      "digest": "046b97ce05c0c9b790d2c6c5b8644f0cf6e83ace05056d671b59b3b0d201daf6"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "b8031738c18583f4db53937b7e0a3aff95eac3324ef37576e114dd1ca4b3ac30"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "e4b6bdb47d58de102d9e1ab9c4a7c7ffd7e56c0f429bb37e47d4ac5849f3c682"
+    }
+  ],
+  "digest": "59b0cd82ab9a69665f7171544ce42f218519a7d49267e9f9747981d7378c6ca0",
+  "createdAt": "2026-08-11T01:31:49.450Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-fdf81542-S-59b0cd82ab9a.json"
+}

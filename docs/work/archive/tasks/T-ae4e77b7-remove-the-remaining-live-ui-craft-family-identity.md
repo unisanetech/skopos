@@ -12,14 +12,14 @@ view: exception
 risk: high-impact
 proofSubject: task-closure
 proofBaseline: baseline-420ac7fc7480b065
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 ---
 
 # Task: Remove the remaining live ui-craft family identity
 
 ## Changelog
 
-- `2026-08-09`: Synchronized Task state `complete` from Skopos.
+- `2026-08-11`: Synchronized Task state `complete` from Skopos.
 
 ## Goal
 
@@ -64,7 +64,7 @@ Remove the remaining live ui-craft family identity
 
 ## Steps
 
-- [x] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, complete) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
+- [ ] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, skipped) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
 - [x] **Resolve plan decisions** (implementation, complete) — Answer the recommended ask-back questions before implementation so the agent does not guess on high-impact choices.
 - [x] **Record Task risk and detail before editing** (implementation, complete) — Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.
 - [x] **Review the current pattern in Skopos Workspace** (implementation, complete) — Use the compact references to confirm the current scope, command surface, and docs entrypoints before editing code.
@@ -107,7 +107,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "type": "task",
   "status": "durable",
   "generatedAt": "2026-08-09T09:55:04.899Z",
-  "updatedAt": "2026-08-09T10:02:33.439Z",
+  "updatedAt": "2026-08-11T01:51:39.456Z",
   "planIds": [],
   "childTasks": [],
   "state": "complete",
@@ -192,7 +192,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "kind": "decision",
       "title": "Should this change stay at workspace scope, or should it be narrowed to one declared Scope?",
       "detail": "Wide-scope Plans in monorepos drift faster and make Readiness less precise.",
-      "status": "complete"
+      "status": "skipped"
     },
     {
       "id": "step-resolve-decisions",
@@ -382,7 +382,13 @@ This machine-readable block is the durable source used to rebuild local Skopos s
         }
       ],
       "blocking": false,
-      "status": "open"
+      "status": "dismissed",
+      "disposition": {
+        "kind": "dismissed",
+        "reason": "Historical Task completed before terminal question invariants. The completed outcome superseded this non-blocking Scope suggestion; no answer is inferred.",
+        "actorId": "codex",
+        "recordedAt": "2026-08-11T01:51:39.456Z"
+      }
     }
   ],
   "recommendations": [
@@ -394,7 +400,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "actionKind": "resolve-question",
       "linkedQuestionId": "plan.scope-confirmation",
       "blocking": false,
-      "status": "open"
+      "status": "dismissed"
     },
     {
       "id": "run-maintenance.refresh-knowledge",

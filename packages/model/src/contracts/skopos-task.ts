@@ -108,6 +108,111 @@ export interface SkoposChildTaskReference {
   createdAt: string;
   createdByActorId?: string;
   claimedByActorId?: string;
+  ownedPaths: string[];
+  dependencyTaskIds: string[];
+  parentAcceptanceRequirementIds: string[];
+}
+
+export interface SkoposTaskSplitChildDraft {
+  key: string;
+  goal: string;
+  scopeId?: string;
+  acceptanceCriteria?: string[];
+  nonGoals?: string[];
+  constraints?: string[];
+  ownedPaths: string[];
+  dependsOnKeys?: string[];
+  dependencyTaskIds?: string[];
+  parentAcceptanceRequirementIds?: string[];
+  risk?: Exclude<SkoposTaskRisk, 'light'>;
+  priority?: number;
+}
+
+export interface SkoposTaskSplitChildPlan {
+  key: string;
+  goal: string;
+  scopeId?: string;
+  acceptanceCriteria: string[];
+  nonGoals: string[];
+  constraints: string[];
+  ownedPaths: string[];
+  dependsOnKeys: string[];
+  dependencyTaskIds: string[];
+  parentAcceptanceRequirementIds: string[];
+  risk: Exclude<SkoposTaskRisk, 'light'>;
+  priority: number;
+}
+
+export interface SkoposTaskSplitProposal
+  extends SkoposArtifactEnvelope<'task-split-proposal'> {
+  workspaceRoot: string;
+  parentTaskId: string;
+  parentUpdatedAt: string;
+  proposalDigest: string;
+  proposedByActorId: string;
+  proposalReason: string;
+  children: SkoposTaskSplitChildPlan[];
+  reviewRequired: true;
+  taskAuthoritiesWritten: false;
+}
+
+export interface SkoposTaskAssignmentInstruction {
+  taskId: string;
+  title: string;
+  projectShort: string;
+  reviewer: {
+    parentTaskId: string;
+    actorId: string;
+  };
+  childActorId: string;
+  sessionLeaseSeconds: number;
+  hostContract: {
+    requiredCapabilities: Array<
+      | 'create-session'
+      | 'inject-initial-prompt'
+      | 'return-session-identity'
+      | 'send-follow-up'
+      | 'wait-for-result'
+    >;
+    sessionIdSource: 'returned-host-session-identity';
+    deliveryStatus: 'not-attempted';
+  };
+  cliCommand: string;
+  sessionContextCommand: string;
+  reviewCommand: string;
+  mcpTool: 'skopos_task_assign';
+  prompt: string;
+  sessionBindingFollowUp: string;
+  manualFallback: {
+    reason: string;
+    prompt: string;
+    sessionBindingFollowUp: string;
+  };
+}
+
+export interface SkoposTaskSplitActivation
+  extends SkoposArtifactEnvelope<'task-split-activation'> {
+  workspaceRoot: string;
+  parentTaskId: string;
+  proposalDigest: string;
+  appliedByActorId: string;
+  approvalReason: string;
+  childTaskIds: string[];
+  assignments: SkoposTaskAssignmentInstruction[];
+}
+
+export interface SkoposTaskSplitProposalResult {
+  proposal: SkoposTaskSplitProposal;
+  proposalPath: string;
+  proposalWrite: 'written' | 'dry-run';
+}
+
+export interface SkoposTaskSplitActivationResult {
+  activation: SkoposTaskSplitActivation;
+  activationPath: string;
+  activationWrite: 'written' | 'dry-run';
+  parentTask: SkoposTaskArtifact;
+  childTasks: SkoposTaskArtifact[];
 }
 
 export interface SkoposTaskPathState {
@@ -121,6 +226,14 @@ export interface SkoposTaskOwnershipExpansion {
   actorId: string;
   recordedAt: string;
   baselinePaths: SkoposTaskPathState[];
+  classification?:
+    | 'within-scope'
+    | 'declared-dependency'
+    | 'common-ancestor'
+    | 'explicit-multi-scope';
+  priorScopeId?: string;
+  nextScopeId?: string;
+  affectedScopeIds?: string[];
 }
 
 export interface SkoposTaskOwnershipSuggestion {
@@ -154,6 +267,7 @@ export type SkoposTaskPathAttributionReason =
   | 'declared-task-ownership'
   | 'current-task-mutation'
   | 'generated-output'
+  | 'linked-child-projection'
   | 'unchanged-admission-baseline'
   | 'other-task-mutation'
   | 'unattributed-post-admission-change';
@@ -263,10 +377,29 @@ export interface SkoposTaskQuestion {
   blocking: boolean;
   recommendedOptionId: string;
   options: SkoposDecisionOption[];
-  status: 'open' | 'resolved';
+  status: 'open' | 'resolved' | 'dismissed' | 'promoted';
   resolvedOptionId?: string;
   resolvedAt?: string;
   resolvedByActorId?: string;
+  disposition?: SkoposTaskQuestionDisposition;
+}
+
+export type SkoposTaskQuestionDispositionKind =
+  | 'answered'
+  | 'dismissed'
+  | 'promoted';
+
+export interface SkoposTaskQuestionDispositionTarget {
+  kind: 'option' | 'document' | 'task';
+  ref: string;
+}
+
+export interface SkoposTaskQuestionDisposition {
+  kind: SkoposTaskQuestionDispositionKind;
+  reason: string;
+  actorId: string;
+  recordedAt: string;
+  target?: SkoposTaskQuestionDispositionTarget;
 }
 
 export interface SkoposTaskQuestionArtifact extends SkoposArtifactEnvelope<'task-questions'> {
@@ -281,9 +414,18 @@ export interface SkoposTaskRecommendation {
   title: string;
   summary: string;
   priority: 'high' | 'medium' | 'low';
-  actionKind: 'resolve-question' | 'implement' | 'run-action' | 'verify';
+  actionKind:
+    | 'resolve-question'
+    | 'implement'
+    | 'run-action'
+    | 'verify'
+    | 'start-child-task';
   linkedQuestionId?: string;
   actionId?: string;
+  command?: string;
+  ownedPaths?: string[];
+  scopeId?: string;
+  reason?: string;
   blocking: boolean;
   status: 'open' | 'complete' | 'dismissed';
 }

@@ -1,0 +1,40 @@
+{
+  "snapshotId": "S-07c2215caa86",
+  "taskId": "T-4c690abd",
+  "sessionId": "release-reconciliation-20260811",
+  "actorId": "codex-release-reconciliation",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "apps/web",
+      "digest": "a0064981c6df9938ed22747ba4692d90d344ff0f3f03fbd32facf3b8bc2f6fdf"
+    },
+    {
+      "path": "docs/operations/first-public-release-scorecard.md",
+      "digest": "319ad5ba565ade798cbb6e99e725a88c2b7c3d180a5f344be2b8e7bcb3eb71c3"
+    },
+    {
+      "path": "docs/operations/fresh-session-continuation-metric.md",
+      "digest": "9416bc918b7ff3f9535b413bcf35ab3f1b984428a3fff85c7ce6bb90c33114ab"
+    },
+    {
+      "path": "docs/scopes/skopos-web/overview.md",
+      "digest": "524f4abc3e1a7adb436ab79f45ff25e3dac88e45c56ff36e1379f5cb83bc2e75"
+    },
+    {
+      "path": "docs/work/plans/P-7dde6750-design-and-deliver-the-public-skopos-homepage.md",
+      "digest": "f224c94cb7b303fa5ba9c531f1c79f1d6795ea94734282b59e08fdf13c072a3c"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "0ebe50ad6c893bd3ea98bdf7107f09ff7e69111e8bb4409250a49fd2d7e5c151"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "fc1419d46ea4f224a0786171282c7db9997a9cb77a34efcc26bff8e2979bd991"
+    }
+  ],
+  "digest": "07c2215caa861622841582d382c36a7b56ac13854573e58240d9227a392295bf",
+  "createdAt": "2026-08-11T11:51:04.084Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4c690abd-S-07c2215caa86.json"
+}

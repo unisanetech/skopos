@@ -7,7 +7,9 @@ import type {
   SkoposTaskDetail,
   SkoposProofSubjectKind,
   SkoposTaskRisk,
+  SkoposTaskArtifact,
 } from '@skopos/model';
+import { resolveSkoposScopeForOwnedPaths } from '@skopos/query';
 
 import {
   claimSkoposCoordinationResource,
@@ -25,8 +27,10 @@ import { buildSkoposProjectKnowledgeGuidance } from '../shared/memory-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
   assessSkoposTaskWorkflowRuntime,
+  claimSkoposTaskRuntime,
   prepareSkoposTaskRuntime,
   publishSkoposTaskAuthorityRuntime,
+  showSkoposTaskRuntime,
   writeSkoposTaskAuxiliaryArtifactsRuntime,
 } from '../task/task.service.js';
 
@@ -49,6 +53,71 @@ export interface BuildSkoposStartRuntimeOptions {
   leaseSeconds?: number;
   proofSubjectKind?: SkoposProofSubjectKind;
 }
+
+export interface SkoposTaskSessionAssignmentResult {
+  workspaceRoot: string;
+  summary: string;
+  task: SkoposTaskArtifact;
+  coordination: SkoposTaskCoordinationState;
+  nextCommand: string;
+}
+
+export const assignSkoposTaskToSessionRuntime = async ({
+  cwd,
+  taskId,
+  actor,
+  sessionId,
+  host = 'manual-cli',
+  leaseSeconds,
+}: {
+  cwd: string;
+  taskId: string;
+  actor?: string;
+  sessionId: string;
+  host?: string;
+  leaseSeconds?: number;
+}): Promise<SkoposTaskSessionAssignmentResult> => {
+  const workspaceRoot = resolve(cwd);
+  const actorId = resolveSkoposRuntimeActorId(actor);
+  if (!actorId) {
+    throw new Error('Task assignment requires --actor <id> or SKOPOS_ACTOR.');
+  }
+  const task = await showSkoposTaskRuntime({ cwd: workspaceRoot, taskId });
+  let coordination: SkoposTaskCoordinationState | undefined;
+  try {
+    coordination = await coordinateStartedTask({
+      workspaceRoot,
+      actorId,
+      host,
+      sessionId,
+      leaseSeconds,
+      taskId,
+      ownedPaths: task.changeScope.declaredOwnedPaths,
+    });
+    const claimed = await claimSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId,
+      actor: actorId,
+    });
+    return {
+      workspaceRoot,
+      summary: `Assigned Task ${taskId} to Session ${sessionId} (${actorId}) with ${coordination.claims.length} resource claim${coordination.claims.length === 1 ? '' : 's'}.`,
+      task: claimed,
+      coordination,
+      nextCommand: `skopos session context . --actor ${actorId} --session-id ${sessionId} --host ${host} --json`,
+    };
+  } catch (error) {
+    if (coordination) {
+      await releaseSkoposCoordinationTask({
+        cwd: workspaceRoot,
+        sessionId,
+        taskId,
+        reason: 'Task assignment failed before Task claim publication.',
+      }).catch(() => undefined);
+    }
+    throw error;
+  }
+};
 
 export const buildSkoposStartRuntime = async ({
   cwd,
@@ -77,10 +146,14 @@ export const buildSkoposStartRuntime = async ({
     );
   }
 
+  const inferredScope =
+    scope === undefined && ownedPaths.length > 0
+      ? await resolveSkoposScopeForOwnedPaths({ cwd: workspaceRoot, paths: ownedPaths })
+      : undefined;
   const plan = await prepareSkoposPlanRuntime({
     cwd: workspaceRoot,
     goal,
-    scope,
+    scope: scope ?? inferredScope?.scope.id,
   });
   const created = await prepareSkoposTaskRuntime({
     cwd: workspaceRoot,

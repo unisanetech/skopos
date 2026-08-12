@@ -223,3 +223,18 @@ scopes:
       - skopos-core
     aliases:
       - "@skopos/ui"
+
+  - id: skopos-web
+    title: Skopos Public Web
+    kind: application
+    path: apps/web
+    memoryRoot: docs/scopes/skopos-web
+    codeRoots:
+      - apps/web
+    parent: skopos
+    profile: core.application
+    dependsOn: []
+    owners:
+      - skopos-core
+    aliases:
+      - "@skopos/web"

@@ -135,6 +135,13 @@ export interface SkoposHeartbeatCoordinationSessionResult {
   session: SkoposCoordinationSession;
 }
 
+export interface SkoposTransitionCoordinationSessionResult
+  extends SkoposHeartbeatCoordinationSessionResult {
+  priorMode: 'writer' | 'reviewer';
+  reason: string;
+  transitionedAt: string;
+}
+
 export interface SkoposEnsureCoordinationSessionResult
   extends SkoposHeartbeatCoordinationSessionResult {
   enforcementLevel: 'cooperative';

@@ -203,6 +203,43 @@ describe('coordination-aware agent lifecycle', () => {
       expect.objectContaining({ path: 'src/existing.ts' }),
     ]);
   });
+
+  it('preserves reviewer mode and a longer live lease in Session context', async () => {
+    const root = await createWorkspace();
+    const opened = await openSkoposCoordinationSession({
+      cwd: root,
+      actorId: 'origin-reviewer',
+      host: 'codex',
+      sessionId: 'origin-review-session',
+      mode: 'reviewer',
+      leaseSeconds: 3600,
+    });
+
+    const context = await buildSkoposSessionContextRuntime({
+      cwd: root,
+      actor: 'origin-reviewer',
+      sessionId: 'origin-review-session',
+      host: 'codex',
+    });
+
+    expect(context.warnings).toEqual([]);
+    expect(context.coordination?.session).toMatchObject({
+      sessionId: 'origin-review-session',
+      mode: 'reviewer',
+      state: 'live',
+      leaseExpiresAt: opened.session.leaseExpiresAt,
+    });
+    expect(context.coordination?.reservation).toBeUndefined();
+    expect(context.additionalContext).toContain(
+      'is live in reviewer mode; preventive safety: no.',
+    );
+    expect(context.additionalContext).toContain(
+      'Reviewer mode preserves this Session without writing authority.',
+    );
+    expect(context.additionalContext).not.toContain(
+      'Pass this Session id to `skopos start',
+    );
+  });
 });
 
 const createWorkspace = async (): Promise<string> => {
@@ -233,5 +270,26 @@ const createWorkspace = async (): Promise<string> => {
     actor: 'fixture-init',
     scaffoldInstructions: false,
   });
+  await mkdir(join(root, 'tools/skopos'), { recursive: true });
+  await writeFile(
+    join(root, 'tools/skopos/scopes.yaml'),
+    [
+      'schemaVersion: 1',
+      'scopes:',
+      '  - id: coordination-lifecycle-fixture',
+      '    title: Coordination Lifecycle Fixture',
+      '    kind: workspace',
+      '    path: .',
+      '    memoryRoot: docs',
+      '    codeRoots: [.]',
+      '    parent: null',
+      '    profile: fixture.workspace',
+      '    dependsOn: []',
+      '    owners: [fixture]',
+      '    aliases: [fixture]',
+      '',
+    ].join('\n'),
+    'utf8',
+  );
   return root;
 };

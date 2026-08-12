@@ -3,9 +3,11 @@ import { resolve } from 'node:path';
 
 import type {
   SkoposDecideRunResult,
+  SkoposTaskArtifact,
   SkoposTaskQuestionArtifact,
   SkoposTaskRecommendationArtifact,
 } from '@skopos/model';
+import { resolveSkoposScopeForOwnedPaths } from '@skopos/query';
 
 import {
   appendSkoposOperationalLogEntry,
@@ -61,6 +63,13 @@ export const buildSkoposDecideRuntime = async ({
     if (!question.options.some((option) => option.id === optionId)) {
       throw new Error(`Question ${questionId} has no option ${optionId}.`);
     }
+    if (questionId === 'plan.scope-confirmation' && optionId === 'narrow-scope-first') {
+      await rejectCeremonialNarrowScopeDecision({
+        workspaceRoot,
+        actorId,
+        task: current.task,
+      });
+    }
     const now = new Date().toISOString();
     const resolvedQuestion = {
       ...question,
@@ -68,6 +77,16 @@ export const buildSkoposDecideRuntime = async ({
       resolvedOptionId: optionId,
       resolvedAt: now,
       resolvedByActorId: actorId,
+      disposition: {
+        kind: 'answered' as const,
+        reason: `Selected Task question option ${optionId}.`,
+        actorId,
+        recordedAt: now,
+        target: {
+          kind: 'option' as const,
+          ref: optionId,
+        },
+      },
     };
     const updatedQuestions: SkoposTaskQuestionArtifact = {
       ...questions,
@@ -206,3 +225,54 @@ export const buildSkoposDecideRuntime = async ({
 
 const readJson = async <T>(path: string): Promise<T> =>
   JSON.parse(await readFile(path, 'utf8')) as T;
+
+const rejectCeremonialNarrowScopeDecision = async ({
+  workspaceRoot,
+  actorId,
+  task,
+}: {
+  workspaceRoot: string;
+  actorId: string;
+  task: SkoposTaskArtifact;
+}): Promise<never> => {
+  const ownedPaths = task.changeScope.declaredOwnedPaths;
+  if (ownedPaths.length === 0) {
+    throw new Error(
+      `Question plan.scope-confirmation cannot narrow Task ${task.id} because it has no declared owned paths. ` +
+      'Start a replacement Task with --scope <scope-id> and explicit --own <path> arguments.',
+    );
+  }
+  const inferred = await resolveSkoposScopeForOwnedPaths({
+    cwd: workspaceRoot,
+    paths: ownedPaths,
+  });
+  if (inferred.scope.id === task.scope.scope.id) {
+    throw new Error(
+      `Question plan.scope-confirmation cannot narrow Task ${task.id}: declared owned paths already resolve to ${inferred.scope.id}. ` +
+      'Choose keep-workspace-scope when that authority is intentional, or update the Scope registry and start separate scoped Tasks.',
+    );
+  }
+  const replacementCommand = [
+    'skopos start',
+    shellQuote(task.goal),
+    '.',
+    '--scope',
+    shellQuote(inferred.scope.id),
+    ...ownedPaths.flatMap((path) => ['--own', shellQuote(path)]),
+    ...task.contract.acceptanceCriteria.flatMap((criterion) => [
+      '--accept',
+      shellQuote(criterion),
+    ]),
+    '--risk',
+    task.risk,
+    '--actor',
+    shellQuote(actorId),
+  ].join(' ');
+  throw new Error(
+    `Question plan.scope-confirmation cannot be recorded ceremonially: Task ${task.id} is bound to ${task.scope.scope.id}, while its owned paths resolve to ${inferred.scope.id}. ` +
+    `Scope rebinding changes the proof subject, so start a replacement Task with: ${replacementCommand}. ` +
+    `Then supersede ${task.id} with skopos task disposition ${task.id} supersede . --reason <text> --successor <new-task-id> --actor ${shellQuote(actorId)}.`,
+  );
+};
+
+const shellQuote = (value: string): string => `'${value.replaceAll("'", "'\\''")}'`;

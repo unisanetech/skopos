@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-4738d12cfc84",
+  "taskId": "T-d1e51637",
+  "sessionId": "1747a1dc-6d70-4ed8-8d24-75f3ad52fa9b",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/findings/F-20260811-task-question-closure-invariant-gap.md",
+      "digest": "33ca2fb036b87134f8773dde00dc677753ab71ad47a935ca0df7ed987200ca9b"
+    },
+    {
+      "path": "docs/work/archive/tasks",
+      "digest": "42a5c5004845a2e7cb25841fd7d6182eddde8e5fb4eee13c927e59a062b9f894"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "86be448c04fc44d0e1c8e81b36498fe8d27a5a1ce97876b94c6ee37654b50905"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "1840938f3bd7d2c79cec8db5f9c5be73790036f23f8d01b6c82e231660eec2a6"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/router.ts",
+      "digest": "c91bcdacaee17c023cb0764a6d928fd27d9765edced9dc3fd32960262c37a916"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "7ee920524d397cbb4557cb2af2a3615481639dcd11cc801ad22bcc588c4d92bc"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "90b2a4004b5eed72f55ae8224e240ec4dd61bc030a3137a4a995436bed78929f"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-decide.ts",
+      "digest": "470087fb6f0e3fe7b75e0c826a188ceef14239d3c72d99e5d035af167ea77a3d"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "69e2bdf9580885fe57edf32e5aac12be8a64052a849e9eaeeb029061c9c690cc"
+    },
+    {
+      "path": "packages/runtime/src/application/decide/decide.service.ts",
+      "digest": "451817014b57b04b595bb5cf70306cba58f622ed7c8b61ea4c4f133e300f7e16"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "6a307545e5f589b735e36e60bdd6d3ed247a4c1f9fbd2d17f56f82eb39eb2402"
+    }
+  ],
+  "digest": "4738d12cfc84ab33fef22535589658cb7d72f04d3cf50ddb4ca6bd60a638fea9",
+  "createdAt": "2026-08-11T02:04:34.007Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-d1e51637-S-4738d12cfc84.json"
+}

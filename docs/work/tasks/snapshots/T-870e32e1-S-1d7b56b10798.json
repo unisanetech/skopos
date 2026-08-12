@@ -1,0 +1,16 @@
+{
+  "snapshotId": "S-1d7b56b10798",
+  "taskId": "T-870e32e1",
+  "sessionId": "homepage-plan-stack-20260810",
+  "actorId": "codex-homepage-plan",
+  "baseRevision": "278724605b98aef065b46a521f553fecb4c2bfd1",
+  "paths": [
+    {
+      "path": "docs/work/plans/P-7dde6750-design-and-deliver-the-public-skopos-homepage.md",
+      "digest": "4f1c573c1da910b76f19d30987ffac349bf013408b0bd0f3b2cd38ffaab5760b"
+    }
+  ],
+  "digest": "1d7b56b107982f1f8b1ffa8b2fc00c55b7a562d4d09a451eb6f4649d54cb316b",
+  "createdAt": "2026-08-10T10:40:49.543Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-870e32e1-S-1d7b56b10798.json"
+}

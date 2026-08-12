@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 relatedDocs:
   - 00-architecture.md
   - action-extension-model.md
@@ -17,6 +17,8 @@ relatedDocs:
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
   - ../findings/archive/F-20260803-task-proof-boundary-and-dirty-worktree-isolation-gap.md
+  - ../findings/F-20260811-task-question-closure-invariant-gap.md
+  - ../findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md
 reviewCycle: when verification or closure behavior changes
 ---
 
@@ -34,6 +36,13 @@ Task acceptance
 
 ## Changelog
 
+- `2026-08-11`: Added linked-child closure derivation. Parent acceptance may be mapped
+  to reviewed child Tasks, but coverage exists only when every mapped child completes
+  successfully; missing or unsuccessfully terminal children are explicit closure
+  blockers.
+- `2026-08-11`: Recorded the terminal question invariant and the target for
+  source-bound browser Evidence. Implementation remains tracked by active Findings;
+  this architecture update does not claim those gaps are closed.
 - `2026-08-09`: Made Guard and Action selection explain both selected and skipped
   capabilities, and projected changed paths outside Task ownership into an exact
   reviewed ownership-expansion recovery step.
@@ -85,6 +94,44 @@ Evidence is an immutable envelope around an observed result. It records:
 Evidence becomes stale when a declared source, configuration, command, or relevant
 dependency changes. A prior success is reusable only while those bindings remain
 equal.
+
+Interactive and visual proof should use a source-bound browser Evidence receipt rather
+than only an agent assertion when the acceptance criterion depends on rendered or
+interactive behavior. The receipt binds at least:
+
+1. URL or route identity
+2. viewport and relevant device or input conditions
+3. performed interaction or inspected state
+4. screenshot, accessibility result, or measured DOM artifact
+5. browser and environment identity
+6. Task source and configuration digest
+
+Human judgment may still be recorded as observation Evidence. It should reference the
+browser receipt it judged so durable proof separates captured behavior from subjective
+approval.
+
+The canonical public command is:
+
+```text
+skopos evidence record-browser <task-id> . \
+  --requirement <id> \
+  --url <url-or-route> \
+  --viewport <WIDTHxHEIGHT[@SCALE]> \
+  --interaction <performed-or-inspected-state> \
+  (--capture <workspace-relative-path> | --measurement <value>) \
+  --capture-kind <screenshot|accessibility|dom-measurement> \
+  --browser <name-and-version> \
+  --actor <actor>
+```
+
+Browser Evidence is a distinct `browser-evidence` artifact. It records capture digest,
+platform, architecture, Node runtime, actor, conditions, and the digest plus exact path
+states of every Task-owned source path. Capture paths must exist inside the workspace;
+inline measurements are allowed only for DOM-measurement or accessibility receipts.
+A current receipt may satisfy the linked acceptance requirement or an
+observation-class Guard. Any owned-source change makes it stale even when the URL,
+capture, or observing agent is unchanged. Observation Evidence remains separate and
+may cite the receipt when human judgment is also required.
 
 An Action Run is reusable project-level Evidence. A Task consumes it only through an
 explicit Task Action Evidence Link stored under that Task's local Evidence directory.
@@ -235,6 +282,8 @@ A Readiness report is derived, explainable, and non-mutating. It combines:
 6. adoption state when Project readiness is requested
 7. open Task Memory obligations and their recorded resolutions
 8. the named proof subject and immutable admission baseline identity
+9. linked child existence, current state, dependency order, and parent acceptance
+   mappings when the Task has been decomposed
 
 The result is `ready`, `needs-review`, or `blocked`, with exact reasons and next safe
 actions. Readiness is not a second executor and never repairs the Project silently.
@@ -250,6 +299,17 @@ A Task can close only when:
 5. every required Memory obligation records either `memory-updated` against adopted
    canonical durable Memory or a reasoned `reviewed-no-change` resolution
 6. the Task state transition is recorded
+7. no Task-local question remains `open`; each question is resolved, explicitly
+   dismissed with reason, or promoted to a durable Finding, Decision, or Plan obligation
+8. every linked child Task exists and is `complete`; cancelled, superseded, missing,
+   active, ready, deferred, blocked, verifying, or ready-to-integrate children block
+   parent closure
+
+A parent acceptance requirement may name one or more linked child Tasks as its proof
+source. It becomes covered only when all mapped children are complete through their
+own normal closure transaction. Child completion is therefore compositional proof, not
+an unchecked parent status flag. Unmapped parent acceptance still requires its normal
+Action, observation, or browser Evidence.
 
 Immutable Task snapshots include exact-path claims and recursive directory claims.
 Directory digests exclude only Skopos/Git runtime state and dependency-install trees;

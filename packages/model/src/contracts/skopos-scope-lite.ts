@@ -56,7 +56,13 @@ export interface SkoposScopesLiteArtifact extends SkoposArtifactEnvelope<'scopes
   scopes: SkoposScopeLite[];
 }
 
-export type SkoposResolveMatch = 'default-root' | 'id' | 'alias' | 'path';
+export type SkoposResolveMatch =
+  | 'default-root'
+  | 'id'
+  | 'alias'
+  | 'path'
+  | 'code-root'
+  | 'topology';
 
 export interface SkoposResolvedScope {
   query: string;

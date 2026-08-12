@@ -1,0 +1,36 @@
+{
+  "snapshotId": "S-67b49a29cd48",
+  "taskId": "T-411732c3",
+  "sessionId": "release-scorecard-20260811",
+  "actorId": "codex-release-scorecard",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/decisions/D-20260811-product-interface-design-first-release-boundary.md",
+      "digest": "b6ab6c701a8f2de7fc1c77413725ffb03ae2952bc6926cf0868ff0a11740b9d6"
+    },
+    {
+      "path": "docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md",
+      "digest": "3507fe1a65fba08669380ecd1d47a2e4a0605c0f1c75efc51b6b2523fe286bef"
+    },
+    {
+      "path": "docs/operations/first-public-release-scorecard.md",
+      "digest": "4399017e7061d0f550162adc5f937b1bc93cabdf2e29103d752a2ef097cb9acc"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "a7c2a848fb5921016a7f1214c00bd6d49aab0fe4e7849c8436100a3530e6eabe"
+    },
+    {
+      "path": "docs/work/plans/P-7b4e3c12-design-context-library.md",
+      "digest": "cd040c95d47738de97eaa72030f4a8c5f5ec5e7983edcdaef6a8be903c2d3766"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "3b2e64c811c0b4c129540210dbe2064b782c01a35c9f96c2d3144f9f814f93f4"
+    }
+  ],
+  "digest": "67b49a29cd487026fc8eb517a419d7e142383d0d13a4d8f574bf6fde912b0bee",
+  "createdAt": "2026-08-11T11:38:23.266Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-411732c3-S-67b49a29cd48.json"
+}

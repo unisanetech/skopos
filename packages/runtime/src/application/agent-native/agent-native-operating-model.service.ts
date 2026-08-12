@@ -105,6 +105,7 @@ export const buildSkoposCompactTaskBriefRuntime = async ({
     workspaceRoot,
     changeScope: task.changeScope,
     currentTaskId: task.id,
+    linkedChildTaskIds: task.childTasks.map((child) => child.taskId),
     generatedOutputPaths: task.selectedActions.flatMap((action) => action.outputPaths),
   });
   const skillSelection = await selectSkoposSkillsForTaskRuntime({

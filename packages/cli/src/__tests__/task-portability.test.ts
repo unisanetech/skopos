@@ -16,10 +16,14 @@ import { promisify } from 'node:util';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
+import { buildSkoposDecideRuntime } from '../../../runtime/src/application/decide/decide.service.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
 import {
+  applySkoposTaskDispositionRuntime,
   archiveTrackedTaskDocumentPath,
   completeSkoposTaskStepRuntime,
+  disposeSkoposTaskQuestionRuntime,
+  expandSkoposTaskOwnershipRuntime,
   resolveSkoposTrackedTaskProjectionPaths,
   resolveSkoposTaskMemoryObligationRuntime,
   showSkoposTaskRuntime,
@@ -197,6 +201,118 @@ describe('tracked Task portability', () => {
     });
   });
 
+  it('binds owned paths to the deepest declared project Scope without an explicit Scope flag', async () => {
+    const workspaceRoot = await createWorkspace();
+    await declareNestedScope(workspaceRoot);
+
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Change catalog behavior inside its declared project boundary',
+      actor: 'agent-a',
+      risk: 'standard',
+      acceptanceCriteria: ['Catalog behavior remains scoped to the catalog authority.'],
+      ownedPaths: ['packages/catalog/src/index.ts'],
+    });
+
+    expect(started.task.scope.scope.id).toBe('catalog');
+    expect(started.task.trackedDocumentPath).toMatch(
+      /^product-memory\/catalog\/work\/tasks\//u,
+    );
+    expect(started.task.questions.map((question) => question.id)).not.toContain(
+      'plan.scope-confirmation',
+    );
+  });
+
+  it('fails closed for implicit mixed-Scope ownership and permits intentional workspace coordination', async () => {
+    const workspaceRoot = await createWorkspace();
+    await declareNestedScope(workspaceRoot);
+    const ownedPaths = ['packages/catalog/src/index.ts', 'README.md'];
+
+    await expect(
+      buildSkoposStartRuntime({
+        cwd: workspaceRoot,
+        goal: 'Coordinate a catalog change with workspace documentation',
+        actor: 'agent-a',
+        ownedPaths,
+      }),
+    ).rejects.toThrow(
+      /Owned paths span multiple declared Scopes.*catalog.*task-portability-fixture.*--scope/isu,
+    );
+
+    const coordinated = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      scope: 'task-portability-fixture',
+      goal: 'Coordinate a catalog change with workspace documentation',
+      actor: 'agent-a',
+      ownedPaths,
+    });
+    expect(coordinated.task.scope.scope.id).toBe('task-portability-fixture');
+  });
+
+  it('refuses to record a legacy narrow-Scope answer without changing Task authority', async () => {
+    const workspaceRoot = await createWorkspace();
+    await declareNestedScope(workspaceRoot);
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      scope: 'task-portability-fixture',
+      goal: 'Keep a legacy Scope decision operational',
+      actor: 'agent-a',
+      risk: 'standard',
+      ownedPaths: ['packages/catalog/src/index.ts'],
+    });
+    const scopeQuestion = {
+      id: 'plan.scope-confirmation',
+      category: 'scope',
+      escalation: 'recommend-and-ask' as const,
+      question: 'Should this Task be narrowed?',
+      whyItMatters: 'The answer must change authority or fail safely.',
+      blocking: false,
+      recommendedOptionId: 'narrow-scope-first',
+      options: [
+        {
+          id: 'narrow-scope-first',
+          label: 'Narrow scope first',
+          rationale: 'Bind work to the declared child Scope.',
+        },
+        {
+          id: 'keep-workspace-scope',
+          label: 'Keep workspace scope',
+          rationale: 'Keep explicit cross-Scope authority.',
+        },
+      ],
+      status: 'open' as const,
+    };
+    await Promise.all([
+      writeFile(
+        started.taskPath,
+        `${JSON.stringify({ ...started.task, questions: [scopeQuestion] }, null, 2)}\n`,
+        'utf8',
+      ),
+      writeFile(
+        started.questionsPath,
+        `${JSON.stringify({ ...started.questions, entries: [scopeQuestion] }, null, 2)}\n`,
+        'utf8',
+      ),
+    ]);
+
+    await expect(
+      buildSkoposDecideRuntime({
+        cwd: workspaceRoot,
+        questionId: scopeQuestion.id,
+        optionId: 'narrow-scope-first',
+        actor: 'agent-a',
+      }),
+    ).rejects.toThrow(
+      /cannot be recorded ceremonially.*bound to task-portability-fixture.*resolve to catalog.*--scope 'catalog'/isu,
+    );
+    await expect(
+      showSkoposTaskRuntime({ cwd: workspaceRoot, taskId: started.task.id }),
+    ).resolves.toMatchObject({
+      scope: { scope: { id: 'task-portability-fixture' } },
+      questions: [expect.objectContaining({ id: scopeQuestion.id, status: 'open' })],
+    });
+  });
+
   it('restores a drifted Task projection to the declared Scope Memory root on mutation', async () => {
     const workspaceRoot = await createWorkspace();
     await declareNestedScope(workspaceRoot);
@@ -300,6 +416,378 @@ describe('tracked Task portability', () => {
     });
     expect(completed.state).toBe('complete');
     expect(completed.steps.every((step) => step.status === 'complete')).toBe(true);
+  }, 15_000);
+
+  it('blocks closure on every open question, including non-blocking ask-backs', async () => {
+    const workspaceRoot = await createWorkspace();
+    const started = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Prove terminal question disposition',
+      actor: 'agent-a',
+      acceptanceCriteria: ['No unresolved question survives Task closure.'],
+      ownedPaths: ['src'],
+    });
+
+    let task = started.task;
+    for (const step of task.steps.filter((entry) => entry.kind !== 'verification')) {
+      task = await completeSkoposTaskStepRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        stepId: step.id,
+        actor: 'agent-a',
+      });
+    }
+    for (const requirement of task.evidenceRequirements) {
+      await recordSkoposObservationEvidenceRuntime({
+        cwd: workspaceRoot,
+        taskId: task.id,
+        requirementId: requirement.id,
+        statement: 'The terminal question invariant is covered by this focused fixture.',
+        actor: 'agent-a',
+      });
+    }
+
+    const openQuestion = {
+      id: 'fixture.non-blocking-follow-up',
+      category: 'scope',
+      escalation: 'recommend-and-ask' as const,
+      question: 'Should the optional follow-up remain deferred?',
+      whyItMatters: 'Terminal Task state must make the disposition explicit.',
+      blocking: false,
+      recommendedOptionId: 'defer-follow-up',
+      options: [
+        {
+          id: 'defer-follow-up',
+          label: 'Defer follow-up',
+          rationale: 'Keep it outside this completed Task.',
+        },
+      ],
+      status: 'open' as const,
+    };
+    const current = await showSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+    });
+    await Promise.all([
+      writeFile(
+        started.taskPath,
+        `${JSON.stringify({ ...current, questions: [...current.questions, openQuestion] }, null, 2)}\n`,
+        'utf8',
+      ),
+      writeFile(
+        started.questionsPath,
+        `${JSON.stringify({ ...started.questions, entries: [...started.questions.entries, openQuestion] }, null, 2)}\n`,
+        'utf8',
+      ),
+    ]);
+
+    const blocked = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+    expect(blocked.readiness).toBe('blocked');
+    expect(blocked.blockers.join('\n')).toContain(
+      'open decision questions: fixture.non-blocking-follow-up',
+    );
+    await expect(
+      showSkoposTaskRuntime({ cwd: workspaceRoot, taskId: task.id }),
+    ).resolves.toMatchObject({ state: 'active' });
+
+    await buildSkoposDecideRuntime({
+      cwd: workspaceRoot,
+      questionId: openQuestion.id,
+      optionId: 'defer-follow-up',
+      actor: 'agent-a',
+    });
+    const readiness = await finishSkoposTaskRuntime({
+      cwd: workspaceRoot,
+      taskId: task.id,
+      actor: 'agent-a',
+    });
+    expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
+    expect(readiness.taskState).toBe('complete');
+  }, 15_000);
+
+  it('records dismissed and promoted question dispositions without inventing answers', async () => {
+    const workspaceRoot = await createWorkspace();
+    await mkdir(join(workspaceRoot, 'docs', 'findings'), { recursive: true });
+    await writeFile(
+      join(workspaceRoot, 'docs', 'findings', 'F-follow-up.md'),
+      [
+        '---',
+        'title: Follow-up',
+        'status: active',
+        'owner: fixture',
+        'id: F-follow-up',
+        'scope: task-portability-fixture',
+        'role: finding',
+        'lifecycle: active',
+        'authority: canonical',
+        'provenance: observed',
+        'view: current',
+        'lastUpdated: 2026-08-11',
+        '---',
+        '',
+        '# Follow-up',
+        '',
+      ].join('\n'),
+      'utf8',
+    );
+
+    const createQuestion = (id: string) => ({
+      id,
+      category: 'scope',
+      escalation: 'recommend-and-ask' as const,
+      question: 'Should the optional follow-up continue?',
+      whyItMatters: 'Terminal state requires an explicit disposition.',
+      blocking: false,
+      recommendedOptionId: 'continue',
+      options: [
+        {
+          id: 'continue',
+          label: 'Continue',
+          rationale: 'Keep the follow-up in this Task.',
+        },
+      ],
+      status: 'open' as const,
+    });
+    const attachQuestion = async (
+      started: Awaited<ReturnType<typeof buildSkoposStartRuntime>>,
+      question: ReturnType<typeof createQuestion>,
+      state?: 'complete',
+    ) => {
+      const current = await showSkoposTaskRuntime({
+        cwd: workspaceRoot,
+        taskId: started.task.id,
+      });
+      await Promise.all([
+        writeFile(
+          started.taskPath,
+          `${JSON.stringify({
+            ...current,
+            ...(state ? { state } : {}),
+            questions: [...current.questions, question],
+          }, null, 2)}\n`,
+          'utf8',
+        ),
+        writeFile(
+          started.questionsPath,
+          `${JSON.stringify({
+            ...started.questions,
+            entries: [...started.questions.entries, question],
+          }, null, 2)}\n`,
+          'utf8',
+        ),
+      ]);
+    };
+
+    const dismissedTask = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Dismiss one no-longer-relevant question',
+      actor: 'agent-dismiss',
+      ownedPaths: ['src'],
+    });
+    await attachQuestion(dismissedTask, createQuestion('fixture.dismiss'));
+    const dismissed = await disposeSkoposTaskQuestionRuntime({
+      cwd: workspaceRoot,
+      taskId: dismissedTask.task.id,
+      questionId: 'fixture.dismiss',
+      disposition: 'dismissed',
+      reason: 'The optional follow-up is outside this Task.',
+      actor: 'agent-dismiss',
+    });
+    expect(dismissed.questions).toContainEqual(
+      expect.objectContaining({
+        id: 'fixture.dismiss',
+        status: 'dismissed',
+        disposition: expect.objectContaining({
+          kind: 'dismissed',
+          reason: 'The optional follow-up is outside this Task.',
+          actorId: 'agent-dismiss',
+        }),
+      }),
+    );
+    await expect(
+      disposeSkoposTaskQuestionRuntime({
+        cwd: workspaceRoot,
+        taskId: dismissedTask.task.id,
+        questionId: 'fixture.dismiss',
+        disposition: 'dismissed',
+        reason: 'Retry the same disposition safely.',
+        actor: 'agent-dismiss',
+      }),
+    ).resolves.toMatchObject({
+      questions: [
+        expect.objectContaining({ id: 'fixture.dismiss', status: 'dismissed' }),
+      ],
+    });
+
+    const promotedTask = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Promote one durable follow-up',
+      actor: 'agent-promote',
+      ownedPaths: ['src'],
+    });
+    await attachQuestion(promotedTask, createQuestion('fixture.promote'));
+    const promoted = await disposeSkoposTaskQuestionRuntime({
+      cwd: workspaceRoot,
+      taskId: promotedTask.task.id,
+      questionId: 'fixture.promote',
+      disposition: 'promoted',
+      reason: 'The follow-up remains durable beyond this Task.',
+      targetPath: 'docs/findings/F-follow-up.md',
+      actor: 'agent-promote',
+    });
+    expect(promoted.questions).toContainEqual(
+      expect.objectContaining({
+        id: 'fixture.promote',
+        status: 'promoted',
+        disposition: expect.objectContaining({
+          kind: 'promoted',
+          target: {
+            kind: 'document',
+            ref: 'docs/findings/F-follow-up.md',
+          },
+        }),
+      }),
+    );
+    await rm(
+      join(
+        workspaceRoot,
+        '.skopos',
+        'tasks',
+        promoted.taskIdentity.worktreeId,
+        promoted.id,
+      ),
+      { recursive: true, force: true },
+    );
+    await expect(
+      showSkoposTaskRuntime({ cwd: workspaceRoot, taskId: promoted.id }),
+    ).resolves.toMatchObject({
+      questions: [
+        expect.objectContaining({
+          id: 'fixture.promote',
+          status: 'promoted',
+          disposition: expect.objectContaining({ kind: 'promoted' }),
+        }),
+      ],
+    });
+
+    const historicalTask = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Reconcile one historical Task question',
+      actor: 'agent-history',
+      ownedPaths: ['src'],
+    });
+    await attachQuestion(
+      historicalTask,
+      createQuestion('fixture.historical'),
+      'complete',
+    );
+    const reconciled = await disposeSkoposTaskQuestionRuntime({
+      cwd: workspaceRoot,
+      taskId: historicalTask.task.id,
+      questionId: 'fixture.historical',
+      disposition: 'dismissed',
+      reason: 'Historical outcome superseded the unanswered suggestion; no answer inferred.',
+      actor: 'auditor',
+    });
+    expect(reconciled.state).toBe('complete');
+    expect(reconciled.questions).toContainEqual(
+      expect.objectContaining({
+        id: 'fixture.historical',
+        status: 'dismissed',
+        disposition: expect.objectContaining({ actorId: 'auditor' }),
+      }),
+    );
+  }, 15_000);
+
+  it('disposes every open question when a Task is cancelled or superseded', async () => {
+    const workspaceRoot = await createWorkspace();
+    const question = {
+      id: 'fixture.terminal-disposition',
+      category: 'scope',
+      escalation: 'recommend-and-ask' as const,
+      question: 'Where should remaining work continue?',
+      whyItMatters: 'Terminal state must name the surviving authority.',
+      blocking: false,
+      recommendedOptionId: 'continue',
+      options: [{ id: 'continue', label: 'Continue', rationale: 'Continue work.' }],
+      status: 'open' as const,
+    };
+    const attachQuestion = async (
+      started: Awaited<ReturnType<typeof buildSkoposStartRuntime>>,
+    ) => {
+      const current = await showSkoposTaskRuntime({
+        cwd: workspaceRoot,
+        taskId: started.task.id,
+      });
+      await Promise.all([
+        writeFile(
+          started.taskPath,
+          `${JSON.stringify({ ...current, questions: [...current.questions, question] }, null, 2)}\n`,
+          'utf8',
+        ),
+        writeFile(
+          started.questionsPath,
+          `${JSON.stringify({ ...started.questions, entries: [...started.questions.entries, question] }, null, 2)}\n`,
+          'utf8',
+        ),
+      ]);
+    };
+
+    const cancelledTask = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Cancel obsolete work',
+      actor: 'agent-cancel',
+      ownedPaths: ['src'],
+    });
+    await attachQuestion(cancelledTask);
+    const cancelled = await applySkoposTaskDispositionRuntime({
+      cwd: workspaceRoot,
+      taskId: cancelledTask.task.id,
+      disposition: 'cancel',
+      reason: 'The requested outcome is no longer needed.',
+      actor: 'agent-cancel',
+    });
+    expect(cancelled.state).toBe('cancelled');
+    expect(cancelled.questions.filter((entry) => entry.status === 'open')).toEqual([]);
+    expect(cancelled.questions.at(-1)).toMatchObject({
+      status: 'dismissed',
+      disposition: { kind: 'dismissed' },
+    });
+
+    const successor = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Own the replacement work',
+      actor: 'agent-successor',
+      ownedPaths: ['src'],
+    });
+    const supersededTask = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Move remaining work to a successor',
+      actor: 'agent-supersede',
+      ownedPaths: ['src'],
+    });
+    await attachQuestion(supersededTask);
+    const superseded = await applySkoposTaskDispositionRuntime({
+      cwd: workspaceRoot,
+      taskId: supersededTask.task.id,
+      disposition: 'supersede',
+      reason: 'The successor has the accurate boundary.',
+      successorTaskId: successor.task.id,
+      actor: 'agent-supersede',
+    });
+    expect(superseded.state).toBe('superseded');
+    expect(superseded.questions.filter((entry) => entry.status === 'open')).toEqual([]);
+    expect(superseded.questions.at(-1)).toMatchObject({
+      status: 'promoted',
+      disposition: {
+        kind: 'promoted',
+        target: { kind: 'task', ref: successor.task.id },
+      },
+    });
   }, 15_000);
 
   it('keeps observation Evidence valid when selected Actions own generated outputs', async () => {
@@ -522,6 +1010,70 @@ describe('tracked Task portability', () => {
       ownedPaths: ['src'],
     });
     expect(ordinary.task.memoryObligations).toEqual([]);
+
+    const oneOffPolish = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Polish spacing on this one page',
+      actor: 'agent-polish',
+      risk: 'standard',
+      acceptanceCriteria: ['The local page spacing looks balanced.'],
+      ownedPaths: ['src'],
+    });
+    expect(oneOffPolish.task.memoryObligations).toEqual([]);
+
+    const durableStandard = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Standardize a project-wide component naming scheme',
+      actor: 'agent-standard',
+      risk: 'standard',
+      acceptanceCriteria: ['The naming standard applies across the repository.'],
+      ownedPaths: ['src'],
+    });
+    expect(durableStandard.task.memoryObligations).toEqual([
+      expect.objectContaining({
+        role: 'standard',
+        status: 'open',
+        targetPath: undefined,
+        reason: expect.stringContaining('create or adopt canonical standard Memory'),
+      }),
+    ]);
+
+    await Promise.all([
+      mkdir(join(workspaceRoot, 'docs', 'patterns'), { recursive: true }),
+      writeFile(join(workspaceRoot, 'src', 'other.ts'), 'export const other = true;\n', 'utf8'),
+    ]);
+    await writeFile(
+      join(workspaceRoot, 'docs', 'patterns', 'component-convention.md'),
+      buildMemoryDocument({
+        title: 'Component Convention',
+        id: 'FIXTURE-COMPONENT-CONVENTION',
+        scope: 'task-portability-fixture',
+        role: 'pattern',
+      }),
+      'utf8',
+    );
+    const durablePattern = await buildSkoposStartRuntime({
+      cwd: workspaceRoot,
+      goal: 'Adopt a component convention across the project',
+      actor: 'agent-pattern',
+      risk: 'standard',
+      ownedPaths: ['src/index.ts'],
+    });
+    expect(durablePattern.task.memoryObligations).toEqual([
+      expect.objectContaining({
+        role: 'pattern',
+        status: 'open',
+        targetPath: 'docs/patterns/component-convention.md',
+      }),
+    ]);
+    const expandedPattern = await expandSkoposTaskOwnershipRuntime({
+      cwd: workspaceRoot,
+      taskId: durablePattern.task.id,
+      ownedPaths: ['src/other.ts'],
+      reason: 'The same project-wide convention covers the paired source file.',
+      actor: 'agent-pattern',
+    });
+    expect(expandedPattern.memoryObligations).toEqual(durablePattern.task.memoryObligations);
 
     const highImpact = await buildSkoposStartRuntime({
       cwd: workspaceRoot,

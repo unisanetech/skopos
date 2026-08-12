@@ -1,0 +1,44 @@
+{
+  "snapshotId": "S-8eaf647f6926",
+  "taskId": "T-f007442d",
+  "sessionId": "019feb11-71c6-7543-a5a3-28f3c019172b",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "ea4cd3eb4093d992ed8a38d4bf4697fa0a43313baad15c5129daf37f62ee6fc9"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-change-scope.test.ts",
+      "digest": "1e792796534a2aa283d62e82aab70ca4c8c8c4112debca73b660d0c293bc73c3"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-splitting.test.ts",
+      "digest": "80a9ac180f2d28aa993ff5e31b6f49ad5769f89dcb4395d0478eb28604fe4f85"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "5e5544b304b0c76cdc9914569508c5f578b8a001162f495881e68f06c09b42ca"
+    },
+    {
+      "path": "packages/runtime/src/application/agent-native/agent-native-operating-model.service.ts",
+      "digest": "e7be572a626c5b2d88dfae5b63239da2014e9a87271807ac155318076129e664"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "ce44b52407567da8f945070d715ede68c602016cfc13cbd26d888d3d0cc9f6e3"
+    },
+    {
+      "path": "packages/runtime/src/application/verification/verification.service.ts",
+      "digest": "217cfa3d58dbfb1a2352131143abdcbf4fef56d9b13508bd6099b25e95c4062b"
+    },
+    {
+      "path": "packages/verification/src/application/task-change-scope/task-change-scope.service.ts",
+      "digest": "a00a65227770747905da2fd4c61ed230aa9e217087c09bea44013894589028e5"
+    }
+  ],
+  "digest": "8eaf647f6926f7857d00b2b99901c269d89cff1b96b606ab015b7b72f3ca7411",
+  "createdAt": "2026-08-11T11:14:46.276Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-f007442d-S-8eaf647f6926.json"
+}

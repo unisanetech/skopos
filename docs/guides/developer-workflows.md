@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-11
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
@@ -25,6 +25,8 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-08-11`: Documented reviewed parent/child Task splitting, exact linked-child
+  creation, dependency and acceptance mapping, and fresh-Session assignment.
 - `2026-08-09`: Documented automatic risk/detail recommendation, the light fast path,
   explainable capability selection, ownership suggestions, recovery-oriented CLI
   output, and the read-only UI workflow.
@@ -114,6 +116,82 @@ skopos work next . --actor <id> --json
 Task state, open questions, and recommendations are Task-owned. Tracked standard and
 high-impact Tasks reconstruct local state after a clean clone. Hot-path JSON is compact
 by default; add `--full` only when complete portable state is required.
+
+## Split Work Across Sessions
+
+Use linked child Tasks when one accepted outcome contains independently claimable work.
+Do not split merely because a checklist is long. Prepare a reviewed JSON file:
+
+```json
+{
+  "reason": "The model and UI surfaces can proceed independently.",
+  "children": [
+    {
+      "key": "model",
+      "goal": "Implement the model contract",
+      "scopeId": "model",
+      "ownedPaths": ["packages/model/src"],
+      "acceptanceCriteria": ["The model contract is type-safe."],
+      "parentAcceptanceRequirementIds": ["acceptance-1"]
+    },
+    {
+      "key": "ui",
+      "goal": "Project the model in the UI",
+      "scopeId": "ui",
+      "ownedPaths": ["packages/ui/src"],
+      "dependsOnKeys": ["model"],
+      "parentAcceptanceRequirementIds": ["acceptance-2"]
+    }
+  ]
+}
+```
+
+Generate the non-authoritative proposal, review it, then apply the exact digest:
+
+```bash
+skopos task split propose <parent-task-id> . \
+  --from <split.json> \
+  --reason "<why this decomposition is correct>" \
+  --actor <id> \
+  --json
+
+# Release a live parent reservation first when the proposal reports one.
+skopos task split apply <parent-task-id> . \
+  --proposal <proposal-digest> \
+  --reason "<approval reason>" \
+  --actor <id> \
+  --json
+```
+
+For one explicit bounded follow-up, use the shorter authority used by semantic-drift
+recommendations:
+
+```bash
+skopos task child start <parent-task-id> "<child goal>" . \
+  --own <path> \
+  --parent-acceptance <parent-requirement-id> \
+  --reason "<why this work is separately ownable>" \
+  --actor <id> \
+  --json
+```
+
+Apply returns one assignment instruction per child. A host adapter can create a new
+chat and call the same authority; otherwise open the tab yourself and run:
+
+```bash
+skopos task assign <child-task-id> . \
+  --actor <child-actor> \
+  --session-id <fresh-session-id> \
+  --host <host> \
+  --json
+```
+
+The operation opens or reuses the Session, enforces one writing Task per Session,
+reserves the child, and claims its owned paths. Skopos does not claim to have launched
+the host chat. Sibling path overlap, dependency cycles, unknown parent acceptance ids,
+a stale parent revision, or a live parent reservation fail before child authority is
+created. Parent closure remains blocked until every linked child completes
+successfully.
 
 ## Continue In A Fresh Session
 

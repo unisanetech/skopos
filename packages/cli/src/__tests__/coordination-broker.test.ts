@@ -16,6 +16,7 @@ import {
   recoverSkoposCoordinationTask,
   releaseSkoposCoordinationTask,
   reserveSkoposCoordinationTask,
+  transitionSkoposCoordinationSession,
 } from '../../../runtime/src/application/coordination/coordination.service.js';
 
 const temporaryRoots: string[] = [];
@@ -494,6 +495,119 @@ describe('same-directory coordination broker', () => {
       }),
     ).rejects.toThrow('only writer Sessions may reserve or claim');
   });
+
+  it('audits safe writer and reviewer transitions after writing authority is released', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-origin', 'agent-origin');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-origin',
+      taskId: 'task-origin',
+    });
+    await claimSkoposCoordinationResource({
+      cwd: root,
+      sessionId: 'session-origin',
+      taskId: 'task-origin',
+      resourceKind: 'exact-path',
+      resourceKey: 'src/a.ts',
+    });
+    const mutation = await beginSkoposCoordinationMutation({
+      cwd: root,
+      sessionId: 'session-origin',
+      taskId: 'task-origin',
+      path: 'src/a.ts',
+      operation: 'edit',
+    });
+
+    await expect(
+      transitionSkoposCoordinationSession({
+        cwd: root,
+        sessionId: 'session-origin',
+        actorId: 'agent-origin',
+        mode: 'reviewer',
+        reason: 'Return the originating Session to review.',
+      }),
+    ).rejects.toThrow('still reserves Task task-origin');
+
+    await releaseSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-origin',
+      taskId: 'task-origin',
+      reason: 'Writing authority is no longer needed.',
+    });
+    await expect(
+      transitionSkoposCoordinationSession({
+        cwd: root,
+        sessionId: 'session-origin',
+        actorId: 'agent-origin',
+        mode: 'reviewer',
+        reason: 'Return the originating Session to review.',
+      }),
+    ).rejects.toThrow('has 1 unresolved mutation');
+
+    await completeSkoposCoordinationMutation({
+      cwd: root,
+      sessionId: 'session-origin',
+      mutationId: mutation.mutation.mutationId,
+    });
+    const reviewer = await transitionSkoposCoordinationSession({
+      cwd: root,
+      sessionId: 'session-origin',
+      actorId: 'agent-origin',
+      mode: 'reviewer',
+      reason: 'Writing authority is released and mutation accounting is complete.',
+    });
+    expect(reviewer).toMatchObject({
+      priorMode: 'writer',
+      session: { mode: 'reviewer', state: 'live' },
+    });
+    await expect(
+      reserveSkoposCoordinationTask({
+        cwd: root,
+        sessionId: 'session-origin',
+        taskId: 'task-reviewer-cannot-write',
+      }),
+    ).rejects.toThrow('only writer Sessions may reserve or claim');
+    await expect(
+      transitionSkoposCoordinationSession({
+        cwd: root,
+        sessionId: 'session-origin',
+        actorId: 'another-agent',
+        mode: 'writer',
+        reason: 'Attempt an actor-changing transition.',
+      }),
+    ).rejects.toThrow('belongs to actor agent-origin');
+
+    const writer = await transitionSkoposCoordinationSession({
+      cwd: root,
+      sessionId: 'session-origin',
+      actorId: 'agent-origin',
+      mode: 'writer',
+      reason: 'Resume implementation after review found a required change.',
+    });
+    expect(writer).toMatchObject({
+      priorMode: 'reviewer',
+      session: { mode: 'writer', state: 'live' },
+    });
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-origin',
+      taskId: 'task-writer-resumed',
+    });
+
+    expect(readSessionTransitionEvents(opened.databasePath, 'session-origin')).toEqual([
+      {
+        priorMode: 'writer',
+        mode: 'reviewer',
+        reason: 'Writing authority is released and mutation accounting is complete.',
+      },
+      {
+        priorMode: 'reviewer',
+        mode: 'writer',
+        reason: 'Resume implementation after review found a required change.',
+      },
+    ]);
+  });
 });
 
 const createWorkspace = async (): Promise<string> => {
@@ -532,6 +646,34 @@ const expireSessionLease = (databasePath: string, sessionId: string): void => {
   if (result.status !== 0) {
     throw new Error(result.stderr || 'Failed to expire coordination Session lease.');
   }
+};
+
+const readSessionTransitionEvents = (
+  databasePath: string,
+  sessionId: string,
+): Array<{ priorMode: string; mode: string; reason: string }> => {
+  const script = `
+    import { DatabaseSync } from 'node:sqlite';
+    const db = new DatabaseSync(process.argv[1]);
+    const rows = db.prepare(
+      "SELECT details_json FROM coordination_events WHERE event_kind = 'session-mode-transitioned' AND session_id = ? ORDER BY recorded_at_ms, event_id"
+    ).all(process.argv[2]);
+    process.stdout.write(JSON.stringify(rows.map((row) => JSON.parse(row.details_json))));
+    db.close();
+  `;
+  const result = spawnSync(
+    process.execPath,
+    ['--input-type=module', '-e', script, databasePath, sessionId],
+    { encoding: 'utf8' },
+  );
+  if (result.status !== 0) {
+    throw new Error(result.stderr || 'Failed to read Session transition events.');
+  }
+  return JSON.parse(result.stdout) as Array<{
+    priorMode: string;
+    mode: string;
+    reason: string;
+  }>;
 };
 
 const initializeGitBaseline = (root: string): void => {

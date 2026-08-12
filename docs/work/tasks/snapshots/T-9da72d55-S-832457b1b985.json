@@ -1,0 +1,100 @@
+{
+  "snapshotId": "S-832457b1b985",
+  "taskId": "T-9da72d55",
+  "sessionId": "codex-host-dispatch-reviewer-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "5a9380c9e99ed34eb5177a081a5e17679da5f7c5400812188933ab21e9845fc0"
+    },
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "c7f6e6e89a410a1d961e5cb0d02af870ceb3ca5a722889a9cdae343a64507ca9"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-e42d4ebb-implement-safe-originating-session-transitions-between-w.md",
+      "digest": "fd6b7ed4b4d4dad3d2e82e7650d0af09da7e8d763dfad1454b8ca6c36c45d68a"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-e7b197de-expose-the-reviewer-and-host-delivery-lifecycle-consiste.md",
+      "digest": "718993244a7f1dee44417fab126d8d60dfe07efe9cac57bf7ac3ab297295980d"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-f4160cb9-generate-exact-truthful-codex-child-task-launch-and-pare.md",
+      "digest": "2550695490690254387b51921a94c3b6e33e5f308c7d6e4565214028893b51a2"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "c4e707305e39bb914d47caf3dd3e3142f47d318d76e76ba96e8af6b502c47284"
+    },
+    {
+      "path": "docs/work/tasks/snapshots/T-e42d4ebb-S-6841dbb9f7e6.json",
+      "digest": "89772389a125f1760ef3c25d0dd3bbcea5ff73fe5e5417825866cc804a9e02a9"
+    },
+    {
+      "path": "docs/work/tasks/snapshots/T-e7b197de-S-0b8666cac089.json",
+      "digest": "ad1ca98059f08733c68682aab61b73b973259f5bd4a779b9cb944f9a8c843d4d"
+    },
+    {
+      "path": "docs/work/tasks/snapshots/T-f4160cb9-S-b082829a5599.json",
+      "digest": "f224f5d0e6e73d3e846102190b36ba69a41a35ce7df9717510aef56632f26476"
+    },
+    {
+      "path": "packages/cli/src/__tests__/coordination-broker.test.ts",
+      "digest": "f86378c3370eb455c37ba2186137909e8c16922d356c7e57b3953d1eb145f1de"
+    },
+    {
+      "path": "packages/cli/src/__tests__/coordination-lifecycle.test.ts",
+      "digest": "1d51a6a556ce936634b91f91bac0f7cf00f77cdf09b870f87fd513b59e8a4c0e"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-splitting.test.ts",
+      "digest": "7fdcd2cd9b5b2fd3def48fb672f55dab9f25402f7d4bc6e76b700f33b084da29"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/coordination.ts",
+      "digest": "87da55d6f4dce2e50557b9b9b67b36dfd1a7ea9f500aa7f5b12d36c3f1102bc4"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "949bc4c7432ac8dbce2f28b0495b17fd13ef0c94986467beb0753091e04d1249"
+    },
+    {
+      "path": "packages/instructions/src/application/sync-codex-wrapper-adapter/sync-codex-wrapper-adapter.service.ts",
+      "digest": "c482b9c0d94afcb74961b533e98d2bfd941a281fe5f81da95da938f934b4dbfa"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "digest": "3bb09cd0fd88a579a6314c7f3bac8d7a9d2200cfdd3d85e004f1c7a22605d0ec"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-coordination.ts",
+      "digest": "40449dae7f7fc9abc6dbd382c2c713db41d9be3d0e06b84c1248b1fccd78c308"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "084fdc45f1d7047f883601a104ca3073ab9aebe899a5c004adddd2da71e57d0e"
+    },
+    {
+      "path": "packages/runtime/src/application/coordination/coordination.service.ts",
+      "digest": "192e9e21d3927f0577db189e1531163615663afd51b540902dc207de64e824c6"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "cfef929c2e9b1a33570e3511c882773b047e74d4d2f2302b42d465f417b187ab"
+    },
+    {
+      "path": "packages/runtime/src/application/start/start.service.ts",
+      "digest": "dd8feb794b839f94835bc56363b7369772d5e7c502bac616f48c61f6aceac91c"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task-split.service.ts",
+      "digest": "d4cb33732d7a4433314369c5678c1b0cbdc7072bb1e571d26fa46448de0347eb"
+    }
+  ],
+  "digest": "832457b1b98506ccac9e044aec17aa62c7c5bfca8cf83e94fbb0c711815aba95",
+  "createdAt": "2026-08-11T07:07:50.770Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-9da72d55-S-832457b1b985.json"
+}

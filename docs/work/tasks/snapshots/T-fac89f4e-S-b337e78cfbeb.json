@@ -1,0 +1,40 @@
+{
+  "snapshotId": "S-b337e78cfbeb",
+  "taskId": "T-fac89f4e",
+  "sessionId": "semantic-drift-close-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "069cb133cdab00231d81ed62323acf3b529febe9b45508545295b8c998a2cee5"
+    },
+    {
+      "path": "docs/findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md",
+      "digest": "6fb7cb3790ef8f9acf8e93d718300735034fc51679dbd665378f8cfb6fe94d69"
+    },
+    {
+      "path": "docs/findings/F-20260811-topology-aware-task-scope-resolution-gap.md",
+      "digest": "e4a7baa215b19383daf79f34914d7fffe08cb188d02b9221388999bac7b27e38"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-ownership-expansion.test.ts",
+      "digest": "dad44bbd1c72eaa23963d21bd1b5f8de6a39fc7cb3076731327146be4c6707c0"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/task.ts",
+      "digest": "132a3eedb9b5f11d101f738c77cc537c6d796ac386f19d2064d1aec5ecf57746"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "3429ca1779792739e7a73bea2494d87ea319bcc6bf2149584727c9abd8edd9b7"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "154717b1d032454c05811d21641f459fd55805416f70480487e2c1740580fed2"
+    }
+  ],
+  "digest": "b337e78cfbebf5a40a633aaa25f4418176fab88c877aec77d2c8fca0c9cd4454",
+  "createdAt": "2026-08-11T02:26:21.103Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-fac89f4e-S-b337e78cfbeb.json"
+}

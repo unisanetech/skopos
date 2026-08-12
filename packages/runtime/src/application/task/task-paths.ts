@@ -30,6 +30,16 @@ export const resolveSkoposTaskRecommendationsPath = (
   taskIdentity: SkoposTaskIdentity,
 ): string => join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'recommendations.json');
 
+export const resolveSkoposTaskSplitProposalPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string => join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'split-proposal.json');
+
+export const resolveSkoposTaskSplitActivationPath = (
+  workspaceRoot: string,
+  taskIdentity: SkoposTaskIdentity,
+): string => join(resolveSkoposTaskDirectory(workspaceRoot, taskIdentity), 'split-activation.json');
+
 const safeTaskPathSegment = (value: string): string => {
   if (value === '.') {
     return '%2E';

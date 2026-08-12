@@ -10,14 +10,16 @@ authority: canonical
 provenance: accepted
 view: exception
 risk: standard
-lastUpdated: 2026-08-03
+proofSubject: task-closure
+proofBaseline: baseline-legacy-6f238739
+lastUpdated: 2026-08-11
 ---
 
 # Task: Complete explicit project-integration proof subjects and certify mixed-worktree isolation
 
 ## Changelog
 
-- `2026-08-03`: Synchronized Task state `cancelled` from Skopos.
+- `2026-08-11`: Synchronized Task state `cancelled` from Skopos.
 
 ## Goal
 
@@ -37,6 +39,10 @@ Complete explicit project-integration proof subjects and certify mixed-worktree 
 ## Constraints
 
 - Preserve the single Task, Action, Guard, Evidence, and Readiness authority.
+
+## Admission And Workflow
+
+- Legacy Task admission; workflow derives from risk `standard`.
 
 ## Owned Paths
 
@@ -59,9 +65,13 @@ Complete explicit project-integration proof subjects and certify mixed-worktree 
 - `packages/runtime/src/application/verification/verification.service.ts`
 - `tools/skopos/actions`
 
+## Ownership Expansions
+
+- None recorded.
+
 ## Steps
 
-- [ ] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, pending) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
+- [ ] **Should this change stay at workspace scope, or should it be narrowed to one declared Scope?** (decision, skipped) — Wide-scope Plans in monorepos drift faster and make Readiness less precise.
 - [ ] **Resolve plan decisions** (implementation, pending) — Answer the recommended ask-back questions before implementation so the agent does not guess on high-impact choices.
 - [ ] **Record Task risk and detail before editing** (implementation, pending) — Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.
 - [ ] **Review the current pattern in Skopos Workspace** (implementation, pending) — Use the compact references to confirm the current scope, command surface, and docs entrypoints before editing code.
@@ -104,7 +114,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "type": "task",
   "status": "active",
   "generatedAt": "2026-08-03T16:58:04.566Z",
-  "updatedAt": "2026-08-03T17:06:48.036Z",
+  "updatedAt": "2026-08-11T01:53:00.474Z",
   "planIds": [],
   "childTasks": [],
   "state": "cancelled",
@@ -159,7 +169,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "kind": "decision",
       "title": "Should this change stay at workspace scope, or should it be narrowed to one declared Scope?",
       "detail": "Wide-scope Plans in monorepos drift faster and make Readiness less precise.",
-      "status": "pending"
+      "status": "skipped"
     },
     {
       "id": "step-resolve-decisions",
@@ -355,7 +365,13 @@ This machine-readable block is the durable source used to rebuild local Skopos s
         }
       ],
       "blocking": false,
-      "status": "open"
+      "status": "dismissed",
+      "disposition": {
+        "kind": "dismissed",
+        "reason": "Historical Task was cancelled before terminal question invariants. Cancellation makes this non-blocking Scope suggestion inapplicable; no answer is inferred.",
+        "actorId": "codex",
+        "recordedAt": "2026-08-11T01:51:10.859Z"
+      }
     }
   ],
   "recommendations": [
@@ -367,7 +383,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "actionKind": "resolve-question",
       "linkedQuestionId": "plan.scope-confirmation",
       "blocking": false,
-      "status": "open"
+      "status": "dismissed"
     },
     {
       "id": "run-maintenance.refresh-knowledge",

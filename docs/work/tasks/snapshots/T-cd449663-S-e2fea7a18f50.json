@@ -1,0 +1,52 @@
+{
+  "snapshotId": "S-e2fea7a18f50",
+  "taskId": "T-cd449663",
+  "sessionId": "scope-expansion-close-20260811-r2",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/decisions/D-20260811-topology-aware-task-scope-authority.md",
+      "digest": "a7aa8babba7224129319d3c17fc96cc3c6557677120bd05919a2c7d1ceb5a876"
+    },
+    {
+      "path": "docs/findings/F-20260811-topology-aware-task-scope-resolution-gap.md",
+      "digest": "74277d206868a8a174f044ef76c65c33773e7a5e9edb5ccf639c5fdf149c6b95"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "72aac60151601994349435551c547f97a954fdc4ebdfd196eb8cf52889da3661"
+    },
+    {
+      "path": "packages/cli/src/__tests__/scope-registry.test.ts",
+      "digest": "b3a789b88a57111c2df0b5474b6517ca216a7fcb66e05529505f01256afeafe5"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-ownership-expansion.test.ts",
+      "digest": "d0c51787f2a937b441f159341abfb76d5f66c61eb086a1f0cb28977c616a396a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "1840938f3bd7d2c79cec8db5f9c5be73790036f23f8d01b6c82e231660eec2a6"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-scope-lite.ts",
+      "digest": "fae57227f26f4229a2b886acbed6d30b58868c058ea1421f994e869b7e877931"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-task.ts",
+      "digest": "1948f30bb8b49e5784ec57f5b5050586179bb6095bc63fe01aa5ddedf3e75022"
+    },
+    {
+      "path": "packages/query/src/application/resolve-scope/resolve-scope.service.ts",
+      "digest": "632e53412129d0c6f18fc3dd182f5079cccb535fc505d7d99fb7d2f83e105f16"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "64b2999af66e9437f621fb937ba7797ecbda281d67f7d0688fad8e2aedb7fcbc"
+    }
+  ],
+  "digest": "e2fea7a18f5063e83f7d1d2e835b3c59affd9137f8c2e8fe742e583e90b73617",
+  "createdAt": "2026-08-11T02:19:14.526Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-cd449663-S-e2fea7a18f50.json"
+}

@@ -1,0 +1,16 @@
+{
+  "snapshotId": "S-18d695637ca4",
+  "taskId": "T-eddd223f",
+  "sessionId": "codex-root-web-plan-20260812",
+  "actorId": "codex-root",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/work/plans/P-20260812-public-web-information-architecture-and-content-plan.md",
+      "digest": "9a23f04548d22f9a3360cb4e8900727c636b1e2700ece8c7277ede2de8663c7e"
+    }
+  ],
+  "digest": "18d695637ca48be2b89f3d787771f16cf4f6fb3fe68149535de3d0f4cba64288",
+  "createdAt": "2026-08-11T20:03:42.135Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-eddd223f-S-18d695637ca4.json"
+}

@@ -1,0 +1,24 @@
+{
+  "snapshotId": "S-c3f3ae911d8b",
+  "taskId": "T-6f2885d0",
+  "sessionId": "1750a50a-d409-4e1e-86ab-b0926bca62ba",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/findings/F-20260811-public-web-build-and-cli-release-gate-coupling.md",
+      "digest": "f9bf89965364f58243f44d0793894e4f5aabd08221e921482fe7408fe488932f"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "394c551eadbf82f3bb7cb927e1c9260c5adb4b9496d590abd969b8be9980cd26"
+    },
+    {
+      "path": "package.json",
+      "digest": "d0d22817165156cb672dd40cba67c3f343de291bc729ade84dcb84aa06e5f57d"
+    }
+  ],
+  "digest": "c3f3ae911d8bc23e675a92dc182156b74b6c259c34438ff7ae63ddac038890f4",
+  "createdAt": "2026-08-11T01:38:33.580Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-6f2885d0-S-c3f3ae911d8b.json"
+}

@@ -1,0 +1,28 @@
+{
+  "snapshotId": "S-0b8666cac089",
+  "taskId": "T-e7b197de",
+  "sessionId": "019fef98-dafe-7582-989d-0f16452f7cb2",
+  "actorId": "codex-host-integration",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "5a9380c9e99ed34eb5177a081a5e17679da5f7c5400812188933ab21e9845fc0"
+    },
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "c7f6e6e89a410a1d961e5cb0d02af870ceb3ca5a722889a9cdae343a64507ca9"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "c4e707305e39bb914d47caf3dd3e3142f47d318d76e76ba96e8af6b502c47284"
+    },
+    {
+      "path": "packages/mcp/src/index.ts",
+      "digest": "3bb09cd0fd88a579a6314c7f3bac8d7a9d2200cfdd3d85e004f1c7a22605d0ec"
+    }
+  ],
+  "digest": "0b8666cac089aae5ad38f0058afdd9f1e88df9f2027f59ad3d881a89b26df256",
+  "createdAt": "2026-08-11T07:01:27.741Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-e7b197de-S-0b8666cac089.json"
+}

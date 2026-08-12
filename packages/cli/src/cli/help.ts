@@ -61,9 +61,14 @@ Usage:
   skopos actions recover <run-id> [target] --actor <id> --reason <text> [--json]
   skopos evidence reuse <task-id> [target] --actor <id> [--full] [--json]
   skopos evidence record-observation <task-id> [target] [--requirement <id>] [--guard <id>] --statement <text> --actor <id> [--full] [--dry-run] [--json]
+  skopos evidence record-browser <task-id> [target] [--requirement <id>] [--guard <id>] --url <url-or-route> --viewport <WIDTHxHEIGHT[@SCALE]> --interaction <text> (--capture <workspace-path>|--measurement <text>) [--capture-kind <screenshot|accessibility|dom-measurement>] [--condition <text>] --browser <name-and-version> --actor <id> [--full] [--dry-run] [--json]
   skopos task show <task-id> [target] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos task claim <task-id> [target] --actor <id> [--json]
   skopos task release <task-id> [target] --actor <id> [--json]
+  skopos task split propose <parent-task-id> [target] --from <proposal.json> --reason <text> --actor <id> [--dry-run] [--json]
+  skopos task split apply <parent-task-id> [target] --proposal <digest> --reason <text> --actor <id> [--dry-run] [--json]
+  skopos task child start <parent-task-id> <goal> [target] --own <path> [--accept <criterion>] [--parent-acceptance <requirement-id>] [--scope <scope>] --reason <text> --actor <id> [--json]
+  skopos task assign <task-id> [target] --actor <id> --session-id <id> [--host <name>] [--lease-seconds <n>] [--json]
   skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>] [--json]
   skopos task step complete <task-id> <step-id> [--cwd <target>] --actor <id> [--json]
   skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
@@ -135,8 +140,13 @@ Usage:
   skopos task show <task-id> [target] [--full|--collection <name>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos task claim <task-id> [target] --actor <id> [--json]
   skopos task release <task-id> [target] --actor <id> [--json]
+  skopos task split propose <parent-task-id> [target] --from <proposal.json> --reason <text> --actor <id> [--dry-run] [--json]
+  skopos task split apply <parent-task-id> [target] --proposal <digest> --reason <text> --actor <id> [--dry-run] [--json]
+  skopos task child start <parent-task-id> <goal> [target] --own <path> [--accept <criterion>] [--parent-acceptance <requirement-id>] [--scope <scope>] --reason <text> --actor <id> [--json]
+  skopos task assign <task-id> [target] --actor <id> --session-id <id> [--host <name>] [--lease-seconds <n>] [--json]
   skopos task ownership add <task-id> --own <path> [--own <path>...] --reason <text> --actor <id> [--cwd <target>] [--json]
   skopos task disposition <task-id> <resume|ready|defer|return-from-verification|cancel|supersede> --reason <text> [--successor <task-id>] [--cwd <target>] --actor <id> [--json]
+  skopos task question dispose <task-id> <question-id> --disposition dismissed|promoted --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
   skopos task step complete <task-id> <step-id> [--cwd <target>] --actor <id> [--json]
   skopos task memory resolve <task-id> <obligation-id> --resolution memory-updated|reviewed-no-change --reason <text> [--target <path>] [--cwd <target>] --actor <id> [--json]
   skopos task verify <task-id> [target] --actor <id> [--json]
@@ -148,6 +158,13 @@ Task.
 
 Task show reports changed paths outside declared ownership and provides an exact,
 audited ownership-add command. High-impact work never adopts those paths silently.
+
+Split proposal is review-only: it validates child keys, dependency order, parent
+acceptance mappings, and non-overlapping owned paths without changing any Task.
+Applying the exact proposal digest creates linked tracked children and blocks parent
+closure until every child completes successfully. Assignment opens or reuses one
+host-neutral Session, reserves one child, and claims that child's resources; it does
+not claim that Skopos launched a host chat.
 `;
 
 const SKOPOS_IMPACT_HELP = `Skopos impact

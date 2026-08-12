@@ -1,0 +1,28 @@
+{
+  "snapshotId": "S-306534f83d9b",
+  "taskId": "T-5acfa92e",
+  "sessionId": "convention-memory-close-20260811",
+  "actorId": "codex",
+  "baseRevision": "4646744fe0ce754999f7ea313032a3e04744c415",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "5dfc242d462ac30f6de8b163b4685b6434cff7c5a9c11d564eb156eff73318c0"
+    },
+    {
+      "path": "docs/findings/F-20260811-agent-iteration-bounding-and-evidence-gap.md",
+      "digest": "8844c0340373141dc4eba765e80533d748942e13e9afcb2c8a0b2e3ec83fa367"
+    },
+    {
+      "path": "packages/cli/src/__tests__/task-portability.test.ts",
+      "digest": "6180c1622ed7f07a6dc923b86d11dd6585c4da1244583da6655b142e81883e13"
+    },
+    {
+      "path": "packages/runtime/src/application/task/task.service.ts",
+      "digest": "8a2e51d28f594f484c063275dc11aa26263a3ad02a07846c69387507760ff75c"
+    }
+  ],
+  "digest": "306534f83d9b6bd4bb3bbb5e0fad7a820c561936c3813fa035eff66e92874e03",
+  "createdAt": "2026-08-11T02:39:57.828Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-5acfa92e-S-306534f83d9b.json"
+}

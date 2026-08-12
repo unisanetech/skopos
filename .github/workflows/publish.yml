@@ -79,6 +79,10 @@ jobs:
         run: |
           pnpm release:security:validate
           pnpm release:publish:validate
+          pnpm release:scorecard:validate
+
+      - name: Reconstruct project Memory and capabilities from tracked truth
+        run: pnpm release:reconstruct:validate
 
       - name: Prove the complete source candidate
         run: |
