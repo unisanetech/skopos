@@ -184,12 +184,22 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(runtimeBlock, /name: unisane-skopos-publish-candidate-/u);
   assert.match(runtimeBlock, /crypto\.createHash\('sha256'\)/u);
   assert.match(runtimeBlock, /actual!==expected/u);
-  assert.match(runtimeBlock, /npm install --prefix \.release\/runtime-project/u);
-  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@unisane\/skopos\/dist\/cli\.js --version/u);
-  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@unisane\/skopos\/dist\/cli\.js --help/u);
-  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js setup/u);
-  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js session context/u);
-  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js ui build/u);
+  assert.match(runtimeBlock, /fs\.mkdtempSync\(path\.join\(os\.tmpdir\(\),'skopos-exact-runtime-'\)\)/u);
+  assert.match(runtimeBlock, /Runtime consumer must live outside the source checkout/u);
+  assert.match(runtimeBlock, /RUNTIME_PROJECT=/u);
+  assert.doesNotMatch(runtimeBlock, /\.release\/runtime-project/u);
+  assert.match(runtimeBlock, /npm install --prefix "\$RUNTIME_PROJECT" "\$GITHUB_WORKSPACE\/\.release\/packed\/unisane-skopos-\$\{PACKAGE_VERSION\}\.tgz"/u);
+  assert.match(runtimeBlock, /RUNTIME_CLI="\$RUNTIME_PROJECT\/node_modules\/@unisane\/skopos\/dist\/cli\.js"/u);
+  assert.match(runtimeBlock, /node "\$RUNTIME_CLI" --version/u);
+  assert.match(runtimeBlock, /node "\$RUNTIME_CLI" --help/u);
+  assert.match(runtimeBlock, /node "\$RUNTIME_CLI" setup "\$RUNTIME_PROJECT"/u);
+  assert.match(runtimeBlock, /node "\$RUNTIME_CLI" session context "\$RUNTIME_PROJECT"/u);
+  assert.match(runtimeBlock, /node "\$RUNTIME_CLI" ui build "\$RUNTIME_PROJECT"/u);
+  assert.match(runtimeBlock, /path\.resolve\(process\.env\.RUNTIME_PROJECT,p\)/u);
+  assert.match(runtimeBlock, /name: Remove the isolated runtime consumer\n\s+if: always\(\)/u);
+  assert.match(runtimeBlock, /const temp=path\.resolve\(os\.tmpdir\(\)\)/u);
+  assert.match(runtimeBlock, /Refusing to remove an unsafe runtime path/u);
+  assert.match(runtimeBlock, /fs\.rmSync\(resolved,\{recursive:true,force:true\}\)/u);
   assert.match(runtimeBlock, /SKOPOS_RELEASE_TARBALL:/u);
   assert.match(runtimeBlock, /pnpm release:smoke:artifact/u);
   assert.match(runtimeBlock, /pnpm build/u);
@@ -307,7 +317,17 @@ for (const weakened of [
   workflow.replace('            --runtime-dir ".release/runtime" \\\n', ''),
   workflow.replace('            --web ".release/evidence/production-web.json" \\\n', ''),
   workflow.replace("const actual=crypto.createHash('sha256')", "const actual=crypto.createHash('sha1')"),
-  workflow.replace('          npm install --prefix .release/runtime-project', '          echo skipped-artifact-install'),
+  workflow.replace("fs.mkdtempSync(path.join(os.tmpdir(),'skopos-exact-runtime-'))", "path.join(process.env.GITHUB_WORKSPACE,'.release','runtime-project')"),
+  workflow.replace('          npm install --prefix "$RUNTIME_PROJECT"', '          echo skipped-artifact-install'),
+  workflow.replace(
+    '          npm install --prefix "$RUNTIME_PROJECT" "$GITHUB_WORKSPACE/.release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz"',
+    '          npm install --prefix "$RUNTIME_PROJECT" ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz"',
+  ),
+  workflow.replace('path.resolve(process.env.RUNTIME_PROJECT,p)', "path.resolve('.release/runtime-project',p)"),
+  workflow.replace(
+    '      - name: Remove the isolated runtime consumer\n        if: always()\n',
+    '      - name: Remove the isolated runtime consumer\n',
+  ),
   workflow.replace('          pnpm release:smoke:artifact\n', '          echo skipped-runtime-lifecycle\n'),
   workflow.replace('installedLifecycle:\'passed\'', 'installedLifecycle:\'skipped\''),
   workflow.replace('bundledUi:\'passed\'', 'bundledUi:\'skipped\''),
