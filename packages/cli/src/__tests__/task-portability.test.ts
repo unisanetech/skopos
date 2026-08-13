@@ -56,6 +56,14 @@ afterEach(async () => {
 });
 
 describe('tracked Task portability', () => {
+  it('hashes persisted Task path states independently of host path separators', () => {
+    const digest = 'a'.repeat(64);
+
+    expect(digestSkoposTaskPathStates([{ path: 'src\\index.ts', digest }])).toBe(
+      digestSkoposTaskPathStates([{ path: 'src/index.ts', digest }]),
+    );
+  });
+
   it('normalizes tracked Task projection paths from Windows separators', () => {
     const activePath = 'docs\\work\\tasks\\T-portable.md';
     const archivedPath = 'docs/work/archive/tasks/T-portable.md';

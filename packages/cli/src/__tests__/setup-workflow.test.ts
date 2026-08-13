@@ -737,9 +737,12 @@ describe('unified intelligent project setup', () => {
       ),
     ));
     let initial = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
-    expect(initial.state.lanes.find((lane) => lane.id === 'understanding')?.evidencePaths[0]).toContain(
-      '/.skopos/',
-    );
+    expect(
+      initial.state.lanes
+        .find((lane) => lane.id === 'understanding')
+        ?.evidencePaths[0]
+        ?.replaceAll('\\', '/'),
+    ).toContain('/.skopos/');
 
     const lifecycle = initial.state.materialQuestions.find(
       (question) => question.id === 'understanding.lifecycle',

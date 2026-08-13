@@ -247,7 +247,9 @@ export const digestSkoposTaskPathStates = (
   states: SkoposTaskPathState[],
 ): string =>
   createHash('sha256')
-    .update(states.map((entry) => `${entry.path}\0${entry.digest}`).join('\n'))
+    .update(states.map((entry) =>
+      `${normalizePortableWorkspacePath(entry.path)}\0${entry.digest}`
+    ).join('\n'))
     .digest('hex');
 
 const digestWorkspacePath = async (
@@ -374,7 +376,15 @@ const normalizeDeclaredPaths = (
 const normalizeWorkspacePath = (
   workspaceRoot: string,
   path: string,
-): string => relative(resolve(workspaceRoot), resolve(workspaceRoot, path)) || '.';
+): string => normalizePortableWorkspacePath(
+  relative(
+    resolve(workspaceRoot),
+    resolve(workspaceRoot, normalizePortableWorkspacePath(path)),
+  ) || '.',
+);
+
+const normalizePortableWorkspacePath = (path: string): string =>
+  path.replaceAll('\\', '/');
 
 const pathIsDeclaredOwned = (
   path: string,

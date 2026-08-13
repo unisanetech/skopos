@@ -93,6 +93,29 @@ describe('tracked unified-setup readiness reconstruction', () => {
       /^project-memory\/work\/tasks\/snapshots\/T-setupcert-S-/u,
     );
   });
+
+  it('classifies portable snapshot paths even when a prior host wrote Windows separators', async () => {
+    const root = await createWorkspace({
+      docsRoot: 'project-memory',
+      extraScopeMemoryRoot: 'apps/web/project-memory',
+    });
+    await writeCertification(root, {
+      paths: ['apps/web/project-memory/overview.md'],
+      snapshotPathSeparator: 'windows',
+    });
+    await writeFile(
+      join(root, 'apps/web/project-memory/overview.md'),
+      '# Changed web truth\n',
+      'utf8',
+    );
+
+    const readiness = await reconstructTrackedSkoposAdoptionReadinessRuntime({ cwd: root });
+    expect(readiness?.state).toBe('agent-analysis-required');
+    expect(readiness?.lanes.find((lane) => lane.id === 'memory')).toMatchObject({
+      status: 'stale',
+      affectedPaths: ['apps/web/project-memory/overview.md'],
+    });
+  });
 });
 
 const createWorkspace = async ({
@@ -209,11 +232,13 @@ const writeCertification = async (
     paths,
     snapshotTaskId,
     snapshotDigest,
+    snapshotPathSeparator,
   }: {
     constraints?: string[];
     paths: string[];
     snapshotTaskId?: string;
     snapshotDigest?: string;
+    snapshotPathSeparator?: 'windows';
   },
 ): Promise<string> => {
   const taskId = 'T-setupcert';
@@ -308,7 +333,10 @@ const writeCertification = async (
     paths,
     ignoredTaskId: taskId,
   });
-  const actualDigest = digestSkoposTaskPathStates(states);
+  const portableStates = snapshotPathSeparator === 'windows'
+    ? states.map((entry) => ({ ...entry, path: entry.path.replaceAll('/', '\\') }))
+    : states;
+  const actualDigest = digestSkoposTaskPathStates(portableStates);
   const digest = snapshotDigest ?? actualDigest;
   const snapshotId = `S-${digest.slice(0, 12)}`;
   const artifactPath = `${docsRoot}/work/tasks/snapshots/${taskId}-${snapshotId}.json`;
@@ -321,7 +349,7 @@ const writeCertification = async (
         sessionId: 'setup-session',
         actorId: 'setup-test',
         baseRevision: null,
-        paths: states,
+        paths: portableStates,
         digest,
         createdAt: now,
         artifactPath,

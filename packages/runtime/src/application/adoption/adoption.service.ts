@@ -361,9 +361,12 @@ const loadLatestTrackedSetupSnapshot = async (
           value.digest === digestSkoposTaskPathStates(value.paths) &&
           value.snapshotId === `S-${value.digest.slice(0, 12)}`
           ? {
-              path: relative(workspaceRoot, artifactPath),
+              path: relative(workspaceRoot, artifactPath).replaceAll('\\', '/'),
               createdAt: value.createdAt,
-              paths: value.paths,
+              paths: value.paths.map((entry) => ({
+                ...entry,
+                path: entry.path.replaceAll('\\', '/'),
+              })),
               digest: value.digest,
             }
           : undefined;
@@ -383,9 +386,13 @@ const resolveTrackedTaskWorkRoot = (trackedDocumentPath: string): string => {
 };
 
 const isPathWithinRoot = (path: string, root: string): boolean => {
-  const normalizedRoot = root.replace(/^\.\//u, '').replace(/\/+$/u, '');
+  const normalizedPath = path.replaceAll('\\', '/');
+  const normalizedRoot = root
+    .replaceAll('\\', '/')
+    .replace(/^\.\//u, '')
+    .replace(/\/+$/u, '');
   if (!normalizedRoot || normalizedRoot === '.') return true;
-  return path === normalizedRoot || path.startsWith(`${normalizedRoot}/`);
+  return normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`);
 };
 
 export const buildSkoposAdoptionAssessmentRuntime = async ({
