@@ -21,6 +21,40 @@ const MAX_EXCERPT_CHARS = 1200;
 const HEAD_LINE_COUNT = 3;
 const TAIL_LINE_COUNT = 6;
 
+interface SkoposShellInvocation {
+  executable: string;
+  args: string[];
+}
+
+export const resolveSkoposShellInvocation = ({
+  command,
+  platform = process.platform,
+  environment = process.env,
+}: {
+  command: string;
+  platform?: NodeJS.Platform;
+  environment?: NodeJS.ProcessEnv;
+}): SkoposShellInvocation => {
+  if (platform === 'win32') {
+    const executable = environment.ComSpec?.trim() || environment.COMSPEC?.trim();
+    if (!executable) {
+      throw new Error(
+        'Unable to start the Action shell on Windows because COMSPEC is not configured.',
+      );
+    }
+
+    return {
+      executable,
+      args: ['/d', '/s', '/c', command],
+    };
+  }
+
+  return {
+    executable: 'sh',
+    args: ['-c', command],
+  };
+};
+
 export const executeSkoposShellCommand = async ({
   command,
   cwd,
@@ -39,6 +73,15 @@ export const executeSkoposShellCommand = async ({
   const startedAt = new Date().toISOString();
   const startedAtMs = Date.parse(startedAt);
   const resolvedCwd = resolve(cwd);
+  const executionEnvironment = {
+    ...process.env,
+    PATH: buildAugmentedPath(resolvedCwd, process.env.PATH),
+    ...environment,
+  };
+  const shell = resolveSkoposShellInvocation({
+    command,
+    environment: executionEnvironment,
+  });
 
   const emitProgress = (kind: SkoposShellCommandProgressEvent['kind']): void => {
     const at = new Date().toISOString();
@@ -52,14 +95,10 @@ export const executeSkoposShellCommand = async ({
   return new Promise((resolvePromise, rejectPromise) => {
     let settled = false;
     let timedOut = false;
-    const child = spawn('/bin/zsh', ['-lc', `setopt NONOMATCH; ${command}`], {
+    const child = spawn(shell.executable, shell.args, {
       cwd: resolvedCwd,
       detached: true,
-      env: {
-        ...process.env,
-        PATH: buildAugmentedPath(resolvedCwd, process.env.PATH),
-        ...environment,
-      },
+      env: executionEnvironment,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     let stdout = '';
@@ -95,11 +134,19 @@ export const executeSkoposShellCommand = async ({
     progressInterval?.unref();
 
     child.on('error', (error) => {
+      if (settled) return;
+      settled = true;
       if (timeout) clearTimeout(timeout);
       if (progressInterval) clearInterval(progressInterval);
-      rejectPromise(error);
+      rejectPromise(
+        new Error(
+          `Unable to start the Action shell "${shell.executable}": ${error.message}`,
+          { cause: error },
+        ),
+      );
     });
     child.on('close', (code) => {
+      if (settled) return;
       settled = true;
       if (timeout) {
         clearTimeout(timeout);

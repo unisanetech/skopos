@@ -11,7 +11,10 @@ import {
 } from '../../../runtime/src/application/actions/actions.service.js';
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 import { buildSkoposSessionContextRuntime } from '../../../runtime/src/application/session/session-context.service.js';
-import { executeSkoposShellCommand } from '../../../runtime/src/application/shared/execute-shell-command.js';
+import {
+  executeSkoposShellCommand,
+  resolveSkoposShellInvocation,
+} from '../../../runtime/src/application/shared/execute-shell-command.js';
 import { buildSkoposStartRuntime } from '../../../runtime/src/application/start/start.service.js';
 import { writeActionProgress } from '../cli/commands/actions.js';
 
@@ -28,6 +31,66 @@ afterEach(async () => {
 });
 
 describe('bounded Action progress and timeout recovery', () => {
+  it('uses the standard POSIX shell without requiring zsh', () => {
+    expect(
+      resolveSkoposShellInvocation({
+        command: 'printf portable',
+        platform: 'linux',
+        environment: { PATH: '/usr/bin:/bin' },
+      }),
+    ).toEqual({
+      executable: 'sh',
+      args: ['-c', 'printf portable'],
+    });
+  });
+
+  it('uses the Windows command processor declared by the host', () => {
+    expect(
+      resolveSkoposShellInvocation({
+        command: 'echo portable',
+        platform: 'win32',
+        environment: { ComSpec: 'C:\\Windows\\System32\\cmd.exe' },
+      }),
+    ).toEqual({
+      executable: 'C:\\Windows\\System32\\cmd.exe',
+      args: ['/d', '/s', '/c', 'echo portable'],
+    });
+
+    expect(() =>
+      resolveSkoposShellInvocation({
+        command: 'echo unavailable',
+        platform: 'win32',
+        environment: {},
+      }),
+    ).toThrow('COMSPEC is not configured');
+  });
+
+  it('preserves an unmatched wildcard for the invoked command', async () => {
+    const execution = await executeSkoposShellCommand({
+      command: `node -e "process.stdout.write(process.argv[1])" skopos-no-match-*.txt`,
+      cwd: process.cwd(),
+      progressIntervalMs: 0,
+    });
+
+    expect(execution.exitCode).toBe(0);
+    expect(execution.stdoutExcerpt).toBe('skopos-no-match-*.txt');
+  });
+
+  it('reports a clear error when the host shell is unavailable', async () => {
+    if (process.platform === 'win32') return;
+    const emptyPath = await mkdtemp(join(tmpdir(), 'skopos-empty-path-'));
+    temporaryRoots.push(emptyPath);
+
+    await expect(
+      executeSkoposShellCommand({
+        command: 'printf unreachable',
+        cwd: process.cwd(),
+        environment: { PATH: emptyPath },
+        progressIntervalMs: 0,
+      }),
+    ).rejects.toThrow('Unable to start the Action shell "sh"');
+  });
+
   it('caps retained events without losing phase disposition', () => {
     const progress = createActionProgressTracker({
       startedAt: '2026-08-03T00:00:00.000Z',
