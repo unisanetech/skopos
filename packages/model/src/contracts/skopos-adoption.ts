@@ -5,6 +5,9 @@ import type {
 } from './skopos-knowledge-state.js';
 import type { SkoposDecisionOption } from './skopos-decision-question.js';
 
+export const SKOPOS_SETUP_CERTIFICATION_CONSTRAINT =
+  'skopos.setup-certification.v1' as const;
+
 export type SkoposAdoptionState =
   | 'uninitialized'
   | 'discovered'
@@ -15,6 +18,28 @@ export type SkoposAdoptionState =
   | 'standard-verified'
   | 'agent-ready'
   | 'team-ready';
+
+export type SkoposAdoptionReadinessLaneId =
+  | 'memory'
+  | 'scopes'
+  | 'capabilities'
+  | 'instructions'
+  | 'configuration';
+
+export interface SkoposAdoptionReadinessLane {
+  id: SkoposAdoptionReadinessLaneId;
+  status: 'ready' | 'stale';
+  summary: string;
+  affectedPaths: string[];
+}
+
+export interface SkoposTrackedAdoptionReadiness {
+  source: 'tracked-reconstruction';
+  state: Extract<SkoposAdoptionState, 'agent-ready' | 'agent-analysis-required'>;
+  certificationTaskId: string;
+  snapshotPath: string;
+  lanes: SkoposAdoptionReadinessLane[];
+}
 
 export type SkoposAdoptionEvidenceProvenance = 'observed' | 'inferred';
 

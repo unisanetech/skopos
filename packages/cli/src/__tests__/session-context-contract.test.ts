@@ -9,18 +9,21 @@ import {
   syncCodexWrapperAdapter,
 } from '@skopos/instructions';
 import type {
-  SkoposAdoptionIntakeArtifact,
   SkoposAdoptionRestructuringProposalArtifact,
   SkoposAdoptionReviewedAnalysisArtifact,
   SkoposSessionContextRunResult,
 } from '@skopos/model';
 import {
-  buildSkoposAdoptionSessionState,
   renderSkoposSessionAdditionalContext,
+  resolveSkoposResponseMode,
 } from '@skopos/runtime';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { syncLatestCodexDiscussionJournal } from '../../../runtime/src/application/shared/codex-session-import.js';
+import {
+  buildSkoposSessionContextRuntime,
+  buildSkoposSetupReadinessSessionState,
+} from '../../../runtime/src/application/session/session-context.service.js';
 
 const temporaryRoots: string[] = [];
 
@@ -31,6 +34,67 @@ afterEach(async () => {
 });
 
 describe('session communication contract', () => {
+  it('surfaces active unified setup as the normal Session decision authority', async () => {
+    const workspaceRoot = await createAdoptionSessionWorkspace();
+    await rm(join(workspaceRoot, '.skopos/adoption'), { recursive: true, force: true });
+    await mkdir(join(workspaceRoot, '.skopos/setup'), { recursive: true });
+    await writeFile(join(workspaceRoot, '.skopos/setup/state.json'), JSON.stringify({
+      schemaVersion: 1,
+      type: 'setup-state',
+      stage: 'questions-open',
+      currentStep: 'clarify',
+      lanes: [],
+      agentPacketPath: join(workspaceRoot, '.skopos/setup/agent-packet.json'),
+      nextCommand: 'skopos setup review .',
+      materialQuestions: [{
+        id: 'understanding.lifecycle',
+        question: 'Should Skopos treat this as an existing project or a new project?',
+        whyItMatters: 'It changes the preservation boundary.',
+        evidencePaths: [],
+        recommendedOptionId: 'existing-project',
+        options: [
+          { id: 'existing-project', label: 'Existing project', rationale: 'Preserve current truth first.' },
+          { id: 'new-project', label: 'New project', rationale: 'Use clean defaults.' },
+        ],
+        answerCommand: 'skopos setup answer understanding.lifecycle existing-project . --actor <id>',
+      }],
+    }));
+    const context = await buildSkoposSessionContextRuntime({ cwd: workspaceRoot });
+    expect(context.warnings).toEqual([]);
+    expect(context.setup).toBeDefined();
+    expect(context.pendingDecision).toMatchObject({
+      id: 'understanding.lifecycle',
+      source: 'setup-question',
+      escalation: 'must-ask',
+      defaultBehavior: 'wait-for-answer',
+    });
+    expect(context.setup).toMatchObject({ stage: 'questions-open', currentStep: 'clarify' });
+    expect(context.responseMode).toBe('decision');
+    expect(context.additionalContext).toContain('Setup stage: questions-open');
+  });
+
+  it('keeps Session context usable when checkout-local setup state predates material questions', async () => {
+    const workspaceRoot = await createAdoptionSessionWorkspace();
+    await rm(join(workspaceRoot, '.skopos/adoption'), { recursive: true, force: true });
+    await mkdir(join(workspaceRoot, '.skopos/setup'), { recursive: true });
+    await writeFile(join(workspaceRoot, '.skopos/setup/state.json'), JSON.stringify({
+      schemaVersion: 1,
+      type: 'setup-state',
+      stage: 'questions-open',
+      currentStep: 'clarify',
+      lanes: [],
+      agentPacketPath: join(workspaceRoot, '.skopos/setup/agent-packet.json'),
+      nextCommand: 'skopos setup review .',
+    }));
+
+    const context = await buildSkoposSessionContextRuntime({ cwd: workspaceRoot });
+
+    expect(context.warnings).toEqual([]);
+    expect(context.setup).toMatchObject({ stage: 'questions-open', currentStep: 'clarify' });
+    expect(context.pendingDecision).toBeUndefined();
+    expect(context.nextCommand).toBe('skopos setup review .');
+  });
+
   it('uses adaptive response modes and deterministic decision defaults', () => {
     expect(SKOPOS_COMMUNICATION_CONTRACT.responseModes).toEqual([
       'direct-answer',
@@ -40,7 +104,7 @@ describe('session communication contract', () => {
       'completion',
     ]);
     expect(SKOPOS_COMMUNICATION_CONTRACT.coreRules).toContain(
-      'Use the response mode that fits the moment; do not announce a lane unless risk or execution scope makes it useful.',
+      'Use clear, calm, simple English and explain necessary Skopos terms in project language.',
     );
     expect(resolveDecisionDefaultBehavior('delegable')).toBe('proceed-with-recommended');
     expect(resolveDecisionDefaultBehavior('recommend-and-ask')).toBe(
@@ -49,6 +113,13 @@ describe('session communication contract', () => {
     expect(resolveDecisionDefaultBehavior('must-ask')).toBe('wait-for-answer');
     expect(resolveDecisionDefaultBehavior('forbidden-without-approval')).toBe(
       'require-explicit-approval',
+    );
+  });
+
+  it('selects completion only for a pending Task closure response', () => {
+    expect(resolveSkoposResponseMode({ completionPending: true })).toBe('completion');
+    expect(resolveSkoposResponseMode({ completionPending: false })).toBe(
+      'direct-answer',
     );
   });
 
@@ -89,6 +160,10 @@ describe('session communication contract', () => {
         whatHappensAfterAnswer: 'Implementation can continue.',
       },
       additionalPendingDecisionCount: 0,
+      setupReadiness: {
+        state: 'uncertified',
+        source: 'missing-certification',
+      },
       warnings: [],
       additionalContext: '',
     };
@@ -96,6 +171,12 @@ describe('session communication contract', () => {
     const rendered = renderSkoposSessionAdditionalContext(context);
     expect(rendered).toContain('[SKOPOS_SESSION_CONTEXT_V1]');
     expect(rendered).toContain('Response mode: decision');
+    expect(rendered).toContain(
+      'Explain the decision, recommendation, reason, alternatives, default behavior, and what follows.',
+    );
+    expect(rendered).not.toContain(
+      'Report completed work, current work, blockers, and proof still needed without false precision.',
+    );
     expect(rendered).toContain('Recommended: Keep existing vendor');
     expect(rendered).toContain(
       'Reason: The choice changes deployment and data ownership.',
@@ -118,28 +199,65 @@ describe('session communication contract', () => {
       claude.writes.find((write) => write.path.endsWith('session-start-hook.mjs'))!.path,
       'utf8',
     );
-    const [codexScript, claudePreCompactScript] = await Promise.all([readFile(
-      codex.writes.find((write) => write.path.endsWith('codex-discussion-adapter.mjs'))!.path,
-      'utf8',
-    ), readFile(
-      claude.writes.find((write) => write.path.endsWith('pre-compact-hook.mjs'))!.path,
-      'utf8',
-    )]);
+    const [codexScript, codexReadme, claudePreCompactScript] = await Promise.all([
+      readFile(
+        codex.writes.find((write) =>
+          write.path.endsWith('codex-discussion-adapter.mjs'),
+        )!.path,
+        'utf8',
+      ),
+      readFile(
+        codex.writes.find((write) => write.path.endsWith('README.md'))!.path,
+        'utf8',
+      ),
+      readFile(
+        claude.writes.find((write) => write.path.endsWith('pre-compact-hook.mjs'))!.path,
+        'utf8',
+      ),
+    ]);
 
-    expect(claudeScript).toContain("'session', 'context'");
-    expect(codexScript).toContain("'session', 'context'");
-    expect(claudeScript).toContain("'--host', 'claude-code'");
+    expect(claudeScript).toMatch(/'session'\s*,\s*'context'/u);
+    expect(codexScript).toMatch(/'session'\s*,\s*'context'/u);
+    expect(claudeScript).toMatch(/'--host'\s*,\s*'claude-code'/u);
     expect(claudeScript).toContain("'--session-id', input.session_id.trim()");
-    expect(codexScript).toContain("'--host', 'codex'");
+    expect(codexScript).toMatch(/'--host'\s*,\s*'codex'/u);
     expect(codexScript).toContain("'--session-id', payload.sessionId.trim()");
     expect(claudeScript).not.toContain("['discuss', 'recent'");
     expect(codexScript).not.toContain("['discuss', 'recent'");
     expect(claudePreCompactScript).toContain("['discuss', 'handoff', 'refresh'");
     expect(codexScript).toContain("['discuss', 'handoff', 'verify'");
     expect(codexScript).toContain("['discuss', 'handoff', 'render'");
+    expect(codexReadme).toContain('.skopos/cache/agent/communication-brief.json');
+    expect(codexReadme).not.toContain('.skopos/agent/communication-brief.json');
   });
 
-  it('delivers one material adoption question through normal session context', async () => {
+  it('keeps ordinary direct-answer guidance inside a compact transport budget', () => {
+    const context: SkoposSessionContextRunResult = {
+      schemaVersion: 1,
+      workspaceRoot: '/project',
+      summary: 'Response guidance is ready.',
+      responseMode: 'direct-answer',
+      communicationContract: {
+        marker: SKOPOS_COMMUNICATION_CONTRACT.marker,
+        tokenBudget: SKOPOS_COMMUNICATION_CONTRACT.tokenBudget,
+        coreRules: SKOPOS_COMMUNICATION_CONTRACT.coreRules,
+      },
+      additionalPendingDecisionCount: 0,
+      setupReadiness: {
+        state: 'uncertified',
+        source: 'missing-certification',
+      },
+      warnings: [],
+      additionalContext: '',
+    };
+
+    const rendered = renderSkoposSessionAdditionalContext(context);
+    expect(Math.ceil(rendered.length / 4)).toBeLessThanOrEqual(180);
+    expect(rendered).toContain('Lead with the answer');
+    expect(rendered).not.toContain('State changed behavior, focused proof');
+  });
+
+  it('ignores stale local adoption questions and routes Session readiness through setup', async () => {
     const workspaceRoot = await createAdoptionSessionWorkspace();
     const analysis = buildAnalysis(workspaceRoot);
     await writeFile(
@@ -148,24 +266,19 @@ describe('session communication contract', () => {
       'utf8',
     );
 
-    const adoption = await buildSkoposAdoptionSessionState(workspaceRoot, []);
+    const readiness = await buildSkoposSetupReadinessSessionState(workspaceRoot, []);
+    const context = await buildSkoposSessionContextRuntime({ cwd: workspaceRoot });
 
-    expect(adoption).toMatchObject({
-      state: 'questions-open',
-      assessmentOnly: true,
-      pendingDecision: {
-        id: 'question-authority',
-        source: 'adoption-question',
-        recommendedOptionId: 'keep-current',
-        defaultBehavior: 'wait-for-answer',
-      },
+    expect(readiness).toEqual({
+      state: 'uncertified',
+      source: 'missing-certification',
     });
-    expect(adoption?.pendingDecision?.recommendedOption?.label).toBe(
-      'Keep current authority',
-    );
+    expect(context.pendingDecision).toBeUndefined();
+    expect(context.setupReadiness).toEqual(readiness);
+    expect(context.nextCommand).toContain('skopos setup');
   });
 
-  it('requires exact proposal approval through normal session context', async () => {
+  it('ignores stale local adoption proposal, approval, verification, and activation artifacts', async () => {
     const workspaceRoot = await createAdoptionSessionWorkspace();
     const proposal = buildProposal(workspaceRoot);
     await writeFile(
@@ -174,35 +287,7 @@ describe('session communication contract', () => {
       'utf8',
     );
 
-    const adoption = await buildSkoposAdoptionSessionState(workspaceRoot, []);
-
-    expect(adoption).toMatchObject({
-      state: 'restructuring-proposed',
-      assessmentOnly: true,
-      proposalDigest: 'proposal-digest',
-      pendingDecision: {
-        source: 'adoption-approval',
-        recommendedOptionId: 'revise-proposal',
-        defaultBehavior: 'require-explicit-approval',
-      },
-    });
-    expect(adoption?.pendingDecision?.alternatives.map((option) => option.id)).toContain(
-      'approve-proposal',
-    );
-    expect(adoption?.pendingDecision?.whatHappensAfterAnswer).toContain(
-      '--accept-material-risk',
-    );
-  });
-
-  it('reports standard verification without claiming agent-ready activation', async () => {
-    const workspaceRoot = await createAdoptionSessionWorkspace();
-    const proposal = buildProposal(workspaceRoot);
     await Promise.all([
-      writeFile(
-        join(workspaceRoot, '.skopos/adoption/restructuring-proposal.json'),
-        JSON.stringify(proposal),
-        'utf8',
-      ),
       writeFile(
         join(workspaceRoot, '.skopos/adoption/proposal-approval.json'),
         JSON.stringify({
@@ -249,17 +334,6 @@ describe('session communication contract', () => {
       ),
     ]);
 
-    const adoption = await buildSkoposAdoptionSessionState(workspaceRoot, []);
-
-    expect(adoption).toMatchObject({
-      state: 'standard-verified',
-      assessmentOnly: false,
-      proposalDigest: 'proposal-digest',
-    });
-    expect(adoption?.pendingDecision).toBeUndefined();
-    expect(adoption?.nextCommand).toContain('activation');
-    expect(adoption?.nextCommand).toContain('before claiming agent-ready');
-
     await writeFile(
       join(workspaceRoot, '.skopos/adoption/activation.json'),
       JSON.stringify({
@@ -281,12 +355,13 @@ describe('session communication contract', () => {
       }),
       'utf8',
     );
-    const activated = await buildSkoposAdoptionSessionState(workspaceRoot, []);
-    expect(activated).toMatchObject({
-      state: 'agent-ready',
-      assessmentOnly: false,
-      proposalDigest: 'proposal-digest',
+    const context = await buildSkoposSessionContextRuntime({ cwd: workspaceRoot });
+    expect(context.setupReadiness).toEqual({
+      state: 'uncertified',
+      source: 'missing-certification',
     });
+    expect(context.pendingDecision).toBeUndefined();
+    expect(context.nextCommand).toContain('skopos setup');
   });
 });
 

@@ -17,7 +17,7 @@ const PACKAGE_NAMES = [
   '@skopos/instructions',
   '@skopos/verification',
   '@skopos/runtime',
-  '@skopos/cli',
+  '@unisane/skopos',
   '@skopos/mcp',
   '@skopos/ui',
 ] as const;
@@ -32,11 +32,11 @@ const CANDIDATE_PACKAGES = [
   '@skopos/instructions',
   '@skopos/verification',
   '@skopos/runtime',
-  '@skopos/cli',
+  '@unisane/skopos',
   '@skopos/mcp',
 ] as const;
 
-const PUBLIC_BUNDLED_CLI_PACKAGE = '@skopos/cli';
+const PUBLIC_BUNDLED_CLI_PACKAGE = '@unisane/skopos';
 const FIRST_PUBLIC_CLI_VERSION = '0.1.0';
 
 describe('skopos release surface contract', () => {
@@ -55,6 +55,7 @@ describe('skopos release surface contract', () => {
     for (const packageName of PACKAGE_NAMES) {
       const packageJson = await loadPackageJson(packageName);
 
+      expect(packageJson.name).toBe(packageName);
       expect(packageJson.skopos, `${packageName} must declare skopos release metadata`).toEqual(
         expect.objectContaining({
           surface: expect.any(String),
@@ -122,11 +123,11 @@ describe('skopos release surface contract', () => {
     expect(cliPackage.description).toContain('Project memory');
     expect(cliPackage.repository).toEqual({
       type: 'git',
-      url: 'git+https://github.com/Croodo/skopos.git',
+      url: 'git+https://github.com/unisanetech/skopos.git',
       directory: 'packages/cli',
     });
-    expect(cliPackage.homepage).toBe('https://github.com/Croodo/skopos#readme');
-    expect(cliPackage.bugs).toEqual({ url: 'https://github.com/Croodo/skopos/issues' });
+    expect(cliPackage.homepage).toBe('https://github.com/unisanetech/skopos#readme');
+    expect(cliPackage.bugs).toEqual({ url: 'https://github.com/unisanetech/skopos/issues' });
     expect(cliPackage.author).toEqual(expect.objectContaining({ name: 'Croodo' }));
     expect(cliPackage.maintainers).toEqual([
       expect.objectContaining({ name: 'Croodo' }),
@@ -230,7 +231,9 @@ interface PersonShape {
 }
 
 const loadPackageJson = async (packageName: string): Promise<PackageJsonShape> => {
-  const packageDirName = packageName.replace('@skopos/', '');
+  const packageDirName = packageName === PUBLIC_BUNDLED_CLI_PACKAGE
+    ? 'cli'
+    : packageName.replace('@skopos/', '');
   const packageJsonPath = `${skoposRoot}/packages/${packageDirName}/package.json`;
   const contents = await readFile(packageJsonPath, 'utf8');
   return JSON.parse(contents) as PackageJsonShape;

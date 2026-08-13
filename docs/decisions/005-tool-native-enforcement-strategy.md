@@ -9,13 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-13
 relatedDocs:
   - README.md
   - ../architecture/runtime-model.md
   - ../architecture/artifact-model.md
   - ../architecture/action-extension-model.md
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: per convergence phase
 ---
 
@@ -25,6 +26,9 @@ Use this decision to keep Skopos enforcement practical in real coding tools with
 
 ## Changelog
 
+- `2026-08-13`: Clarified that generated tool-native output is not public host-support
+  certification. The first release certifies Codex only; every later host claim needs
+  current real-host Evidence.
 - `2026-08-05`: Reconciled the host matrix with implemented Claude Code native hooks,
   Codex wrapper delivery, and truthful manual fallback while retaining CLI and MCP as
   the portable runtime authority.
@@ -70,3 +74,6 @@ Use this decision to keep Skopos enforcement practical in real coding tools with
    - benchmarked before being treated as a reliable enforcement path
 5. Release proof exercises the portable CLI, Task reconstruction, coordination,
    adoption, Evidence, and Readiness surfaces.
+6. Generated Claude Code, Cursor, or Copilot surfaces remain unverified for the first
+   public release. Only Codex may be called supported until a later real-host proof
+   certifies the exact capabilities claimed.

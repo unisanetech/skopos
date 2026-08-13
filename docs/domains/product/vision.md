@@ -11,11 +11,13 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-07-28
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../../overview.md
   - positioning.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when product purpose changes
 ---
@@ -28,6 +30,12 @@ evidence-backed closure.
 
 ## Changelog
 
+- `2026-08-13`: Separated the host-neutral product vision from first-release support
+  claims. The launch certifies Codex; every additional supported host requires its own
+  current real-host Evidence.
+- `2026-08-12`: Made intelligent project onboarding part of the product promise. A
+  coding agent investigates and explains the project, while Skopos bounds decisions,
+  approval, durable outcomes, and setup Readiness.
 - `2026-07-28`: Classified the product vision as durable canonical domain Memory.
 - `2026-07-28`: Reframed the vision around one clean pre-release Project Memory,
   Task, Action, Guard, Evidence, Readiness, and Session model. Full adoption now
@@ -36,8 +44,11 @@ evidence-backed closure.
 
 ## Vision
 
-Developers should be able to open Codex, Claude Code, or another capable coding agent
-in an adopted repository and discuss the work they want.
+Developers should be able to open a supported coding agent in an adopted repository
+and discuss the work they want. Codex is the real-host-certified adapter for the first
+public release. Claude Code, Cursor, GitHub Copilot, and future hosts remain part of
+the host-neutral direction, but are not called supported until matching real-host
+Evidence exists.
 
 The agent should immediately know:
 
@@ -75,18 +86,22 @@ does not become another agent inside the agent.
 
 For any supported project shape, Skopos should:
 
-1. guide an agent to understand the real project
-2. restructure project docs into a predictable Memory standard after approval
-3. preserve durable truth in tracked human-readable sources
-4. compile compact local state for fast retrieval
-5. protect current Task intent from drift
-6. expose project-specific capabilities as Actions
-7. enforce deterministic constraints through Guards
-8. coordinate concurrent Sessions honestly
-9. map acceptance criteria to fresh Evidence
-10. explain Readiness in plain language
-11. preserve a compact handoff across Sessions and coding-agent hosts
-12. improve the project's memory as durable truth changes
+1. give a coding agent a complete, bounded work contract for understanding the project
+2. let the agent explain findings and ask only material user questions
+3. propose meaningful Scopes rather than mirroring arbitrary directories
+4. restructure existing docs or create missing Memory from Evidence after approval
+5. recommend project capabilities, proportional Policies, and relevant Skills
+6. verify that agent instructions and host context delivery actually work
+7. preserve durable truth in tracked human-readable sources
+8. compile compact local state for fast retrieval
+9. protect current Task intent from drift
+10. expose project-specific capabilities as Actions
+11. enforce deterministic constraints through Guards
+12. coordinate concurrent Sessions honestly
+13. map acceptance criteria to fresh Evidence
+14. explain Readiness in plain language
+15. preserve a compact handoff across Sessions and coding-agent hosts
+16. improve the project's Memory as durable truth changes
 
 ## Design Principles
 
@@ -103,6 +118,8 @@ For any supported project shape, Skopos should:
 11. smallest sufficient context and validation
 12. project-specific intelligence outside core
 13. no pre-release compatibility debt
+14. simple user interaction with strict internal authority
+15. deterministic enforcement and freshness; coding-agent judgment and synthesis
 
 ## Success Criteria
 
@@ -112,14 +129,18 @@ Skopos succeeds when:
 2. a messy existing project becomes more predictable after adoption
 3. a small project does not pay monorepo-scale ceremony
 4. nested Scopes retrieve the correct local and inherited Memory
-5. Unisane can replace its project-specific LLM workflow with generic Skopos plus
-   Unisane-owned extensions
+5. an adopter can replace a project-specific agent workflow with generic Skopos plus
+   project-owned extensions
 6. several same-directory Sessions do not silently overwrite one another
 7. expensive checks are not repeated when fresh Evidence remains valid
 8. false completion is blocked
 9. deleting `.skopos/**` loses no durable project truth
-10. Codex and Claude Code receive equivalent operating context
+10. every coding-agent host claimed as supported receives the verified operating
+    context and lifecycle named in that claim
 11. the first public release contains no prototype compatibility layer
+12. a developer can complete setup through a clear conversation without operating
+    internal artifacts or separate subsystem workflows
+13. setup makes future agent work measurably more contextual, bounded, and provable
 
 ## North Star
 

@@ -9,13 +9,17 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-13
 ---
 
 # Public Skopos Homepage
 
 ## Changelog
 
+- `2026-08-13`: Aligned the active homepage Plan with the truthful pre-release
+  candidate. The site names `@unisane/skopos@next` as the planned first-release channel,
+  links status to release progress, and does not claim that the package is already
+  available.
 - `2026-08-11`: Reconciled the production candidate without redesigning it. Replaced
   the false `Read the product model` hero jump with the real target document, linked
   npm/source/release destinations through one content owner, added the intentional
@@ -39,7 +43,7 @@ lastUpdated: 2026-08-11
   ownership, Server and Client Component boundary, and shared-promotion rule for
   `apps/web`.
 - `2026-08-10`: Accepted `apps/web` as the separate public application boundary and
-  Next.js, TypeScript, React, Tailwind CSS, and source-installed Unisane UI as the
+  Next.js, TypeScript, React, Tailwind CSS, and reviewed app-owned UI primitives as the
   homepage stack.
 - `2026-08-10`: Replaced the generated scaffold with the accepted homepage product,
   copy, interaction, visual-direction, delivery, and proof contract.
@@ -97,11 +101,12 @@ The homepage conversion contract is:
 4. public installation becomes the primary action only after an approved release
    candidate and public package exist
 
-The checked-in implementation is the post-publication candidate requested for launch:
-it shows `Available on npm` and the public install path. That candidate must not be
-deployed before the package and linked public destinations exist. Until then, the
-local page is target-state preview Evidence; it is not proof that npm publication has
-already happened.
+The checked-in implementation is a truthful pre-release candidate. It names
+`@unisane/skopos@next` as the planned first-release channel, marks the install path as
+planned, and directs status clicks to public release progress. It must not claim npm
+availability or make the npm package page the release-status destination until
+registry verification passes. Showing the planned command is not proof that npm
+publication has already happened.
 
 ## Messaging Contract
 
@@ -123,7 +128,7 @@ Recommended hero direction:
   starting over.`
 - primary action: `Explore the workflow`
 - secondary action: `Read the product model`
-- status: `Pre-release · Explore the source workspace and follow release progress.`
+- status: `First release targets npm @next.`
 
 Final copy may improve this wording, but it must preserve the same hierarchy, truth,
 and action contract.
@@ -280,7 +285,7 @@ The accepted application stack is:
 2. TypeScript
 3. React 19, aligned with the workspace
 4. Tailwind CSS 4
-5. Unisane UI registry-owned source components and semantic theme
+5. app-owned source components and semantic theme
 6. pnpm workspace scripts and focused Skopos Actions and Guards
 
 Pin the exact compatible framework versions during the scaffold Task. Start with
@@ -291,21 +296,19 @@ application API, or Skopos runtime dependency. Use Next.js metadata, icon, socia
 font, sitemap, and robots conventions rather than parallel custom owners. Keep image
 handling and social assets compatible with static export.
 
-Unisane UI is consumed through its registry, not as a private runtime package:
+Reusable UI source is reviewed into and owned by the application:
 
-1. run `unisane ui init` and `unisane ui add` from `apps/web`
-2. keep `apps/web/unisane-ui.json`, the semantic theme and tokens, and copied reusable
+1. keep `apps/web/ui-registry.json`, the semantic theme and tokens, and reviewed reusable
    primitives owned inside `apps/web`
-3. install only primitives selected by the accepted visual direction; do not copy the
+2. install only primitives selected by the accepted visual direction; do not copy the
    complete registry speculatively
-4. keep public npm dependencies declared by `@skopos/web`
-5. do not import private `@unisane/*` packages or copy components from `packages/ui`
-6. review every new registry diff and its license/provenance; authorization recorded
-   for the existing console source does not automatically authorize future imports
+3. keep public npm dependencies declared by `@skopos/web`
+4. do not import private packages or copy components from `packages/ui`
+5. review every new source contribution and its license/provenance
 
-Unisane owns reusable component behavior, accessibility, semantic tokens, theming,
-states, and responsive defaults. Skopos owns the homepage narrative, information
-hierarchy, product workstream, marketing compositions, brand assets, and public claims.
+The app owns reusable component behavior, accessibility, semantic tokens, theming,
+states, responsive defaults, homepage narrative, information hierarchy, product
+workstream, marketing compositions, brand assets, and public claims.
 
 Add `apps/*` to the pnpm workspace when scaffolding begins. Workspace build and
 typecheck should include `@skopos/web`, while website deployment remains independent
@@ -359,7 +362,7 @@ apps/web/
       ui/
     platform/
     support/
-  unisane-ui.json
+  ui-registry.json
 ```
 
 Create `platform/` and `support/` children only when a real owner exists; empty
@@ -374,8 +377,8 @@ architecture folders are not progress. The initial ownership rules are:
    the feature does not deep-import its private sections or workstream internals.
 4. `patterns/site/` owns stable site-shell and repeated marketing-layout grammar. It
    contains no homepage-only claims or product state.
-5. `components/ui/` and registry-declared transitive support own source-installed
-   Unisane primitives only. Product copy, Skopos workflow logic, and one-off marketing
+5. `components/ui/` and registry-declared transitive support own reviewed UI primitives
+   only. Product copy, Skopos workflow logic, and one-off marketing
    sections do not enter the registry layer.
 6. `platform/` owns real external bridges such as analytics or public content clients
    only after their contracts are accepted. It does not own presentation logic.
@@ -534,8 +537,8 @@ Accepted for this Plan:
    and local-console contracts unchanged unless a later explicit Decision says otherwise
 5. own the public site in `apps/web` as private workspace package `@skopos/web`, with
    `/` as the homepage and `skopos-web` as its target application Scope
-6. use Next.js App Router, TypeScript, React 19, Tailwind CSS 4, and the Unisane UI
-   registry's source-owned components and semantic theme
+6. use Next.js App Router, TypeScript, React 19, Tailwind CSS 4, and app-owned UI
+   components and semantic theme
 7. keep v1 static-first, export-ready, and free of backend, authentication, database,
    or Skopos runtime dependencies
 8. include the web app in workspace health checks while keeping deployment and npm/CLI

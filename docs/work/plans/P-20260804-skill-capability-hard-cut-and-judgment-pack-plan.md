@@ -125,11 +125,11 @@ reviewCycle: per phase
   the real canary phrase is frozen in the alias-free positive fixture. Seven fixtures
   and 18 focused tests pass, and exact re-acceptance produced combined digest
   `sha256:74f7b07ec76849bdb2d6401ca1e53c81fcd24a480af283f76830a6175f9ea4ab`.
-  Repack and rerun the same isolated Unisane `@unisane/ui` canary before any dashboard
-  quality claim.
+  Any future rerun must use a fresh generic external-project canary before making a
+  dashboard quality claim.
 
 - `2026-08-06`: Corrected canonical Scope applicability and signal precision before
-  the requested Unisane ecommerce-dashboard canary. The prior generated dashboard
+  the requested external ecommerce-dashboard canary. The prior generated dashboard
   Task `T-28e5cb45` is retained unchanged as a no-Skill baseline because its selection
   was empty. Packed Skill manifests now reject noncanonical pseudo-Scope kinds, runtime
   Scope matching is exact, positive selection requires coherent structural evidence,
@@ -138,9 +138,9 @@ reviewCycle: per phase
   7/7 exact fixtures, including the alias-free canonical `application` regression, and
   is re-accepted at combined digest
   `sha256:d4814dbf0106e5415237e100b9cc0baf7b8e54ad3625358bfb597905a0416da9`.
-  The next bounded step is a fresh isolated Unisane project canary that builds with
-  actual `@unisane/ui`; it must prove nonzero exact Skill selection before editing and
-  cannot claim efficacy beyond its rendered Evidence.
+  Any next bounded step is a fresh isolated external-project canary using that
+  project's actual component authority; it must prove nonzero exact Skill selection
+  before editing and cannot claim efficacy beyond its rendered Evidence.
 
 - `2026-08-06`: Completed the frozen visual-modernity full run
   `product-ui-craft-v3-full-real-20260806-r2`. Sixteen isolated workers and eight
@@ -249,8 +249,9 @@ reviewCycle: per phase
   Task, executable declarations match commands, and containment wording is limited to
   the paths and environment controls the harness actually observes.
 - `2026-08-05`: Completed packed non-Skopos adoption for Product UI Craft. One canonical
-  harness now packs `@skopos/cli`, runs a minimal external fixture and sanitized Billquest
-  copy outside both checkouts, proves six fixtures, exact binding and host projections,
+  harness now packs the CLI (now `@unisane/skopos`), runs a minimal external fixture
+  and sanitized Billquest copy outside both checkouts, proves six fixtures, exact
+  binding and host projections,
   relevant and irrelevant Task context, module-local capabilities, cache reuse and
   invalidation, and rejects observed source, link, environment, and Skopos-path
   containment leaks.

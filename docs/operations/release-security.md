@@ -18,7 +18,7 @@ relatedDocs:
 # Release Security And Runtime Certification
 
 This runbook defines the fail-closed security and runtime proof required before a
-public `@skopos/cli` candidate can be approved. It does not publish, tag, or promote a
+public `@unisane/skopos` candidate can be approved. It does not publish, tag, or promote a
 package.
 
 ## Supported Runtime
@@ -48,7 +48,7 @@ commit. It:
 1. checks out the complete Git history without retaining credentials
 2. runs the release boundary and canonical lifecycle tests across all six runtime jobs
 3. fails on critical or high production dependency advisories
-4. builds and packs `@skopos/cli@0.1.0`, then installs that tarball in a clean project
+4. builds and packs `@unisane/skopos@0.1.0`, then installs that tarball in a clean project
 5. scans full Git history and a physically extracted, nonempty CLI tarball with
    Gitleaks 8.30.1
 6. scans installed package manifests and checks the production-license report
@@ -95,7 +95,7 @@ It does not publish and cannot prove that GitHub or npm external settings are co
 Normal package publication uses npm trusted publishing from the GitHub-hosted
 `publish.yml` workflow and does not receive an npm token. npm currently requires a
 package to exist before its trusted publisher can be configured, so the first-ever
-`@skopos/cli` publication uses one short-expiry granular bootstrap token inside the
+`@unisane/skopos` publication uses one short-expiry granular bootstrap token inside the
 manually approved `npm-release` environment. The token must be removed and revoked
 immediately after the first registry verification, then the package must be switched
 to the exact OIDC trust binding and traditional tokens disallowed. The complete

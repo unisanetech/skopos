@@ -1,5 +1,5 @@
 {
-  "name": "@skopos/cli",
+  "name": "@unisane/skopos",
   "version": "0.1.0",
   "private": false,
   "type": "module",
@@ -19,12 +19,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Croodo/skopos.git",
+    "url": "git+https://github.com/unisanetech/skopos.git",
     "directory": "packages/cli"
   },
-  "homepage": "https://github.com/Croodo/skopos#readme",
+  "homepage": "https://github.com/unisanetech/skopos#readme",
   "bugs": {
-    "url": "https://github.com/Croodo/skopos/issues"
+    "url": "https://github.com/unisanetech/skopos/issues"
   },
   "keywords": [
     "coding-agents",

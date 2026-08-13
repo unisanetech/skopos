@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 import { loadSkoposConfig } from '@skopos/config';
@@ -21,6 +21,7 @@ export const discoverSkoposCapabilityCandidates = async ({
   const candidates: SkoposCapabilityCandidate[] = [];
   const seenCommands = new Set<string>();
   const config = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
+  const packageManifest = await readPackageManifest(join(workspaceRoot, 'package.json'));
 
   for (const [name, command] of Object.entries(config?.commands ?? {})) {
     if (!command || seenCommands.has(command)) continue;
@@ -31,11 +32,11 @@ export const discoverSkoposCapabilityCandidates = async ({
         sourcePath: 'skopos.config.yaml',
         name,
         command,
+        sourceCommand: resolveWrappedPackageScript(packageManifest, name, command),
       }),
     );
   }
 
-  const packageManifest = await readPackageManifest(join(workspaceRoot, 'package.json'));
   for (const [name, script] of Object.entries(packageManifest.scripts)) {
     const command = packageScriptCommand(packageManifest.packageManager, name);
     if (seenCommands.has(command) || seenCommands.has(script)) continue;
@@ -46,11 +47,101 @@ export const discoverSkoposCapabilityCandidates = async ({
         sourcePath: 'package.json',
         name,
         command,
+        sourceCommand: script,
       }),
     );
   }
 
+  for (const provider of await discoverLanguageProviderCommands(workspaceRoot)) {
+    if (seenCommands.has(provider.command)) continue;
+    seenCommands.add(provider.command);
+    candidates.push(buildCandidate(provider));
+  }
+
   return candidates.sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const resolveWrappedPackageScript = (
+  manifest: PackageManifestCapabilities,
+  name: string,
+  command: string,
+): string | undefined => {
+  const direct = manifest.scripts[name];
+  if (direct && packageScriptCommand(manifest.packageManager, name) === command) return direct;
+  return Object.entries(manifest.scripts).find(
+    ([scriptName]) => packageScriptCommand(manifest.packageManager, scriptName) === command,
+  )?.[1];
+};
+
+const discoverLanguageProviderCommands = async (
+  workspaceRoot: string,
+): Promise<Array<Pick<SkoposCapabilityCandidate, 'source' | 'sourcePath' | 'name' | 'command'>>> => {
+  const providers: Array<Pick<SkoposCapabilityCandidate, 'source' | 'sourcePath' | 'name' | 'command'>> = [];
+  const add = (
+    source: SkoposCapabilityCandidate['source'],
+    sourcePath: string,
+    commands: Array<[string, string]>,
+  ): void => {
+    for (const [name, command] of commands) providers.push({ source, sourcePath, name, command });
+  };
+
+  if (await pathExists(join(workspaceRoot, 'pyproject.toml'))) {
+    const pyproject = await readFile(join(workspaceRoot, 'pyproject.toml'), 'utf8');
+    const commands: Array<[string, string]> = [];
+    if (/\[(tool\.pytest|pytest)\.|\bpytest\b/.test(pyproject)) commands.push(['test', 'python -m pytest']);
+    if (/\[tool\.ruff(?:\.|\])/.test(pyproject)) commands.push(['lint', 'ruff check .']);
+    if (/\[tool\.(mypy|pyright)(?:\.|\])/.test(pyproject)) commands.push(['typecheck', /\[tool\.mypy/.test(pyproject) ? 'python -m mypy .' : 'pyright']);
+    if (/\[build-system\]/.test(pyproject)) commands.push(['build', 'python -m build']);
+    add('python-project', 'pyproject.toml', commands);
+  } else if (await pathExists(join(workspaceRoot, 'pytest.ini'))) {
+    add('python-project', 'pytest.ini', [['test', 'python -m pytest']]);
+  }
+
+  if (await pathExists(join(workspaceRoot, 'go.mod'))) {
+    add('go-project', 'go.mod', [
+      ['test', 'go test ./...'],
+      ['typecheck', 'go vet ./...'],
+      ['build', 'go build ./...'],
+    ]);
+  }
+  if (await pathExists(join(workspaceRoot, 'Cargo.toml'))) {
+    add('rust-project', 'Cargo.toml', [
+      ['test', 'cargo test'],
+      ['typecheck', 'cargo check'],
+      ['build', 'cargo build'],
+    ]);
+  }
+  if (await pathExists(join(workspaceRoot, 'pom.xml'))) {
+    add('java-project', 'pom.xml', [
+      ['test', 'mvn test'],
+      ['build', 'mvn verify'],
+    ]);
+  } else if (await pathExists(join(workspaceRoot, 'gradlew'))) {
+    add('java-project', 'gradlew', [
+      ['test', './gradlew test'],
+      ['build', './gradlew build'],
+    ]);
+  }
+
+  const entries = await readdir(workspaceRoot).catch(() => [] as string[]);
+  const dotnetSource = entries.find((entry) => entry.endsWith('.sln')) ?? entries.find((entry) => entry.endsWith('.csproj'));
+  if (dotnetSource) {
+    add('dotnet-project', dotnetSource, [
+      ['test', 'dotnet test'],
+      ['build', 'dotnet build'],
+    ]);
+  }
+  return providers;
+};
+
+const pathExists = async (path: string): Promise<boolean> => {
+  try {
+    await readFile(path);
+    return true;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
+    throw error;
+  }
 };
 
 interface PackageManifestCapabilities {
@@ -102,7 +193,9 @@ const buildCandidate = ({
   sourcePath,
   name,
   command,
-}: Pick<SkoposCapabilityCandidate, 'source' | 'sourcePath' | 'name' | 'command'>): SkoposCapabilityCandidate => {
+  sourceCommand,
+}: Pick<SkoposCapabilityCandidate, 'source' | 'sourcePath' | 'name' | 'command'> &
+  Pick<SkoposCapabilityCandidate, 'sourceCommand'>): SkoposCapabilityCandidate => {
   const normalizedName = normalizeCapabilityName(name);
   const suggestion = capabilitySuggestion(normalizedName, command);
   const id = `CAP-${createHash('sha256')
@@ -115,6 +208,7 @@ const buildCandidate = ({
     sourcePath,
     name,
     command,
+    ...(sourceCommand ? { sourceCommand } : {}),
     cwd: '.',
     rationale: suggestion
       ? `The project declares ${name} as an executable capability; Skopos can integrate it only after review of the exact Action and Guard declarations.`

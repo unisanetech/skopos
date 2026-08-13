@@ -1,5 +1,4 @@
 import { runImpactCommand } from './commands/impact.js';
-import { runAdoptCommand } from './commands/adoption.js';
 import { runDiscussionCommand } from './commands/discussion.js';
 import { runGuardsCommand } from './commands/guards.js';
 import { runInitCommand } from './commands/init.js';
@@ -24,7 +23,6 @@ import {
   runReadinessCommand,
   runVerifyCommand,
 } from './commands/verification.js';
-import { runUnderstandCommand } from './commands/understanding.js';
 import { runUiCommand } from './commands/ui.js';
 import { runActionsCommand } from './commands/actions.js';
 import { runEvidenceCommand } from './commands/evidence.js';
@@ -33,7 +31,6 @@ import { runStorageCommand } from './commands/storage.js';
 import type { SkoposCliCommandHandler } from './types.js';
 
 export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> = {
-  adopt: runAdoptCommand,
   init: runInitCommand,
   scan: runScanCommand,
   session: runSessionCommand,
@@ -59,7 +56,6 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   impact: runImpactCommand,
   instructions: runInstructionsCommand,
   ui: runUiCommand,
-  understand: runUnderstandCommand,
   integrations: runIntegrationsCommand,
   storage: runStorageCommand,
 };

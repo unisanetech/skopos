@@ -29,9 +29,9 @@ export const changelogPage: PublicPageContent = {
   sections: [
     {
       number: "01",
-      title: "Public release preparation",
+      title: "Codex-certified first release preparation",
       status: "In progress",
-      description: "The core operating model, CLI, MCP surface, self-hosted workflow, and public website are converging toward the first public release.",
+      description: "The core operating model, CLI, MCP surface, self-hosted workflow, and public website are converging toward a Codex-certified first release. Other host projections remain explicitly unverified until real-host proof exists.",
     },
     {
       number: "02",
@@ -50,8 +50,8 @@ export const changelogPage: PublicPageContent = {
     title: "Follow the release from source to proof.",
     description: "Every public claim should have a shipped artifact or a clearly stated readiness limit behind it.",
     primaryLabel: "View GitHub releases",
-    primaryHref: "https://github.com/Croodo/skopos/releases",
+    primaryHref: "https://github.com/unisanetech/skopos/releases",
     secondaryLabel: "Browse the source",
-    secondaryHref: "https://github.com/Croodo/skopos",
+    secondaryHref: "https://github.com/unisanetech/skopos",
   },
 };

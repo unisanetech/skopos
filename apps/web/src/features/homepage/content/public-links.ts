@@ -1,7 +1,7 @@
 export const publicLinks = {
-  npm: "https://www.npmjs.com/package/@skopos/cli",
+  npm: "https://www.npmjs.com/package/@unisane/skopos",
   productModel:
-    "https://github.com/Croodo/skopos/blob/main/docs/overview.md",
-  releaseProgress: "https://github.com/Croodo/skopos/releases",
-  source: "https://github.com/Croodo/skopos",
+    "https://github.com/unisanetech/skopos/blob/main/docs/overview.md",
+  releaseProgress: "https://github.com/unisanetech/skopos/releases",
+  source: "https://github.com/unisanetech/skopos",
 } as const;

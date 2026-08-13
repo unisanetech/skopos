@@ -5,22 +5,30 @@ owner: skopos-core
 id: SKOPOS-D-20260804-BROWSER-HISTORY-AND-UNISANE-UI-REGISTRY-DELIVERY
 scope: skopos-ui
 role: decision
-lifecycle: durable
-authority: canonical
+lifecycle: historical
+authority: supporting
 provenance: accepted
-view: current
+view: transition
+defaultVisible: false
 date: 2026-08-04
 implementationStatus: implemented
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/00-architecture.md
   - ../findings/archive/F-20260804-url-and-shared-ui-delivery-drift.md
   - ../work/archive/P-20260804-human-first-ui-convergence.md
+  - D-20260812-locally-owned-ui-source-and-visual-authority.md
   - D-20260804-human-first-supervision-projection.md
   - D-20260804-unisane-ui-visual-ownership.md
 ---
 
 # Browser History And Unisane UI Registry Delivery
+
+## Changelog
+
+- `2026-08-13`: Demoted this superseded Unisane delivery boundary to a historical,
+  supporting transition record after Skopos adopted locally owned UI source and visual
+  authority.
 
 ## Context
 

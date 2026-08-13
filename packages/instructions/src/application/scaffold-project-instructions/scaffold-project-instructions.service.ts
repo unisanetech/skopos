@@ -1,5 +1,5 @@
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, normalize, resolve } from 'node:path';
+import { basename, dirname, posix, resolve } from 'node:path';
 
 import type {
   SkoposCommandMap,
@@ -9,6 +9,7 @@ import type {
 } from '@skopos/model';
 
 import { renderSkoposCommunicationContractLines } from '../communication-contract/communication-contract.js';
+import { resolveWorkspaceContainedPath } from '../shared/workspace-contained-path.js';
 
 export type SkoposInstructionScaffoldWriteStatus =
   | 'written'
@@ -55,8 +56,12 @@ export const scaffoldProjectInstructions = async ({
   force = false,
 }: ScaffoldProjectInstructionsOptions): Promise<ScaffoldProjectInstructionsResult> => {
   const workspaceRoot = resolve(cwd);
-  const relativePath = normalizeRelativePath(instructionSourcePath);
-  const targetPath = join(workspaceRoot, relativePath);
+  const relativePath = normalizeInstructionSourcePath(instructionSourcePath);
+  const targetPath = await resolveWorkspaceContainedPath({
+    workspaceRoot,
+    path: relativePath,
+    label: 'Canonical instruction source',
+  });
   const resolvedProjectName = projectName?.trim() || basename(workspaceRoot) || 'project';
   const resolvedStartHerePath = docsStartHerePath ?? `${docsRoot}/00-start-here.md`;
   const exists = await fileExists(targetPath);
@@ -65,6 +70,7 @@ export const scaffoldProjectInstructions = async ({
     const existingContents = await readTextIfExists(targetPath);
     const nextContents = upsertSkoposOperatingContract(existingContents, {
       projectName: resolvedProjectName,
+      instructionSourcePath: relativePath,
       docsRoot,
       docsStartHerePath: resolvedStartHerePath,
       commands,
@@ -99,6 +105,7 @@ export const scaffoldProjectInstructions = async ({
 
   const contents = renderProjectInstructions({
     projectName: resolvedProjectName,
+    instructionSourcePath: relativePath,
     mode,
     repoMode,
     archetype,
@@ -125,6 +132,7 @@ export const scaffoldProjectInstructions = async ({
 
 interface RenderProjectInstructionsOptions {
   projectName: string;
+  instructionSourcePath?: string;
   mode: SkoposInitMode;
   repoMode: SkoposRepoMode;
   archetype: SkoposProjectArchetype;
@@ -135,6 +143,7 @@ interface RenderProjectInstructionsOptions {
 
 export const renderProjectInstructions = ({
   projectName,
+  instructionSourcePath: providedInstructionSourcePath = 'AGENTS.md',
   mode,
   repoMode,
   archetype,
@@ -142,12 +151,13 @@ export const renderProjectInstructions = ({
   docsStartHerePath,
   commands,
 }: RenderProjectInstructionsOptions): string => {
+  const instructionSourcePath = normalizeInstructionSourcePath(providedInstructionSourcePath);
   const commandRows = renderCommandRows(commands);
   const modePolicy = mode === 'greenfield' ? renderGreenfieldPriority() : renderBrownfieldPriority();
   const repoPolicy = repoMode === 'monorepo' ? renderMonorepoPolicy() : renderSingleProjectPolicy();
 
   return [
-    `# AGENTS.md instructions for ${projectName}`,
+    `# ${instructionSourcePath} instructions for ${projectName}`,
     '',
     'This is the canonical instruction source for coding agents working in this project. Keep it short enough to read at session start, but specific enough that an agent can work without inventing local rules.',
     '',
@@ -159,12 +169,12 @@ export const renderProjectInstructions = ({
     `- Archetype: ${archetype}`,
     `- Docs root: ${docsRoot}`,
     `- Start-here doc: ${docsStartHerePath}`,
-    '- Canonical instruction source: `AGENTS.md`',
+    `- Canonical instruction source: \`${instructionSourcePath}\``,
     '',
     '## First Read Order',
     '',
     '1. Read this file before changing code.',
-    '2. Run or inspect `skopos session context . --json` before broad scanning. If Skopos is not initialized yet, run `skopos init .` first.',
+    '2. Run or inspect `skopos session context . --json` before broad scanning. If project setup is missing or stale, run `skopos setup .` first.',
     `3. Read \`${docsStartHerePath}\` if it exists; otherwise inspect \`${docsRoot}/\` and the package README files relevant to the task.`,
     '4. Use Skopos compact state before broad scanning when available: `.skopos/index/bootstrap.json`, `.skopos/index/scopes.json`, `.skopos/index/architecture.json`, and `.skopos/index/memory.json`.',
     '5. Read the files you will edit and search usages of changed symbols before editing.',
@@ -187,6 +197,7 @@ export const renderProjectInstructions = ({
     '',
     renderSkoposOperatingContract({
       projectName,
+      instructionSourcePath,
       docsRoot,
       docsStartHerePath,
       commands,
@@ -239,13 +250,13 @@ export const renderProjectInstructions = ({
     '',
     '## Skopos Operating Model',
     '',
-    '1. Initialize or refresh project understanding with `skopos init .`.',
+    '1. Set up or refresh the project operating layer with `skopos setup .`.',
     '2. Use `skopos session context . --json` as the default session-start command.',
     '3. Inspect `skopos work next . --json` when choosing unclaimed work.',
     '4. Start substantial work with `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>` so Task intent, ownership, acceptance, and questions are durable.',
     '5. Keep the default `task-closure` proof subject for bounded work. Use `--proof-subject project-integration` only for an explicit integration or release baseline; it requires an owned path and does not absorb unrelated dirty-worktree changes.',
     '6. Use the Task returned by Session context. Inspect its bounded projection with `skopos task show <task-id> . --json`; add `--full` only when the complete portable state is required.',
-    '7. Use `skopos instructions sync .` after changing `AGENTS.md` so mirrors and tool adapters stay aligned.',
+    `7. Use \`skopos instructions sync .\` after changing \`${instructionSourcePath}\` so mirrors and tool adapters stay aligned.`,
     '8. After required Evidence exists, run `skopos finish <task-id> . --actor <id>` before claiming completion. It verifies, advances, archives, and rechecks final Readiness in one operation.',
     '',
   ].join('\n');
@@ -272,6 +283,7 @@ const upsertSkoposOperatingContract = (
   contents: string,
   options: {
     projectName: string;
+    instructionSourcePath: string;
     docsRoot: string;
     docsStartHerePath: string;
     commands: SkoposCommandMap;
@@ -298,12 +310,14 @@ const upsertSkoposOperatingContract = (
 
 const renderSkoposOperatingContract = ({
   projectName: _projectName,
+  instructionSourcePath,
   docsRoot,
   docsStartHerePath,
   commands,
   includeMarkers,
 }: {
   projectName: string;
+  instructionSourcePath: string;
   docsRoot: string;
   docsStartHerePath: string;
   commands: SkoposCommandMap;
@@ -317,9 +331,9 @@ const renderSkoposOperatingContract = ({
     '',
     '### Session Start',
     '',
-    '1. Read `AGENTS.md` first.',
+    `1. Read \`${instructionSourcePath}\` first.`,
     '2. Run or inspect `skopos session context . --json` before broad scanning or implementation.',
-    '3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos session context`.',
+    '3. If Skopos state is missing or stale, run `skopos setup .` and then re-check `skopos session context`.',
     `4. Use \`${docsStartHerePath}\` as the human docs router when it exists; otherwise inspect \`${docsRoot}/\` conservatively.`,
     '5. Host adapters should inject `skopos session context . --json`; use it directly when the host cannot inject session context.',
     '',
@@ -336,8 +350,8 @@ const renderSkoposOperatingContract = ({
     '',
     '- Update durable docs, decisions, findings, or policy only when project truth changes.',
     '- Do not duplicate truth. Tasks track execution; durable rules belong in docs, policy, decisions, findings, Patterns, or Memory.',
-    '- In brownfield projects, use Skopos adoption discovery, proposal, approval, transformation, verification, and activation to converge docs safely.',
-    '- After changing `AGENTS.md`, run the project instruction action selected by Skopos. `skopos instructions sync .` owns only mirrors and adapters declared through Skopos.',
+    '- In brownfield projects, use the unified Skopos setup review to converge Scopes, Project Memory, checks, Policies, Skills, instructions, and host delivery safely.',
+    `- After changing \`${instructionSourcePath}\`, run the project instruction action selected by Skopos. \`skopos instructions sync .\` owns only mirrors and adapters declared through Skopos.`,
     '',
     '### Validation Economy',
     '',
@@ -434,16 +448,18 @@ const renderSingleProjectPolicy = (): string =>
     '3. Keep local helpers near the feature until reuse is proven by multiple real call sites.',
   ].join('\n');
 
-const normalizeRelativePath = (value: string): string => {
-  const trimmed = value.trim().replace(/^\.\//, '');
+export const normalizeInstructionSourcePath = (value = 'AGENTS.md'): string => {
+  const trimmed = value.trim().replaceAll('\\', '/').replace(/^\.\/+/, '');
 
-  if (trimmed.length === 0 || trimmed.startsWith('/')) {
+  if (trimmed.length === 0 || trimmed.startsWith('/') || /^[a-zA-Z]:\//u.test(trimmed)) {
     return 'AGENTS.md';
   }
 
-  const normalized = normalize(trimmed);
+  const normalized = posix.normalize(trimmed);
 
-  return normalized === '.' ? 'AGENTS.md' : normalized;
+  return normalized === '.' || normalized === '..' || normalized.startsWith('../')
+    ? 'AGENTS.md'
+    : normalized;
 };
 
 const fileExists = async (targetPath: string): Promise<boolean> => {

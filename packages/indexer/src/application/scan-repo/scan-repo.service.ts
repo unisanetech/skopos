@@ -99,7 +99,11 @@ export const scanRepo = async ({
     return isWithinSubtree(packageDir, focusSubtree);
   });
   const dependencyNames = await collectDependencyNames(localRootPackageJsonPath, packageJsonPaths);
-  const commands = extractCommandMap(localRootPackageJson);
+  const detectedCommands = extractCommandMap(localRootPackageJson);
+  const commands: SkoposCommandMap = {
+    ...detectedCommands,
+    ...(config?.commands ?? {}),
+  };
   const configuredDocsRoot = config?.docs.root;
   const docsRoots = await collectDocsRoots({
     cwd: resolvedCwd,
@@ -112,6 +116,7 @@ export const scanRepo = async ({
   const instructionFiles = await collectInstructionFiles({
     cwd: resolvedCwd,
     workspaceRoot,
+    configuredInstructionSource: config?.agents.canonicalInstructions,
   });
   const hasPnpmWorkspace = await pathExists(join(workspaceRoot, 'pnpm-workspace.yaml'));
   const inferredRepoMode = detectRepoMode(hasWorkspaceSignals, workspacePackageJsonPaths.length);
@@ -123,6 +128,7 @@ export const scanRepo = async ({
     docsRoots,
     docsHealth,
     instructionFiles,
+    canonicalInstructionSource: config?.agents.canonicalInstructions,
     repoMode,
     packageJsonPaths,
     workspacePackageCount: workspacePackageJsonPaths.length,
@@ -262,12 +268,21 @@ const extractCommandMap = (rootPackageJson: Record<string, unknown> | null): Sko
 const collectInstructionFiles = async ({
   cwd,
   workspaceRoot,
+  configuredInstructionSource,
 }: {
   cwd: string;
   workspaceRoot: string;
+  configuredInstructionSource?: string;
 }): Promise<string[]> => {
   const candidates = ['AGENTS.md', 'CLAUDE.md', '.github/copilot-instructions.md'];
   const found = new Set<string>();
+
+  if (
+    configuredInstructionSource &&
+    (await pathExists(join(cwd, configuredInstructionSource)))
+  ) {
+    found.add(configuredInstructionSource);
+  }
 
   for (const candidate of candidates) {
     if (await pathExists(join(cwd, candidate))) {
@@ -374,6 +389,7 @@ interface BuildFindingsInput {
   docsRoots: string[];
   docsHealth: SkoposDocsHealthSummary;
   instructionFiles: string[];
+  canonicalInstructionSource?: string;
   repoMode: SkoposRepoMode;
   packageJsonPaths: string[];
   workspacePackageCount: number;
@@ -385,6 +401,7 @@ const buildFindings = ({
   docsRoots,
   docsHealth,
   instructionFiles,
+  canonicalInstructionSource,
   repoMode,
   packageJsonPaths,
   workspacePackageCount,
@@ -402,8 +419,12 @@ const buildFindings = ({
     findings.push(`Stale docs detected: ${docsHealth.staleDocPaths.join(', ')}.`);
   }
 
-  if (!instructionFiles.some((instructionFile) => basename(instructionFile) === 'AGENTS.md')) {
-    findings.push('No canonical AGENTS.md instruction source detected.');
+  const expectedInstructionSource = canonicalInstructionSource ?? 'AGENTS.md';
+  const hasCanonicalInstructionSource = canonicalInstructionSource
+    ? instructionFiles.includes(canonicalInstructionSource)
+    : instructionFiles.some((instructionFile) => basename(instructionFile) === 'AGENTS.md');
+  if (!hasCanonicalInstructionSource) {
+    findings.push(`No canonical ${expectedInstructionSource} instruction source detected.`);
   }
 
   if (Object.keys(commands).length === 0) {

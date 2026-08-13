@@ -1,0 +1,120 @@
+{
+  "snapshotId": "S-7efcf7bed14d",
+  "taskId": "T-afa60772",
+  "sessionId": "unified-onboarding-closure",
+  "actorId": "codex-unified-onboarding",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": "AGENTS.md",
+      "digest": "e48fe97498740c360158b7a9b8bcb760dfee43cec21fbaccd9b6b7cb340e19c7"
+    },
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "75574401ba8dde437f9467f2782ddea364db7c869f1427822a3615419c1e119a"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "c5c2585945fde272f1d4a7409256fbcb9b887ecfe0d942c934d000a0cd92cfb5"
+    },
+    {
+      "path": "docs/decisions/D-20260812-intelligent-project-onboarding-contract.md",
+      "digest": "7bba5b114ac455a39541d4896569f305ed1e190003e9c82194ef471f47d61b22"
+    },
+    {
+      "path": "docs/guides",
+      "digest": "254899f007ab3d86e1db2b7eb7f2ec4174f68ac3e03a0a4bcb378f5867c4ab34"
+    },
+    {
+      "path": "docs/scopes/skopos-cli/overview.md",
+      "digest": "f84cde0ee11fd98d95d60e32a17def17a57025a37516f160fd89f0cbd07ef269"
+    },
+    {
+      "path": "package.json",
+      "digest": "b494c40bf0cd0db7aba9a74bdd24113ae598bfde73f8f2e8b7588fbb8f61f551"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "digest": "9298d7f0878128ca43ec07b455708db540cfc476deb19f9756b3555c13ad7e53"
+    },
+    {
+      "path": "packages/cli/src/__tests__",
+      "digest": "e23b2e7e199e4a0e81f8e95a8b44af67092dc3bb6caca68b30215133e5029bfe"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/adoption.ts",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/router.ts",
+      "digest": "c91bcdacaee17c023cb0764a6d928fd27d9765edced9dc3fd32960262c37a916"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/setup.ts",
+      "digest": "271328ed72c7d3c0ce142fbeb5de774bb20f2c07cf1746573a26eb57da0041bb"
+    },
+    {
+      "path": "packages/cli/src/cli/help.ts",
+      "digest": "e3c252c8ef40a85580a77b739381809203d26f23628fbcf7bf35963e046ba55d"
+    },
+    {
+      "path": "packages/cli/src/cli/registry.ts",
+      "digest": "5f026f20565c4979a0983e4c0e75dc8d7d6c961daa9bc19c36c6f7317240a15a"
+    },
+    {
+      "path": "packages/cli/src/cli/router.ts",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "packages/indexer/src/application/build-diagnosis-report/build-diagnosis-report.service.ts",
+      "digest": "fbcde44dbcf724cd904345e596c31ea44d440713bc1ce87db6db13c0baa23a86"
+    },
+    {
+      "path": "packages/indexer/src/application/discover-capability-candidates/discover-capability-candidates.service.ts",
+      "digest": "4d2bca1d29d15513373b92b927a3f283d7718a935d30d5b99daf5e669713fc5f"
+    },
+    {
+      "path": "packages/indexer/src/index.ts",
+      "digest": "eca95f956679d3e8f4fddaab50baa4313a4400ff905c783e2d21a508c986421d"
+    },
+    {
+      "path": "packages/instructions/src/application/scaffold-project-instructions/scaffold-project-instructions.service.ts",
+      "digest": "c80b2d5618074ea0b66b5a8f8a860a78c8c3cbde90cfc8c697463a7eb661ff6f"
+    },
+    {
+      "path": "packages/model/src/contracts",
+      "digest": "5ddef0ee8d3d0608416b0e8065d26a02fbd0c8c8988b3abce67f40fe98207f3a"
+    },
+    {
+      "path": "packages/model/src/index.ts",
+      "digest": "c3255826fd9ac8d9c695c45f02a97d218c8105b3cc8f1d36d7738c9e8acad659"
+    },
+    {
+      "path": "packages/runtime/src/application/adoption/adoption.service.ts",
+      "digest": "28298c8316b59731634f6b9b55a107c35ac257a49c0c9e1e24044ee02e224f70"
+    },
+    {
+      "path": "packages/runtime/src/application/init/init.service.ts",
+      "digest": "779a5541f89775132b2b4ad1d733a81fac145b543a511709e0f33c03181c5e20"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "4423718018cc204dc3ca4b54b033ffbb004f6f5f9e7cf2dc66312bfd63228ed9"
+    },
+    {
+      "path": "packages/runtime/src/application/setup",
+      "digest": "763e482425205691347ab55249d7b2f99ed05eb511e3e892494b3f6a8090a58d"
+    },
+    {
+      "path": "packages/runtime/src/application/understanding/understanding.service.ts",
+      "digest": "da35a50888f6040153063cca9e4e6cf98aa949067a3e211fd26f476116b8a3d0"
+    },
+    {
+      "path": "packages/runtime/src/index.ts",
+      "digest": "4977127f00610393d7ac676c41d8440513900c4f59e593989c197d8edc39ac3c"
+    }
+  ],
+  "digest": "7efcf7bed14d19e3adcf9629bf53b0e44afc92ef5f3a4b63e01fc0267f38d6b9",
+  "createdAt": "2026-08-12T20:41:23.424Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-afa60772-S-7efcf7bed14d.json"
+}

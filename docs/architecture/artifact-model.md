@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-14
 relatedDocs:
   - 00-architecture.md
   - docs-governance.md
+  - intelligent-project-onboarding.md
   - storage-lifecycle-and-privacy.md
   - ../standards/terminology.md
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
@@ -25,6 +26,12 @@ Skopos distinguishes tracked project truth from rebuildable local projections.
 
 ## Changelog
 
+- `2026-08-14`: Clarified that the company-owned npm name `@unisane/skopos` identifies
+  the release artifact only; tracked project truth and local runtime ownership remain
+  Skopos-native and project-agnostic.
+- `2026-08-12`: Defined setup as resumable local workflow state whose accepted
+  outcomes promote to existing tracked owners. Rejected and deferred recommendations
+  remain subsystem-owned dispositions rather than an omnibus setup authority.
 - `2026-08-09`: Added the reference-aware local storage lifecycle, privacy boundary,
   explicit pins, and content-free cleanup receipts.
 - `2026-08-05`: Clarified that the exact Task handoff may contain one bounded,
@@ -123,6 +130,16 @@ Rules:
     contents
 14. `.skopos/` can contain private source, prompts, screenshots, traces, generated
     code, and provider receipts, so it must not be shared wholesale
+15. setup intake, agent packets, draft recommendations, conversation progress,
+    approval envelopes, application checkpoints, and verification receipts are local
+    generated workflow state
+16. accepted setup outcomes are promoted to the Scope registry, Project Memory,
+    Action/Guard declarations, Policy and Skill sources, or canonical instructions;
+    no tracked omnibus setup manifest duplicates them
+17. deferred and rejected recommendation dispositions live with their owning
+    subsystem and are invalidated only by material source-identity change
+18. setup application is resumable by stage; failure records completed valid stages,
+    unapplied stages, invalidated approval, and one exact recovery step
 
 ## Artifact Envelope
 

@@ -1,7 +1,10 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
+
+import { normalizeInstructionSourcePath } from '../scaffold-project-instructions/scaffold-project-instructions.service.js';
+import { resolveWorkspaceContainedPath } from '../shared/workspace-contained-path.js';
 
 export interface SyncInstructionMirrorsOptions {
   cwd: string;
@@ -40,18 +43,33 @@ export const MIRROR_TARGETS = [
 export const syncInstructionMirrors = async ({
   cwd,
   dryRun = false,
-  instructionSourcePath = 'AGENTS.md',
+  instructionSourcePath: providedInstructionSourcePath,
+  mirrorTargets: providedMirrorTargets,
   projectionModel,
 }: SyncInstructionMirrorsOptions): Promise<SyncInstructionMirrorsResult> => {
   const workspaceRoot = resolve(cwd);
-  const sourcePath = join(workspaceRoot, instructionSourcePath);
+  const normalizedInstructionSourcePath = normalizeInstructionSourcePath(
+    providedInstructionSourcePath ?? projectionModel?.instructionSourcePath,
+  );
+  const sourcePath = await resolveWorkspaceContainedPath({
+    workspaceRoot,
+    path: normalizedInstructionSourcePath,
+    label: 'Canonical instruction source',
+  });
   const source = await readFile(sourcePath, 'utf8');
   const writes: InstructionMirrorWrite[] = [];
 
-  const mirrorTargets = resolveMirrorTargets(projectionModel);
+  const mirrorTargets = resolveMirrorTargets(projectionModel, providedMirrorTargets);
   for (const relativeTarget of mirrorTargets) {
-    const targetPath = join(workspaceRoot, relativeTarget);
-    const rendered = renderMirror(relativeTarget, source, basename(instructionSourcePath));
+    if (normalizeInstructionSourcePath(relativeTarget) === normalizedInstructionSourcePath) {
+      throw new Error(`Canonical instruction source cannot also be an instruction mirror: ${relativeTarget}`);
+    }
+    const targetPath = await resolveWorkspaceContainedPath({
+      workspaceRoot,
+      path: relativeTarget,
+      label: 'Instruction mirror',
+    });
+    const rendered = renderMirror(relativeTarget, source, normalizedInstructionSourcePath);
 
     if (!dryRun) {
       await mkdir(dirname(targetPath), { recursive: true });
@@ -72,18 +90,32 @@ export const syncInstructionMirrors = async ({
 
 export const checkInstructionMirrorParity = async ({
   cwd,
-  instructionSourcePath = 'AGENTS.md',
+  instructionSourcePath: providedInstructionSourcePath,
   mirrorTargets,
   projectionModel,
 }: Pick<SyncInstructionMirrorsOptions, 'cwd' | 'instructionSourcePath' | 'mirrorTargets' | 'projectionModel'>): Promise<CheckInstructionMirrorParityResult> => {
   const workspaceRoot = resolve(cwd);
-  const sourcePath = join(workspaceRoot, instructionSourcePath);
+  const normalizedInstructionSourcePath = normalizeInstructionSourcePath(
+    providedInstructionSourcePath ?? projectionModel?.instructionSourcePath,
+  );
+  const sourcePath = await resolveWorkspaceContainedPath({
+    workspaceRoot,
+    path: normalizedInstructionSourcePath,
+    label: 'Canonical instruction source',
+  });
   const source = await readFile(sourcePath, 'utf8');
   const issues: InstructionMirrorIssue[] = [];
 
   for (const relativeTarget of resolveMirrorTargets(projectionModel, mirrorTargets)) {
-    const targetPath = join(workspaceRoot, relativeTarget);
-    const expected = renderMirror(relativeTarget, source, basename(instructionSourcePath));
+    if (normalizeInstructionSourcePath(relativeTarget) === normalizedInstructionSourcePath) {
+      throw new Error(`Canonical instruction source cannot also be an instruction mirror: ${relativeTarget}`);
+    }
+    const targetPath = await resolveWorkspaceContainedPath({
+      workspaceRoot,
+      path: relativeTarget,
+      label: 'Instruction mirror',
+    });
+    const expected = renderMirror(relativeTarget, source, normalizedInstructionSourcePath);
 
     let current: string;
     try {
@@ -113,12 +145,12 @@ export const checkInstructionMirrorParity = async ({
 const resolveMirrorTargets = (
   projectionModel?: SkoposHostProjectionModel,
   mirrorTargets?: string[],
-): string[] =>
-  projectionModel
+): string[] => [...new Map((projectionModel
     ? projectionModel.hosts
         .filter((host) => host.instructionProjection === 'mirror')
         .map((host) => host.instructionPath)
-    : mirrorTargets ?? [...MIRROR_TARGETS];
+    : mirrorTargets ?? [...MIRROR_TARGETS])
+  .map((path) => [normalizeInstructionSourcePath(path), path] as const)).values()];
 
 export const renderMirror = (target: string, source: string, sourceLabel = 'AGENTS.md'): string => {
   const header = [

@@ -1,11 +1,42 @@
 import type { Metadata } from "next";
 
+type SiteEnvironment = {
+  NEXT_PUBLIC_SITE_URL?: string;
+  NODE_ENV?: string;
+};
+
+const LOCAL_SITE_URL = "http://localhost:4173";
+
+export function resolveSiteUrl(environment: SiteEnvironment): URL {
+  const configuredUrl = environment.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!configuredUrl) {
+    if (environment.NODE_ENV === "production") {
+      throw new Error(
+        "NEXT_PUBLIC_SITE_URL must be set to the public HTTPS origin for a production web build.",
+      );
+    }
+    return new URL(LOCAL_SITE_URL);
+  }
+
+  const url = new URL(configuredUrl);
+  if (url.protocol !== "http:" && url.protocol !== "https:") {
+    throw new Error("NEXT_PUBLIC_SITE_URL must use an HTTP or HTTPS origin.");
+  }
+  if (environment.NODE_ENV === "production" && url.protocol !== "https:") {
+    throw new Error("NEXT_PUBLIC_SITE_URL must use HTTPS for a production web build.");
+  }
+  if (url.pathname !== "/" || url.search || url.hash) {
+    throw new Error("NEXT_PUBLIC_SITE_URL must be an origin without a path, query, or fragment.");
+  }
+  return url;
+}
+
 export const siteConfig = {
   name: "Skopos",
   shortDescription: "Project memory for coding agents.",
   description:
     "Skopos keeps project knowledge, task intent, project-specific rules, and proof with the repository so coding agents can continue real work without starting over.",
-  url: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:4173"),
+  url: resolveSiteUrl(process.env),
 } as const;
 
 export const publicRoutePaths = [

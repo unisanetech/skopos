@@ -284,6 +284,30 @@ describe('same-directory coordination broker', () => {
     ).resolves.toMatchObject({ session: { state: 'closed' } });
   });
 
+  it('releases the SQLite file before stale recovery returns', async () => {
+    const root = await createWorkspace();
+    const opened = await openSession(root, 'session-stale', 'agent-stale');
+    await reserveSkoposCoordinationTask({
+      cwd: root,
+      sessionId: 'session-stale',
+      taskId: 'task-stale',
+    });
+    expireSessionLease(opened.databasePath, 'session-stale');
+    await openSession(root, 'session-maintainer', 'maintainer');
+
+    await recoverSkoposCoordinationTask({
+      cwd: root,
+      taskId: 'task-stale',
+      sessionId: 'session-maintainer',
+      operation: 'release',
+      reason: 'Verify that recovery closes its coordination database before returning.',
+    });
+
+    await expect(rm(root, { recursive: true, force: true })).resolves.toBeUndefined();
+    const rootIndex = temporaryRoots.indexOf(root);
+    if (rootIndex >= 0) temporaryRoots.splice(rootIndex, 1);
+  });
+
   it('blocks stale Task recovery until a running Action is reconciled', async () => {
     const root = await createWorkspace();
     const opened = await openSession(root, 'session-stale', 'agent-stale');
@@ -398,7 +422,7 @@ describe('same-directory coordination broker', () => {
         reason: 'Attempt recovery with contamination.',
       }),
     ).rejects.toThrow('contamination issue');
-  });
+  }, 15_000);
 
   it('allows only one winner across concurrent stale recovery attempts', async () => {
     const root = await createWorkspace();

@@ -5,22 +5,29 @@ owner: skopos-core
 id: SKOPOS-D-20260804-UNISANE-UI-VISUAL-OWNERSHIP
 scope: skopos-ui
 role: decision
-lifecycle: durable
-authority: canonical
+lifecycle: historical
+authority: supporting
 provenance: accepted
-view: current
+view: transition
+defaultVisible: false
 date: 2026-08-04
 implementationStatus: implemented
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/00-architecture.md
   - ../findings/archive/F-20260804-unisane-ui-visual-ownership-drift.md
   - ../work/archive/P-20260804-human-first-ui-convergence.md
-  - D-20260804-browser-history-and-unisane-ui-registry-delivery.md
+  - D-20260812-locally-owned-ui-source-and-visual-authority.md
   - D-20260804-human-first-supervision-projection.md
 ---
 
 # Unisane UI Visual Ownership
+
+## Changelog
+
+- `2026-08-13`: Demoted this superseded Unisane visual-ownership boundary to a
+  historical, supporting transition record after Skopos adopted locally owned UI
+  source and visual authority.
 
 ## Context
 

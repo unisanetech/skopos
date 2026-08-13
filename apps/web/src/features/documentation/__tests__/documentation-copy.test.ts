@@ -22,15 +22,18 @@ describe("Documentation public journey", () => {
   it("provides conversation-first and exact-command setup paths", () => {
     for (const mode of Object.values(quickstartModes)) {
       expect(mode.prompt.length).toBeGreaterThan(100);
-      expect(mode.commands[0]).toBe("npm install --save-dev @skopos/cli");
-      expect(mode.commands.some((command) => command.includes("skopos init"))).toBe(true);
+      expect(mode.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
+      expect(mode.commands.some((command) => command.includes("skopos setup"))).toBe(true);
+      expect(mode.commands.at(-1)).toBe("npx skopos setup resume . --actor <id>");
+      expect(mode.commands.join(" ")).not.toContain("skopos adopt");
+      expect(mode.commands.join(" ")).not.toContain("skopos init");
       expect(mode.review.length).toBeGreaterThanOrEqual(4);
     }
   });
 
   it("keeps setup completion and failure recovery observable", () => {
     expect(quickstartDoneWhen).toHaveLength(4);
-    expect(quickstartDoneWhen.join(" ")).toContain("Session context");
+    expect(quickstartDoneWhen.join(" ")).toContain("Setup reports");
     expect(quickstartProblems).toHaveLength(4);
     expect(quickstartProblems.flatMap((problem) => [problem.title, problem.recovery]).join(" ")).not.toContain("undefined");
   });
@@ -78,5 +81,7 @@ describe("Documentation public journey", () => {
     expect(freshSessionStages.find((stage) => stage.id === "deliver")?.truth).toContain("real host outcome");
     expect(freshSessionStages.find((stage) => stage.id === "accept")?.commands.join(" ")).toContain("handoff accept");
     expect(hostDeliveryTruth.map((host) => host.label)).toEqual(["Codex", "Claude Code", "Any manual host"]);
+    expect(hostDeliveryTruth.find((host) => host.label === "Codex")?.status).toBe("Certified for first release");
+    expect(hostDeliveryTruth.find((host) => host.label === "Claude Code")?.status).toContain("verification planned");
   });
 });

@@ -40,9 +40,36 @@ export const proposeSkoposCapabilityIntegrationsRuntime = async ({
   dryRun?: boolean;
 }): Promise<SkoposCapabilityIntegrationProposalResult> => {
   const workspaceRoot = resolve(cwd);
-  const candidates = await discoverSkoposCapabilityCandidates({
-    cwd: workspaceRoot,
-  });
+  const [discoveredCandidates, existingActions, existingGuards] = await Promise.all([
+    discoverSkoposCapabilityCandidates({ cwd: workspaceRoot }),
+    loadSkoposActionManifests({ cwd: workspaceRoot }),
+    loadSkoposGuardManifests({ cwd: workspaceRoot }),
+  ]);
+  const actionPathById = new Map(existingActions.map((action) => [action.id, action.sourcePath]));
+  const guardPathById = new Map(existingGuards.map((guard) => [guard.id, guard.sourcePath]));
+  const candidates = discoveredCandidates.map((candidate) => ({
+    ...candidate,
+    ...(candidate.suggestedAction
+      ? {
+          suggestedAction: {
+            ...candidate.suggestedAction,
+            sourcePath:
+              actionPathById.get(candidate.suggestedAction.id) ??
+              candidate.suggestedAction.sourcePath,
+          },
+        }
+      : {}),
+    ...(candidate.suggestedGuard
+      ? {
+          suggestedGuard: {
+            ...candidate.suggestedGuard,
+            sourcePath:
+              guardPathById.get(candidate.suggestedGuard.id) ??
+              candidate.suggestedGuard.sourcePath,
+          },
+        }
+      : {}),
+  }));
   const generatedAt = new Date().toISOString();
   const proposalDigest = digestValue({ workspaceRoot, candidates });
   const proposal: SkoposCapabilityIntegrationProposal = {
@@ -223,7 +250,7 @@ export const applySkoposCapabilityIntegrationsRuntime = async ({
       guard,
     };
   });
-  assertNoDeclarationCollisions(existingActions, existingGuards, selected);
+  const writePlan = planDeclarationWrites(existingActions, existingGuards, selected);
   validateGuardProviders(
     [...existingActions.map((action) => action.id), ...selected.map(({ action }) => action.id)],
     selected.map(({ guard }) => guard),
@@ -231,8 +258,18 @@ export const applySkoposCapabilityIntegrationsRuntime = async ({
 
   if (!dryRun) {
     for (const { action, guard } of selected) {
-      await writeTrackedManifest(workspaceRoot, action.sourcePath, action);
-      await writeTrackedManifest(workspaceRoot, guard.sourcePath, guard);
+      await writeTrackedManifest(
+        workspaceRoot,
+        action.sourcePath,
+        action,
+        writePlan.replaceActionIds.has(action.id),
+      );
+      await writeTrackedManifest(
+        workspaceRoot,
+        guard.sourcePath,
+        guard,
+        writePlan.replaceGuardIds.has(guard.id),
+      );
     }
     const [activatedActions, activatedGuards] = await Promise.all([
       loadSkoposActionManifests({ cwd: workspaceRoot }),
@@ -299,35 +336,51 @@ const validateGuardProviders = (
   }
 };
 
-const assertNoDeclarationCollisions = (
+const planDeclarationWrites = (
   existingActions: SkoposActionManifest[],
   existingGuards: SkoposGuardManifest[],
   selected: Array<{
     action: SkoposActionManifest;
     guard: SkoposGuardManifest;
   }>,
-): void => {
-  const actionIds = new Set(existingActions.map((action) => action.id));
-  const guardIds = new Set(existingGuards.map((guard) => guard.id));
+): { replaceActionIds: Set<string>; replaceGuardIds: Set<string> } => {
+  const actionsById = new Map(existingActions.map((action) => [action.id, action]));
+  const guardsById = new Map(existingGuards.map((guard) => [guard.id, guard]));
+  const selectedActionIds = new Set<string>();
+  const selectedGuardIds = new Set<string>();
+  const replaceActionIds = new Set<string>();
+  const replaceGuardIds = new Set<string>();
   for (const { action, guard } of selected) {
-    if (actionIds.has(action.id)) {
-      throw new Error(`Action ${action.id} already exists; integration will not overwrite it.`);
-    }
-    if (guardIds.has(guard.id)) {
-      throw new Error(`Guard ${guard.id} already exists; integration will not overwrite it.`);
-    }
-    if (actionIds.has(action.id) || guardIds.has(guard.id)) {
+    if (selectedActionIds.has(action.id) || selectedGuardIds.has(guard.id)) {
       throw new Error(`Duplicate capability integration declaration ${action.id}.`);
     }
-    actionIds.add(action.id);
-    guardIds.add(guard.id);
+    selectedActionIds.add(action.id);
+    selectedGuardIds.add(guard.id);
+
+    const existingAction = actionsById.get(action.id);
+    if (existingAction && existingAction.sourcePath !== action.sourcePath) {
+      throw new Error(
+        `Action ${action.id} already exists at ${existingAction.sourcePath}; reviewed source-bound update expected ${action.sourcePath}.`,
+      );
+    }
+    if (existingAction) replaceActionIds.add(action.id);
+
+    const existingGuard = guardsById.get(guard.id);
+    if (existingGuard && existingGuard.sourcePath !== guard.sourcePath) {
+      throw new Error(
+        `Guard ${guard.id} already exists at ${existingGuard.sourcePath}; reviewed source-bound update expected ${guard.sourcePath}.`,
+      );
+    }
+    if (existingGuard) replaceGuardIds.add(guard.id);
   }
+  return { replaceActionIds, replaceGuardIds };
 };
 
 const writeTrackedManifest = async (
   workspaceRoot: string,
   sourcePath: string,
   manifest: SkoposActionManifest | SkoposGuardManifest,
+  replace: boolean,
 ): Promise<void> => {
   const artifactPath = join(workspaceRoot, sourcePath);
   const { sourcePath: ignoredSourcePath, ...trackedManifest } = manifest;
@@ -335,7 +388,7 @@ const writeTrackedManifest = async (
   await mkdir(dirname(artifactPath), { recursive: true });
   await writeFile(artifactPath, `${JSON.stringify(trackedManifest, null, 2)}\n`, {
     encoding: 'utf8',
-    flag: 'wx',
+    flag: replace ? 'w' : 'wx',
   });
 };
 

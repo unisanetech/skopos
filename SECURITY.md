@@ -15,7 +15,7 @@ systems listed in [release security and runtime certification](docs/operations/r
 
 ## Report A Vulnerability
 
-Use [GitHub's private vulnerability reporting](https://github.com/Croodo/skopos/security/advisories/new).
+Use [GitHub's private vulnerability reporting](https://github.com/unisanetech/skopos/security/advisories/new).
 Do not open a public issue for a suspected vulnerability.
 
 Include only what is needed to reproduce and assess the problem:

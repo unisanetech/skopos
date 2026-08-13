@@ -12,25 +12,25 @@ export const trustControlCopy = {
   localState: [
     { path: ".skopos/index/", label: "Rebuildable project projections" },
     { path: ".skopos/cache/", label: "Generated host adapters and caches" },
-    { path: ".skopos/coordination/", label: "Live claims and Session state" },
+    { path: ".skopos/coordination.sqlite", label: "Live claims and Session state" },
     { path: ".skopos/runs/", label: "Action output and Evidence envelopes" },
   ],
   lifecycle: [
     {
       number: "01",
-      label: "Initialize",
-      title: "Establish the project model.",
+      label: "Understand",
+      title: "Learn the project before changing it.",
       description:
-        "Skopos creates project-local configuration and rebuildable runtime state. A new project may also receive the agreed documentation structure.",
-      review: "Review tracked files before commit.",
+        "Skopos inventories the repository and gives the coding agent a bounded brief for understanding current code, documentation, commands, and project truth.",
+      review: "Observed facts stay separate from assumptions.",
     },
     {
       number: "02",
-      label: "Adopt",
-      title: "Propose before restructuring.",
+      label: "Review",
+      title: "Approve one coherent setup plan.",
       description:
-        "For an existing repository, Skopos discovers current truth and proposes keep, move, merge, split, rewrite, archive, or delete operations before material documentation changes.",
-      review: "Exact proposal approval is required.",
+        "Skopos groups Memory, Scope, checks, rules, Skills, instructions, and host context into one review. Material changes wait for an explicit decision.",
+      review: "Accept, edit, defer, or reject each recommendation.",
     },
     {
       number: "03",

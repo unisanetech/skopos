@@ -9,19 +9,21 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-14
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
   - config-model.md
   - artifact-model.md
   - agent-native-operating-model.md
+  - intelligent-project-onboarding.md
   - design-context-model.md
   - docs-governance.md
   - evidence-and-readiness-model.md
   - policy-applicability-and-fixture-governance.md
   - public-package-content-and-provenance.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: when owning truth changes
 ---
 
@@ -33,6 +35,16 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-14`: Bound the public npm artifact to `@unisane/skopos` because the
+  third-party `@skopos` namespace is unavailable. The internal package graph and
+  `skopos` executable are unchanged; the company scope is release identity, not a
+  runtime architecture layer.
+- `2026-08-13`: Separated host-neutral adapter architecture from certified host
+  support and recorded the standalone company-owned repository boundary. The first
+  release certifies Codex only; generated projections never imply support.
+- `2026-08-12`: Added one unified intelligent onboarding workflow. It composes
+  coding-agent investigation with reviewed Scope, Memory, capability, Policy, Skill,
+  instruction, and host-delivery outcomes while preserving their existing authorities.
 - `2026-08-11`: Completed the Codex host-delivery boundary for linked children. An
   approved split produces truthful undelivered assignments; the Codex adapter may
   create real tasks, bind returned thread identities as Sessions, and wait for results
@@ -98,15 +110,31 @@ Skopos has two deliberately separate application surfaces:
 1. `packages/ui` is the private, local supervision console projected from compiled
    Skopos state and bundled through the CLI.
 2. `apps/web` is the independently deployable public product website. It owns public
-   narrative, marketing compositions, metadata, assets, and reviewed app-local
-   Unisane UI registry source.
+   narrative, marketing compositions, metadata, assets, and reviewed app-owned UI
+   source.
 
 The public website is not part of the core SDK package family, does not import the
 internal console, and has no dependency on Skopos runtime or compiled local project
 state. Its initial Next.js route is static-first; backend, authentication, analytics,
 and hosting-provider contracts require separate Decisions.
 
+## Repository Ownership Boundary
+
+The canonical source and release-provenance repository is
+`https://github.com/unisanetech/skopos`. `unisanetech` owns company governance around
+the standalone Skopos product; it is not a runtime namespace or an adopter-specific
+architecture layer. Skopos core and its public package remain project-agnostic and may
+not acquire a private Unisane dependency, registry, Action, Guard, path, or product
+workflow through repository ownership.
+
+The first public npm artifact is `@unisane/skopos`, exposing the `skopos` executable.
+The `@unisane` scope is the company-owned publisher identity selected because the
+third-party `@skopos` namespace is unavailable. It does not rename the product, alter
+the internal `@skopos/*` workspace graph, or permit Unisane-specific runtime coupling.
+
 ## Canonical Operating Loop
+
+The currently implemented operating loop is:
 
 ```text
 adopt Project Memory
@@ -122,6 +150,16 @@ adopt Project Memory
 
 Plan is optional durable direction across Tasks. Work Queue is compiled from tracked
 Tasks, Plans, Findings, material questions, dependencies, and Readiness blockers.
+
+The accepted clean-refactor target replaces the visible adoption ceremony with one
+`Understand -> Clarify -> Review -> Apply -> Verify` setup journey. Setup is not another
+product primitive: its local resumable workflow composes the existing Scope registry,
+Project Memory, Actions, Guards, Policies, Skill bindings, instructions, adapters, and
+Readiness authorities. Accepted outcomes live with those owners; local drafts and
+receipts remain under `.skopos/**`. See
+[Intelligent Project Onboarding](intelligent-project-onboarding.md). The target command
+surface is implemented through `skopos setup`; lower-level primitives remain available
+to the runtime without becoming a second public onboarding journey.
 
 ## Project Memory
 
@@ -144,8 +182,10 @@ Reconstruction discovers those portable projections through the Project Memory
 catalog across all declared roots, so no project layout or domain convention is built
 into Task persistence.
 
-During pre-adoption intake, only the inferred default workspace Scope may use the
-standard `docs/` Memory root before a registry exists. Once a Scope is declared, a
+During first setup, Skopos may non-destructively scaffold only the missing workspace
+Scope registry with the standard `docs/` Memory root. It does not create inferred
+sub-Scopes or overwrite an existing registry; those boundaries stay reviewable setup
+recommendations. Once a Scope is declared, a
 missing or unsafe `memoryRoot` is an invalid authority declaration and fails closed.
 
 Task admission creates an open Memory obligation when declared ownership overlaps
@@ -227,6 +267,11 @@ Split activation therefore has three explicit delivery states:
 3. when any required host capability is unavailable or fails, the adapter reports the
    failed stage and preserves the same prompt and follow-up for reviewed manual copy
 
+This implemented Codex delivery path is the sole real-host-certified adapter for the
+first public release. Claude Code, Cursor, and GitHub Copilot configuration or
+instruction projections remain unverified until the exact real host produces matching
+Evidence. Host-neutral shape and generated output are not support proof.
+
 The originating Session releases its parent Task reservation and resource claims,
 reconciles open mutations and contamination, then explicitly transitions from
 `writer` to `reviewer`. The transition is actor-bound, live-Session-only, audited, and
@@ -249,3 +294,10 @@ into runtime core.
 10. retrieval is Scope- and Task-selective, not a broad documentation dump
 11. detected commands remain proposals until reviewed approval creates tracked
     declarations and provider validation activates them
+12. onboarding gives coding agents broad project investigation authority but never
+    promotes inference, widens approved mutation, or accepts an optional extension
+    without the required user decision
+13. setup readiness is lane-specific; configured adapters never masquerade as verified
+    host delivery
+14. a host is publicly called supported only when current real-host Evidence covers
+    the exact capabilities claimed

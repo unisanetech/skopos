@@ -13,11 +13,11 @@ Requirements:
 - Git
 
 ```bash
-git clone https://github.com/Croodo/skopos.git
+git clone https://github.com/unisanetech/skopos.git
 cd skopos
 pnpm install --frozen-lockfile
 pnpm build
-pnpm skopos:init
+pnpm skopos:setup
 pnpm skopos:session
 ```
 

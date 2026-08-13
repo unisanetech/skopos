@@ -12,8 +12,8 @@ describe("Project Memory public story", () => {
     expect(projectMemoryCopy.alternatives.every((item) => item.strength.length > 0)).toBe(true);
   });
 
-  it("uses the complete approved existing-project adoption vocabulary", () => {
-    expect(projectMemoryCopy.adoptionOperations).toEqual([
+  it("uses the complete reviewed existing-project setup vocabulary", () => {
+    expect(projectMemoryCopy.setupOperations).toEqual([
       "Keep",
       "Move",
       "Merge",

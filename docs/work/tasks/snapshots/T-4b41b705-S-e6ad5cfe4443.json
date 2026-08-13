@@ -1,0 +1,60 @@
+{
+  "snapshotId": "S-e6ad5cfe4443",
+  "taskId": "T-4b41b705",
+  "sessionId": "skopos-owner-cutover-20260813",
+  "actorId": "codex-root",
+  "baseRevision": "e38d18eeb1cb9938624ac6d5b63bbc7d9a9f517b",
+  "paths": [
+    {
+      "path": ".github",
+      "digest": "afee9d817541f9c9726f8c16be39a1b276f573a8ddde4c662c97b77b78e8c829"
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "digest": "c66caafc78fdc62a18cad2ff624d97dff23baf2dbbe7520742c13492d6dc9d19"
+    },
+    {
+      "path": "README.md",
+      "digest": "04b583aff7bc780a997988b8f5364f489a3e7481966b0f4443e4349f4240e28b"
+    },
+    {
+      "path": "SECURITY.md",
+      "digest": "c59e56392cb51f686be711427a060af999c8ba7f28b024d2cf62bfd4d7d123e6"
+    },
+    {
+      "path": "SUPPORT.md",
+      "digest": "0c1acea634e9544e6c9d6f91d7264cad03526bc5d47eed28e571817edfe51412"
+    },
+    {
+      "path": "apps/web",
+      "digest": "a6feb493d23771851a09fdbef4358e2ca92b45f35d39ee1ecab6ba5bd70e4a26"
+    },
+    {
+      "path": "docs",
+      "digest": "c3965575539d5721c423c0c7ba0c92a94f87b719d02b86b665863839724c8f07"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "digest": "d43adb3b29dbe5bf0b12f37a48db9fe9b56da1b3d04673b7ceb64f9416a57928"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "digest": "97ea40315a6f207907b44f1a5136baa4233604e1b193f33d0fbc8326e9cf2255"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-surface.test.ts",
+      "digest": "afb8d0cde9b52eb8cc6a146bc8c6a05f94f4bcf2f551f8b952c41b3a0eed427d"
+    },
+    {
+      "path": "scripts/release/validate-publish-workflow.mjs",
+      "digest": "463118c7b48066e092f3cea48533e39286d1f96fc25dc6682d14372b0279aaa7"
+    },
+    {
+      "path": "scripts/release/validate-release-scorecard.test.mjs",
+      "digest": "049e19b5bd97b18f61c65e8659186f04f16c8f227160174bd459b65a0f3583ae"
+    }
+  ],
+  "digest": "e6ad5cfe44438cc88b903261caa7a1f644b3a84695abcb48100ddd6492dabe46",
+  "createdAt": "2026-08-13T11:19:26.515Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-4b41b705-S-e6ad5cfe4443.json"
+}

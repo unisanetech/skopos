@@ -9,13 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/evidence-and-readiness-model.md
   - ../standards/validation.md
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
   - semantic-guards.md
 reviewCycle: when CLI behavior changes
@@ -25,6 +26,10 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-08-13`: Clarified first-release host status: Codex is certified; Claude Code,
+  Cursor, and GitHub Copilot projections remain unverified until real-host proof.
+- `2026-08-13`: Documented the unified coding-agent-led setup, consolidated review,
+  source-bound decisions, staged resume, and low-level-only `init` boundary.
 - `2026-08-11`: Documented reviewed parent/child Task splitting, exact linked-child
   creation, dependency and acceptance mapping, and fresh-Session assignment.
 - `2026-08-09`: Documented automatic risk/detail recommendation, the light fast path,
@@ -240,6 +245,11 @@ injection. Manual hosts provide no automation: review and copy the rendered prom
 In every case, generated or rendered is not delivered, native resume is not a fresh
 Session, and the originating Session is never archived or deleted implicitly.
 
+For the first public release, only the Codex path is real-host certified and called
+supported. Claude Code, Cursor, and GitHub Copilot remain unverified projections;
+their generated surfaces are useful for verification work but do not imply support or
+parity.
+
 ## Run Project Capabilities
 
 ```bash
@@ -372,31 +382,37 @@ writer therefore cannot produce an empty structural snapshot merely because old 
 were released. Because direct writes can bypass the broker, current enforcement remains
 cooperative unless the host reports hooked or mediated operation.
 
-## Adopt An Existing Project
+## Set Up An Existing Project
 
 ```bash
-skopos init . --mode existing --actor <id>
-skopos adopt assess . --actor <id>
+skopos setup . --actor <id>
 ```
 
-The coding agent reviews the intake and creates analysis input separating facts,
-inferences, assumptions, contradictions, material questions, and complete document
-dispositions. Then:
+The coding agent follows the generated bounded setup packet, inspects the project, and
+explains what it understands in plain language. Skopos keeps facts, inferences,
+unknowns, contradictory authority, and prior user answers distinct.
 
 ```bash
-skopos adopt propose . --analysis <path> --actor <id>
-skopos adopt approve . --proposal <digest> --actor <id> --reason "<reason>"
+skopos setup status . --actor <id>
+skopos setup review . --actor <id>
 ```
 
-Execute only the approved restructuring brief, repair links/instructions/config/Scope
-roots, complete its execution evidence, then:
+The one review covers meaningful Scopes, minimum useful Project Memory, project-owned
+checks, proportional Policies, relevant Skills, agent instructions, and host delivery.
+Accept, edit, defer, or reject each recommendation; a changed source invalidates only
+the choice that reviewed it.
 
 ```bash
-skopos adopt verify . --execution <path> --actor <id>
-skopos adopt activate . --actor <id> --reason "<reason>"
+skopos setup decide <recommendation-id> accept . --actor <id>
+skopos setup resume . --actor <id> --host <host> --session-id <id>
 ```
 
-Assessment-only mode is valid, but it is not agent-ready adoption.
+`resume` applies only accepted recommendations through their existing authority and
+then verifies every setup lane. Supplying host and Session identifiers requests a
+delivery challenge; it does not prove delivery. After the host actually injects the
+bound Session context, it must run the exact `setup confirm-host-delivery` continuation
+reported by setup. Use `init` only for low-level reconstruction or diagnostics; it is
+not the normal onboarding journey.
 
 ## Validation Economy
 

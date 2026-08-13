@@ -1,0 +1,64 @@
+{
+  "snapshotId": "S-01373242dbfe",
+  "taskId": "T-cbbd94cd",
+  "sessionId": "candidate-consolidation-20260813",
+  "actorId": "codex-root",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": ".cursor/rules/project.mdc",
+      "digest": "9158fbd4178d2e53f6c0f6bb18d46b1adfb62aacb7493218915a92b8742c2b38"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "digest": "9ad8ef2435e699fed1bda197207d2da444e54a5689ae38e28835dd3eb423cadb"
+    },
+    {
+      "path": "AGENTS.md",
+      "digest": "e48fe97498740c360158b7a9b8bcb760dfee43cec21fbaccd9b6b7cb340e19c7"
+    },
+    {
+      "path": "CLAUDE.md",
+      "digest": "2a6a32f3973b60c276aacec996a80be18d4beb92fbd8205af2bf191c20540bcd"
+    },
+    {
+      "path": "README.md",
+      "digest": "4d7783927268f871ce93f86f0d3f360e6c0ee148802b242699b27fb77d050c6a"
+    },
+    {
+      "path": "apps/web",
+      "digest": "e65eaeb9ba6deee433a64a4f84ae2c50094e288b6f93ef35601834ef808807c9"
+    },
+    {
+      "path": "design-qa.md",
+      "digest": "05b2a87ce0f33d338a3687431e6cfc0154c4027ed5350f4139eff13104b2a6e9"
+    },
+    {
+      "path": "docs",
+      "digest": "59fd1fda8d4aefccdc13ac28c6166bc53ba0235553628489915765417a88b774"
+    },
+    {
+      "path": "package.json",
+      "digest": "3b8a5093119eefe65dfd217c381c3e12004450c17feecaab8c60d44a916c9d51"
+    },
+    {
+      "path": "packages",
+      "digest": "fad4ac1291857bf057ea26173211c6507794d7b3ec2c7d6834fbe19bd7a4ce5d"
+    },
+    {
+      "path": "scripts",
+      "digest": "5a0253efb4772d0f2022cfa787dbdd01d6242a3283f81f4d1e14a27881d533c1"
+    },
+    {
+      "path": "tools/skopos/actions/maintenance-refresh-knowledge.yaml",
+      "digest": "66ba3d52afe2a730c4d2e595b98a172b68e1f60d91eca3407ec3d1365766f5e2"
+    },
+    {
+      "path": "tools/skopos/skills/ui.product-interface-design.json",
+      "digest": "03c73c0b13ba9781c592829936a602f3b03017621727df021e0a7d16d6cb507c"
+    }
+  ],
+  "digest": "01373242dbfebb3c6b9acc94012fd24eeb9fbdbca3451617da852ee947c7079f",
+  "createdAt": "2026-08-13T10:28:43.559Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-cbbd94cd-S-01373242dbfe.json"
+}

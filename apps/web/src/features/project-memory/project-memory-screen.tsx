@@ -85,7 +85,7 @@ export function ProjectMemoryScreen() {
               <h1 className={pageType.hero}>{projectMemoryCopy.title}</h1>
               <p className="mt-8 max-w-[680px] text-[clamp(1rem,1.3vw,1.2rem)] leading-[1.65] text-[var(--skopos-muted)]">{projectMemoryCopy.description}</p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                <a className="inline-flex min-h-[52px] items-center justify-between gap-7 border border-[var(--skopos-ink)] bg-[var(--skopos-ink)] px-[18px] text-[13px] font-bold text-white" href="#adopt-project">
+                <a className="inline-flex min-h-[52px] items-center justify-between gap-7 border border-[var(--skopos-ink)] bg-[var(--skopos-ink)] px-[18px] text-[13px] font-bold text-white" href="#setup-project">
                   Add Skopos to an existing project
                   <Icon symbol="arrow_downward" size="sm" />
                 </a>
@@ -176,11 +176,11 @@ export function ProjectMemoryScreen() {
               </article>
             </div></PageFrame></PageSection>
 
-        <PageSection id="adopt-project" aria-labelledby="memory-adoption-title"><PageFrame className="grid min-[960px]:grid-cols-2"><div className="px-[var(--page-gutter)] py-[clamp(56px,7vw,92px)] md:px-[clamp(38px,5vw,68px)]"><span className="font-mono text-[clamp(3.5rem,7vw,6.5rem)] leading-none font-light tracking-[-0.07em] text-[#b8b5ae]">05</span><h2 id="memory-adoption-title" className={cn(pageType.section,"mt-10")}>Bring the project you already have.</h2><p className="mt-6 leading-[1.65] text-[var(--skopos-muted)]">
+        <PageSection id="setup-project" aria-labelledby="memory-setup-title"><PageFrame className="grid min-[960px]:grid-cols-2"><div className="px-[var(--page-gutter)] py-[clamp(56px,7vw,92px)] md:px-[clamp(38px,5vw,68px)]"><span className="font-mono text-[clamp(3.5rem,7vw,6.5rem)] leading-none font-light tracking-[-0.07em] text-[#b8b5ae]">05</span><h2 id="memory-setup-title" className={cn(pageType.section,"mt-10")}>Bring the project you already have.</h2><p className="mt-6 leading-[1.65] text-[var(--skopos-muted)]">
                 Skopos first discovers the repository and proposes how its existing knowledge should fit the Memory standard. Material documentation changes wait for approval.
               </p>
-              <div className="mt-8 flex flex-wrap gap-2" aria-label="Possible adoption operations">
-                {projectMemoryCopy.adoptionOperations.map((operation) => (
+              <div className="mt-8 flex flex-wrap gap-2" aria-label="Possible setup operations">
+                {projectMemoryCopy.setupOperations.map((operation) => (
                   <span className="border border-[var(--skopos-rule-light)] px-3 py-2 font-mono text-[10px] uppercase" key={operation}>{operation}</span>
                 ))}
               </div>
@@ -188,7 +188,7 @@ export function ProjectMemoryScreen() {
               <li className="grid grid-cols-[42px_1fr] border-b border-[var(--skopos-rule-light)] p-6"><span className="font-mono text-xs text-[#777]">01</span><div><strong>Discover</strong><p className="mt-2 text-sm leading-[1.55] text-[var(--skopos-muted)]">Read the repository, docs, commands, and declared project boundaries.</p></div></li>
               <li className="grid grid-cols-[42px_1fr] border-b border-[var(--skopos-rule-light)] p-6"><span className="font-mono text-xs text-[#777]">02</span><div><strong>Propose</strong><p className="mt-2 text-sm leading-[1.55] text-[var(--skopos-muted)]">Show exactly what stays, moves, merges, splits, rewrites, archives, or disappears.</p></div></li>
               <li className="grid grid-cols-[42px_1fr] border-b border-[var(--skopos-rule-light)] p-6"><span className="font-mono text-xs text-[#777]">03</span><div><strong>Approve</strong><p className="mt-2 text-sm leading-[1.55] text-[var(--skopos-muted)]">A developer reviews material restructuring before Skopos changes human-authored Memory.</p></div></li>
-              <li className="grid grid-cols-[42px_1fr] p-6"><span className="font-mono text-xs text-[#777]">04</span><div><strong>Verify and activate</strong><p className="mt-2 text-sm leading-[1.55] text-[var(--skopos-muted)]">Confirm the adopted Memory is coherent and reconstructable before agents rely on it.</p></div></li>
+              <li className="grid grid-cols-[42px_1fr] p-6"><span className="font-mono text-xs text-[#777]">04</span><div><strong>Verify readiness</strong><p className="mt-2 text-sm leading-[1.55] text-[var(--skopos-muted)]">Confirm the reviewed Memory is coherent and reconstructable before agents rely on it.</p></div></li>
             </ol>
           </PageFrame></PageSection>
 
@@ -218,7 +218,7 @@ export function ProjectMemoryScreen() {
               </table>
             </div></PageFrame></PageSection>
 
-        <ClosingSection title="Let the next agent start with the project—not an empty chat." description="Adopt Skopos without overwriting the truth your repository already contains."><PageAction href="/docs" primary light>Add Skopos to your project</PageAction><PageAction href="/how-it-works" light>See how the work continues</PageAction></ClosingSection>
+        <ClosingSection title="Let the next agent start with the project—not an empty chat." description="Set up Skopos without overwriting the truth your repository already contains."><PageAction href="/docs" primary light>Add Skopos to your project</PageAction><PageAction href="/how-it-works" light>See how the work continues</PageAction></ClosingSection>
       </article>
     </SiteShell>
   );

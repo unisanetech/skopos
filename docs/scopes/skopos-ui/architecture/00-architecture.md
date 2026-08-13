@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-12
 relatedDocs:
   - ../overview.md
   - ../decisions/D-20260804-human-first-supervision-projection.md
+  - ../decisions/D-20260812-locally-owned-ui-source-and-visual-authority.md
   - ../decisions/D-20260804-browser-history-and-unisane-ui-registry-delivery.md
   - ../decisions/D-20260804-unisane-ui-visual-ownership.md
   - ../../../architecture/00-architecture.md
@@ -136,12 +137,12 @@ Primary route families are:
 4. Readiness
 5. Activity
 
-Deep canonical routes remain available inside those families. The source-installed
-Unisane Sidebar owns the collapsible desktop drawer, compact overlay, focus, Escape,
-scroll lock, and responsive transition behavior. A compact Unisane Search Bar occupies
+Deep canonical routes remain available inside those families. The locally owned
+Sidebar owns the collapsible desktop drawer, compact overlay, focus, Escape,
+scroll lock, and responsive transition behavior. A compact Search Bar occupies
 the outer shell strip above the inset application surface on desktop with the same quiet
 outline token as the inset, a contrasting surface fill, and left alignment to the inset edge, while the
-Unisane Top App Bar owns route context and the navigation trigger. Mobile keeps an
+Top App Bar owns route context and the navigation trigger. Mobile keeps an
 accessible search icon in that Top App Bar. Both search entries open the same canonical
 project-search Dialog; the sidebar carries no duplicate search control. Route context
 is presented as a compact breadcrumb from the
@@ -164,7 +165,7 @@ the mounted shell. External URLs, downloads, and in-page anchors retain native b
 behavior. Built snapshots are inspected through
 `skopos ui serve`, which owns the deep-link fallback.
 
-Search is a global read-only resolver presented through Unisane Dialog, Search Bar,
+Search is a global read-only resolver presented through locally owned Dialog, Search Bar,
 List, Badge, Icon, and Typography primitives. The complete command surface is mounted
 only while open so hidden controls do not remain in the accessibility tree. The query
 field receives initial focus, every navigation action has an explicit accessible name,
@@ -190,14 +191,14 @@ Readiness engine. All effects continue through canonical CLI, MCP, and runtime o
 
 Skopos owns product language, supervision hierarchy, route composition, document and
 artifact presentation, and application-specific layout. Reusable visual behavior is
-installed as local source through the Unisane UI external registry, together with one
-managed semantic CSS baseline. Unisane defaults own palette, typography, radii,
+reviewed as local Skopos source together with one managed semantic CSS baseline. Local
+defaults own palette, typography, radii,
 elevation, motion, state layers, and shared component behavior. Skopos may not place a
 parallel visual system or sweeping override above those defaults.
 
-Installed source is Skopos-owned and reviewed in the same repository. Private Unisane
-workspace packages, `@unisane/ui`, and `@unisane/tokens` are not Skopos runtime
-dependencies, and runtime/package delivery is not mixed with registry ownership.
+Installed source is Skopos-owned and reviewed in the same repository. Private external
+workspace packages are not Skopos runtime dependencies, and source provenance does not
+grant another product runtime, release, or visual authority.
 
 The console keeps one restrained typography hierarchy: `pageTitle` for the route
 heading, `titleLarge` for primary content sections, `titleMedium` for nested groups,
@@ -211,7 +212,7 @@ full-height structural wall. The rail uses the standard surface without an outer
 outline or elevation. Inspector Accordion composition removes child boxes and uses
 simple section dividers. Summary and disclosure content share one horizontal inset and
 a restrained title-to-label hierarchy. It can be collapsed or restored with
-an accessible Unisane Icon Button and
+an accessible local Icon Button and
 persists that preference across routed records. The primary reading scrollbar remains
 functional but visually hidden so it does not compete with the panel boundary. Open
 summaries sit directly on the rail surface, optional detail keeps the default Accordion
@@ -222,6 +223,8 @@ with the complete path retained as supporting metadata.
 
 ## Changelog
 
+- `2026-08-12`: Replaced external visual authority with reviewed, locally owned Skopos
+  component source and preserved origin only in historical provenance records.
 - `2026-08-04`: Moved desktop global search into the outer shell strip above the inset
   application surface while preserving the mobile Top App Bar entry and canonical
   search Dialog.

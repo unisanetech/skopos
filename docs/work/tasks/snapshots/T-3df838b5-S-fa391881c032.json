@@ -1,0 +1,128 @@
+{
+  "snapshotId": "S-fa391881c032",
+  "taskId": "T-3df838b5",
+  "sessionId": "ca35dd00-1e6d-4616-9f68-2e27bf536636",
+  "actorId": "codex-setup-cutover",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": "README.md",
+      "digest": "3005d5f5707522b3f3ddcbc36839d6ec4b16150279b300c1d6e3e257adb40609"
+    },
+    {
+      "path": "apps/web/src/app/globals.css",
+      "digest": "a4a982f0c98f832366f1e81b9e2b84cfb678ca8662ea4a7f40625109042d2311"
+    },
+    {
+      "path": "apps/web/src/features/documentation/__tests__/documentation-copy.test.ts",
+      "digest": "846d902939d4a7b268d8c0a49388a42bfbd2c10c89601a12b27ac61596b0cf39"
+    },
+    {
+      "path": "apps/web/src/features/documentation/content.ts",
+      "digest": "65c849dba54f185c67ec218989439e36b7001b241e068159374786e541582203"
+    },
+    {
+      "path": "apps/web/src/features/documentation/customize-content.ts",
+      "digest": "72130f73ef3f6334b127893d378c14d4a35e3313f14f0754be369ec04981605f"
+    },
+    {
+      "path": "apps/web/src/features/documentation/docs-landing-screen.tsx",
+      "digest": "513865cc864724325057be0f204f7870cbb9c50c76f6548175e04717bfbe706f"
+    },
+    {
+      "path": "apps/web/src/features/documentation/quickstart-screen.tsx",
+      "digest": "ea49343dc1625cd6219d8affeecf82ab9943ea10cf9ebbe548f33b33b921dfdd"
+    },
+    {
+      "path": "apps/web/src/features/homepage/__tests__/hero-onboarding.test.ts",
+      "digest": "031ec99219d583ba51d8f13a7c1107cc07bcf4df2ce9bb7d27f8fb4010496c93"
+    },
+    {
+      "path": "apps/web/src/features/homepage/content/homepage-copy.ts",
+      "digest": "8ef77e15fe163111dc36b4db4ad757362e6403b8e279e3237de34ea766015926"
+    },
+    {
+      "path": "apps/web/src/features/homepage/sections/hero-onboarding.tsx",
+      "digest": "18860b162e60cb8b4473a63c4dc32cfbf0482ef1cf771ab7139256d90e7e5bc4"
+    },
+    {
+      "path": "apps/web/src/features/project-memory/__tests__/project-memory-copy.test.ts",
+      "digest": "74ba8d10e391c3a1f6141a869969ea8b0a5383f6a79684f64af30877f256a654"
+    },
+    {
+      "path": "apps/web/src/features/project-memory/content.ts",
+      "digest": "bb64e203770d7edb18bbe611e7a50b32e3ed568bead91acb3865c37368ec46d1"
+    },
+    {
+      "path": "apps/web/src/features/project-memory/project-memory-screen.tsx",
+      "digest": "231114494df98975442754632a28c485deb189920c5950f37dd24a248e8460e3"
+    },
+    {
+      "path": "apps/web/src/features/trust-control/content.ts",
+      "digest": "d7bcd4b89ab7e10a364f4269b67587bd1745ff8f390929c92333d9f460237c1f"
+    },
+    {
+      "path": "apps/web/src/features/use-cases/__tests__/use-cases-copy.test.ts",
+      "digest": "ede8de493a45c6fb79ea9445d81b2a6c436094aa20dfb7e19f02173ab25d8512"
+    },
+    {
+      "path": "apps/web/src/features/use-cases/content.ts",
+      "digest": "3a81771d9a2a6a7c614677183a5865198f79aee4337cfb924b8adb8efb7965d4"
+    },
+    {
+      "path": "docs/architecture/docs-governance.md",
+      "digest": "1a814f96e0f56a164bb958cfa30ded74ef4ffb60e8d556acc21b08e35fbd862d"
+    },
+    {
+      "path": "docs/decisions/031-bundled-cli-release-contract.md",
+      "digest": "0e16e6c21aa5ddd7c3193820528671b052acd1cc5ce146757902c19da2e10bc2"
+    },
+    {
+      "path": "docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md",
+      "digest": "6526fac296a3d487b290f037dfa4eb9883be8328b37ad5ad00f1bf5f2013f4dd"
+    },
+    {
+      "path": "docs/guides/bootstrap-a-project.md",
+      "digest": "8561a6bf5d60ed457cfe0057d267e06d828f457d62b547eca4e2b51e43afcdf6"
+    },
+    {
+      "path": "docs/operations/first-public-release-scorecard.md",
+      "digest": "e0320e70b0634938bcd20aaa6270fe9cf38fe03234f4b561cbd89500d6627f75"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "digest": "48c7704acaef2dcc2f8ed637fed550536417c1af7234bd5a573c48e057a7d61e"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "digest": "dd7ad0e47e1a17843a0ddc8e1acc6d8d7c1b3d0abaf09478556366d0b7a93368"
+    },
+    {
+      "path": "packages/cli/src/__tests__/adoption-approval.test.ts",
+      "digest": "eac5c89bcf8b761a85dc691edf5a7cc2278097c213322caec8e4cbcc8143804f"
+    },
+    {
+      "path": "packages/cli/src/__tests__/canonical-surface.test.ts",
+      "digest": "639e869c09d9c6c798b6f979e84d6150ccc747d3f1d0c07f385d6f728ce5e2a8"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "0244cc03648fe0b9843c6722c0149455b9a07fdc932a01bfdd946e54a855914a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-surface.test.ts",
+      "digest": "b0314d6a586dfb5bb873bcabc798f822f68b11dc3b0ee2cd4cb8d4bf00f5bad0"
+    },
+    {
+      "path": "packages/docs-engine/src/adoption-proposal.ts",
+      "digest": "f897969462f103caaaf7bda34528bec49e6523b1a55e34eb610e2a9d22c26fd4"
+    },
+    {
+      "path": "packages/runtime/src/application/adoption/adoption.service.ts",
+      "digest": "7bc2ef233f248c18256b0de86935a3ec0c45d98c28fc64d85c335e7299640ac3"
+    }
+  ],
+  "digest": "fa391881c03273fd1e39317982b447fa96ee426268eabddbab4d7020a3a8ff68",
+  "createdAt": "2026-08-12T21:11:55.117Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-3df838b5-S-fa391881c032.json"
+}

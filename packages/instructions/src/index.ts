@@ -6,4 +6,5 @@ export * from './application/sync-codex-wrapper-adapter/sync-codex-wrapper-adapt
 export * from './application/sync-instruction-mirrors/sync-instruction-mirrors.service.js';
 export * from './application/sync-manual-host-adapter/sync-manual-host-adapter.service.js';
 export * from './application/validate-host-projection-model/validate-host-projection-model.service.js';
+export * from './application/shared/workspace-contained-path.js';
 export const skoposInstructionSurfaces = ['AGENTS.md', 'CLAUDE.md'] as const;

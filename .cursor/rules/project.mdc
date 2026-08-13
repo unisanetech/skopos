@@ -42,7 +42,7 @@ This file is the canonical instruction source for the standalone Skopos workspac
 2. `pnpm test`
 3. `pnpm proof`
 4. `pnpm instructions:sync`
-5. `pnpm skopos:init`
+5. `pnpm skopos:setup`
 6. `pnpm skopos:session`
 7. `pnpm skopos:ui`
 8. `pnpm skopos:ui:dev`
@@ -54,8 +54,8 @@ Use `skopos --help` for the full CLI surface and `skopos <command> --help` where
 
 1. Load compact project knowledge: `skopos knowledge . --compact`
 2. See current work and material decisions: `skopos session context . --actor <id> --json`
-3. Build project Understanding when adoption needs it: `skopos understand . --actor <id> --json`
-4. Assess adoption when Session context reports an adoption gap: `skopos adopt assess . --actor <id> --json`
+3. Set up or refresh the project operating layer: `skopos setup . --actor <id> --json`
+4. Review setup recommendations and material questions: `skopos setup review . --actor <id>`
 5. Start tracked work: `skopos start "<goal>" . --accept "<criterion>" --own <path> --actor <id>`
 6. Start explicit integration proof: `skopos start "<integration goal>" . --proof-subject project-integration --own <integration-path> --actor <id>`
 7. Continue tracked work: `skopos work next . --actor <id> --json`
@@ -90,16 +90,15 @@ When Skopos is installed, agents should treat it as the default operating memory
 ### Session Start
 1. Read `AGENTS.md` first.
 2. Run or inspect `skopos session context . --json` before broad scanning or implementation.
-3. If Skopos state is missing or stale, run `skopos init .` and then re-check `skopos session context`.
+3. If Skopos state is missing or stale, run `skopos setup .` and then re-check `skopos session context`.
 4. Use `docs/00-start-here.md` as the human docs router when it exists; otherwise inspect `docs/` conservatively.
 5. Host adapters should inject `skopos session context . --json`; use it directly when the host cannot inject session context.
 ### Agent Response Contract
 - Answer the user directly before process detail.
-- Use the response mode that fits the moment; do not announce a lane unless risk or execution scope makes it useful.
+- Use clear, calm, simple English and explain necessary Skopos terms in project language.
 - Ask only when the answer changes direction, risk, policy, or public behavior.
 - When asking, show the recommendation, reason, alternatives, and the default behavior if the user has no preference.
-- For progress, report completed work, current work, blockers, and proof still needed without false precision.
-- For closure, state changed behavior, focused proof, memory updates, and remaining risk.
+- Do not claim completion until required proof and Readiness agree.
 ### Task Risk And Detail
 - Light risk: use for narrow local edits. Inspect relevant files, edit, capture focused Evidence, and update Memory only if project truth changed.
 - Standard risk: use for bounded multi-file feature, docs, policy, or maintenance work. Start or continue a Task, keep decisions current, and capture proportional Evidence.
@@ -108,7 +107,7 @@ When Skopos is installed, agents should treat it as the default operating memory
 ### Memory And Docs
 - Update durable docs, decisions, findings, or policy only when project truth changes.
 - Do not duplicate truth. Tasks track execution; durable rules belong in docs, policy, decisions, findings, Patterns, or Memory.
-- In brownfield projects, use Skopos adoption discovery, proposal, approval, transformation, verification, and activation to converge docs safely.
+- In brownfield projects, use the unified Skopos setup review to converge Scopes, Project Memory, checks, Policies, Skills, instructions, and host delivery safely.
 - After changing `AGENTS.md`, run the project instruction action selected by Skopos. `skopos instructions sync .` owns only mirrors and adapters declared through Skopos.
 ### Validation Economy
 - Treat root validation commands as a capability catalog, not a mandatory sequence.

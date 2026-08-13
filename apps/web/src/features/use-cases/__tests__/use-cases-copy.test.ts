@@ -4,7 +4,7 @@ import { useCasesCopy } from "../content";
 describe("Skopos use cases", () => {
   it("keeps the seven approved launch scenarios in order", () => {
     expect(useCasesCopy.cases.map((useCase) => useCase.id)).toEqual([
-      "adopt-existing-project",
+      "set-up-existing-project",
       "plan-build-feature",
       "return-after-time-away",
       "continue-fresh-session",

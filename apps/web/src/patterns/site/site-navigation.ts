@@ -18,8 +18,8 @@ export const productNavigation: readonly SiteNavItem[] = [
   },
   {
     href: "/agents",
-    label: "Supported agents",
-    description: "Understand what works automatically and manually.",
+    label: "Agent support",
+    description: "See what is certified, projected, or manual.",
   },
   {
     href: "/trust",
@@ -33,7 +33,7 @@ export const primaryNavigation: readonly SiteNavItem[] = [
   { href: "/docs", label: "Docs" },
   { href: "/changelog", label: "Changelog" },
   {
-    href: "https://github.com/Croodo/skopos",
+    href: "https://github.com/unisanetech/skopos",
     label: "GitHub",
     external: true,
   },

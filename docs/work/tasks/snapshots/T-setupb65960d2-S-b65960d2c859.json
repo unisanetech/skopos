@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-b65960d2c859",
+  "taskId": "T-setupb65960d2",
+  "sessionId": "setup-certification-20260813",
+  "actorId": "codex-release",
+  "baseRevision": "24b96f6a89a8b4bc7367bf119e2849a97725948d",
+  "paths": [
+    {
+      "path": "AGENTS.md",
+      "digest": "e48fe97498740c360158b7a9b8bcb760dfee43cec21fbaccd9b6b7cb340e19c7"
+    },
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "4d97b8f57080616f4d9e1f50572d32807391f7c462aabb215816a119891ee79f"
+    },
+    {
+      "path": "docs/overview.md",
+      "digest": "486a258819514b771ef20bf021324072c638a779de8097adc607aed5d87e94fb"
+    },
+    {
+      "path": "docs/standards/validation.md",
+      "digest": "970428f5252f1a63587176418bfa43cbd5d2779cac7f79a8dbc604fc7d78a2e2"
+    },
+    {
+      "path": "skill-packs",
+      "digest": "c0f3c1a8757269095ba48d4e0315840c377b4305417a62c8f50c1fe2f7174094"
+    },
+    {
+      "path": "skopos.config.yaml",
+      "digest": "837dec03ced8514cccd60b5dd7d9590460d7fe5142ca8e123cee3d2bca3a6fb7"
+    },
+    {
+      "path": "tools/skopos/actions",
+      "digest": "9cb88a88213c2cadf72639c35a1c8ad791f1963f68cfc5d3cd9607b8275c7465"
+    },
+    {
+      "path": "tools/skopos/guards",
+      "digest": "45472c0c97570cd3237de1ca2f97babec5a8bc79c6eec6fc2a0ff197c878fbb8"
+    },
+    {
+      "path": "tools/skopos/policies.yaml",
+      "digest": "e4f7c45a199a6a440faa2674bf4d495310a2024c75de0751f6b7f5ae847a0458"
+    },
+    {
+      "path": "tools/skopos/scopes.yaml",
+      "digest": "d5421e42b80bb9a25b8f5dc9fda8bebc756aba01a85ec30522c54166ba69a324"
+    },
+    {
+      "path": "tools/skopos/skills",
+      "digest": "6a44fe94cbfcd5bc5d66383de2d5fdd3cf9f66923a681b5dae4e7b9384333d57"
+    }
+  ],
+  "digest": "b65960d2c859450aa315db51f40bbfac18e3b95d4ed94d8ee30a98290ca2aabd",
+  "createdAt": "2026-08-13T13:58:29.786Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-setupb65960d2-S-b65960d2c859.json"
+}

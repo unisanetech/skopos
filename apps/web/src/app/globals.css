@@ -1,8 +1,8 @@
-/* Unisane UI local runtime baseline. App overrides belong below this block. */
+/* Skopos-owned local UI baseline. App overrides belong below this block. */
 @import "tailwindcss";
 @source "../**/*.{ts,tsx,mdx}";
 
-/* unisane:theme:start */
+/* skopos:theme:start */
 /* Generated theme: Neutral. Replace this managed region with the CLI. */
 :root {
   --color-primary: #48758b;
@@ -343,9 +343,9 @@
   --color-inverse-on-surface: #323638;
   --color-inverse-primary: #48758b;
 }
-/* unisane:theme:end */
+/* skopos:theme:end */
 /* ============================================================
-   Unisane UI Design Tokens
+   Skopos UI Design Tokens
    Generated from "Blue" theme using OKLCH color science
    ============================================================ */
 
@@ -1214,10 +1214,10 @@
     outline-offset: 2px;
   }
 
-  .unisane-text-field-control:-webkit-autofill,
-  .unisane-text-field-control:-webkit-autofill:hover,
-  .unisane-text-field-control:-webkit-autofill:focus,
-  .unisane-text-field-control:-webkit-autofill:active {
+  .skopos-text-field-control:-webkit-autofill,
+  .skopos-text-field-control:-webkit-autofill:hover,
+  .skopos-text-field-control:-webkit-autofill:focus,
+  .skopos-text-field-control:-webkit-autofill:active {
     -webkit-box-shadow: 0 0 0 1000px var(--color-surface) inset;
     -webkit-text-fill-color: var(--color-on-surface);
     caret-color: var(--color-primary);
@@ -1370,7 +1370,7 @@
   }
 }
 
-/* Skopos public website overrides. The Unisane managed baseline remains above. */
+/* Skopos public website overrides. The app-owned baseline remains above. */
 :root {
   --color-primary: #111111;
   --color-on-primary: #ffffff;
@@ -2445,7 +2445,7 @@ code {
   }
 
   .memory-tree,
-  .memory-adoption-steps {
+  .memory-setup-steps {
     border-top: 1px solid var(--skopos-rule-light);
     border-left: 0;
   }

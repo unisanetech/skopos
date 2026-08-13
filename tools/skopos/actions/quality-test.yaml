@@ -1,0 +1,46 @@
+{
+  "id": "quality.test",
+  "title": "Test affected behavior",
+  "description": "Run the project-owned behavior proof.",
+  "category": "quality-check",
+  "scope": [
+    "workspace"
+  ],
+  "command": "pnpm test",
+  "cwd": ".",
+  "timeoutMs": 900000,
+  "inputs": [
+    "."
+  ],
+  "outputs": [],
+  "affects": [],
+  "capabilities": {
+    "process": "required",
+    "network": "none",
+    "browser": "none",
+    "tools": [],
+    "secrets": [],
+    "services": []
+  },
+  "effects": {
+    "workspace": "none",
+    "artifacts": "none",
+    "external": "none"
+  },
+  "concurrency": "shared",
+  "workspaceMode": "overlay-safe",
+  "safety": "read-only",
+  "requiresApproval": false,
+  "whenToUse": "Use when a matching Guard selects quality.test for Task impact.",
+  "phases": [
+    "stabilization",
+    "closure"
+  ],
+  "risks": [
+    "light",
+    "standard",
+    "high-impact"
+  ],
+  "recommendedAfter": [],
+  "owner": "project"
+}

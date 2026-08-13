@@ -57,6 +57,7 @@ export interface SkoposDiscussionRecentRunResult {
   recentCheckpoints: SkoposDiscussionRecentEntry[];
   latestJournalPath?: string;
   latestJournalTurnCount: number;
+  latestJournalTurnAt?: string;
   additionalContext?: string;
 }
 

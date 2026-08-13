@@ -49,7 +49,7 @@ build environment had no network access.
 
 These are two different product lifecycles:
 
-1. `@skopos/cli` is the first npm release candidate
+1. `@unisane/skopos` is the first npm release candidate
 2. `@skopos/web` is a separately hosted public product surface
 
 Website health should not silently block or weaken CLI publication proof, and CLI

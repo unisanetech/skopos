@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-10
+lastUpdated: 2026-08-13
 relatedDocs:
   - 00-architecture.md
   - ../decisions/031-bundled-cli-release-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: before every public package release or imported-source change
 ---
 
@@ -20,7 +21,7 @@ reviewCycle: before every public package release or imported-source change
 
 ## Release Boundary
 
-The first public artifact is the bundled `@skopos/cli` npm package. GitHub source and
+The first public artifact is the bundled `@unisane/skopos` npm package. GitHub source and
 the npm tarball are separate review surfaces:
 
 1. the repository review covers authored source, fixtures, licenses, and provenance
@@ -33,6 +34,13 @@ the npm tarball are separate review surfaces:
 The public package manifest exposes the `skopos` binary and import export only.
 Repository build, test, benchmark, proof, release, and UI-capture scripts are owned by
 the private workspace root and must not appear in the installed package manifest.
+
+The canonical source and npm-provenance repository is
+`https://github.com/unisanetech/skopos`. Exact owner, repository, workflow, and
+environment identity must agree across the package manifest, trusted publisher, and
+release Evidence. Company ownership does not widen the tarball boundary or permit a
+private Unisane package, registry, configuration, or product integration to enter the
+Skopos runtime.
 
 ## Product Interface Design Runtime Assets
 
@@ -75,7 +83,7 @@ On 2026-08-09, during the public-release hardening review, the copyright owner
 confirmed ownership of Unisane UI and explicitly authorized the Unisane UI source
 copied into Skopos for distribution under Apache-2.0. That authorization covers the
 source-installed UI implementation under `packages/ui/src/**`, its token and theme
-baseline, and the corresponding compiled object code bundled into `@skopos/cli`.
+baseline, and the corresponding compiled object code bundled into `@unisane/skopos`.
 Those files are distributed under the repository's root Apache-2.0 `LICENSE`.
 
 The copied UI source is therefore certified as Apache-2.0-compatible for this release
@@ -102,6 +110,9 @@ Before publication, the release gate must show:
 
 ## Changelog
 
+- `2026-08-13`: Bound current package and trusted-publisher provenance to
+  `unisanetech/skopos` while preserving Skopos as a standalone product with no private
+  Unisane runtime or registry dependency.
 - `2026-08-10`: Kept the required Product Interface Design three-module core in the
   package while excluding four unproven Design Context development assets. The copy
   step now validates the complete 42-file source inventory as 38 public files plus four

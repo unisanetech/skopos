@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../../architecture/runtime-model.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
@@ -22,12 +22,14 @@ The CLI is a thin human and coding-agent adapter over canonical runtime use case
 
 ## Changelog
 
+- `2026-08-13`: Made setup the only public onboarding journey and removed the
+  prototype adopt command family. Init remains a low-level reconstruction command.
 - `2026-07-29`: Promoted the canonical first-release command surface.
 
 ## Primary Commands
 
-1. `skopos init`
-2. `skopos adopt`
+1. `skopos setup`
+2. `skopos init` for low-level reconstruction and diagnostics
 3. `skopos knowledge`
 4. `skopos session context`
 5. `skopos start`

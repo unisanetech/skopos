@@ -493,7 +493,7 @@ const buildAgentAnalysisBriefArtifact = async ({
     nextAgentAction:
       analysisStatus === 'agent-reviewed'
         ? 'Use the mapped project understanding sources as durable context before broad source scans.'
-        : 'Have a coding agent follow this brief, inspect the project, write the durable understanding docs, then rerun `skopos understand .` and `skopos adopt assess .`.',
+        : 'Have a coding agent follow this brief, inspect the project, write the approved durable understanding docs, then run `skopos setup resume .`.',
     nextCommand:
       analysisStatus === 'agent-reviewed'
         ? 'skopos session context . --json'
@@ -886,6 +886,12 @@ const buildSetupAssumptions = ({
   lifecycle: 'greenfield' | 'brownfield';
   projectMode?: SkoposRootConfig['project']['mode'];
 }): SkoposUnderstandingSetupClaim[] => {
+  const hasDeclaredRootConfig = bootstrap.sourceDependencies.some(
+    (dependency) => dependency.kind === 'root-config' && dependency.existsAtBuild,
+  );
+  const configuredDocsRootIsCurrent =
+    hasDeclaredRootConfig &&
+    bootstrap.detected.docsRoots.includes(bootstrap.recommendedConfig.docs.root);
   const assumptions: SkoposUnderstandingSetupClaim[] = [
     {
       id: 'assumption.lifecycle',
@@ -912,9 +918,14 @@ const buildSetupAssumptions = ({
       id: 'assumption.archetype',
       kind: 'assumption',
       title: 'Project archetype',
-      summary: `Skopos is using "${bootstrap.recommendedConfig.project.archetype}" as the working archetype until confirmed.`,
-      confidence: bootstrap.detected.confidence,
-      evidence: [{ label: 'Bootstrap detection', path: '.skopos/index/bootstrap.json' }],
+      summary: hasDeclaredRootConfig
+        ? `Skopos is using the configured "${bootstrap.recommendedConfig.project.archetype}" project archetype.`
+        : `Skopos is using "${bootstrap.recommendedConfig.project.archetype}" as the working archetype until confirmed.`,
+      confidence: hasDeclaredRootConfig ? 'high' : bootstrap.detected.confidence,
+      evidence: [{
+        label: hasDeclaredRootConfig ? 'Root config' : 'Bootstrap detection',
+        path: hasDeclaredRootConfig ? 'skopos.config.yaml' : '.skopos/index/bootstrap.json',
+      }],
     },
   ];
 
@@ -923,8 +934,12 @@ const buildSetupAssumptions = ({
       id: 'assumption.docs-root',
       kind: 'assumption',
       title: 'Canonical docs root',
-      summary: `Skopos is treating "${bootstrap.recommendedConfig.docs.root}" as the preferred docs root unless the user confirms a different source of truth.`,
-      confidence: bootstrap.detected.docsHealth.hasStartHere ? 'high' : 'medium',
+      summary: configuredDocsRootIsCurrent
+        ? `Skopos is using the configured "${bootstrap.recommendedConfig.docs.root}" canonical docs root.`
+        : `Skopos is treating "${bootstrap.recommendedConfig.docs.root}" as the preferred docs root unless the user confirms a different source of truth.`,
+      confidence: configuredDocsRootIsCurrent || bootstrap.detected.docsHealth.hasStartHere
+        ? 'high'
+        : 'medium',
       evidence: buildDocsEntrypoints(bootstrap),
     });
   } else {
@@ -1078,7 +1093,7 @@ const buildSetupRecommendedActions = (
   if (readiness === 'ready') {
     return [
       'Use the repo summary and hotspots as the compact first-read context for future agent work.',
-      'Run `skopos adopt assess .` before closing onboarding so Memory and instruction surfaces stay aligned.',
+      'Run `skopos setup resume .` before closing onboarding so Memory and instruction surfaces stay aligned.',
     ];
   }
 
@@ -1201,10 +1216,36 @@ const applySetupAnswerToConfig = async ({
     });
   }
 
+  if (questionId === 'bootstrap.instructions-source' && optionId === 'restore-configured-instructions') {
+    candidateEffects.push({
+      kind: 'answer-recorded',
+      path: existingConfig.agents.canonicalInstructions,
+      summary: `Setup Apply will restore the configured ${existingConfig.agents.canonicalInstructions} instruction source without changing project configuration.`,
+    });
+  }
+
+  if (questionId === 'bootstrap.instructions-source' && optionId.startsWith('switch-instruction-source:')) {
+    const instructionSource = optionId.slice('switch-instruction-source:'.length);
+    if (instructionSource) {
+      nextConfig.agents.canonicalInstructions = instructionSource;
+      const normalizedInstructionSource = normalizeWorkspacePath(instructionSource);
+      nextConfig.agents.syncMirrors = [...new Map(
+        nextConfig.agents.syncMirrors
+          .filter((mirror) => normalizeWorkspacePath(mirror) !== normalizedInstructionSource)
+          .map((mirror) => [normalizeWorkspacePath(mirror), mirror] as const),
+      ).values()];
+      candidateEffects.push({
+        kind: 'config-updated',
+        path: 'skopos.config.yaml',
+        summary: `Canonical agent instructions set to ${instructionSource}; that source was removed from generated mirror targets.`,
+      });
+    }
+  }
+
   if (JSON.stringify(existingConfig) === JSON.stringify(nextConfig)) {
     return {
       configWrite: 'unchanged',
-      effects: [],
+      effects: candidateEffects,
     };
   }
 
@@ -1223,6 +1264,9 @@ const isProjectArchetype = (value: string): value is SkoposRootConfig['project']
 
 const isProjectMode = (value: string): value is NonNullable<SkoposRootConfig['project']['mode']> =>
   ['brownfield', 'clean-refactor', 'greenfield-in-existing-repo', 'new-project'].includes(value);
+
+const normalizeWorkspacePath = (value: string): string =>
+  value.replaceAll('\\', '/').replace(/^\.\//u, '').replace(/\/+$/u, '') || '.';
 
 const describeRepoPurpose = ({
   projectName,

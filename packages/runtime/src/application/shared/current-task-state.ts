@@ -75,6 +75,40 @@ export const resolveCurrentTaskState = async ({
   });
 };
 
+export const resolveLatestCompletedTaskState = async ({
+  workspaceRoot,
+  actorId,
+}: {
+  workspaceRoot: string;
+  actorId?: string;
+}): Promise<SkoposCurrentTaskState | undefined> => {
+  await reconstructTrackedSkoposTasksRuntime({ cwd: workspaceRoot });
+  const [workspace, tasks] = await Promise.all([
+    resolveSkoposWorkspaceIdentity(workspaceRoot),
+    loadTaskArtifacts(workspaceRoot),
+  ]);
+  const candidates = tasks
+    .filter((task) =>
+      taskIdentityMatchesWorkspace({
+        taskIdentity: task.taskIdentity,
+        workspace,
+      }),
+    )
+    .filter(
+      (task) =>
+        task.state === 'complete' &&
+        (!actorId || task.coordination.claimedBy?.actorId === actorId),
+    )
+    .sort(
+      (left, right) =>
+        Date.parse(right.updatedAt ?? right.generatedAt ?? '') -
+        Date.parse(left.updatedAt ?? left.generatedAt ?? ''),
+    );
+  return candidates[0]
+    ? buildCurrentTaskState({ workspaceRoot, task: candidates[0] })
+    : undefined;
+};
+
 export const buildCurrentTaskState = ({
   workspaceRoot,
   task,

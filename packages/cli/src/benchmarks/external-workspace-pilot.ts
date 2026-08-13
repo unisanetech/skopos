@@ -185,8 +185,8 @@ export const runExternalWorkspacePilot = (
     tasksCreated: 0,
     compactBudgetBytes: COMPACT_JSON_BUDGET_BYTES,
     limitations: [
-      'The pilot validates Skopos transport, retrieval, classification, and project integration behavior; it does not certify Unisane product implementation or production deployment.',
-      'The live Unisane Work Queue and dirty worktree remain project-owned state and are reported, not resolved, by this pilot.',
+      'The pilot validates Skopos transport, retrieval, classification, and project integration behavior; it does not certify the external project implementation or production deployment.',
+      'The live external-project Work Queue and dirty worktree remain project-owned state and are reported, not resolved, by this pilot.',
       'Command durations are local wall-clock observations and exclude model reasoning or network latency.',
     ],
   };
@@ -227,10 +227,10 @@ export const renderExternalWorkspacePilotReport = (
     .join('\n');
   const limitations = report.limitations.map((entry) => `- ${entry}`).join('\n');
   return `---
-title: Unisane External Workspace Pilot
+title: External Workspace Pilot
 status: generated
 owner: skopos-core
-id: DOC-unisane-external-workspace-pilot
+id: DOC-external-workspace-pilot
 scope: skopos
 role: reference
 lifecycle: durable
@@ -243,7 +243,7 @@ relatedDocs:
   - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 ---
 
-# Unisane External Workspace Pilot
+# External Workspace Pilot
 
 ## Result
 

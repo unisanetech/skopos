@@ -34,6 +34,31 @@ afterEach(async () => {
 });
 
 describe('declared Scope registry', () => {
+  it('gives inferred Scopes safe Memory roots before a registry is adopted', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'skopos-inferred-scope-'));
+    temporaryRoots.push(root);
+    await Promise.all([
+      mkdir(join(root, 'src'), { recursive: true }),
+      writeFile(
+        join(root, 'package.json'),
+        JSON.stringify({ name: 'inferred-project', private: true }),
+        'utf8',
+      ),
+    ]);
+
+    const scanSummary = await scanRepo({ cwd: root });
+    const scopesLite = await buildSkoposScopesLite({ cwd: root, scanSummary });
+
+    expect(scopesLite.scopes).toContainEqual(
+      expect.objectContaining({
+        id: 'workspace',
+        kind: 'workspace',
+        memoryRoot: 'docs',
+        codeRoots: ['.'],
+      }),
+    );
+  });
+
   it('uses stable declared ids, memory roots, profiles, and dependencies', async () => {
     const root = await createWorkspace();
     const scanSummary = await scanRepo({ cwd: root });

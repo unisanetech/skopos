@@ -48,6 +48,7 @@ import { writeSkoposProjectArtifact } from '../agent-native/project-artifact.js'
 import {
   buildSkoposAdoptionAssessmentRuntime,
   hasActiveSkoposAdoptionRuntime,
+  reconstructTrackedSkoposAdoptionReadinessRuntime,
 } from '../adoption/adoption.service.js';
 import { resolveSkoposGuardsRuntime } from '../guards/guards.service.js';
 import { resolveSkoposPolicyRuntime } from '../policies/policies.service.js';
@@ -61,7 +62,9 @@ export interface InitSkoposProjectOptions {
   dryRun?: boolean;
   force?: boolean;
   scaffoldInstructions?: boolean;
+  scaffoldMemoryBoundary?: boolean;
   forceInstructions?: boolean;
+  buildAdoptionAssessment?: boolean;
 }
 
 export const initSkoposProject = async ({
@@ -72,7 +75,9 @@ export const initSkoposProject = async ({
   dryRun = false,
   force = false,
   scaffoldInstructions = true,
+  scaffoldMemoryBoundary = false,
   forceInstructions = false,
+  buildAdoptionAssessment = true,
 }: InitSkoposProjectOptions): Promise<SkoposInitResult> => {
   const workspaceRoot = resolve(cwd);
   const actorId = resolveSkoposRuntimeActorId(actor);
@@ -119,10 +124,13 @@ export const initSkoposProject = async ({
         })
       : undefined;
   const scopeRegistryScaffold =
-    mode === 'greenfield'
+    mode === 'greenfield' || scaffoldMemoryBoundary
       ? await scaffoldScopeRegistry({
           workspaceRoot,
-          scopes: scopesLite.scopes,
+          scopes:
+            mode === 'greenfield'
+              ? scopesLite.scopes
+              : scopesLite.scopes.filter((scope) => scope.kind === 'workspace'),
           docsRoot: bootstrap.recommendedConfig.docs.root,
           dryRun,
         })
@@ -261,6 +269,7 @@ export const initSkoposProject = async ({
   const projectArtifact = await writeSkoposProjectArtifact({
     workspaceRoot,
     dryRun,
+    config: bootstrap.recommendedConfig,
   });
   const fallbackRegistry = buildFallbackRegistryArtifact({
     projectMode: bootstrap.recommendedConfig.project.mode,
@@ -289,16 +298,19 @@ export const initSkoposProject = async ({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   await syncCodexWrapperAdapter({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   await syncManualHostAdapter({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   const workspaceGraphWrite = await writeJsonArtifact({
     artifactPath: workspaceGraphPath,
@@ -323,10 +335,13 @@ export const initSkoposProject = async ({
     artifact: scopeRelationsGraph,
     dryRun,
   });
-  const adoptionIsActive =
+  const adoptionReconstruction = !dryRun
+    ? await reconstructTrackedSkoposAdoptionReadinessRuntime({ cwd: workspaceRoot })
+    : undefined;
+  const localAdoptionIsActive =
     !dryRun && (await hasActiveSkoposAdoptionRuntime({ cwd: workspaceRoot }));
   const adoptionAssessment =
-    dryRun || adoptionIsActive
+    dryRun || !buildAdoptionAssessment || adoptionReconstruction || localAdoptionIsActive
       ? undefined
       : await buildSkoposAdoptionAssessmentRuntime({
           cwd: workspaceRoot,
@@ -382,7 +397,11 @@ export const initSkoposProject = async ({
       docsScaffoldPath: docsScaffold?.relativePath ?? null,
       scopeRegistryScaffoldStatus: scopeRegistryScaffold?.status ?? null,
       scopeRegistryScaffoldPath: scopeRegistryScaffold?.relativePath ?? null,
-      adoptionState: adoptionAssessment?.adoptionState ?? null,
+      adoptionState:
+        adoptionReconstruction?.state ?? adoptionAssessment?.adoptionState ?? null,
+      adoptionSource: adoptionReconstruction?.source ?? null,
+      adoptionCertificationTaskId:
+        adoptionReconstruction?.certificationTaskId ?? null,
       adoptionIntakePath: adoptionAssessment?.intakePath ?? null,
       gitignoreScaffoldStatus: gitignoreScaffold.status,
       gitignoreScaffoldPath: gitignoreScaffold.relativePath,
@@ -464,6 +483,7 @@ export const initSkoposProject = async ({
     gitignoreScaffold,
     instructionScaffold,
     adoptionAssessment,
+    adoptionReconstruction,
     configWrite,
     projectWrite: projectArtifact.write,
     bootstrapWrite,

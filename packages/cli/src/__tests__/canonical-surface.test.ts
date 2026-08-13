@@ -8,7 +8,7 @@ describe('canonical CLI surface', () => {
   it('exposes one first-release work and proof vocabulary', () => {
     expect(Object.keys(skoposCliCommandRegistry)).toEqual(
       expect.arrayContaining([
-        'adopt',
+        'setup',
         'session',
         'start',
         'task',
@@ -25,6 +25,7 @@ describe('canonical CLI surface', () => {
     );
     expect(Object.keys(skoposCliCommandRegistry)).not.toEqual(
       expect.arrayContaining([
+        'adopt',
         'mission',
         'program',
         'workflows',
@@ -35,6 +36,13 @@ describe('canonical CLI surface', () => {
         'next',
       ]),
     );
+  });
+
+  it('keeps onboarding on setup without a public adoption compatibility command', () => {
+    expect(skoposCliCommandRegistry.setup).toBeTypeOf('function');
+    expect(skoposCliCommandRegistry).not.toHaveProperty('adopt');
+    expect(skoposCliCommandRegistry).not.toHaveProperty('understand');
+    expect(skoposCliCommandRegistry.init).toBeTypeOf('function');
   });
 
   it('renders only executable current Task and closure commands', () => {

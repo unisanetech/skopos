@@ -1,5 +1,5 @@
-import { access, readFile, rm } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { access, readFile, readdir, rm } from 'node:fs/promises';
+import { join, posix, relative, resolve } from 'node:path';
 
 import { loadSkoposConfig } from '@skopos/config';
 import {
@@ -15,7 +15,10 @@ import {
   SKOPOS_ADOPTION_PROPOSAL_PATH,
   SKOPOS_ADOPTION_VERIFICATION_PATH,
 } from '@skopos/docs-engine';
-import { buildSkoposDocumentCatalog } from '@skopos/indexer';
+import {
+  buildSkoposDocumentCatalog,
+  loadSkoposScopeRegistry,
+} from '@skopos/indexer';
 import { checkInstructionMirrorParity } from '@skopos/instructions';
 import type {
   SkoposAdoptionAssessmentRuntimeResult,
@@ -31,15 +34,26 @@ import type {
   SkoposAdoptionVerificationCheck,
   SkoposAdoptionVerificationRuntimeResult,
   SkoposBootstrapArtifact,
+  SkoposTaskArtifact,
+  SkoposTaskSnapshot,
+  SkoposTrackedAdoptionReadiness,
   SkoposScopesLiteArtifact,
 } from '@skopos/model';
+import {
+  captureSkoposTaskPathStates,
+  digestSkoposTaskPathStates,
+} from '@skopos/verification';
 
 import {
   appendSkoposOperationalLogEntry,
   refreshSkoposKnowledgeIndex,
 } from '../shared/knowledge-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
+import { SKOPOS_RUNTIME_SETUP_CERTIFICATION_CONSTRAINT } from '../shared/setup-certification.js';
 import { writeJsonArtifact } from '../shared/write-json-artifact.js';
+import {
+  reconstructTrackedSkoposTasksRuntime,
+} from '../task/task.service.js';
 
 export interface BuildSkoposAdoptionAssessmentRuntimeOptions {
   cwd: string;
@@ -81,49 +95,304 @@ export const hasActiveSkoposAdoptionRuntime = async ({
   cwd,
 }: {
   cwd: string;
-}): Promise<boolean> => {
+}): Promise<boolean> =>
+  (await reconstructTrackedSkoposAdoptionReadinessRuntime({ cwd }))?.state ===
+  'agent-ready';
+
+export const reconstructTrackedSkoposAdoptionReadinessRuntime = async ({
+  cwd,
+}: {
+  cwd: string;
+}): Promise<SkoposTrackedAdoptionReadiness | undefined> => {
   const workspaceRoot = resolve(cwd);
-  const [proposal, approval, verification, activation] = await Promise.all([
-    readJsonIfExists<SkoposAdoptionRestructuringProposalArtifact>(
-      join(workspaceRoot, SKOPOS_ADOPTION_PROPOSAL_PATH),
-    ),
-    readJsonIfExists<SkoposAdoptionApprovalArtifact>(
-      join(workspaceRoot, SKOPOS_ADOPTION_APPROVAL_PATH),
-    ),
-    readJsonIfExists<SkoposAdoptionVerificationArtifact>(
-      join(workspaceRoot, SKOPOS_ADOPTION_VERIFICATION_PATH),
-    ),
-    readJsonIfExists<SkoposAdoptionActivationArtifact>(
-      join(workspaceRoot, SKOPOS_ADOPTION_ACTIVATION_PATH),
-    ),
-  ]);
+  const tasks = await loadTrackedSetupCertificationTasks(workspaceRoot);
+  const certification = tasks
+    .filter(isCompleteSetupCertificationTask)
+    .sort((left, right) =>
+      (right.updatedAt ?? right.generatedAt ?? '').localeCompare(
+        left.updatedAt ?? left.generatedAt ?? '',
+      ),
+    )[0];
+  if (!certification) return undefined;
 
-  if (!proposal || !approval || !verification || !activation) return false;
-  if (
-    proposal.proposalDigest !== approval.proposalDigest ||
-    proposal.proposalDigest !== verification.proposalDigest ||
-    proposal.proposalDigest !== activation.proposalDigest
-  ) {
-    return false;
-  }
-  if (
-    activation.status !== 'active' ||
-    activation.adoptionState !== 'agent-ready' ||
-    verification.adoptionState !== 'standard-verified' ||
-    verification.checks.some((check) => check.status !== 'pass')
-  ) {
-    return false;
-  }
-
-  const proposedIds = proposal.operations.map((operation) => operation.id).sort();
-  const approvedIds = [...approval.approvedOperationIds].sort();
-  const verifiedIds = [...verification.verifiedOperationIds].sort();
-  const activatedIds = [...activation.verifiedOperationIds].sort();
-  return (
-    JSON.stringify(proposedIds) === JSON.stringify(approvedIds) &&
-    JSON.stringify(proposedIds) === JSON.stringify(verifiedIds) &&
-    JSON.stringify(proposedIds) === JSON.stringify(activatedIds)
+  const snapshot = await loadLatestTrackedSetupSnapshot(
+    workspaceRoot,
+    certification,
   );
+  if (!snapshot) return undefined;
+
+  const currentStates = await captureSkoposTaskPathStates({
+    workspaceRoot,
+    paths: snapshot.paths.map((entry) => entry.path),
+    ignoredTaskId: certification.id,
+  });
+  const currentByPath = new Map(currentStates.map((entry) => [entry.path, entry.digest]));
+  const changedPaths = snapshot.paths
+    .filter((entry) => currentByPath.get(entry.path) !== entry.digest)
+    .map((entry) => entry.path);
+  return buildTrackedReadinessFromChangedPaths({
+    workspaceRoot,
+    certificationTaskId: certification.id,
+    snapshotPath: snapshot.path,
+    changedPaths,
+  });
+};
+
+const buildTrackedReadinessFromChangedPaths = async ({
+  workspaceRoot,
+  certificationTaskId,
+  snapshotPath,
+  changedPaths,
+}: {
+  workspaceRoot: string;
+  certificationTaskId: string;
+  snapshotPath: string;
+  changedPaths: string[];
+}): Promise<SkoposTrackedAdoptionReadiness> => {
+  const config = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
+  const scopeRegistry = await loadSkoposScopeRegistry({ cwd: workspaceRoot }).catch(
+    () => null,
+  );
+  const memoryRoots = [
+    config?.docs.root,
+    ...(scopeRegistry?.scopes.map((scope) => scope.memoryRoot) ?? []),
+  ].filter((root): root is string => Boolean(root));
+  const instructionPaths = new Set([
+    config?.agents.canonicalInstructions ?? 'AGENTS.md',
+    ...(config?.agents.syncMirrors ?? [
+      'CLAUDE.md',
+      '.github/copilot-instructions.md',
+      '.cursor/rules/project.mdc',
+    ]),
+  ]);
+  const lanePaths: Record<
+    'memory' | 'scopes' | 'capabilities' | 'instructions' | 'configuration',
+    string[]
+  > = {
+    memory: changedPaths.filter(
+      (path) =>
+        path === 'README.md' ||
+        memoryRoots.some((memoryRoot) => isPathWithinRoot(path, memoryRoot)),
+    ),
+    scopes: changedPaths.filter((path) => /(?:^|\/)scopes\.ya?ml$/u.test(path)),
+    capabilities: changedPaths.filter((path) =>
+      /(?:^|\/)tools\/skopos\/(?:actions|guards)(?:\/|\.ya?ml$)/u.test(path),
+    ),
+    instructions: changedPaths.filter((path) => instructionPaths.has(path)),
+    configuration: changedPaths.filter((path) => path === 'skopos.config.yaml'),
+  };
+  const classifiedPaths = new Set(Object.values(lanePaths).flat());
+  lanePaths.configuration.push(
+    ...changedPaths.filter((path) => !classifiedPaths.has(path)),
+  );
+
+  const lanes: SkoposTrackedAdoptionReadiness['lanes'] = [
+    ['memory', 'Tracked project Memory and document authority'],
+    ['scopes', 'Tracked Scope ownership'],
+    ['capabilities', 'Tracked Actions and required Guards'],
+    ['instructions', 'Canonical instructions and host mirrors'],
+    ['configuration', 'Skopos configuration and certification boundary'],
+  ].map(([id, summary]) => {
+    const affectedPaths = [...new Set(lanePaths[id as keyof typeof lanePaths])].sort();
+    return {
+      id: id as keyof typeof lanePaths,
+      status: affectedPaths.length === 0 ? 'ready' : 'stale',
+      summary,
+      affectedPaths,
+    };
+  });
+
+  return {
+    source: 'tracked-reconstruction',
+    state: lanes.every((lane) => lane.status === 'ready')
+      ? 'agent-ready'
+      : 'agent-analysis-required',
+    certificationTaskId,
+    snapshotPath,
+    lanes,
+  };
+};
+
+const loadTrackedSetupCertificationTasks = async (
+  workspaceRoot: string,
+): Promise<SkoposTaskArtifact[]> => {
+  await reconstructTrackedSkoposTasksRuntime({ cwd: workspaceRoot });
+  const catalog = await buildSkoposDocumentCatalog({
+    cwd: workspaceRoot,
+    config: undefined,
+  });
+  const documentPaths = [
+    ...catalog.documents
+      .filter(
+        (document) =>
+          document.role === 'task' &&
+          (document.lifecycle === 'active' || document.lifecycle === 'historical'),
+      )
+      .map((document) => document.path),
+    ...(await listTrackedTaskDocumentPaths(workspaceRoot)),
+  ];
+  const candidates = await Promise.all(
+    [...new Set(documentPaths)].map(async (documentPath) => {
+        const source = await readFile(join(workspaceRoot, documentPath), 'utf8');
+        const match = source.match(
+          /<!-- skopos:task-state:start -->\s*```json\s*([\s\S]*?)\s*```\s*<!-- skopos:task-state:end -->/u,
+        );
+        if (!match?.[1]) return undefined;
+        const portable = JSON.parse(match[1]) as PortableTrackedTask;
+        if (
+          !portable.contract?.constraints?.includes(
+            SKOPOS_RUNTIME_SETUP_CERTIFICATION_CONSTRAINT,
+          )
+        ) {
+          return undefined;
+        }
+        return buildTrackedTaskFromPortable({
+          workspaceRoot,
+          trackedDocumentPath: documentPath,
+          portable,
+        });
+      }),
+  );
+  return candidates.filter((task): task is SkoposTaskArtifact => Boolean(task));
+};
+
+const buildTrackedTaskFromPortable = ({
+  workspaceRoot,
+  trackedDocumentPath,
+  portable,
+}: {
+  workspaceRoot: string;
+  trackedDocumentPath: string;
+  portable: PortableTrackedTask;
+}): SkoposTaskArtifact => ({
+  ...portable,
+  workspaceRoot,
+  taskIdentity: {
+    repositoryId: 'tracked-reconstruction',
+    repositoryRoot: workspaceRoot,
+    worktreeId: 'tracked-reconstruction',
+    worktreeRoot: workspaceRoot,
+    taskId: portable.id,
+  },
+  trackedDocumentPath,
+  authority: 'generated',
+  changeScope: {
+    capturedAt: portable.generatedAt ?? portable.updatedAt ?? new Date(0).toISOString(),
+    baselineDirtyPaths: [],
+    declaredOwnedPaths: portable.declaredOwnedPaths ?? [],
+  },
+  coordination: {},
+});
+
+type PortableTrackedTask = Omit<
+    SkoposTaskArtifact,
+    | 'workspaceRoot'
+    | 'taskIdentity'
+    | 'trackedDocumentPath'
+    | 'coordination'
+    | 'authority'
+    | 'changeScope'
+  > & { declaredOwnedPaths?: string[] };
+
+const listTrackedTaskDocumentPaths = async (
+  workspaceRoot: string,
+): Promise<string[]> => {
+  const roots = ['docs/work/tasks', 'docs/work/archive/tasks'];
+  const files = await Promise.all(
+    roots.map(async (relativeRoot) => {
+      const entries = await readdir(join(workspaceRoot, relativeRoot), {
+        withFileTypes: true,
+      }).catch(() => []);
+      return entries
+        .filter(
+          (entry) =>
+            entry.isFile() &&
+            /^T-[a-z0-9]+.*\.md$/iu.test(entry.name),
+        )
+        .map((entry) => join(relativeRoot, entry.name));
+    }),
+  );
+  return files.flat();
+};
+
+const isCompleteSetupCertificationTask = (
+  task: SkoposTaskArtifact,
+): boolean =>
+  task.type === 'task' &&
+  task.status === 'durable' &&
+  task.state === 'complete' &&
+  task.risk === 'high-impact' &&
+  task.detail === 'detailed' &&
+  task.contract.constraints.includes(SKOPOS_RUNTIME_SETUP_CERTIFICATION_CONSTRAINT) &&
+  task.steps.every((step) => step.status === 'complete' || step.status === 'skipped') &&
+  task.memoryObligations.every((obligation) => obligation.status === 'complete') &&
+  task.questions.every((question) => question.status !== 'open');
+
+const loadLatestTrackedSetupSnapshot = async (
+  workspaceRoot: string,
+  certification: SkoposTaskArtifact,
+): Promise<
+  | {
+      path: string;
+      createdAt: string;
+      paths: Array<{ path: string; digest: string }>;
+      digest: string;
+    }
+  | undefined
+> => {
+  const taskId = certification.id;
+  if (!certification.trackedDocumentPath) return undefined;
+  const directory = join(
+    workspaceRoot,
+    resolveTrackedTaskWorkRoot(certification.trackedDocumentPath),
+    'tasks',
+    'snapshots',
+  );
+  const names = await readdir(directory).catch(() => [] as string[]);
+  const candidates = await Promise.all(
+    names
+      .filter((name) => name.startsWith(`${taskId}-S-`) && name.endsWith('.json'))
+      .map(async (name) => {
+        const artifactPath = join(directory, name);
+        const value = await readJsonIfExists<SkoposTaskSnapshot>(artifactPath);
+        return value?.createdAt &&
+          value.taskId === taskId &&
+          value.paths?.length &&
+          value.digest === digestSkoposTaskPathStates(value.paths) &&
+          value.snapshotId === `S-${value.digest.slice(0, 12)}`
+          ? {
+              path: relative(workspaceRoot, artifactPath).replaceAll('\\', '/'),
+              createdAt: value.createdAt,
+              paths: value.paths.map((entry) => ({
+                ...entry,
+                path: entry.path.replaceAll('\\', '/'),
+              })),
+              digest: value.digest,
+            }
+          : undefined;
+      }),
+  );
+  return candidates
+    .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
+    .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+};
+
+const resolveTrackedTaskWorkRoot = (trackedDocumentPath: string): string => {
+  let workRoot = posix.dirname(posix.dirname(trackedDocumentPath.replaceAll('\\', '/')));
+  while (posix.basename(workRoot) === 'archive') {
+    workRoot = posix.dirname(workRoot);
+  }
+  return workRoot;
+};
+
+const isPathWithinRoot = (path: string, root: string): boolean => {
+  const normalizedPath = path.replaceAll('\\', '/');
+  const normalizedRoot = root
+    .replaceAll('\\', '/')
+    .replace(/^\.\//u, '')
+    .replace(/\/+$/u, '');
+  if (!normalizedRoot || normalizedRoot === '.') return true;
+  return normalizedPath === normalizedRoot || normalizedPath.startsWith(`${normalizedRoot}/`);
 };
 
 export const buildSkoposAdoptionAssessmentRuntime = async ({
@@ -498,7 +767,7 @@ const buildAdoptionExecutionBrief = ({
     })),
   },
   verificationCommand:
-    'skopos adopt verify . --execution .skopos/adoption/execution-input.json --actor <id>',
+    'skopos setup resume . --actor <id>',
 });
 
 export const buildSkoposAdoptionVerificationRuntime = async ({

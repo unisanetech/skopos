@@ -2,13 +2,16 @@ import type {
   SkoposDecisionEscalationClass,
   SkoposDecisionOption,
 } from './skopos-decision-question.js';
-import type { SkoposAdoptionState } from './skopos-adoption.js';
+import type {
+  SkoposAdoptionReadinessLane,
+} from './skopos-adoption.js';
 import type { SkoposTaskCoordinationState } from './skopos-coordination.js';
 import type {
   SkoposTaskRisk,
   SkoposTaskState,
   SkoposTaskStepKind,
 } from './skopos-task.js';
+import type { SkoposSetupLane, SkoposSetupStage } from './skopos-setup.js';
 
 export type SkoposAgentResponseMode =
   | 'direct-answer'
@@ -34,7 +37,7 @@ export interface SkoposSessionPendingDecision {
   alternatives: SkoposDecisionOption[];
   defaultBehavior: SkoposDecisionDefaultBehavior;
   whatHappensAfterAnswer: string;
-  source?: 'task' | 'adoption-question' | 'adoption-approval';
+  source?: 'task' | 'setup-question';
 }
 
 export interface SkoposSessionTaskContext {
@@ -64,6 +67,14 @@ export interface SkoposSessionRecommendedWork {
   scopeId: string;
 }
 
+export interface SkoposSessionCompletedTask {
+  id: string;
+  title: string;
+  goal: string;
+  scopeId: string;
+  completedAt: string;
+}
+
 export interface SkoposSessionInterruptedAction {
   runId: string;
   actionId: string;
@@ -82,19 +93,28 @@ export interface SkoposSessionContextRunResult {
     marker: string;
     tokenBudget: number;
     coreRules: readonly string[];
+    modeRules?: readonly string[];
   };
   currentTaskId?: string;
   currentTask?: SkoposSessionTaskContext;
+  completedTask?: SkoposSessionCompletedTask;
   interruptedAction?: SkoposSessionInterruptedAction;
   recommendedWork?: SkoposSessionRecommendedWork;
   workQueueSummary?: string;
   nextCommand?: string;
   resumeSummary?: string;
   pendingDecision?: SkoposSessionPendingDecision;
-  adoption?: {
-    state: SkoposAdoptionState;
-    assessmentOnly: boolean;
-    proposalDigest?: string;
+  setup?: {
+    stage: SkoposSetupStage;
+    currentStep: string;
+    lanes: SkoposSetupLane[];
+    agentPacketPath: string;
+  };
+  setupReadiness: {
+    state: 'ready' | 'stale' | 'uncertified';
+    source: 'tracked-certification' | 'missing-certification';
+    certificationTaskId?: string;
+    readinessLanes?: SkoposAdoptionReadinessLane[];
   };
   coordination?: SkoposTaskCoordinationState;
   additionalPendingDecisionCount: number;

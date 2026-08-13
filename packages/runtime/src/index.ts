@@ -1,5 +1,10 @@
 export * from './application/init/init.service.js';
-export * from './application/adoption/adoption.service.js';
+export {
+  buildSkoposAdoptionAssessmentRuntime,
+  hasActiveSkoposAdoptionRuntime,
+  reconstructTrackedSkoposAdoptionReadinessRuntime,
+  type BuildSkoposAdoptionAssessmentRuntimeOptions,
+} from './application/adoption/adoption.service.js';
 export * from './application/agent-native/agent-native-operating-model.service.js';
 export * from './application/shared/current-task-state.js';
 export * from './application/task/task.service.js';
@@ -30,10 +35,10 @@ export * from './application/instructions-sync/instructions-sync.service.js';
 export * from './application/instructions-scaffold/instructions-scaffold.service.js';
 export * from './application/start/start.service.js';
 export * from './application/understanding/understanding.service.js';
+export * from './application/setup/setup.service.js';
 export * from './application/storage/storage.service.js';
 export const skoposRuntimeCommands = [
   'init',
-  'adopt',
   'scan',
   'session',
   'coordination',
@@ -57,7 +62,6 @@ export const skoposRuntimeCommands = [
   'impact',
   'knowledge',
   'guards',
-  'understand',
   'integrations',
   'storage',
 ] as const;

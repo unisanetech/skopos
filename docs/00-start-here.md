@@ -9,14 +9,17 @@ lifecycle: active
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-09
+lastUpdated: 2026-08-14
 relatedDocs:
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
   - domains/product/vision.md
   - overview.md
   - domains/product/positioning.md
   - architecture/00-architecture.md
+  - architecture/intelligent-project-onboarding.md
   - architecture/policy-applicability-and-fixture-governance.md
   - architecture/storage-lifecycle-and-privacy.md
   - guides/storage-and-privacy.md
@@ -34,6 +37,15 @@ Skopos.
 
 ## Changelog
 
+- `2026-08-14`: Recorded the clean pre-launch npm identity `@unisane/skopos` after the
+  third-party `@skopos` namespace proved unavailable. The binary remains `skopos`, and
+  company-owned publisher identity does not change the standalone product boundary.
+- `2026-08-13`: Added the company-owned repository and truthful first-release host
+  support boundary. The launch certifies Codex only; other generated host projections
+  remain explicitly unverified until real-host Evidence exists.
+- `2026-08-12`: Added the accepted intelligent project onboarding contract and its
+  canonical architecture route. The target setup journey is one coding-agent-led
+  Understand, Clarify, Review, Apply, and Verify workflow.
 - `2026-08-09`: Added the independent Product Interface Design human-review protocol
   for the current release-gate A/B bundles.
 - `2026-08-09`: Added the progressive Task workflow and semantic Guard template guide
@@ -57,11 +69,13 @@ Skopos.
 Read target truth in this order:
 
 1. [Canonical product decision](decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md)
-2. [Overview](overview.md)
-3. [Vision](domains/product/vision.md)
-4. [Glossary](standards/terminology.md)
-5. [Canonical product convergence Plan](work/plans/P-e7e888e6-canonical-product-convergence.md)
-6. [Architecture baseline](architecture/00-architecture.md)
+2. [Company ownership and first-release host support](decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md)
+3. [Overview](overview.md)
+4. [Vision](domains/product/vision.md)
+5. [Glossary](standards/terminology.md)
+6. [Canonical product convergence Plan](work/plans/P-e7e888e6-canonical-product-convergence.md)
+7. [Architecture baseline](architecture/00-architecture.md)
+8. [Intelligent project onboarding](architecture/intelligent-project-onboarding.md)
 
 The decision owns what the first released product is. The Plan owns how the current
 prototype becomes that product.
@@ -94,14 +108,15 @@ explain history but never define current behavior.
 1. [Architecture baseline](architecture/00-architecture.md)
 2. [Runtime model](architecture/runtime-model.md)
 3. [Agent-native operating model](architecture/agent-native-operating-model.md)
-4. [Config model](architecture/config-model.md)
-5. [Artifact model](architecture/artifact-model.md)
-6. [Docs governance](architecture/docs-governance.md)
-7. [Retrieval strategy](architecture/retrieval-and-query-strategy.md)
-8. [Evidence and Readiness model](architecture/evidence-and-readiness-model.md)
-9. [Action extension model](architecture/action-extension-model.md)
-10. [Policy applicability and fixture governance](architecture/policy-applicability-and-fixture-governance.md)
-11. [Storage lifecycle and privacy](architecture/storage-lifecycle-and-privacy.md)
+4. [Intelligent project onboarding](architecture/intelligent-project-onboarding.md)
+5. [Config model](architecture/config-model.md)
+6. [Artifact model](architecture/artifact-model.md)
+7. [Docs governance](architecture/docs-governance.md)
+8. [Retrieval strategy](architecture/retrieval-and-query-strategy.md)
+9. [Evidence and Readiness model](architecture/evidence-and-readiness-model.md)
+10. [Action extension model](architecture/action-extension-model.md)
+11. [Policy applicability and fixture governance](architecture/policy-applicability-and-fixture-governance.md)
+12. [Storage lifecycle and privacy](architecture/storage-lifecycle-and-privacy.md)
 
 ### Work
 

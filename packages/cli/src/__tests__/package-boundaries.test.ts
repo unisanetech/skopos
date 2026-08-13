@@ -20,7 +20,8 @@ const PUBLIC_SDK_CORE_PACKAGES = [
 const INTERNAL_PRODUCT_PACKAGES = ['@skopos/ui'] as const;
 
 
-const TOOL_SURFACE_PACKAGES = ['@skopos/cli', '@skopos/mcp'] as const;
+const PUBLIC_BUNDLED_CLI_PACKAGE = '@unisane/skopos';
+const TOOL_SURFACE_PACKAGES = [PUBLIC_BUNDLED_CLI_PACKAGE, '@skopos/mcp'] as const;
 
 describe('skopos package boundary contract', () => {
   it('keeps public sdk core packages free from internal product dependencies', async () => {
@@ -49,7 +50,7 @@ describe('skopos package boundary contract', () => {
   });
 
   it('keeps the publishable CLI manifest free from Skopos workspace runtime dependencies', async () => {
-    const cliPackage = await loadPackageJson('@skopos/cli');
+    const cliPackage = await loadPackageJson(PUBLIC_BUNDLED_CLI_PACKAGE);
     const mcpPackage = await loadPackageJson('@skopos/mcp');
 
     expect(
@@ -89,7 +90,9 @@ interface PackageJsonShape {
 }
 
 const loadPackageJson = async (packageName: string): Promise<PackageJsonShape> => {
-  const packageDirName = packageName.replace('@skopos/', '');
+  const packageDirName = packageName === PUBLIC_BUNDLED_CLI_PACKAGE
+    ? 'cli'
+    : packageName.replace('@skopos/', '');
   const packageJsonPath = `${skoposRoot}/packages/${packageDirName}/package.json`;
   const contents = await readFile(packageJsonPath, 'utf8');
   return JSON.parse(contents) as PackageJsonShape;

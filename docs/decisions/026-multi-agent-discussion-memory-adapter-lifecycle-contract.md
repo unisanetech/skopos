@@ -10,19 +10,23 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-04-13
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/agent-native-operating-model.md
   - ../architecture/artifact-model.md
   - D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - 021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
+  - D-20260813-company-ownership-and-first-release-host-support-boundary.md
 ---
 
 # Decision: Multi-Agent Session Adapter Lifecycle Contract
 
 ## Changelog
 
+- `2026-08-13`: Separated the shared adapter lifecycle from support certification.
+  Codex is the sole real-host-certified first-release adapter; other projections do
+  not become support claims without matching real-host Evidence.
 - `2026-08-05`: Verified truthful Codex task creation and prompt injection, manual
   host-neutral rendering, and the declared capability gap for Claude fresh-process
   creation and injection. Generated, accepted, and delivered remain distinct states.
@@ -67,3 +71,8 @@ continuation because it may retain the bloated conversation context.
 Claude Code, Codex, and manual hosts may differ in hook coverage, but they never invent
 host-specific work semantics. Each adapter reports whether enforcement is observed,
 cooperative, hooked, or mediated.
+
+This host-neutral contract does not certify every projection as supported. The first
+public release claims Codex support only. Claude Code, Cursor, GitHub Copilot, and
+manual projections retain their declared capability shape, but are unverified until
+current real-host Evidence proves the public claim.

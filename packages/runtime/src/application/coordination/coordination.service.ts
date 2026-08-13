@@ -1233,13 +1233,9 @@ const ensureCoordinationDatabase = async (
   workspaceRoot: string,
 ): Promise<string> => {
   const databasePath = join(workspaceRoot, COORDINATION_DATABASE_PATH);
+  // The caller opens, initializes, and closes the one database handle it owns.
+  // Opening a separate initializer handle doubles lock/close latency on Windows.
   await mkdir(dirname(databasePath), { recursive: true });
-  const db = openDatabase(databasePath);
-  try {
-    initializeSchema(db);
-  } finally {
-    db.close();
-  }
   return databasePath;
 };
 
@@ -1250,6 +1246,7 @@ const openDatabase = (databasePath: string): SqliteDatabase => {
     db.exec('PRAGMA foreign_keys = ON');
     db.exec(`PRAGMA busy_timeout = ${COORDINATION_BUSY_TIMEOUT_MS}`);
     ensureWalJournalMode(db);
+    initializeSchema(db);
     return db;
   } catch (error) {
     db.close();
@@ -1309,6 +1306,9 @@ const initializeSchema = (db: SqliteDatabase): void => {
       `Unsupported coordination database schema ${version}; delete generated .skopos/coordination.sqlite and rebuild it.`,
     );
   }
+  // A versioned schema is complete. Replaying DDL on every broker operation
+  // takes write locks and makes short Windows coordination lifecycles needlessly slow.
+  if (version === 2) return;
   db.exec(`
     CREATE TABLE IF NOT EXISTS sessions (
       session_id TEXT PRIMARY KEY,

@@ -2,14 +2,13 @@
 
 import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/icon";
+import { resolveFragmentId, revealFragmentTarget } from "@/lib/fragment-navigation";
 import { DocumentationCopyBlock } from "./copy-block";
 import { featureWorkflowStages, type FeatureWorkflowStageId } from "./feature-workflow-content";
 import { cn } from "@/lib/utils";
 import { documentationType } from "./documentation-layout";
 
-function isStageId(value: string): value is FeatureWorkflowStageId {
-  return featureWorkflowStages.some((stage) => stage.id === value);
-}
+const featureWorkflowStageIds = featureWorkflowStages.map((stage) => stage.id);
 
 export function FeatureWorkflowNavigator() {
   const [stageId, setStageId] = useState<FeatureWorkflowStageId>("discuss");
@@ -18,8 +17,10 @@ export function FeatureWorkflowNavigator() {
 
   useEffect(() => {
     const selectFromHash = () => {
-      const hash = window.location.hash.slice(1);
-      if (isStageId(hash)) setStageId(hash);
+      const fragmentId = resolveFragmentId(window.location.hash, featureWorkflowStageIds);
+      if (!fragmentId) return;
+      setStageId(fragmentId);
+      window.requestAnimationFrame(() => revealFragmentTarget(fragmentId));
     };
     selectFromHash();
     window.addEventListener("hashchange", selectFromHash);
@@ -48,7 +49,7 @@ export function FeatureWorkflowNavigator() {
           <button
             key={item.id}
             ref={(node) => { tabRefs.current[index] = node; }}
-            id={`feature-workflow-tab-${item.id}`}
+            id={item.id}
             type="button"
             role="tab"
             aria-selected={stageId === item.id}
@@ -64,7 +65,7 @@ export function FeatureWorkflowNavigator() {
         ))}
       </div>
 
-      <section id="feature-workflow-panel" role="tabpanel" aria-labelledby={`feature-workflow-tab-${stage.id}`}>
+      <section id="feature-workflow-panel" role="tabpanel" aria-labelledby={stage.id}>
         <header className="grid min-h-[300px] items-end gap-[30px] border-b border-[var(--skopos-rule-light)] px-[var(--page-gutter)] py-[clamp(44px,5vw,66px)] min-[901px]:grid-cols-[1.12fr_0.88fr] min-[901px]:gap-[60px] md:px-[clamp(38px,5vw,68px)]">
           <div><span className="font-mono text-[10px] tracking-[0.08em] text-[#707070] uppercase">{stage.number} · {stage.verb}</span><h2 className={cn(documentationType.section, "mt-[26px] max-w-[720px]")}>{stage.title}</h2></div>
           <p className="m-0 max-w-[550px] text-base leading-[1.65] text-[var(--skopos-muted)]">{stage.description}</p>

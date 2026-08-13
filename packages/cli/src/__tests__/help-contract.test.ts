@@ -17,6 +17,10 @@ describe('public command help contract', () => {
 
   it.each([
     {
+      args: ['setup', '--help'],
+      expected: ['Skopos setup', 'normal project onboarding entry point', 'accept|edit|defer|reject', 'Use init only as a low-level'],
+    },
+    {
       args: ['start', '--help'],
       expected: ['Task risk:', '--risk <light|standard|high-impact>', 'goal, owned paths, affected Scopes', 'Fast path:', 'Proof subjects:', 'task-closure', 'project-integration'],
     },
@@ -83,6 +87,15 @@ describe('public command help contract', () => {
     expect(instructions).toContain('default `task-closure` proof subject');
     expect(instructions).toContain('--proof-subject project-integration');
     expect(instructions).toContain('does not absorb unrelated dirty-worktree changes');
+  });
+
+  it('keeps project understanding inside setup instead of exposing a duplicate command', async () => {
+    const output = await captureStdout(() => runSkoposCli(['--help']));
+    expect(output).toContain('skopos setup [target]');
+    expect(output).not.toContain('skopos understand ');
+    await expect(runSkoposCli(['understand'])).rejects.toThrow(
+      'Unknown Skopos command: understand',
+    );
   });
 
   it('renders human and JSON recovery guidance for failed commands', () => {

@@ -1,4 +1,4 @@
-export const releaseStatusCopy = "Available on npm";
+export const releaseStatusCopy = "First release targets npm @next";
 
 export const homepageDeepLinks = {
   workflow: "/how-it-works",
@@ -9,17 +9,17 @@ export const heroCopy = {
   title: "Your agents write the code. Skopos keeps the work coherent.",
   titleLines: ["Your agents write the code.", "Skopos keeps the work coherent."],
   description:
-    "Project context, intent, rules, and proof stay in the repository—so any coding agent can continue.",
+    "Project context, intent, rules, and proof stay in the repository—so work can continue without depending on one coding agent or conversation.",
 } as const;
 
 export const heroOnboarding = {
   source: {
-    tabLabel: "Install with npm",
-    label: "Install in your project",
+    tabLabel: "npm @next on release",
+    label: "First public release install",
     commands: [
-      "npm install --save-dev @skopos/cli",
-      "npx skopos init . --mode existing --actor <id>",
-      "npx skopos session context . --actor <id> --json",
+      "npm install --save-dev @unisane/skopos@next",
+      "npx skopos setup . --actor <id>",
+      "npx skopos setup review . --actor <id>",
     ],
     copyLabel: "Copy installation commands",
   },
@@ -27,32 +27,32 @@ export const heroOnboarding = {
     tabLabel: "Give to your agent",
     label: "Agent setup brief",
     visibleBrief:
-      "Initialize Skopos without overwriting project truth. Build understanding, assess gaps, and review the proposal before anything changes.",
+      "Set up Skopos without overwriting project truth. Explain what you find, recommend improvements, and ask before material changes.",
     brief:
-      "Install and adopt Skopos in this existing repository. Preserve its current docs and commands as project truth. Initialize Skopos, build project understanding, then assess adoption gaps. Show me any documentation proposal before applying it.",
+      "Set up Skopos in this repository. Inspect the source, documentation, instructions, and working commands. Preserve current project truth, explain conflicts and gaps in simple language, and show me one consolidated recommendation before applying material changes.",
     steps: [
-      { number: "01", label: "Initialize" },
-      { number: "02", label: "Understand" },
-      { number: "03", label: "Assess" },
+      { number: "01", label: "Understand" },
+      { number: "02", label: "Review" },
+      { number: "03", label: "Apply" },
     ],
     commands: [
-      "npx skopos init . --mode existing --actor <id>",
-      "npx skopos understand . --actor <id> --json",
-      "npx skopos adopt assess . --actor <id> --json",
+      "npx skopos setup . --actor <id>",
+      "npx skopos setup review . --actor <id>",
+      "npx skopos setup resume . --actor <id>",
     ],
     copyLabel: "Copy agent brief",
   },
-  packageLabel: "npm · @skopos/cli",
+  packageLabel: "planned · @unisane/skopos@next",
 } as const;
 
 export const agentCompatibilityCopy = {
-  eyebrow: "Agent-compatible",
-  title: "Works with the coding agents you already use.",
+  eyebrow: "First-release host support",
+  title: "Codex certified. Portable project truth everywhere else.",
   agents: [
-    { name: "Codex", icon: "codex" },
-    { name: "Claude Code", icon: "claude-code" },
-    { name: "Cursor", icon: "cursor" },
-    { name: "GitHub Copilot", icon: "github-copilot" },
+    { name: "Codex", icon: "codex", status: "Certified" },
+    { name: "Claude Code", icon: "claude-code", status: "Adapter available · verification planned" },
+    { name: "Cursor", icon: "cursor", status: "Instructions available · manual workflow" },
+    { name: "GitHub Copilot", icon: "github-copilot", status: "Instructions available · manual workflow" },
   ],
 } as const;
 

@@ -9,13 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-12
 relatedDocs:
   - architecture/00-architecture.md
   - ../../architecture/docs-governance.md
   - ../../architecture/evidence-and-readiness-model.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - decisions/D-20260804-human-first-supervision-projection.md
+  - decisions/D-20260812-locally-owned-ui-source-and-visual-authority.md
   - decisions/D-20260804-browser-history-and-unisane-ui-registry-delivery.md
   - decisions/D-20260804-unisane-ui-visual-ownership.md
   - decisions/008-system-ui-routed-app-stack.md
@@ -37,6 +38,8 @@ The UI is an internal human projection over canonical Project Memory and runtime
 
 ## Changelog
 
+- `2026-08-12`: Made the reviewed local component source and semantic theme explicitly
+  Skopos-owned; adopter origin remains provenance rather than product authority.
 - `2026-08-05`: Consolidated current UI Decisions under this Scope and archived the
   superseded shell, navigation, component-normalization, and fixed search-dock
   contracts behind the August human-first and Unisane ownership authorities.
@@ -103,9 +106,9 @@ The UI is an internal human projection over canonical Project Memory and runtime
     parallel mutation or workflow authority
 13. canonical application destinations use browser-history pathnames and are served
     through `skopos ui dev` or `skopos ui serve`
-14. shared primitives use locally owned Unisane UI registry source; private Unisane
-    runtime packages are forbidden
-15. Unisane semantic tokens and component defaults own reusable visual behavior;
+14. shared primitives and their semantic theme are locally owned Skopos source;
+    private external workspace packages are forbidden
+15. locally owned semantic tokens and component defaults own reusable visual behavior;
     Skopos must not add a parallel palette, type scale, shape system, shell, control,
     or sweeping override
 16. Skopos-specific CSS and components are limited to supervision composition,
@@ -139,10 +142,10 @@ its decision wording reflects whether work is actually blocked, its handoff is
 copyable, and its supporting content is limited to current focus, current-Task
 discussion, and real attention. The UI still has no ambient actor
 identity, so a workspace with several active Tasks truthfully reports that no
-actor-specific Session Task is selected and directs the developer to Work. Unisane UI
-components are registry-installed and Skopos-owned; their defaults own reusable visual
-behavior, system light/dark theming is coherent, and there is no Unisane UI/token
-application runtime dependency.
+actor-specific Session Task is selected and directs the developer to Work. UI
+components and theme source are locally owned by Skopos; their defaults own reusable
+visual behavior, system light/dark theming is coherent, and there is no private
+external application runtime dependency.
 
 The shell sidebar now shares the inset header grid, separates identity from work with
 a deliberate spacing rhythm, shows group disclosure explicitly, avoids double-selected

@@ -9,12 +9,13 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - P-e7e888e6-canonical-product-convergence.md
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
   - ../../decisions/031-bundled-cli-release-contract.md
   - ../../decisions/D-20260811-product-interface-design-first-release-boundary.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../findings/F-20260804-skill-selection-proof-and-portability-gap.md
   - ../../operations/first-public-release-scorecard.md
   - ../../decisions/D-20260811-topology-aware-task-scope-authority.md
@@ -28,20 +29,35 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Closed release-contract ambiguity without claiming candidate proof.
+  Gate `16` now requires production-origin website verification plus six supported
+  runtime receipts that install and exercise the single digest-bound tarball. Unified
+  setup is executed during clean reconstruction, the final `20 / 20` receipt is
+  downstream of exact security and runtime proof, and a post-publication job verifies
+  registry identity, provenance, launchers, installed lifecycle, and bundled UI.
+- `2026-08-13`: Accepted company-owned repository governance and a truthful
+  Codex-first host boundary. The canonical source and release identity is
+  `unisanetech/skopos`; Codex is the sole real-host-certified launch adapter. Claude
+  Code, Cursor, and GitHub Copilot verification is later support-expansion work, not a
+  blocker while those hosts remain explicitly unverified and are not claimed
+  supported. The full canonical scorecard is now `16 yes / 4 no`; an immutable
+  external receipt must overlay the four candidate-bound gates for an effective
+  `20 / 20` release result.
 - `2026-08-12`: Reconciled the release-control boundary without claiming new product
   proof. The accepted Product Interface Design boundary no longer contradicts the
   runbook hard stops. The protected publication workflow now fails closed on the
   accepted non-candidate scorecard gates before certification and reconstructs
   Project Memory and registered capabilities from a fresh checkout. Real Claude
-  parity and final Unisane replacement remain explicit blockers; candidate-bound
-  reconstruction, adoption, packed-install, and full-matrix gates are earned only by
+  parity remains an explicit blocker; candidate-bound
+  reconstruction, unified setup, packed-install, and full-matrix gates are earned only by
   the frozen-candidate workflow.
 - `2026-08-11`: Reconciled the local pre-freeze truth. The north-star continuation
   operation now records a source-linked `3 / 3` real Codex baseline without treating
   it as Claude parity or general efficacy. The superseded-decision/prototype-document
   gate is closed after confirming historical routing and metadata. The canonical
-  score is now `11 yes / 6 no`; real Claude parity, final Unisane replacement, and the
-  four exact-candidate certification answers remain release blockers.
+  score is now `12 yes / 5 no`; real Claude parity and the four exact-candidate
+  certification answers remain release blockers. External adopter migrations are
+  outside the Skopos release boundary.
 
 - `2026-08-11`: Accepted Product Interface Design `0.5.0` as publishable for the first
   `next` release without claiming certified efficacy. Its deterministic selection,
@@ -89,9 +105,11 @@ relatedDocs:
   Ubuntu, macOS, Windows, Node 22.13, and Node 24. Package metadata, version reporting,
   public support documents, and the runtime matrix are implemented. Added a
   manual-only exact-tag publication workflow and executable contract. npm registry
-  checks confirmed that `@skopos/cli` does not yet exist, the local npm client is not
-  authenticated, and no visible `skopos` organization membership is available. The
-  repository is still private and has no `npm-release` environment. Official npm
+  checks confirmed that the planned third-party `@skopos` namespace is unavailable.
+  The accepted clean pre-launch identity is now `@unisane/skopos`, using a
+  company-owned publisher scope without changing the Skopos executable or runtime
+  boundary. At that audit point, the repository was still private and had no
+  `npm-release` environment. Official npm
   behavior also requires a one-time temporary-token bootstrap before OIDC trust can be
   configured for a brand-new package. None of these facts authorize publication.
 - `2026-08-09`: Completed Product Interface Design `0.3.0` smoke and full machine
@@ -109,7 +127,7 @@ relatedDocs:
 
 ## Goal
 
-Prepare and certify the first safe public release of `@skopos/cli@0.1.0` under the
+Prepare and certify the first safe public release of `@unisane/skopos@0.1.0` under the
 `next` npm dist tag without publishing until every product, security, packaging,
 documentation, adoption, and release-proof gate is satisfied from one immutable
 committed candidate.
@@ -133,7 +151,7 @@ into one ordered program and may close only after their relevant gates are satis
 
 ## Fixed Release Contract
 
-1. The first public package is only `@skopos/cli`.
+1. The first public package is only `@unisane/skopos`; its executable remains `skopos`.
 2. The first version is `0.1.0`.
 3. The first publication uses the `next` dist tag, never `latest`.
 4. Internal SDK packages and `@skopos/ui` remain private.
@@ -144,6 +162,11 @@ into one ordered program and may close only after their relevant gates are satis
 7. No Task created from this Plan may publish, tag, promote, deprecate, or unpublish a
    package without a separate explicit human-approved release Task.
 8. A changed candidate invalidates release certification and must be proved again.
+9. The canonical repository and trusted-publisher identity is
+   `unisanetech/skopos`; Skopos remains a standalone product with no Unisane runtime
+   or product coupling.
+10. Codex is the only host claimed supported in the first release. Any additional host
+    needs current real-host Evidence before support or parity is claimed.
 
 ## Current Baseline
 
@@ -157,11 +180,11 @@ change requires a new exact-commit run.
 Current release blockers are:
 
 1. the canonical convergence Plan remains active and the current release scorecard has
-   six `no` answers
-2. the GitHub repository is private, so npm public-package provenance cannot bind to
-   public source; the `npm-release` environment and its protection rules do not exist
-3. the local npm client is not authenticated, `@skopos/cli` does not exist, and
-   ownership or creation rights for the `@skopos` scope are not certified
+   four `no` answers
+2. public-repository provenance binding and the protected `npm-release` environment
+   must be certified against the exact release candidate
+3. `@unisane/skopos` does not exist yet, and ownership or creation rights for the
+   company-owned `@unisane` scope must be certified before the bootstrap
 4. npm cannot configure trusted publishing for a package that does not yet exist; the
    exact first release therefore needs one temporary-token GitHub bootstrap followed
    immediately by token revocation, OIDC trust configuration, and token disallowance
@@ -171,8 +194,9 @@ Current release blockers are:
 The hosted website is a parallel product track, not part of the first npm artifact.
 Its former build-time Google Fonts dependency is resolved through local Geist assets,
 and `pnpm web:verify` owns its current typecheck, focused-test, and static production
-build gate. Hosting-provider configuration and actual deployment remain separate web
-work and do not block an otherwise valid CLI candidate.
+build gate. Although hosting-provider configuration and deployment remain separate web
+work, the first public-release candidate must pass that gate with the repository's
+configured `SKOPOS_PUBLIC_SITE_URL` HTTPS origin; root CLI checks do not cover it.
 
 ## Ordered Workstreams
 
@@ -226,8 +250,9 @@ Purpose: finish the product-level promises that cannot be inferred from package 
 
 Tasks:
 
-1. complete the Unisane replacement pilot without leaking adopter grammar into core
-2. prove Codex and Claude lifecycle parity
+1. confirm external-project integrations remain project-owned without leaking adopter grammar into core
+2. prove the claimed Codex lifecycle from the real host and keep every unverified host
+   out of supported-host claims
 3. complete every missing scenario in the canonical proof matrix
 4. record the north-star fresh-session continuation metric
 5. confirm `.skopos/**` deletion and reconstruction from tracked truth
@@ -236,7 +261,8 @@ Tasks:
 
 Exit gate:
 
-- all 17 canonical final-release questions answer `yes` with linked Evidence
+- all 20 canonical first-release questions pass with linked Evidence, combining the
+  accepted tracked prerequisites with the immutable exact-candidate receipt
 - the convergence Plan is complete or its remaining work is explicitly non-blocking by
   an accepted replacement decision
 
@@ -273,9 +299,9 @@ Tasks:
    and supported runtime matrix
 2. retain the GitHub-hosted manual publication workflow and create its manually
    approved `npm-release` environment
-3. verify npm `@skopos` ownership, package creation rights, exact repository binding,
-   workflow filename, environment, allowed action, protected tags, and publisher
-   permissions
+3. verify npm `@unisane` ownership, package creation rights, exact
+   `unisanetech/skopos` repository binding, workflow filename, environment, allowed
+   action, protected tags, and publisher permissions
 4. ensure only the tagged commit can produce the published artifact
 5. preserve provenance and record registry integrity after publication
 
@@ -299,9 +325,12 @@ Tasks:
 3. reconstruct it in a clean clone with a frozen lockfile and no local Skopos state
 4. run the complete release matrix in fail-fast order
 5. build and inspect one tarball from that exact commit
-6. install the tarball into fresh Node projects and exercise the complete lifecycle,
-   bundled UI, Actions, coordination, Evidence, and Readiness
-7. produce a release scorecard mapping every gate to immutable Evidence
+6. in every supported OS/Node cell, download and verify the same tarball, install it
+   into fresh projects, and exercise the complete lifecycle, bundled UI, Actions,
+   coordination, Evidence, and Readiness
+7. produce an external release-certification receipt mapping every gate to immutable
+   Evidence, the candidate SHA, and the one reviewed tarball digest; do not mutate the
+   tracked candidate scorecard to certify itself
 
 Exit gate:
 
@@ -321,9 +350,12 @@ that Task after the final scorecard is reviewed.
 1. check out the protected release tag in the trusted GitHub workflow
 2. install the frozen lockfile without a release build cache
 3. run the certified build, typecheck, test, proof, audit, release-check, release-smoke,
-   host-parity, adoption, deterministic Skill, responsive, and accessibility lanes
+   production-origin website, claimed-host support, unified setup, deterministic Skill,
+   responsive, and accessibility
+   lanes
 4. pack and compare the artifact identity with the reviewed manifest
-5. publish `@skopos/cli@0.1.0` to `next` through OIDC
+5. publish `@unisane/skopos@0.1.0` to `next` through the bounded one-time bootstrap token;
+   configure and require OIDC trusted publishing for every later version
 6. verify registry metadata, integrity, provenance, and dist tags
 7. run real registry `npx`, `npm exec`, and `pnpm dlx` smoke in clean projects
 8. exercise installed `init`, Session, Task, Action, Evidence, Readiness, and bundled UI
@@ -362,7 +394,7 @@ Promotion to `latest` requires a separate human-approved Task and all of the fol
 This Plan completes only when:
 
 1. R1–R6 are closed with fresh Evidence
-2. the explicit release Task published and verified `@skopos/cli@0.1.0` on `next`
+2. the explicit release Task published and verified `@unisane/skopos@0.1.0` on `next`
 3. post-release monitoring ownership and escalation paths are active
 4. the release result, limitations, registry identity, and next promotion decision are
    recorded in durable project Memory

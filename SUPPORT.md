@@ -14,7 +14,7 @@ basis and does not include an uptime or response-time guarantee.
 
 ## Where To Ask
 
-Use [GitHub Issues](https://github.com/Croodo/skopos/issues) for reproducible bugs,
+Use [GitHub Issues](https://github.com/unisanetech/skopos/issues) for reproducible bugs,
 documentation gaps, compatibility problems, and focused feature requests. Search open
 and closed issues first.
 
@@ -31,7 +31,9 @@ complete `.skopos/**` directory. For suspected vulnerabilities, follow
 
 ## Current Support Boundary
 
-- The first public package is only `@skopos/cli`.
+- The first public package is only `@unisane/skopos`; its executable remains `skopos`.
+- `@unisane` is the company-owned npm publisher identity. It does not make Skopos a
+  Unisane application or add a Unisane runtime dependency.
 - The supported Node.js range is `^22.13.0 || ^24.0.0`.
 - Internal SDK packages and `@skopos/ui` are not separately supported public packages.
 - Prototype-state migration and backward compatibility are not promised before a

@@ -4,7 +4,12 @@ import type { SkoposGuardManifest } from './skopos-guard.js';
 
 export type SkoposCapabilityCandidateSource =
   | 'configured-command'
-  | 'package-script';
+  | 'package-script'
+  | 'python-project'
+  | 'go-project'
+  | 'rust-project'
+  | 'java-project'
+  | 'dotnet-project';
 
 export interface SkoposCapabilityCandidate {
   id: string;
@@ -12,6 +17,7 @@ export interface SkoposCapabilityCandidate {
   sourcePath: string;
   name: string;
   command: string;
+  sourceCommand?: string;
   cwd: string;
   rationale: string;
   suggestedAction?: SkoposActionManifest;

@@ -67,6 +67,22 @@ const invalidConfigPathCases: InvalidConfigPathCase[] = [
       'Skopos instruction mirror path must stay inside the workspace: ../../CLAUDE.md',
   },
   {
+    name: 'instruction mirror equal to its canonical source',
+    configure: (config) => {
+      config.agents.canonicalInstructions = 'PROJECT_AGENT.md';
+      config.agents.syncMirrors = ['PROJECT_AGENT.md'];
+    },
+    expectedError:
+      'Skopos canonical instruction source cannot also be an instruction mirror: PROJECT_AGENT.md',
+  },
+  {
+    name: 'duplicate instruction mirrors',
+    configure: (config) => {
+      config.agents.syncMirrors = ['CLAUDE.md', './CLAUDE.md'];
+    },
+    expectedError: 'Skopos instruction mirrors must be unique: ./CLAUDE.md duplicates index 0',
+  },
+  {
     name: 'start-here path outside its memory root',
     configure: (config) => {
       config.docs.startHerePath = 'reference/00-start-here.md';

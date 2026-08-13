@@ -288,8 +288,9 @@ relatedDocs:
   operating-system-wide write claim. The installed `skills context` and help contracts
   are now explicitly owned and tested by correction Task `T-6d37da41`.
 - `2026-08-05`: Proved Product UI Craft adoption from one minimal project and a
-  sanitized Billquest canary using only a packed `@skopos/cli` tarball plus ordinary
-  declared dependencies. The installed binary now exposes canonical tracked-Task Skill
+  sanitized Billquest canary using only a packed CLI tarball (now
+  `@unisane/skopos`) plus ordinary declared dependencies. The installed binary now
+  exposes canonical tracked-Task Skill
   context; both external projects passed all six fixtures, relevant and irrelevant Task
   selection, module-local capabilities, five host projections, exact reuse and
   capability-identity invalidation, with no observed source-checkout, workspace-link,

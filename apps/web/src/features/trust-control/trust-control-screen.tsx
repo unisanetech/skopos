@@ -115,18 +115,18 @@ export function TrustControlScreen() {
               ))}
             </ol>
             <div className="grid border-t border-[var(--skopos-rule-light)] md:grid-cols-3">
-              <a className="flex min-h-20 items-center justify-between gap-4 border-b border-r border-[var(--skopos-rule-light)] px-6 text-sm font-bold md:border-b-0" href="https://github.com/Croodo/skopos/blob/main/docs/architecture/agent-native-operating-model.md" target="_blank" rel="noreferrer">
+              <a className="flex min-h-20 items-center justify-between gap-4 border-b border-r border-[var(--skopos-rule-light)] px-6 text-sm font-bold md:border-b-0" href="https://github.com/unisanetech/skopos/blob/main/docs/architecture/agent-native-operating-model.md" target="_blank" rel="noreferrer">
                 Read the operating model <Icon symbol="arrow_outward" size="sm" />
               </a>
-              <a className="flex min-h-20 items-center justify-between gap-4 border-b border-r border-[var(--skopos-rule-light)] px-6 text-sm font-bold md:border-b-0" href="https://github.com/Croodo/skopos/blob/main/SECURITY.md" target="_blank" rel="noreferrer">
+              <a className="flex min-h-20 items-center justify-between gap-4 border-b border-r border-[var(--skopos-rule-light)] px-6 text-sm font-bold md:border-b-0" href="https://github.com/unisanetech/skopos/blob/main/SECURITY.md" target="_blank" rel="noreferrer">
                 Security policy <Icon symbol="arrow_outward" size="sm" />
               </a>
-              <a className="flex min-h-20 items-center justify-between gap-4 px-6 text-sm font-bold" href="https://github.com/Croodo/skopos/blob/main/LICENSE" target="_blank" rel="noreferrer">
+              <a className="flex min-h-20 items-center justify-between gap-4 px-6 text-sm font-bold" href="https://github.com/unisanetech/skopos/blob/main/LICENSE" target="_blank" rel="noreferrer">
                 Apache-2.0 license <Icon symbol="arrow_outward" size="sm" />
               </a>
             </div></PageFrame></PageSection>
 
-        <ClosingSection title="Give your agent clear authority—and clear limits." description="Start with one repository. Keep durable truth reviewable, make sensitive capabilities explicit, and require proof that still matches the source."><PageAction href="https://github.com/Croodo/skopos/blob/main/docs/architecture/agent-native-operating-model.md" primary light>Read the operating model</PageAction><PageAction href="/docs" light>Get started</PageAction></ClosingSection>
+        <ClosingSection title="Give your agent clear authority—and clear limits." description="Start with one repository. Keep durable truth reviewable, make sensitive capabilities explicit, and require proof that still matches the source."><PageAction href="https://github.com/unisanetech/skopos/blob/main/docs/architecture/agent-native-operating-model.md" primary light>Read the operating model</PageAction><PageAction href="/docs" light>Get started</PageAction></ClosingSection>
       </article>
     </SiteShell>
   );

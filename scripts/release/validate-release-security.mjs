@@ -19,6 +19,26 @@ const workflow = await readFile(workflowPath, 'utf8');
 const rootPackage = JSON.parse(await readFile(rootPackagePath, 'utf8'));
 const cliPackage = JSON.parse(await readFile(cliPackagePath, 'utf8'));
 const copyUiApp = await readFile(copyUiAppPath, 'utf8');
+const artifactUploadBlocks = workflow
+  .split(/\n\s+- name:/u)
+  .filter((block) => block.includes('uses: actions/upload-artifact@'));
+
+const validateGitleaksProof = (source) => {
+  assert.match(source, /gitleaks_8\.18\.4_linux_x64\.tar\.gz/u);
+  assert.match(source, /ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d/u);
+  assert.doesNotMatch(source, /gitleaks_8\.30\.1/u);
+  assert.match(source, /name: Prove the secret scanner detects a positive canary/u);
+  assert.match(source, /printf 'token = "%s%s"\\n' 'ghp_'/u);
+  assert.match(source, /gitleaks detect --no-git --no-banner --redact/u);
+  assert.match(source, /test "\$canary_exit" -eq 1/u);
+  assert.match(source, /x\[0\]\.RuleID!=='github-pat'/u);
+  assert.match(source, /rm -rf "\$canary_root"/u);
+  assert.match(source, /gitleaks detect --redact --no-banner --source \./u);
+  assert.match(
+    source,
+    /gitleaks detect --no-git --redact --no-banner --source \.release\/package\/package/u,
+  );
+};
 
 for (const action of expectedActionPins) {
   assert.match(workflow, new RegExp(action.replaceAll('/', '\\/')));
@@ -28,19 +48,32 @@ assert.doesNotMatch(workflow, /uses:\s+[^\n@]+@v\d+/u, 'Actions must use immutab
 assert.match(workflow, /permissions:\n\s+contents: read/u);
 assert.match(workflow, /fetch-depth: 0/u);
 assert.match(workflow, /persist-credentials: false/u);
-assert.match(workflow, /tar -xzf \.release\/packed\/skopos-cli-0\.1\.0\.tgz -C \.release\/package/u);
-assert.match(workflow, /gitleaks git --redact/u);
-assert.match(workflow, /gitleaks dir --redact/u);
+assert.equal(
+  artifactUploadBlocks.length,
+  1,
+  'The release-security workflow must preserve one Evidence artifact.',
+);
+assert.match(
+  artifactUploadBlocks[0],
+  /\n\s+include-hidden-files: true/u,
+  'The .release/** Evidence upload must explicitly include hidden paths.',
+);
+assert.match(workflow, /tar -xzf \.release\/packed\/unisane-skopos-0\.1\.0\.tgz -C \.release\/package/u);
+validateGitleaksProof(workflow);
 assert.match(workflow, /find \.release\/package\/package -type f -print -quit/u);
-assert.match(workflow, /gitleaks_8\.30\.1_linux_x64\.tar\.gz/u);
-assert.match(workflow, /551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb/u);
 assert.match(workflow, /format: cyclonedx-json/u);
 assert.match(workflow, /scan-installed-licenses\.mjs \.release\/install \.release\/licenses\.json/u);
 assert.match(workflow, /pnpm audit --prod --audit-level high/u);
 assert.match(workflow, /name: Build workspace packages\n\s+run: pnpm build/u);
+assert.match(workflow, /name: Exercise canonical lifecycle and snapshot portability\n\s+run: pnpm proof/u);
+assert.doesNotMatch(
+  workflow,
+  /pnpm --filter @unisane\/skopos test:e2e/u,
+  'The runtime matrix must use the canonical proof lane, not a nonexistent package script.',
+);
 assert.match(
   workflow,
-  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/skopos-cli-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
+  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/unisane-skopos-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
 );
 assert.doesNotMatch(workflow, /pnpm --dir \.release\/install add/u);
 assert.doesNotMatch(workflow, /--package-lock=false/u);
@@ -51,6 +84,8 @@ for (const os of ['ubuntu-24.04', 'macos-15', 'windows-2025']) {
 for (const node of ["'22.13.0'", "'24'"]) assert.match(workflow, new RegExp(`node: ${node}`));
 
 assert.equal(rootPackage.packageManager, 'pnpm@10.26.0');
+assert.equal(cliPackage.name, '@unisane/skopos');
+assert.deepEqual(cliPackage.bin, { skopos: 'dist/cli.js' });
 assert.equal(cliPackage.engines?.node, '^22.13.0 || ^24.0.0');
 assert.match(copyUiApp, /process\.env\.npm_execpath/u);
 assert.match(copyUiApp, /execFileSync\(process\.execPath/u);
@@ -73,5 +108,18 @@ assert.equal(
 );
 assert.equal(evaluateInstalledManifests([{ name: 'review-me', version: '1.0.0' }]).ok, false);
 assert.equal(evaluateInstalledManifests([]).ok, false);
+
+for (const weakened of [
+  workflow.replace('gitleaks_8.18.4_linux_x64.tar.gz', 'gitleaks_8.30.1_linux_x64.tar.gz'),
+  workflow.replace(
+    'ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d',
+    '0'.repeat(64),
+  ),
+  workflow.replace('      - name: Prove the secret scanner detects a positive canary\n', '      - name: Skip scanner canary\n'),
+  workflow.replace('          test "$canary_exit" -eq 1\n', '          test "$canary_exit" -eq 0\n'),
+  workflow.replace("x[0].RuleID!=='github-pat'", "x[0].RuleID!=='anything'"),
+]) {
+  assert.throws(() => validateGitleaksProof(weakened));
+}
 
 console.log('Release security workflow contract is valid.');

@@ -76,16 +76,19 @@ export const syncSkoposInstructions = async ({
       cwd: workspaceRoot,
       dryRun,
       projectionModel,
+      instructionSourcePath,
     }),
     syncCodexWrapperAdapter({
       cwd: workspaceRoot,
       dryRun,
       projectionModel,
+      instructionSourcePath,
     }),
     syncManualHostAdapter({
       cwd: workspaceRoot,
       dryRun,
       projectionModel,
+      instructionSourcePath,
     }),
   ]);
   const enforcementPath = join(workspaceRoot, '.skopos', 'index', 'enforcement.json');

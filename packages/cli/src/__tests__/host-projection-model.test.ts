@@ -1,9 +1,10 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import {
   buildSkoposEnforcementProfile,
+  scaffoldProjectInstructions,
   syncClaudeCodeHookAdapter,
   syncCodexWrapperAdapter,
   syncInstructionMirrors,
@@ -110,7 +111,7 @@ describe('host projection model', () => {
     await writeFile(join(workspaceRoot, 'AGENTS.md'), '# Canonical instructions\n', 'utf8');
     const configuredMirrorPaths = [
       'CLAUDE.md',
-      '.cursor/rules/unisane-core.mdc',
+      '.cursor/rules/product-core.mdc',
       '.github/copilot-instructions.md',
     ];
 
@@ -132,10 +133,95 @@ describe('host projection model', () => {
     });
 
     expect(
-      await readFile(join(workspaceRoot, '.cursor/rules/unisane-core.mdc'), 'utf8'),
+      await readFile(join(workspaceRoot, '.cursor/rules/product-core.mdc'), 'utf8'),
     ).toContain('# Canonical instructions');
     await expect(
       readFile(join(workspaceRoot, '.cursor/rules/project.mdc'), 'utf8'),
     ).rejects.toThrow();
+  });
+
+  it('projects one configured canonical instruction path through every generated host surface', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-custom-instruction-source-'));
+    temporaryRoots.push(workspaceRoot);
+    const instructionSourcePath = 'PROJECT_AGENT.md';
+    await writeFile(
+      join(workspaceRoot, instructionSourcePath),
+      '# Project-specific canonical instructions\n',
+      'utf8',
+    );
+    const profile = buildSkoposEnforcementProfile({
+      cwd: workspaceRoot,
+      actions: [],
+      guards: [],
+      instructionSourcePath,
+    });
+
+    await Promise.all([
+      syncInstructionMirrors({ cwd: workspaceRoot, projectionModel: profile.hostProjectionModel }),
+      syncClaudeCodeHookAdapter({ cwd: workspaceRoot, projectionModel: profile.hostProjectionModel }),
+      syncCodexWrapperAdapter({ cwd: workspaceRoot, projectionModel: profile.hostProjectionModel }),
+      syncManualHostAdapter({ cwd: workspaceRoot, projectionModel: profile.hostProjectionModel }),
+    ]);
+
+    const [mirror, claudePostEditHook, codexReadme, manualGuide] = await Promise.all([
+      readFile(join(workspaceRoot, 'CLAUDE.md'), 'utf8'),
+      readFile(
+        join(workspaceRoot, '.skopos/cache/tooling/claude-code/hooks/post-edit-hook.mjs'),
+        'utf8',
+      ),
+      readFile(join(workspaceRoot, '.skopos/cache/tooling/codex/README.md'), 'utf8'),
+      readFile(join(workspaceRoot, '.skopos/cache/tooling/manual-hosts/README.md'), 'utf8'),
+    ]);
+
+    expect(profile.instructionSourcePath).toBe(instructionSourcePath);
+    expect(
+      profile.rules.find((rule) => rule.id === 'enforcement.after-instruction-source-edit')?.summary,
+    ).toContain(instructionSourcePath);
+    expect(mirror).toContain(`Generated from ${instructionSourcePath}`);
+    expect(claudePostEditHook).toContain(`const instructionSourcePath = "${instructionSourcePath}"`);
+    expect(claudePostEditHook).toContain(`after ${instructionSourcePath} changed`);
+    expect(codexReadme).toContain(`\`${instructionSourcePath}\` plus`);
+    expect(manualGuide).toContain(`Read \`${instructionSourcePath}\``);
+    for (const generatedSurface of [claudePostEditHook, codexReadme, manualGuide]) {
+      expect(generatedSurface).not.toContain('AGENTS.md');
+    }
+  });
+
+  it('rejects self-mirroring and symlink escapes before instruction writes', async () => {
+    const workspaceRoot = await mkdtemp(join(tmpdir(), 'skopos-instruction-containment-'));
+    const outsideRoot = await mkdtemp(join(tmpdir(), 'skopos-instruction-outside-'));
+    temporaryRoots.push(workspaceRoot, outsideRoot);
+    await writeFile(join(workspaceRoot, 'AGENTS.md'), '# Canonical instructions\n', 'utf8');
+
+    await expect(syncInstructionMirrors({
+      cwd: workspaceRoot,
+      instructionSourcePath: 'AGENTS.md',
+      mirrorTargets: ['AGENTS.md'],
+    })).rejects.toThrow('cannot also be an instruction mirror');
+
+    await mkdir(join(workspaceRoot, '.cursor'), { recursive: true });
+    await symlink(
+      outsideRoot,
+      join(workspaceRoot, '.cursor/rules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    await expect(syncInstructionMirrors({
+      cwd: workspaceRoot,
+      instructionSourcePath: 'AGENTS.md',
+      mirrorTargets: ['.cursor/rules/project.mdc'],
+    })).rejects.toThrow('resolves outside the workspace through a symbolic link');
+    await expect(readFile(join(outsideRoot, 'project.mdc'), 'utf8')).rejects.toThrow();
+
+    await expect(scaffoldProjectInstructions({
+      cwd: workspaceRoot,
+      instructionSourcePath: '.cursor/rules/PROJECT_AGENT.md',
+    })).rejects.toThrow('resolves outside the workspace through a symbolic link');
+    await symlink(
+      outsideRoot,
+      join(workspaceRoot, '.skopos'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    await expect(syncCodexWrapperAdapter({ cwd: workspaceRoot }))
+      .rejects.toThrow('resolves outside the workspace through a symbolic link');
   });
 });

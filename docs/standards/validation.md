@@ -59,7 +59,7 @@ This page records the project capability catalog and the rule for selecting proo
 
 Use focused checks before full checks when iterating:
 
-1. CLI behavior: `pnpm --filter @skopos/cli exec vitest run <test-file>`
+1. CLI behavior: `pnpm --filter @unisane/skopos exec vitest run <test-file>`
 2. UI behavior: `pnpm --filter @skopos/ui exec vitest run <test-file>`
 3. Package typecheck: `pnpm --filter @skopos/<package> check-types`
 

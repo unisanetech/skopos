@@ -10,13 +10,16 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: convergence-and-release-proof-in-progress
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
   - ../../domains/product/vision.md
   - ../../architecture/00-architecture.md
   - ../../architecture/agent-native-operating-model.md
+  - ../../architecture/intelligent-project-onboarding.md
   - ../../architecture/artifact-model.md
   - ../../architecture/config-model.md
   - ../../architecture/docs-governance.md
@@ -39,6 +42,25 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-14`: Bound the first public artifact to `@unisane/skopos` after confirming
+  the third-party `@skopos` npm namespace is unavailable. The executable remains
+  `skopos`; company-owned publisher identity creates no Unisane runtime, product, or
+  adopter coupling.
+- `2026-08-13`: Reconciled the host-neutral target with the first-release support
+  boundary. Codex is the sole real-host-certified launch adapter; every later host
+  support claim requires its own current real-host Evidence. Claude Code, Cursor, and
+  GitHub Copilot projections remain unverified and do not block the first release.
+  Recorded `unisanetech/skopos` as company-owned governance without introducing
+  Unisane runtime or product coupling.
+- `2026-08-13`: Added the compact human-response implementation slice. The target uses
+  one canonical contract, mode-selective Session injection, stage-specific onboarding
+  guidance, plain-language rendering, measured token targets, and offline response
+  evaluations without a second model call on every response.
+- `2026-08-12`: Accepted intelligent project onboarding as the clean Phase 4 target.
+  One coding-agent-led setup journey now owns the planned convergence of Scopes,
+  Project Memory, capabilities, Policies, Skills, instructions, host delivery, and
+  lane-specific Readiness; the prototype command ceremony receives no compatibility
+  promise.
 - `2026-08-11`: Recorded the first north-star continuation cohort from the real Codex
   child-Task orchestration: three eligible fresh Codex Sessions completed three bounded
   Tasks without user restatement or known authority conflict, with linked closure
@@ -255,12 +277,16 @@ At completion:
 9. Readiness explains whether work can start, integrate, or close.
 10. `.skopos/**` is disposable and rebuildable.
 11. several coding-agent Sessions can work safely in one branch and working directory.
-12. Codex and Claude Code receive the same lifecycle and project truth.
-13. Unisane uses Skopos instead of its prior LLM workflow.
-14. no Unisane-specific rule or path exists in Skopos core.
+12. every host claimed supported receives the verified lifecycle and project truth
+    named in that claim; the first release certifies Codex only.
+13. adopter-specific workflows and integrations remain owned by their projects.
+14. no adopter-specific rule or path exists in Skopos core.
 15. the first public package contains no legacy prototype API.
 16. one Task can close proportionally in a shared dirty worktree without claiming
     Project integration or release readiness.
+17. one conversational setup workflow lets a coding agent understand and organize an
+    existing project with the user, then verifies Scopes, Memory, capabilities,
+    Policies, Skills, instructions, and host delivery by lane.
 
 ## Definition Of Done
 
@@ -272,7 +298,7 @@ The Plan is complete only when:
 4. current architecture docs match implemented code
 5. the clean-clone and multi-Session proof suites pass
 6. the full adopter proof matrix passes
-7. the Unisane replacement pilot passes
+7. a generic external-project adoption pilot passes without entering release authority
 8. CLI, MCP, UI, generated instructions, packages, schemas, tests, and docs contain no
    active legacy authority
 9. release smoke passes from a packed installation
@@ -283,13 +309,15 @@ The Plan is complete only when:
     calls
 13. compact and detailed agent transports meet measured response budgets
 14. release-certification Actions pass hermetic and declared-effect proof
+15. undocumented, chaotic, contradictory, small, multi-language, and mixed-stack
+    onboarding fixtures pass the intelligent setup contract
 
 ## Non-Goals
 
 1. build another coding agent or model provider
 2. reproduce native agent reasoning, plan generation, tool choice, or subagent control
 3. standardize application source-code architecture across adopters
-4. hardcode Unisane's domains, paths, packages, or validation commands
+4. hardcode an adopter's domains, paths, packages, or validation commands
 5. require every small edit to create a tracked Task
 6. claim preventive cross-machine coordination without a remote authority
 7. ship a broad extension SDK before Profiles, Actions, and Guards prove sufficient
@@ -379,7 +407,7 @@ flowchart TD
   P5 --> P6
   P6 --> P7["Phase 7: same-workspace coordination"]
   P7 --> P8["Phase 8: host parity and UX"]
-  P4 --> P9["Phase 9: Unisane replacement pilot"]
+  P4 --> P9["Phase 9: external-project adoption pilot"]
   P5 --> P9
   P8 --> P9
   P9 --> P10["Phase 10: release proof"]
@@ -743,10 +771,83 @@ permanently mapping its problems.
    verification
 8. a changed source root, rule, metadata record, or document invalidates intake output
 
-Status: certified on 2026-08-05 by Task T-db2a2a6c. The canonical adoption matrix
+Prototype foundation status: certified on 2026-08-05 by Task T-db2a2a6c. The current
+adoption matrix
 exercises all project-shape and ambiguity lanes above; scanner-only assessment remains
 non-ready, while only exact reviewed execution, strict standard verification, and
 activation reach `agent-ready`.
+
+### Clean Target Extension — Intelligent Project Onboarding
+
+The accepted onboarding decision supersedes the prototype's visible multi-command
+ceremony. Implement one `setup` workflow without preserving compatibility aliases:
+
+1. add `setup`, `setup status`, `setup resume`, and `setup review` as projections of
+   one runtime authority
+2. generate an executable coding-agent packet containing required reads, known
+   signals, prior answers, response objective, output schema and path, approval
+   boundaries, prohibited claims, and exact continuation
+3. add domain-aware Scope proposals and approve the tracked Scope registry before
+   restructuring targets depend on Memory roots
+4. add `create-from-evidence` with source-bound facts, explicit inference and unknowns,
+   user-confirmed intent, proposed authority, and strict promotion validation
+5. compose project capability proposals, proportional Policy recommendations,
+   generated Skill binding proposals, instruction sync, and host verification into one
+   consolidated review
+6. support accept, edit, defer, and reject with source-bound invalidation and
+   natural-language partial approval
+7. add resumable staged apply with dependency-aware stop, truthful partial-state
+   reporting, and one exact recovery step
+8. replace one loose `agent-ready` result with required readiness lanes and
+   `setup-ready` or `setup-ready-with-deferred-options`
+9. distinguish generated adapter configuration from verified host context delivery
+10. add provider-based discovery for Node, Python, Go, Rust, Java, .NET, mixed-stack,
+    nested command surfaces, CI, migrations, browser checks, security, and custom tools
+11. delete the replaced prototype setup commands, schemas, states, help, tests, docs,
+    and generated projections in the same implementation slices; retain a low-level
+    diagnostic only when it has a distinct advanced or recovery purpose
+12. replace duplicated communication rules with one canonical source and generated
+    compact projections; keep the stable contract near 100–150 tokens
+13. add mode-specific `direct-answer`, `work-start`, `progress`, `decision`, and
+    `completion` renderers, normally adding only 20–80 instruction tokens plus current
+    material state
+14. put simple-English and internal-term translation in the compact contract, load the
+    detailed guide only at setup, material decision, high-risk, closure, recovery, and
+    handoff boundaries, and avoid unchanged per-turn reinjection
+15. align generated Claude, Codex, Copilot, and manual adapter paths and delivery proof;
+    make adapter contract tests semantic rather than formatting-sensitive
+16. add focused response-quality and token-budget scenarios for normal work and all
+    onboarding project shapes; do not add a per-response LLM judge or rewrite pass
+
+### Onboarding Exit Criteria
+
+1. a clean small project receives a short setup plan without unnecessary ceremony
+2. an undocumented project receives minimum useful Memory created from Evidence
+3. chaotic docs receive a complete reviewed authority and restructuring proposal
+4. contradictory truth produces one understandable blocking question and no mutation
+5. existing projects receive approved meaningful Scopes rather than package-derived
+   canonical identity
+6. commands are proposed with correct working directory, Scope, input, effects,
+   safety, and Evidence contract
+7. Policies are proportional and Skill bindings are generated rather than manually
+   authored by the user
+8. existing human instructions survive managed projection
+9. the setup agent explains findings, recommends defaults, remembers decisions, and
+   never exposes internal artifact ceremony as the normal experience
+10. users can naturally accept, edit, defer, reject, or partially approve the plan
+11. interruption and partial failure resume safely without silently widening approval
+12. stale or incomplete artifacts cannot produce setup Readiness
+13. configured adapters do not pass the host-delivery lane without delivery Evidence
+14. after setup, a fresh supported coding-agent Session receives materially better
+    Memory, Scope, Policy, Skill, Action, Guard, and proof context
+15. ordinary response guidance stays within the selective token targets and does not
+    replay the full communication or onboarding brief on every turn
+16. direct answers lead with the answer; decisions recommend a default; completion
+    states changed behavior, proof, Memory updates, and remaining risk
+17. user-facing text translates internal artifact, digest, lifecycle, and Readiness
+    details unless exact diagnostic terminology is requested or necessary
+18. response-quality evaluation passes representative direct-answer, progress,
+    decision, completion, recovery, and onboarding scenarios without a runtime judge
 
 ## Phase 5 — Profiles, Actions, And Guards
 
@@ -778,7 +879,7 @@ Give every project one capability and enforcement model.
 11. make Guards own required Evidence
 12. implement parent-strengthening and explicit exceptions
 13. implement missing-provider blockers
-14. replace Unisane-style gates with project bindings in the adopter, not core
+14. replace adopter-specific gates with project bindings in the adopter, not core
 15. implement exact Action execution identity and one-owner duplicate suppression
 16. implement fail-fast execution with partial Evidence and resumable remaining work
 17. reuse Evidence only while declared Action, source, config, environment, input,
@@ -1049,9 +1150,9 @@ Make Skopos automatic and consistent across supported coding agents.
 
 ### Exit Criteria
 
-1. Codex and Claude receive equivalent Project, Scope, Task, Action, Guard, and
-   Readiness truth
-2. continuation works across hosts
+1. every host claimed supported receives verified Project, Scope, Task, Action, Guard,
+   and Readiness truth for the capabilities named in that claim
+2. continuation works for every host claimed supported
 3. pre-compaction handoff is sufficient without transcript replay
 4. users do not need to remind agents to follow Skopos
 5. CLI, MCP, and UI agree on status and next action
@@ -1069,37 +1170,37 @@ retain the exact manual prompt and follow-up. The originating Session uses the s
 audited CLI/MCP transition to remain a reviewer until it intentionally reacquires
 writer mode.
 
-## Phase 9 — Unisane Replacement Pilot
+## Phase 9 — External-Project Adoption Pilot
 
 ### Purpose
 
-Prove Skopos can replace the workflow that inspired it without becoming Unisane-specific.
+Prove Skopos can support a complex external project without becoming adopter-specific.
 
 ### Work
 
-1. inventory Unisane's root and nested docs
+1. inventory the adopter's root and nested docs
 2. declare stable Scopes for Framework, deployables, platforms, modules, packages, and
    other real ownership units
 3. select Profiles
 4. generate and approve the documentation restructuring proposal
 5. converge root and Scope Memory packs
-6. convert Unisane commands and gates into project Actions and Guards
+6. convert adopter commands and gates into project Actions and Guards
 7. convert active Plans, workpacks, and missions into Plans and Tasks
-8. remove the prior Unisane LLM workflow authority
+8. remove or archive any prior parallel workflow authority when the adopter chooses Skopos
 9. regenerate agent instructions
 10. run Codex and Claude sessions
 11. run several same-directory Tasks
 12. prove source-bound validation and closure
-13. verify no Unisane path or rule entered Skopos core
+13. verify no adopter path or rule entered Skopos core
 
 ### Exit Criteria
 
-1. Unisane has one Skopos control plane
+1. the adopter has one Skopos control plane
 2. every material nested Scope resolves correct memory
-3. Unisane-specific checks remain Unisane Action/Guard sources
+3. adopter-specific checks remain adopter-owned Action/Guard sources
 4. previous LLM workflow code and docs are deleted or archived
 5. same-directory parallel sessions do not conflict
-6. a fresh agent continues a tracked Unisane Task without user restatement
+6. a fresh agent continues a tracked external-project Task without user restatement
 7. Readiness and acceptance-linked Evidence pass
 
 ## Phase 10 — Release Proof
@@ -1141,7 +1242,7 @@ Prove the product contract before the first public launch.
 3. no old command or schema is reachable
 4. no active doc describes old concepts as current or target
 5. clean installs and clean-clone reconstruction pass
-6. supported host parity passes
+6. every claimed supported host has current real-host proof
 7. first release documentation reflects only the clean product
 8. installed-package UI behavior passes from a fresh external project
 9. no P1 proof artifact is counted as proof until its target regression passes
@@ -1226,7 +1327,7 @@ fixtures, snapshots, help output, and installed-package smoke must agree.
 | `@skopos/instructions` | host-neutral lifecycle and projections |
 | current trust package | Evidence, Verify, Readiness, and closure |
 | `@skopos/runtime` | Task, Work Queue, Actions, coordination broker, adoption |
-| `@skopos/cli` | canonical command surface |
+| `@unisane/skopos` | canonical command surface and first public package |
 | `@skopos/mcp` | canonical semantic tools |
 | `@skopos/ui` | Tasks, Plans, Actions, Evidence, Readiness, Sessions |
 | fixtures/evals | full cross-project and concurrency proof |
@@ -1254,7 +1355,7 @@ fixtures, snapshots, help output, and installed-package smoke must agree.
 | clean clone | full tracked truth reconstruction |
 | high-impact restructuring | approval, tracked Task, stable proof |
 | Skopos self-hosting | product can operate on itself |
-| Unisane | complete replacement without core contamination |
+| complex external adopter | successful adoption without core contamination |
 | linked/polyrepo project | explicit limits and scoped coordination |
 
 ## Metrics
@@ -1272,7 +1373,7 @@ completes:
 The recording contract and current baseline live in
 `docs/operations/fresh-session-continuation-metric.md`. The first recorded cohort is
 `3 / 3` from real Codex child-Task delivery on `2026-08-11`; it is deliberately scoped
-to Codex and does not satisfy the separate Claude-parity or Unisane-adopter gates.
+to Codex and does not satisfy the separate Claude-parity gate.
 
 ### Supporting Measures
 
@@ -1339,19 +1440,25 @@ Do not publish until all answers are `yes`:
 1. Does the source expose only the canonical vocabulary?
 2. Is `.skopos/**` safely disposable?
 3. Can a clean clone rebuild Project Memory and capabilities?
-4. Does full adoption converge docs to the standard?
+4. Does unified setup converge docs to the standard?
 5. Do nested Scopes work without hardcoded adopter paths?
 6. Do Guards, not Actions, decide required Evidence?
 7. Does one Task own execution?
 8. Is Work Queue derived and Session-aware?
 9. Can several same-directory Sessions work without unsafe overlap?
 10. Is closure proof bound to an immutable Task snapshot?
-11. Are Codex and Claude behaviorally equivalent?
-12. Has Unisane deleted its parallel LLM workflow?
-13. Is Skopos core free of Unisane-specific grammar?
+11. Does every host claimed supported have current real-host behavioral proof?
+12. Do external-project integrations remain project-owned?
+13. Is Skopos core free of adopter-specific grammar?
 14. Are all superseded decisions and prototype work docs historical?
 15. Does packed-install smoke pass?
 16. Does the full proof matrix pass?
 17. Is the north-star continuation metric recorded?
+18. Does one intelligent setup workflow handle missing, chaotic, and contradictory
+    Project Memory without making users operate internal artifacts?
+19. Are Scope, capability, Policy, Skill, instruction, and host-delivery recommendations
+    composed and verified without a second durable authority?
+20. Can users accept, edit, defer, reject, and resume setup through clear agent
+    conversation with source-bound approval?
 
 If any answer is `no`, Skopos is still pre-release.

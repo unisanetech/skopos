@@ -1,0 +1,36 @@
+{
+  "snapshotId": "S-0d101ae78069",
+  "taskId": "T-c2411843",
+  "sessionId": "codex-response-guidance-docs-20260813",
+  "actorId": "codex-response-guidance-docs",
+  "baseRevision": "c430050b64c54d773139cdfa83d1a678e685376f",
+  "paths": [
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "239c13cddc2a02af4dd331b2a499a783250e27a28656340137d5c841d0a07cfc"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "45ebd34aee504599b0f89da979f43912501f5fd55396965f114d311ea53c4627"
+    },
+    {
+      "path": "docs/decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md",
+      "digest": "ca7ea52f4bcfff04a217e33ee4d4cb4380bdab1ac4516da1301b4af3e9f8a3fc"
+    },
+    {
+      "path": "docs/decisions/D-20260812-intelligent-project-onboarding-contract.md",
+      "digest": "bed055d75c02c30a3f20b28de4ae3c69464ae56f3991d4c271fef3c71171788e"
+    },
+    {
+      "path": "docs/domains/product/implementation-map.md",
+      "digest": "11b70fe50f2b87454d9e2bcdaface3235d4d4b1f2a2f551ab8a3eb1a8cb3eb51"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "013414240a7abda4762e4fc683b23da32c40e71941df4d2f052412428a692db9"
+    }
+  ],
+  "digest": "0d101ae7806973b181e67714f3d70be1e86544bb352b15e1de3b2b241b34a082",
+  "createdAt": "2026-08-12T18:46:18.881Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-c2411843-S-0d101ae78069.json"
+}

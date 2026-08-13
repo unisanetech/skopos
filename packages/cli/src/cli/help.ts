@@ -1,11 +1,15 @@
 export const SKOPOS_CLI_HELP = `Skopos CLI
 
 Usage:
-  skopos adopt assess [target] [--actor <id>] [--dry-run] [--json]
-  skopos adopt propose [target] --analysis <path> --actor <id> [--dry-run] [--json]
-  skopos adopt approve [target] --proposal <digest> --actor <id> --reason <text> [--accept-material-risk] [--dry-run] [--json]
-  skopos adopt verify [target] --execution <path> --actor <id> [--dry-run] [--json]
-  skopos adopt activate [target] --actor <id> --reason <text> [--dry-run] [--json]
+  skopos setup [target] [--actor <id>] [--host <name> --session-id <id>] [--dry-run] [--json]
+  skopos setup status [target] [--actor <id>] [--json]
+  skopos setup review [target] [--actor <id>] [--json]
+  skopos setup decide <recommendation-id> <accept|edit|defer|reject> [target] [--note <text>] --actor <id> [--json]
+  skopos setup answer <question-id> <option-id> [target] --actor <id> [--json]
+  skopos setup submit <analysis.json> [target] --actor <id> [--dry-run] [--json]
+  skopos setup submit-completion <receipt.json> [target] --actor <id> [--dry-run] [--json]
+  skopos setup confirm-host-delivery [target] --actor <id> --host <name> --session-id <id> --context-marker <marker> --context-digest <sha256> [--dry-run] [--json]
+  skopos setup resume [target] --actor <id> [--host <name> --session-id <id>] [--dry-run] [--json]
   skopos init [target] [--mode existing|greenfield] [--subtree <path>] [--actor <id>] [--dry-run] [--force] [--no-scaffold-instructions] [--force-instructions] [--json]
   skopos scan [target] [--subtree <path>] [--actor <id>] [--json]
   skopos session context [target] [--actor <id>] [--session-id <id>] [--host <name>] [--lease-seconds <n>] [--dry-run] [--json]
@@ -77,7 +81,6 @@ Usage:
   skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--phase <phase>] [--risk <risk>] [--why] [--collection <changed|matched-guards|required-actions|guard-decisions|action-decisions>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos instructions scaffold [target] [--mode existing|greenfield] [--force] [--dry-run] [--actor <id>] [--json]
   skopos instructions sync [target] [--dry-run] [--actor <id>] [--json]
-  skopos understand [target] [--actor <id>] [--dry-run] [--json]
   skopos ui render [target] [--output <path>] [--dry-run] [--json]
   skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]
   skopos ui dev [target] [--host <host>] [--port <port>] [--json]        # live workspace UI with auto-refreshing state
@@ -109,6 +112,30 @@ Proof subjects:
 Unrelated pre-existing or other-Task changes stay visible but do not silently enter
 either proof subject. Use project-integration only when the requested outcome is an
 integration or release baseline, not as a workaround for a dirty worktree.
+`;
+
+const SKOPOS_SETUP_HELP = `Skopos setup
+
+Usage:
+  skopos setup [target] [--actor <id>] [--host <name> --session-id <id>] [--dry-run] [--json]
+  skopos setup status [target] [--actor <id>] [--json]
+  skopos setup review [target] [--actor <id>] [--json]
+  skopos setup decide <recommendation-id> <accept|edit|defer|reject> [target] [--note <text>] --actor <id> [--json]
+  skopos setup answer <question-id> <option-id> [target] --actor <id> [--json]
+  skopos setup submit <analysis.json> [target] --actor <id> [--dry-run] [--json]
+  skopos setup submit-completion <receipt.json> [target] --actor <id> [--dry-run] [--json]
+  skopos setup confirm-host-delivery [target] --actor <id> --host <name> --session-id <id> --context-marker <marker> --context-digest <sha256> [--dry-run] [--json]
+  skopos setup resume [target] --actor <id> [--host <name> --session-id <id>] [--dry-run] [--json]
+
+Setup is the normal project onboarding entry point. It understands the repository,
+asks only material questions, presents one review covering Project Memory, Scopes,
+checks, Policies, Skills, instructions, and coding-agent context delivery, then applies
+only accepted recommendations. Choices are bound to the project evidence they reviewed.
+Agent-owned Scope or document work becomes applied only after submit-completion verifies
+its current source-bound postconditions. Host delivery becomes ready only when the host
+explicitly confirms the exact live Session context marker and digest; setup never self-certifies it.
+
+Use init only as a low-level reconstruction or diagnostic command.
 `;
 
 const SKOPOS_DECIDE_HELP = `Skopos decide
@@ -242,6 +269,7 @@ not widen the proof subject or run missing Actions implicitly.
 `;
 
 const COMMAND_HELP = new Map<string, string>([
+  ['setup', SKOPOS_SETUP_HELP],
   ['start', SKOPOS_START_HELP],
   ['decide', SKOPOS_DECIDE_HELP],
   ['task', SKOPOS_TASK_HELP],

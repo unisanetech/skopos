@@ -9,11 +9,12 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
   - ../decisions/D-20260811-product-interface-design-first-release-boundary.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - fresh-session-continuation-metric.md
 reviewCycle: after any release-candidate source change or release-gate Evidence update
 ---
@@ -24,6 +25,22 @@ This is the current binary release view. `Yes` means the product behavior or acc
 release boundary is established. `No` means work or fresh immutable-candidate Evidence
 is still required. A source change can turn a previously proven candidate check back
 to `No` until it is rerun.
+
+## Changelog
+
+- `2026-08-13`: Strengthened exact-candidate gate `16`: every supported OS/Node cell
+  must download, digest-check, install, and exercise the one reviewed tarball, including
+  the installed lifecycle and bundled UI. Core certification also requires the
+  independent website to pass `pnpm web:verify` against the configured HTTPS
+  production origin. Source-only proof cannot complete this gate.
+- `2026-08-13`: Reconciled this scorecard with all 20 gates in the canonical
+  convergence Plan. Exact-candidate gates remain `No` in tracked source until an
+  immutable external certification receipt proves them for one commit and one
+  tarball; certification never rewrites its own source candidate.
+- `2026-08-13`: Replaced the unsupported Codex/Claude parity blocker with the accepted
+  claimed-host certification boundary. Codex is the only host claimed supported for
+  the first release; Claude Code, Cursor, and GitHub Copilot remain unverified and are
+  not release blockers while no support claim is made.
 
 ## Product Interface Design
 
@@ -47,39 +64,51 @@ no**. No additional efficacy work is required for the first `next` release.
 | 1 | Canonical vocabulary only | Yes | Current product and host contracts use the canonical Project, Scope, Task, Session, Action, Guard, Evidence, and Readiness model. |
 | 2 | `.skopos/**` is disposable | Yes | Tracked Memory and Task projections reconstruct local derived state. |
 | 3 | Clean clone rebuilds current Memory and capabilities | No | Earlier proof passed, but the accumulated candidate has changed and needs one fresh clean-clone run. |
-| 4 | Full adoption converges docs to the standard | No | The exact final-candidate adoption matrix is not yet consolidated. |
+| 4 | Unified setup converges docs to the standard | No | The protected clean-checkout run must invoke unified setup, preserve the configured docs root without redundant archetype/docs questions, and reconstruct tracked setup Readiness. |
 | 5 | Nested Scopes work generically | Yes | Topology-aware admission, expansion, reconstruction, and packed fixtures pass. |
 | 6 | Guards decide required Evidence | Yes | Actions execute; Guards select Evidence obligations. |
 | 7 | One Task owns execution | Yes | Session reservation and Task ownership are canonical. |
 | 8 | Work Queue is derived and Session-aware | Yes | Queue state derives from canonical Task, dependency, and Session state. |
 | 9 | Same-directory Sessions avoid unsafe overlap | Yes | Reservations, exact claims, recovery, and reviewer transitions fail closed on conflicting authority. |
 | 10 | Closure proof binds to an immutable Task snapshot | Yes | High-impact closure requires and records immutable snapshots. |
-| 11 | Codex and Claude are behaviorally equivalent | No | Host-neutral contracts exist, but equivalent real-host child-delivery proof is not current for Claude. |
-| 12 | Unisane deleted its parallel LLM workflow | No | Final adopter-side replacement certification is not linked in the current release scorecard. |
-| 13 | Core is free of Unisane grammar | Yes | Project-specific integration remains outside the generic core package family. |
+| 11 | Every host claimed supported has real-host behavioral proof | Yes | Codex is the sole first-release supported host and has current real-host delivery and continuation Evidence. Claude Code, Cursor, and GitHub Copilot remain explicitly unverified projections, not support claims. |
+| 12 | External-project integrations remain project-owned | Yes | Adopter-specific workflows, commands, and checks stay outside the Skopos core and release boundary. |
+| 13 | Core is free of adopter-specific grammar | Yes | Project-specific integration remains outside the generic core package family. |
 | 14 | Superseded decisions and prototype work are historical | Yes | Superseded sequential Decisions and completed prototype Plans live under archive routes with historical/transition metadata; the remaining active Plans are current release, convergence, and homepage work rather than prototypes. |
 | 15 | Packed-install smoke passes for the exact candidate | No | Earlier packed smoke passed; the changed candidate must be frozen and rerun. |
-| 16 | Full proof matrix passes for the exact candidate | No | Final immutable-candidate certification has not run. |
+| 16 | Full proof matrix passes for the exact candidate | No | Final immutable-candidate security, six-cell exact-tarball runtime, installed-lifecycle/UI, and production-origin website proof has not run. |
 | 17 | North-star continuation metric is recorded | Yes | The canonical operation records the eligibility rule and a source-linked `3 / 3` real Codex baseline, explicitly limited to that cohort. |
+| 18 | One intelligent setup workflow handles missing, chaotic, and contradictory Project Memory | Yes | Unified setup inspects current project truth, asks only material questions, and converges reviewed outcomes without making users operate internal artifacts. |
+| 19 | Setup composes Scope, capability, Policy, Skill, instruction, and host-delivery recommendations without a second authority | Yes | Each lane retains its owning tracked source while one resumable setup workflow composes review and verification. |
+| 20 | Users can accept, edit, defer, reject, and resume setup through source-bound agent conversation | Yes | Setup decisions are digest-bound, resumable, and projected through the plain-language agent response contract. |
 
-Current canonical score: **11 yes / 6 no**.
+Current tracked score: **16 yes / 4 no**. An exact candidate is releasable only when
+its external certification receipt overlays passing Evidence for gates `3`, `4`, `15`,
+and `16`, producing an effective **20 / 20** result for that exact commit and tarball.
 
 ### Gate execution boundary
 
 The protected publication workflow divides these answers into two groups so it cannot
 silently substitute candidate tests for adopter or host proof:
 
-1. Gates `1`, `2`, `5`–`14`, and `17` must already be `Yes` in this accepted
-   scorecard before candidate certification starts. This includes real Claude parity
-   and final Unisane replacement; generated adapters and local inference do not count.
+1. Gates `1`, `2`, `5`–`14`, and `17`–`20` must already be `Yes` in this accepted
+   scorecard before candidate certification starts. Every claimed host needs real-host
+   proof; generated adapters and local inference do not count.
 2. Gates `3`, `4`, `15`, and `16` are candidate-bound. The protected workflow earns
-   them from a fresh exact checkout through reconstruction, the adoption matrix,
-   packed-install smoke, and the complete candidate proof commands.
+   them from a fresh exact checkout through reconstruction, an actual unified setup
+   run, packed-install smoke, the production-origin website gate, and the complete
+   exact-artifact proof matrix. Every supported runtime cell downloads and verifies
+   the same tarball before exercising the installed lifecycle and bundled UI. Their result is
+   written to an external, machine-readable receipt bound to the candidate SHA and
+   tarball digest. The workflow does not change these tracked `No` rows to certify the
+   same source it is evaluating.
 
-`pnpm release:scorecard:validate` enforces the first group. It is expected to fail
-while questions `11` or `12` remain `No`. `pnpm release:reconstruct:validate` enforces
-the clean-checkout portion of the second group and refuses a checkout that already has
-derived `.skopos/**` state or tracked-file drift.
+`pnpm release:scorecard:validate` enforces the first group.
+`pnpm release:reconstruct:validate` enforces the clean-checkout portion of the second
+group and refuses a checkout that already has derived `.skopos/**` state or
+tracked-file drift. The protected workflow preserves its reconstruction, unified
+setup, production-web, packed-smoke, and final certification receipts outside tracked
+source.
 
 ## Release Workstreams
 
@@ -87,19 +116,19 @@ derived `.skopos/**` state or tracked-file drift.
 | --- | --- | --- |
 | R1 — security and dependency baseline | No | Rerun on the frozen candidate commit. |
 | R2 — Product Interface Design boundary | Yes | Publishable with efficacy explicitly unproven. |
-| R3 — canonical product and adoption closure | No | Close the six remaining `No` canonical answers: current-candidate reconstruction, adoption convergence, real Claude parity, Unisane replacement, packed smoke, and the full proof matrix. |
+| R3 — canonical product and setup closure | No | Close the four remaining `No` canonical answers: current-candidate reconstruction, setup convergence, packed smoke, and the full proof matrix. |
 | R4 — public package and user contract | No | Inspect and certify the final tarball and launch-facing documentation. |
 | R5 — CI and trusted publishing | No | Public repository, npm scope rights, protected environment, bootstrap, and OIDC remain external setup. |
 | R6 — immutable candidate certification | No | Commit, freeze, clean-clone, run the full matrix, and bind one tarball digest. |
 
 ## Next Release Work
 
-1. obtain real Claude host-parity and final Unisane replacement Evidence; neither may
-   be inferred from generated adapters, project docs that merely declare Skopos the
-   authority, or the earlier read-only pilot
-2. integrate and commit the accumulated work, then freeze one candidate
-3. rerun adoption, clean-clone, packed-install, security, runtime, and full proof on
+1. integrate and commit the accumulated work, then freeze one candidate
+2. rerun unified setup, clean-clone, packed-install, security, runtime, and full proof on
    that exact commit
-4. configure the public repository, npm scope, protected release environment, and
+3. configure the public repository, npm scope, protected release environment, and
    trusted publisher
-5. request explicit human publication approval for the exact commit and tarball
+4. request explicit human publication approval for the exact commit and tarball
+
+Real-host verification for Claude Code, Cursor, and GitHub Copilot remains later
+support-expansion work. None may be described as supported until that proof exists.

@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-07-29
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../guides/developer-workflows.md
   - ../standards/validation.md
@@ -21,6 +21,8 @@ reviewCycle: when local commands change
 
 ## Changelog
 
+- `2026-08-13`: Aligned the local Node requirement with the supported public runtime
+  families and the unflagged `node:sqlite` floor.
 - `2026-07-29`: Replaced prototype execution instructions with the canonical
   Session, Task, Action, Evidence, and Readiness loop.
 
@@ -31,7 +33,9 @@ pnpm install
 pnpm typecheck
 ```
 
-Node.js 22.5 or newer is required for the local SQLite coordination broker.
+Node.js `^22.13.0` or `^24.0.0` is required. Node 22 versions before 22.13 still
+require an experimental flag for the local SQLite coordination broker and are not
+supported.
 
 ## Work Loop
 
@@ -50,7 +54,7 @@ multi-Scope, or long-running work.
 
 ```bash
 pnpm --filter @skopos/<package> check-types
-pnpm --filter @skopos/cli exec vitest run <test-file>
+pnpm --filter @unisane/skopos exec vitest run <test-file>
 pnpm --filter @skopos/ui exec vitest run <test-file>
 ```
 

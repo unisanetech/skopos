@@ -87,6 +87,7 @@ const inferCodeScopes = async ({
   focusSubtree?: string;
 }): Promise<SkoposScopeLite[]> => {
   const packageJsonPaths = await findFilesNamed(cwd, 'package.json');
+  const workspaceMemoryRoot = resolveInferredMemoryRoot(scanSummary.docsHealth.root);
   const scopes: SkoposScopeLite[] = [
     {
       id: 'workspace',
@@ -96,6 +97,8 @@ const inferCodeScopes = async ({
       aliases: ['root'],
       summary: 'Workspace root scope.',
       confidence: scanSummary.confidence,
+      memoryRoot: workspaceMemoryRoot,
+      codeRoots: ['.'],
     },
   ];
 
@@ -122,11 +125,27 @@ const inferCodeScopes = async ({
       confidence: 'high',
       parent: 'workspace',
       ancestorIds: ['workspace'],
+      memoryRoot: `${workspaceMemoryRoot}/scopes/${toMemoryScopeSegment(packageName)}`,
+      codeRoots: [packageDir],
     });
   }
 
   return scopes;
 };
+
+const resolveInferredMemoryRoot = (candidate: string | undefined): string => {
+  const normalized = candidate?.replaceAll('\\', '/').replace(/^\.\//u, '').replace(/\/$/u, '');
+  return normalized && !normalized.startsWith('/') && !normalized.split('/').includes('..')
+    ? normalized
+    : 'docs';
+};
+
+const toMemoryScopeSegment = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/^@/u, '')
+    .replace(/[^a-z0-9]+/gu, '-')
+    .replace(/^-+|-+$/gu, '') || 'package';
 
 const asOptionalString = (value: unknown): string | undefined =>
   typeof value === 'string' && value.trim().length > 0 ? value : undefined;

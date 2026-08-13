@@ -70,7 +70,7 @@ describe('adoption proposal approval', () => {
         proposalDigest: 'proposal-digest',
         approvedOperationIds: ['delete-duplicate'],
         verificationCommand:
-          'skopos adopt verify . --execution .skopos/adoption/execution-input.json --actor <id>',
+          'skopos setup resume . --actor <id>',
         executionInputTemplate: {
           proposalDigest: 'proposal-digest',
           operations: [

@@ -2,10 +2,8 @@
 
 ## Comparison Target
 
-- Source visual truth, desktop:
-  `/Users/bhaskarbarma/.codex/generated_images/019feb11-71c6-7543-a5a3-28f3c019172b/exec-79b9b977-b1b1-49d4-829a-81c374762be2.png`
-- Source visual truth, mobile:
-  `/Users/bhaskarbarma/.codex/generated_images/019feb11-71c6-7543-a5a3-28f3c019172b/exec-954497c1-2e2b-49af-94e6-17fe51824531.png`
+- Source visual truth: the approved desktop and mobile concepts from the design
+  review session. They are review inputs rather than repository dependencies.
 - Rendered implementation: `http://127.0.0.1:4173/`
 - Route and theme: `/`, initial checkout-recovery state, fixed editorial light/dark
   composition.
@@ -71,6 +69,10 @@ story bands, and closing product boundary are too small to judge reliably in the
 normalized full-view comparison alone.
 
 ## Comparison History
+
+Passes below are retained as an audit trail, including interim states that were blocked
+at the time. The current release-facing result is Pass 15, which closes the capture and
+interaction gaps recorded in Passes 13 and 14 with fresh browser evidence.
 
 ### Pass 1 — blocked
 
@@ -143,12 +145,12 @@ normalized full-view comparison alone.
 ### Pass 6 — passed: hero onboarding refinement
 
 - Replaced the generic hero CTA pair with one compact, copyable onboarding surface.
-  The default tab presents the intended released npm package flow; the second tab gives
-  a coding agent a guarded existing-project adoption brief and exact init, understand,
-  and assess sequence.
-- The visible release state now says `Available on npm` rather than contradicting the
-  released-package installation model. The package identifier remains visible beside
-  the tabs without competing with the headline.
+  The default tab gives a coding agent a guarded existing-project setup brief organized
+  as Understand, Review, and Apply. The second tab shows the planned first-release
+  `@unisane/skopos@next` installation flow through the unified `skopos setup` command.
+- The visible release state now says the first release targets npm `@next`; it does not
+  claim the unpublished package is already available. The planned package identifier
+  remains visible beside the tabs without competing with the headline.
 - The desktop comparison preserves the approved three-line promise and repository-truth
   illustration while adding a darker, developer-native setup surface in the former CTA
   space. The mobile comparison intentionally moves more of the illustration below the
@@ -159,8 +161,8 @@ normalized full-view comparison alone.
   reported no horizontal overflow. At `320px`, the hero content and onboarding panel
   both measured `261px` wide and the copy control remained fully inside the surface.
 - The two tab controls are semantic tabs with labelled tab panels and visible focus.
-  The copy action switched to its `Copied` confirmation state, and the agent tab exposed
-  the full adoption brief without clipping.
+  The copy action switched to its `Copied` confirmation state, and the default agent tab
+  exposed the full setup brief without clipping.
 
 ## Required Fidelity Surfaces
 
@@ -178,16 +180,16 @@ normalized full-view comparison alone.
   tiny cobalt signal, amber blocker, and green valid state form a restrained semantic
   hierarchy with readable contrast. No decorative gradients, glows, glass surfaces, or
   blue-slate dark panels remain.
-- Image quality and asset fidelity: the hero uses a dedicated `1448 × 1086` generated
-  raster asset grounded in both approved references. It keeps all five exact labels and
-  has no crop, stretch, halo, inline SVG substitute, or CSS-art replacement.
+- Image quality and asset fidelity: the hero uses a repository-owned, hand-authored
+  inline SVG. Its Memory, Task, Policy, Evidence, Project Truth, and Repository labels
+  stay crisp at every responsive size without a raster crop or external image request.
 - Copy and content: hero and story promises match the approved narrative. Workstream
   data remains truthful about cooperative coordination, Task closure, skipped broad
   checks, and project-owned Evidence.
-- Hero onboarding copy models the intended npm release surface: install, initialize,
-  recover Session context, or hand a guarded init/understand/adopt-assess brief to a
-  coding agent. No source-checkout or pre-release caveat remains in the released view.
-- Icons: all interface icons come from the app-local Unisane Icon component backed by
+- Hero onboarding copy models the honest pre-release surface: give the setup brief to a
+  coding agent now, or use the planned npm `@next` commands after the first release.
+  Both paths converge on unified setup rather than the retired onboarding sequence.
+- Icons: all interface icons come from the app-local Icon component backed by
   Material Symbols; sizes, optical weight, and state colors are consistent.
 - Accessibility and behavior: semantic landmarks and headings, skip link, labelled
   navigation, alt text, visible focus, `44px` targets, keyboard stage controls,
@@ -210,21 +212,18 @@ normalized full-view comparison alone.
   alert appeared and development-server requests completed without errors.
 - Hero refinement: selected both onboarding tabs, confirmed the labelled panel content,
   activated the copy control and observed its `Copied` state, measured the hero at six
-  responsive widths, and found no horizontal overflow. The final desktop and mobile
-  captures show `Available on npm` and the npm package installation state.
+  responsive widths, and found no horizontal overflow. The final implementation keeps
+  the agent brief first and labels npm installation as the planned `@next` release.
 
 ## Findings
 
 No actionable P0, P1, or P2 differences remain.
 
-Residual P3 variation: the repository-truth raster retains its thin cobalt linework and
-the npm-availability dot uses the same small signal color. This is intentional tertiary color,
-not action styling; blocker and passing state colors remain semantic. The implementation
-also gives mobile Evidence controls more vertical room than the compressed source frame.
-
-The public release label now uses the same small cobalt signal dot; it carries status,
-not action styling. On narrow mobile screens the illustration continues below the first
-viewport by design so the npm commands and agent handoff remain legible.
+Residual P3 variation: the repository-truth SVG retains thin cobalt linework as an
+intentional tertiary signal, not action styling; blocker and passing state colors remain
+semantic. The implementation also gives mobile Evidence controls more vertical room
+than the compressed source frame. On narrow mobile screens the illustration continues
+below the first viewport so the setup brief and planned npm commands remain legible.
 
 ## Implementation Checklist
 
@@ -299,14 +298,13 @@ Required fidelity surfaces:
 - Colors and tokens: paper, neutral black, warm gray dividers, and the existing small
   semantic blue signal remain. Tabs and controls are black/white according to surface;
   the dark panel is `#0b0b0b`, not blue slate.
-- Image quality and asset fidelity: the existing `repository-truth.png` raster remains
-  intact, centered, uncropped, and sharp. No inline SVG, CSS illustration, or placeholder
-  asset replaced it.
-- Copy and content: the released npm install flow is unchanged. The agent view now gives
-  a concise guarded brief plus Initialize, Understand, and Assess steps; copying still
-  supplies the full brief and exact commands.
-- Accessibility and behavior: tabs implement roving keyboard focus; `End` selected and
-  focused the agent tab, `Home` returned to the npm tab, and the copy button announced
+- Image quality and asset fidelity: the repository-truth visual is a project-owned
+  inline SVG that remains centered, uncropped, and sharp at every verified width.
+- Copy and content: npm installation is truthfully labelled as the planned first
+  `@next` release. The default agent view gives a concise guarded brief plus Understand,
+  Review, and Apply steps; copying supplies the full brief and unified setup commands.
+- Accessibility and behavior: tabs implement roving keyboard focus; `Home` selected and
+  focused the agent tab, `End` selected the npm tab, and the copy button announced
   `Copied`. Tabs measure `46px` high and the copy target measures `44px` high.
 
 Browser verification:
@@ -320,8 +318,8 @@ Browser verification:
 - Browser development logs contained informational React/HMR entries and zero warnings
   or errors after the final render.
 
-No actionable P0, P1, or P2 differences remain. The small blue npm-status dot and blue
-linework inside the repository illustration remain intentional tertiary signals.
+No actionable P0, P1, or P2 differences remain. The blue linework inside the repository
+illustration remains an intentional tertiary signal.
 
 ### Pass 8 — passed: frameless hero edge treatment
 
@@ -482,11 +480,12 @@ No actionable P0, P1, or P2 differences remain.
 
 final result: passed
 
-### Pass 14 — blocked: revised hero headline balance
+### Pass 14 — historical interim block: revised hero headline balance
 
 Source visual truth:
 
-- `/var/folders/5h/v4t5vlh146z2wcg11rdyxh400000gn/T/TemporaryItems/NSIRD_screencaptureui_bIJ3Zk/Screenshot 2026-08-11 at 3.01.20 AM.png`
+- The approved wide-desktop homepage capture from the August 11 review session. The
+  temporary source file is not a repository dependency.
 - Source capture dimensions: `2048 × 1187` pixels. The visible state shows the selected
   hero copy at a wide desktop viewport with the installation tab active.
 
@@ -515,9 +514,9 @@ Required continuation:
 - Compare the new captures with the source in one comparison input, apply any remaining
   P1/P2 fixes, and repeat until no actionable visual findings remain.
 
-final result: blocked
+historical result: blocked pending a fresh browser capture
 
-### Pass 13 — blocked: grid-line continuity polish
+### Pass 13 — historical interim block: grid-line continuity polish
 
 Source visual truth:
 
@@ -525,7 +524,7 @@ Source visual truth:
 - `apps/web/.artifacts/design-qa/grid-polish/02-reference.png`
 - `apps/web/.artifacts/design-qa/grid-polish/03-reference.png`
 
-Requested fixes implemented in `apps/web/src/app/globals.css`:
+Requested fixes were implemented in the homepage style layer that existed at this pass:
 
 - Workstream tabs now have a full-width top rule and full-height vertical cell borders.
 - Task and Readiness internal horizontal rules expand through the column padding so they
@@ -551,7 +550,7 @@ Blocking visual evidence gap:
   establish a visual pass. Refreshing the existing preview tab and resuming browser
   access is required before closure.
 
-final result: blocked
+historical result: blocked pending a fresh browser capture
 
 ### Pass 12 — passed: viewport-wide rules with contained content
 
@@ -597,5 +596,32 @@ Responsive result:
   existing implementation tests rather than this visual pass alone.
 
 No actionable P0, P1, or P2 differences remain.
+
+final result: passed
+
+### Pass 15 — passed: current hero balance, responsiveness, and interactions
+
+Fresh browser evidence was captured on 2026-08-13 from the current homepage at:
+
+- `2048 × 1187` wide desktop
+- `1280 × 800` desktop
+- `390 × 844` mobile
+
+Current findings:
+
+- The wide headline resolves to four balanced lines; mobile also resolves to four lines
+  without clipping or horizontal overflow.
+- At wide desktop, the hero keeps the same `1011px` rendered height, `1076px` document
+  boundary, and `200px` onboarding panel height before and after switching tabs.
+- Both onboarding bodies remain mounted in the same fixed geometry layer, so selecting
+  the npm tab does not move the following compatibility strip or workstream section.
+- The copy control reaches a persistent visible `Copied` state and retains an explicit
+  failure state plus a fallback for browsers without the Clipboard API.
+- Desktop and mobile report equal document `scrollWidth` and `clientWidth`.
+- The fresh browser session reported no console warnings or errors.
+- The focused public-web suite passes `54/54` tests and its TypeScript check passes.
+
+No actionable P0, P1, or P2 differences remain. Earlier blocked entries are preserved
+only as historical evidence of the state at those passes.
 
 final result: passed
