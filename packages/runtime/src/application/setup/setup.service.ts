@@ -1344,7 +1344,10 @@ const collectSetupCertificationPaths = ({
     ...lanes
       .filter((lane) => lane.id !== 'host-delivery')
       .flatMap((lane) => lane.evidencePaths),
-  ].map((path) => relative(workspaceRoot, resolve(workspaceRoot, path)) || '.'))]
+  ].map((path) =>
+    (relative(workspaceRoot, resolve(workspaceRoot, path)) || '.')
+      .replaceAll('\\', '/'),
+  ))]
     .filter((path) =>
       path !== '.skopos' &&
       !path.startsWith('.skopos/') &&
