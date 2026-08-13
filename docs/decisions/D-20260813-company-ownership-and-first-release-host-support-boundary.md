@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-08-13
-implementationStatus: cutover-in-progress
+implementationStatus: implemented
 lastUpdated: 2026-08-13
 relatedDocs:
   - ../domains/product/positioning.md
@@ -24,6 +24,13 @@ reviewCycle: before adding a supported host or changing repository ownership
 ---
 
 # Decision: Company Ownership And First-Release Host Support Boundary
+
+## Changelog
+
+- `2026-08-13`: Completed the private repository transfer. The existing repository,
+  reviewed candidate branch, package provenance, and both verified local checkouts now
+  resolve to `unisanetech/skopos`; the former personal URL redirects to that repository.
+- `2026-08-13`: Accepted company ownership and the Codex-first host-support boundary.
 
 ## Context
 
