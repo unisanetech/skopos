@@ -1,14 +1,14 @@
 ---
 title: "Task: Consolidate and review the first public release candidate"
-status: active
+status: complete
 owner: "codex-root"
 id: T-cbbd94cd
 scope: "skopos"
 role: task
-lifecycle: active
+lifecycle: historical
 authority: canonical
 provenance: accepted
-view: current
+view: exception
 risk: high-impact
 proofSubject: task-closure
 proofBaseline: baseline-fcaa7d1ce633f049
@@ -19,7 +19,7 @@ lastUpdated: 2026-08-13
 
 ## Changelog
 
-- `2026-08-13`: Synchronized Task state `active` from Skopos.
+- `2026-08-13`: Synchronized Task state `complete` from Skopos.
 
 ## Goal
 
@@ -172,12 +172,12 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "schemaVersion": 1,
   "id": "T-cbbd94cd",
   "type": "task",
-  "status": "active",
+  "status": "durable",
   "generatedAt": "2026-08-13T08:35:00.392Z",
-  "updatedAt": "2026-08-13T10:27:26.307Z",
+  "updatedAt": "2026-08-13T10:28:53.251Z",
   "planIds": [],
   "childTasks": [],
-  "state": "active",
+  "state": "complete",
   "detail": "detailed",
   "title": "Consolidate and review the first public release candidate",
   "goal": "Consolidate and review the first public release candidate",
