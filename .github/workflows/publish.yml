@@ -329,20 +329,32 @@ jobs:
           name: unisane-skopos-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
+      - name: Prepare an isolated runtime consumer
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('node:fs'),os=require('node:os'),path=require('node:path');const runtime=fs.mkdtempSync(path.join(os.tmpdir(),'skopos-exact-runtime-'));const workspace=path.resolve(process.env.GITHUB_WORKSPACE);const resolved=path.resolve(runtime);const relation=path.relative(workspace,resolved);if(relation===''||(!relation.startsWith('..'+path.sep)&&relation!=='..'&&!path.isAbsolute(relation)))throw new Error('Runtime consumer must live outside the source checkout');fs.mkdirSync(path.join(runtime,'src'),{recursive:true});fs.writeFileSync(path.join(runtime,'package.json'),JSON.stringify({name:'skopos-exact-runtime-proof',version:'0.0.0',private:true,type:'module'},null,2)+'\n');fs.writeFileSync(path.join(runtime,'src','index.ts'),'export {};\n');fs.appendFileSync(process.env.GITHUB_ENV,'RUNTIME_PROJECT='+runtime+'\n')"
+
       - name: Verify, install, and exercise the reviewed artifact
         shell: bash
         run: |
           set -euo pipefail
           node -e "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=process.env.GITHUB_WORKSPACE;const tarball=path.join(root,'.release','packed','unisane-skopos-'+process.env.PACKAGE_VERSION+'.tgz');const expected=fs.readFileSync(path.join(root,'.release','unisane-skopos.sha256'),'utf8').trim().split(/\s+/)[0];const actual=crypto.createHash('sha256').update(fs.readFileSync(tarball)).digest('hex');if(actual!==expected)process.exit(1);fs.appendFileSync(process.env.GITHUB_ENV,'TARBALL_SHA='+actual+'\n')"
-          node -e "const fs=require('node:fs');fs.mkdirSync('.release/runtime-project/src',{recursive:true});fs.writeFileSync('.release/runtime-project/package.json',JSON.stringify({name:'skopos-exact-runtime-proof',version:'0.0.0',private:true,type:'module'},null,2)+'\n');fs.writeFileSync('.release/runtime-project/src/index.ts','export {};\n')"
-          npm install --prefix .release/runtime-project ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
-          test "$(node .release/runtime-project/node_modules/@unisane/skopos/dist/cli.js --version)" = "$PACKAGE_VERSION"
-          node .release/runtime-project/node_modules/@unisane/skopos/dist/cli.js --help > .release/runtime-help.txt
+          npm install --prefix "$RUNTIME_PROJECT" "$GITHUB_WORKSPACE/.release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
+          RUNTIME_CLI="$RUNTIME_PROJECT/node_modules/@unisane/skopos/dist/cli.js"
+          test "$(node "$RUNTIME_CLI" --version)" = "$PACKAGE_VERSION"
+          node "$RUNTIME_CLI" --help > .release/runtime-help.txt
           grep -q "skopos setup" .release/runtime-help.txt
-          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js setup . --actor exact-runtime-proof --json > ../runtime-setup.json)
-          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js session context . --actor exact-runtime-proof --json > ../runtime-session.json)
-          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js ui build . --output-dir .skopos/release-ui --json > ../runtime-ui.json)
-          node -e "const fs=require('node:fs'),path=require('node:path');for(const p of ['.release/runtime-setup.json','.release/runtime-session.json']){const x=JSON.parse(fs.readFileSync(p,'utf8'));if(!x||typeof x!=='object')process.exit(1)}const ui=JSON.parse(fs.readFileSync('.release/runtime-ui.json','utf8'));for(const p of [ui.entryHtmlPath,ui.statePath,ui.searchIndexPath]){if(typeof p!=='string'||!fs.existsSync(path.resolve('.release/runtime-project',p)))process.exit(1)}if(!Array.isArray(ui.assetPaths)||ui.assetPaths.length===0)process.exit(1)"
+          node "$RUNTIME_CLI" setup "$RUNTIME_PROJECT" --actor exact-runtime-proof --json > .release/runtime-setup.json
+          node "$RUNTIME_CLI" session context "$RUNTIME_PROJECT" --actor exact-runtime-proof --json > .release/runtime-session.json
+          node "$RUNTIME_CLI" ui build "$RUNTIME_PROJECT" --output-dir .skopos/release-ui --json > .release/runtime-ui.json
+          node -e "const fs=require('node:fs'),path=require('node:path');for(const p of ['.release/runtime-setup.json','.release/runtime-session.json']){const x=JSON.parse(fs.readFileSync(p,'utf8'));if(!x||typeof x!=='object')process.exit(1)}const ui=JSON.parse(fs.readFileSync('.release/runtime-ui.json','utf8'));for(const p of [ui.entryHtmlPath,ui.statePath,ui.searchIndexPath]){if(typeof p!=='string'||!fs.existsSync(path.resolve(process.env.RUNTIME_PROJECT,p)))process.exit(1)}if(!Array.isArray(ui.assetPaths)||ui.assetPaths.length===0)process.exit(1)"
+
+      - name: Remove the isolated runtime consumer
+        if: always()
+        shell: bash
+        run: |
+          node -e "const fs=require('node:fs'),os=require('node:os'),path=require('node:path');const runtime=process.env.RUNTIME_PROJECT;if(!runtime)process.exit(0);const resolved=path.resolve(runtime);const temp=path.resolve(os.tmpdir());const relation=path.relative(temp,resolved);if(relation===''||relation==='..'||relation.startsWith('..'+path.sep)||path.isAbsolute(relation)||!path.basename(resolved).startsWith('skopos-exact-runtime-'))throw new Error('Refusing to remove an unsafe runtime path');fs.rmSync(resolved,{recursive:true,force:true})"
 
       - name: Prove build, package boundary, and canonical lifecycle
         env:
