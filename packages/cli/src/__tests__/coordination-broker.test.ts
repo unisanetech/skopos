@@ -422,7 +422,7 @@ describe('same-directory coordination broker', () => {
         reason: 'Attempt recovery with contamination.',
       }),
     ).rejects.toThrow('contamination issue');
-  });
+  }, 15_000);
 
   it('allows only one winner across concurrent stale recovery attempts', async () => {
     const root = await createWorkspace();

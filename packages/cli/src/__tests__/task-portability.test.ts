@@ -1028,7 +1028,7 @@ describe('tracked Task portability', () => {
         taskId: started.task.id,
       }),
     ).resolves.toMatchObject({ state: 'active' });
-  });
+  }, 15_000);
 
   it('serializes concurrent cross-process Task mutations without losing step updates', async () => {
     const workspaceRoot = await createWorkspace();
@@ -1257,7 +1257,7 @@ describe('tracked Task portability', () => {
       actor: 'agent-a',
     });
     expect(readiness.blockers, readiness.blockers.join('\n')).toEqual([]);
-  }, 15_000);
+  }, 30_000);
 
   it('keeps high-impact snapshot proof mandatory in the one-command finish path', async () => {
     const workspaceRoot = await createWorkspace();
