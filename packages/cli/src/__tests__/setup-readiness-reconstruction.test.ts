@@ -71,6 +71,9 @@ describe('tracked unified-setup readiness reconstruction', () => {
     await writeCertification(root, {
       paths: ['project-memory/overview.md', 'apps/web/project-memory/overview.md'],
     });
+    await expect(readFile(join(root, 'docs'), 'utf8')).rejects.toMatchObject({
+      code: 'ENOENT',
+    });
     await writeFile(
       join(root, 'apps/web/project-memory/overview.md'),
       '# Changed web truth\n',
@@ -85,6 +88,9 @@ describe('tracked unified-setup readiness reconstruction', () => {
     });
     expect(readiness?.lanes.find((lane) => lane.id === 'configuration')?.affectedPaths).not.toContain(
       'apps/web/project-memory/overview.md',
+    );
+    expect(readiness?.snapshotPath).toMatch(
+      /^project-memory\/work\/tasks\/snapshots\/T-setupcert-S-/u,
     );
   });
 });
@@ -102,10 +108,7 @@ const createWorkspace = async ({
   const canonicalTaskRoot = join(root, docsRoot, 'work/archive/tasks');
   await Promise.all([
     mkdir(canonicalTaskRoot, { recursive: true }),
-    ...(docsRoot === 'docs'
-      ? []
-      : [mkdir(join(root, 'docs/work/archive/tasks'), { recursive: true })]),
-    mkdir(join(root, 'docs/work/tasks/snapshots'), { recursive: true }),
+    mkdir(join(root, docsRoot, 'work/tasks/snapshots'), { recursive: true }),
     mkdir(join(root, 'tools/skopos'), { recursive: true }),
     ...memoryRoots.map((memoryRoot) => mkdir(join(root, memoryRoot), { recursive: true })),
   ]);
@@ -308,7 +311,7 @@ const writeCertification = async (
   const actualDigest = digestSkoposTaskPathStates(states);
   const digest = snapshotDigest ?? actualDigest;
   const snapshotId = `S-${digest.slice(0, 12)}`;
-  const artifactPath = `docs/work/tasks/snapshots/${taskId}-${snapshotId}.json`;
+  const artifactPath = `${docsRoot}/work/tasks/snapshots/${taskId}-${snapshotId}.json`;
   await writeFile(
     join(root, artifactPath),
     JSON.stringify(

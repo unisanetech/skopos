@@ -26,6 +26,14 @@ describe("homepage clipboard behavior", () => {
     await expect(copyText("install", { writeText, fallback })).resolves.toBe(false);
   });
 
+  it("copies through the synchronous fallback when the Clipboard API is unavailable", async () => {
+    const fallback = vi.fn(() => true);
+
+    await expect(copyText("agent brief", { writeText: undefined, fallback })).resolves.toBe(true);
+    expect(fallback).toHaveBeenCalledOnce();
+    expect(fallback).toHaveBeenCalledWith("agent brief");
+  });
+
   it("falls back when a Clipboard API write stalls", async () => {
     const writeText = vi.fn(() => new Promise<void>(() => undefined));
     const fallback = vi.fn(() => true);

@@ -1,14 +1,17 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
 
 import { buildHostActorBinding } from '../host-actor-binding/host-actor-binding.js';
+import { normalizeInstructionSourcePath } from '../scaffold-project-instructions/scaffold-project-instructions.service.js';
+import { resolveWorkspaceContainedPath } from '../shared/workspace-contained-path.js';
 
 export interface SyncClaudeCodeHookAdapterOptions {
   cwd: string;
   dryRun?: boolean;
   projectionModel?: SkoposHostProjectionModel;
+  instructionSourcePath?: string;
 }
 
 export interface ClaudeCodeHookAdapterWrite {
@@ -37,31 +40,43 @@ export const syncClaudeCodeHookAdapter = async ({
   cwd,
   dryRun = false,
   projectionModel,
+  instructionSourcePath: providedInstructionSourcePath,
 }: SyncClaudeCodeHookAdapterOptions): Promise<SyncClaudeCodeHookAdapterResult> => {
   const workspaceRoot = resolve(cwd);
+  const instructionSourcePath = normalizeInstructionSourcePath(
+    providedInstructionSourcePath ?? projectionModel?.instructionSourcePath,
+  );
+  const [settingsPath, sessionStartHookPath, userPromptSubmitHookPath, postEditHookPath, preCompactHookPath, stopHookPath] = await Promise.all([
+    resolveWorkspaceContainedPath({ workspaceRoot, path: SETTINGS_RELATIVE_PATH, label: 'Claude Code adapter settings' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: SESSION_START_HOOK_RELATIVE_PATH, label: 'Claude Code session-start hook' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: USER_PROMPT_SUBMIT_HOOK_RELATIVE_PATH, label: 'Claude Code user-prompt hook' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: POST_EDIT_HOOK_RELATIVE_PATH, label: 'Claude Code post-edit hook' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: PRE_COMPACT_HOOK_RELATIVE_PATH, label: 'Claude Code pre-compact hook' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: STOP_HOOK_RELATIVE_PATH, label: 'Claude Code stop hook' }),
+  ]);
   const files = [
     {
-      path: join(workspaceRoot, SETTINGS_RELATIVE_PATH),
+      path: settingsPath,
       contents: renderClaudeCodeSettings(projectionModel),
     },
     {
-      path: join(workspaceRoot, SESSION_START_HOOK_RELATIVE_PATH),
+      path: sessionStartHookPath,
       contents: renderSessionStartHookScript(),
     },
     {
-      path: join(workspaceRoot, USER_PROMPT_SUBMIT_HOOK_RELATIVE_PATH),
+      path: userPromptSubmitHookPath,
       contents: renderUserPromptSubmitHookScript(),
     },
     {
-      path: join(workspaceRoot, POST_EDIT_HOOK_RELATIVE_PATH),
-      contents: renderPostEditHookScript(),
+      path: postEditHookPath,
+      contents: renderPostEditHookScript(instructionSourcePath),
     },
     {
-      path: join(workspaceRoot, PRE_COMPACT_HOOK_RELATIVE_PATH),
+      path: preCompactHookPath,
       contents: renderPreCompactHookScript(),
     },
     {
-      path: join(workspaceRoot, STOP_HOOK_RELATIVE_PATH),
+      path: stopHookPath,
       contents: renderStopHookScript(),
     },
   ];
@@ -80,13 +95,13 @@ export const syncClaudeCodeHookAdapter = async ({
   }
 
   return {
-    settingsPath: join(workspaceRoot, SETTINGS_RELATIVE_PATH),
+    settingsPath,
     hookPaths: [
-      join(workspaceRoot, SESSION_START_HOOK_RELATIVE_PATH),
-      join(workspaceRoot, USER_PROMPT_SUBMIT_HOOK_RELATIVE_PATH),
-      join(workspaceRoot, POST_EDIT_HOOK_RELATIVE_PATH),
-      join(workspaceRoot, PRE_COMPACT_HOOK_RELATIVE_PATH),
-      join(workspaceRoot, STOP_HOOK_RELATIVE_PATH),
+      sessionStartHookPath,
+      userPromptSubmitHookPath,
+      postEditHookPath,
+      preCompactHookPath,
+      stopHookPath,
     ],
     writes,
   };
@@ -301,21 +316,25 @@ runSkopos(
 );
 `;
 
-const renderPostEditHookScript = (): string => `#!/usr/bin/env node
+const renderPostEditHookScript = (instructionSourcePath: string): string => `#!/usr/bin/env node
 ${renderSharedRunner()}
 
 const input = await readInput();
 const projectDir = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const filePath = typeof input.tool_input?.file_path === 'string' ? input.tool_input.file_path : '';
+const normalizedFilePath = filePath.replaceAll('\\\\', '/');
+const normalizedProjectDir = projectDir.replaceAll('\\\\', '/').replace(/\\/$/, '');
+const instructionSourcePath = ${JSON.stringify(instructionSourcePath)};
+const projectInstructionPath = normalizedProjectDir + '/' + instructionSourcePath;
 
-if (!filePath.endsWith('/AGENTS.md') && filePath !== 'AGENTS.md') {
+if (normalizedFilePath !== instructionSourcePath && normalizedFilePath !== projectInstructionPath) {
   process.exit(0);
 }
 
 const result = runSkopos(projectDir, ['instructions', 'sync', projectDir, '--json']);
 
 if (result.status !== 0) {
-  process.stderr.write(result.stderr || 'Skopos failed to sync instruction mirrors after AGENTS.md changed.\\n');
+  process.stderr.write(result.stderr || ${JSON.stringify(`Skopos failed to sync instruction mirrors after ${instructionSourcePath} changed.\n`)});
   process.exit(1);
 }
 `;

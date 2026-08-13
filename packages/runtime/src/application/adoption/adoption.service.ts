@@ -1,5 +1,5 @@
 import { access, readFile, readdir, rm } from 'node:fs/promises';
-import { join, relative, resolve } from 'node:path';
+import { join, posix, relative, resolve } from 'node:path';
 
 import { loadSkoposConfig } from '@skopos/config';
 import {
@@ -117,7 +117,7 @@ export const reconstructTrackedSkoposAdoptionReadinessRuntime = async ({
 
   const snapshot = await loadLatestTrackedSetupSnapshot(
     workspaceRoot,
-    certification.id,
+    certification,
   );
   if (!snapshot) return undefined;
 
@@ -157,6 +157,14 @@ const buildTrackedReadinessFromChangedPaths = async ({
     config?.docs.root,
     ...(scopeRegistry?.scopes.map((scope) => scope.memoryRoot) ?? []),
   ].filter((root): root is string => Boolean(root));
+  const instructionPaths = new Set([
+    config?.agents.canonicalInstructions ?? 'AGENTS.md',
+    ...(config?.agents.syncMirrors ?? [
+      'CLAUDE.md',
+      '.github/copilot-instructions.md',
+      '.cursor/rules/project.mdc',
+    ]),
+  ]);
   const lanePaths: Record<
     'memory' | 'scopes' | 'capabilities' | 'instructions' | 'configuration',
     string[]
@@ -170,13 +178,7 @@ const buildTrackedReadinessFromChangedPaths = async ({
     capabilities: changedPaths.filter((path) =>
       /(?:^|\/)tools\/skopos\/(?:actions|guards)(?:\/|\.ya?ml$)/u.test(path),
     ),
-    instructions: changedPaths.filter(
-      (path) =>
-        path === 'AGENTS.md' ||
-        path === 'CLAUDE.md' ||
-        path === '.github/copilot-instructions.md' ||
-        path === '.cursor/rules/project.mdc',
-    ),
+    instructions: changedPaths.filter((path) => instructionPaths.has(path)),
     configuration: changedPaths.filter((path) => path === 'skopos.config.yaml'),
   };
   const classifiedPaths = new Set(Object.values(lanePaths).flat());
@@ -328,7 +330,7 @@ const isCompleteSetupCertificationTask = (
 
 const loadLatestTrackedSetupSnapshot = async (
   workspaceRoot: string,
-  taskId: string,
+  certification: SkoposTaskArtifact,
 ): Promise<
   | {
       path: string;
@@ -338,7 +340,14 @@ const loadLatestTrackedSetupSnapshot = async (
     }
   | undefined
 > => {
-  const directory = join(workspaceRoot, 'docs', 'work', 'tasks', 'snapshots');
+  const taskId = certification.id;
+  if (!certification.trackedDocumentPath) return undefined;
+  const directory = join(
+    workspaceRoot,
+    resolveTrackedTaskWorkRoot(certification.trackedDocumentPath),
+    'tasks',
+    'snapshots',
+  );
   const names = await readdir(directory).catch(() => [] as string[]);
   const candidates = await Promise.all(
     names
@@ -363,6 +372,14 @@ const loadLatestTrackedSetupSnapshot = async (
   return candidates
     .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
     .sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+};
+
+const resolveTrackedTaskWorkRoot = (trackedDocumentPath: string): string => {
+  let workRoot = posix.dirname(posix.dirname(trackedDocumentPath.replaceAll('\\', '/')));
+  while (posix.basename(workRoot) === 'archive') {
+    workRoot = posix.dirname(workRoot);
+  }
+  return workRoot;
 };
 
 const isPathWithinRoot = (path: string, root: string): boolean => {

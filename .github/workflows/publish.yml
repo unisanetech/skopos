@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       mode:
-        description: Certification never publishes; bootstrap is only for the first package; OIDC is the normal path
+        description: Certification never publishes; bootstrap is only for the first package; later releases use OIDC
         required: true
         default: certify
         type: choice
@@ -75,6 +75,9 @@ jobs:
       - name: Install the frozen workspace without a release cache
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace packages for source-level certification
+        run: pnpm build
+
       - name: Prove security and publishing controls
         run: |
           pnpm release:security:validate
@@ -82,14 +85,29 @@ jobs:
           pnpm release:scorecard:validate
 
       - name: Reconstruct project Memory and capabilities from tracked truth
-        run: pnpm release:reconstruct:validate
+        run: node scripts/release/validate-clean-checkout-reconstruction.mjs . --evidence-dir .release/evidence
 
       - name: Prove the complete source candidate
         run: |
           pnpm typecheck
           pnpm test
           pnpm proof
-          pnpm release:smoke
+
+      - name: Prove the independent production website
+        env:
+          CANDIDATE_SHA: ${{ steps.identity.outputs.candidate_sha }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.SKOPOS_PUBLIC_SITE_URL }}
+          SKOPOS_WEB_CANDIDATE_SHA: ${{ steps.identity.outputs.candidate_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$NEXT_PUBLIC_SITE_URL"
+          pnpm release:web:test
+          pnpm web:verify
+          pnpm release:web:verify -- \
+            --candidate-sha "$CANDIDATE_SHA" \
+            --origin "$NEXT_PUBLIC_SITE_URL" \
+            --output ".release/evidence/production-web.json"
 
       - name: Pack and identify the one reviewed artifact
         shell: bash
@@ -99,7 +117,26 @@ jobs:
           pnpm --filter @skopos/cli pack --pack-destination "$GITHUB_WORKSPACE/.release/packed" --json > .release/pack.json
           test "$(find .release/packed -maxdepth 1 -name "skopos-cli-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
           (cd .release && sha256sum "packed/skopos-cli-${PACKAGE_VERSION}.tgz" > skopos-cli.sha256)
+
+      - name: Prove packed installation from the one reviewed artifact
+        env:
+          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/skopos-cli-${{ steps.identity.outputs.package_version }}.tgz
+        run: pnpm release:smoke:artifact
+
+      - name: Prove the reviewed artifact is publishable without publishing
+        run: |
           npm publish ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --tag next --access public --dry-run
+
+      - name: Write the provisional core candidate receipt
+        run: |
+          pnpm release:receipt:write -- \
+            --candidate-sha "${{ steps.identity.outputs.candidate_sha }}" \
+            --tag "${{ inputs.tag }}" \
+            --tarball ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" \
+            --reconstruction ".release/evidence/clean-checkout-reconstruction.json" \
+            --setup ".release/evidence/unified-setup-reconstruction.json" \
+            --web ".release/evidence/production-web.json" \
+            --output ".release/evidence/candidate-core-certification.json"
 
       - name: Preserve the reviewed candidate artifact and manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -109,12 +146,297 @@ jobs:
             .release/pack.json
             .release/skopos-cli.sha256
             .release/packed/skopos-cli-${{ steps.identity.outputs.package_version }}.tgz
+            .release/evidence/clean-checkout-reconstruction.json
+            .release/evidence/unified-setup-reconstruction.json
+            .release/evidence/production-web.json
+            .release/evidence/candidate-core-certification.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
+
+  exact-candidate-security:
+    name: Prove security for the exact certified SHA and artifact
+    needs: certify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      CANDIDATE_SHA: ${{ needs.certify.outputs.candidate_sha }}
+      PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
+    steps:
+      - name: Check out the same exact tagged candidate
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm from packageManager
+        uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+
+      - name: Install Node 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Verify exact source identity and install the locked workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          pnpm install --frozen-lockfile
+
+      - name: Fail on critical or high production advisories
+        run: pnpm audit --prod --audit-level high
+
+      - name: Download the one reviewed artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          path: .release
+
+      - name: Verify, extract, and install the reviewed artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          (cd .release && sha256sum --check --strict skopos-cli.sha256)
+          mkdir -p .release/package .release/install
+          tar -xzf ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" -C .release/package
+          node -e "require('node:fs').writeFileSync('.release/install/package.json', '{\"name\":\"@skopos/release-proof\",\"version\":\"0.0.0\",\"private\":true,\"license\":\"Apache-2.0\",\"type\":\"module\"}\n')"
+          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
+
+      - name: Install checksum-pinned known-good Gitleaks
+        shell: bash
+        run: |
+          curl --fail --location --silent --show-error \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz \
+            --output "$RUNNER_TEMP/gitleaks.tar.gz"
+          echo "ba6dbb656933921c775ee5a2d1c13a91046e7952e9d919f9bac4cec61d628e7d  $RUNNER_TEMP/gitleaks.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/gitleaks.tar.gz" -C "$RUNNER_TEMP" gitleaks
+          echo "$RUNNER_TEMP" >> "$GITHUB_PATH"
+
+      - name: Prove the secret scanner detects a positive canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          canary_root="$RUNNER_TEMP/gitleaks-positive-canary"
+          mkdir -p "$canary_root/input"
+          printf 'token = "%s%s"\n' 'ghp_' 'aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789' > "$canary_root/input/fixture.txt"
+          set +e
+          gitleaks detect --no-git --no-banner --redact \
+            --report-format json --report-path "$canary_root/report.json" \
+            --source "$canary_root/input" >/dev/null 2>&1
+          canary_exit=$?
+          set -e
+          test "$canary_exit" -eq 1
+          node -e "const x=require(process.argv[1]);if(!Array.isArray(x)||x.length!==1||x[0].RuleID!=='github-pat')process.exit(1)" "$canary_root/report.json"
+          rm -rf "$canary_root"
+
+      - name: Scan exact history and reviewed artifact for secrets
+        shell: bash
+        run: |
+          gitleaks detect --redact --no-banner --source .
+          gitleaks detect --no-git --redact --no-banner --source .release/package/package
+
+      - name: Generate installed license and SBOM evidence
+        run: node scripts/release/scan-installed-licenses.mjs .release/install .release/evidence/licenses.json
+
+      - name: Generate the installed candidate SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: .release/install
+          format: cyclonedx-json
+          output-file: .release/evidence/skopos-cli.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Validate and record exact-SHA security proof
+        shell: bash
+        run: |
+          node -e "const fs=require('node:fs');const x=require('./.release/evidence/skopos-cli.cdx.json');const digest=fs.readFileSync('.release/skopos-cli.sha256','utf8').trim().split(/\s+/)[0];if(x.bomFormat!=='CycloneDX'||!Array.isArray(x.components)||x.components.length===0||!/^[a-f0-9]{64}$/.test(digest))process.exit(1);fs.writeFileSync('.release/evidence/exact-candidate-security.json',JSON.stringify({schemaVersion:1,kind:'skopos.exact-candidate-security',candidateCommit:process.env.CANDIDATE_SHA,packageVersion:process.env.PACKAGE_VERSION,tarballSha256:digest,sourceAudit:'passed',historySecretScan:'passed',artifactSecretScan:'passed',licenseReview:'passed',sbom:'passed'},null,2)+'\n')"
+
+      - name: Preserve exact-candidate security evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skopos-cli-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
+          path: |
+            .release/evidence/licenses.json
+            .release/evidence/skopos-cli.cdx.json
+            .release/evidence/exact-candidate-security.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
+
+  exact-candidate-runtime:
+    name: ${{ matrix.os }} / Node ${{ matrix.node }} exact-candidate proof
+    needs: certify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            node: '22.13.0'
+          - os: ubuntu-24.04
+            node: '24'
+          - os: macos-15
+            node: '22.13.0'
+          - os: macos-15
+            node: '24'
+          - os: windows-2025
+            node: '22.13.0'
+          - os: windows-2025
+            node: '24'
+    env:
+      CANDIDATE_SHA: ${{ needs.certify.outputs.candidate_sha }}
+      PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
+      MATRIX_OS: ${{ matrix.os }}
+      MATRIX_NODE: ${{ matrix.node }}
+    steps:
+      - name: Check out the same exact tagged candidate
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: Install pnpm from packageManager
+        uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+
+      - name: Install the matrix Node runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: ${{ matrix.node }}
+          package-manager-cache: false
+
+      - name: Verify exact source identity and install the locked workspace
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          pnpm install --frozen-lockfile
+
+      - name: Download the one reviewed artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          path: .release
+
+      - name: Verify, install, and exercise the reviewed artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=process.env.GITHUB_WORKSPACE;const tarball=path.join(root,'.release','packed','skopos-cli-'+process.env.PACKAGE_VERSION+'.tgz');const expected=fs.readFileSync(path.join(root,'.release','skopos-cli.sha256'),'utf8').trim().split(/\s+/)[0];const actual=crypto.createHash('sha256').update(fs.readFileSync(tarball)).digest('hex');if(actual!==expected)process.exit(1);fs.appendFileSync(process.env.GITHUB_ENV,'TARBALL_SHA='+actual+'\n')"
+          node -e "const fs=require('node:fs');fs.mkdirSync('.release/runtime-project/src',{recursive:true});fs.writeFileSync('.release/runtime-project/package.json',JSON.stringify({name:'skopos-exact-runtime-proof',version:'0.0.0',private:true,type:'module'},null,2)+'\n');fs.writeFileSync('.release/runtime-project/src/index.ts','export {};\n')"
+          npm install --prefix .release/runtime-project ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
+          test "$(node .release/runtime-project/node_modules/@skopos/cli/dist/cli.js --version)" = "$PACKAGE_VERSION"
+          node .release/runtime-project/node_modules/@skopos/cli/dist/cli.js --help > .release/runtime-help.txt
+          grep -q "skopos setup" .release/runtime-help.txt
+          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js setup . --actor exact-runtime-proof --json > ../runtime-setup.json)
+          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js session context . --actor exact-runtime-proof --json > ../runtime-session.json)
+          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js ui build . --output-dir .skopos/release-ui --json > ../runtime-ui.json)
+          node -e "const fs=require('node:fs'),path=require('node:path');for(const p of ['.release/runtime-setup.json','.release/runtime-session.json']){const x=JSON.parse(fs.readFileSync(p,'utf8'));if(!x||typeof x!=='object')process.exit(1)}const ui=JSON.parse(fs.readFileSync('.release/runtime-ui.json','utf8'));for(const p of [ui.entryHtmlPath,ui.statePath,ui.searchIndexPath]){if(typeof p!=='string'||!fs.existsSync(path.resolve('.release/runtime-project',p)))process.exit(1)}if(!Array.isArray(ui.assetPaths)||ui.assetPaths.length===0)process.exit(1)"
+
+      - name: Prove build, package boundary, and canonical lifecycle
+        env:
+          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/skopos-cli-${{ needs.certify.outputs.package_version }}.tgz
+        run: |
+          pnpm build
+          pnpm release:check
+          pnpm proof
+          pnpm release:smoke:artifact
+
+      - name: Record the exact runtime proof
+        run: node -e "const fs=require('node:fs');fs.mkdirSync('.release/evidence',{recursive:true});if(!/^[a-f0-9]{64}$/.test(process.env.TARBALL_SHA||''))process.exit(1);fs.writeFileSync('.release/evidence/runtime-'+process.env.MATRIX_OS+'-'+process.env.MATRIX_NODE+'.json',JSON.stringify({schemaVersion:1,kind:'skopos.exact-candidate-runtime',candidateCommit:process.env.CANDIDATE_SHA,tarballSha256:process.env.TARBALL_SHA,packageVersion:process.env.PACKAGE_VERSION,os:process.env.MATRIX_OS,node:process.env.MATRIX_NODE,artifactInstall:'passed',versionCommand:'passed',helpCommand:'passed',setupCommand:'passed',sessionCommand:'passed',installedLifecycle:'passed',bundledUi:'passed',sourceProof:'passed',status:'passed'},null,2)+'\n')"
+
+      - name: Preserve the exact runtime Evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skopos-cli-runtime-${{ needs.certify.outputs.candidate_sha }}-${{ matrix.os }}-${{ matrix.node }}
+          path: .release/evidence/runtime-${{ matrix.os }}-${{ matrix.node }}.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90
+
+  finalize-candidate-receipt:
+    name: Finalize the immutable 20-of-20 candidate receipt
+    needs: [certify, exact-candidate-security, exact-candidate-runtime]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      CANDIDATE_SHA: ${{ needs.certify.outputs.candidate_sha }}
+      PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
+    steps:
+      - name: Check out the exact receipt writer
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: Install Node 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Download core candidate Evidence and reviewed artifact
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          path: .release
+
+      - name: Download exact-candidate security Evidence
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
+          path: .release/security
+
+      - name: Download the complete exact-candidate runtime matrix
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: skopos-cli-runtime-${{ needs.certify.outputs.candidate_sha }}-*
+          path: .release/runtime
+          merge-multiple: true
+
+      - name: Validate both proof authorities and finalize the receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
+          (cd .release && sha256sum --check --strict skopos-cli.sha256)
+          node scripts/release/write-candidate-certification-receipt.mjs \
+            --candidate-sha "$CANDIDATE_SHA" \
+            --tag "${{ inputs.tag }}" \
+            --tarball ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" \
+            --reconstruction ".release/evidence/clean-checkout-reconstruction.json" \
+            --setup ".release/evidence/unified-setup-reconstruction.json" \
+            --web ".release/evidence/production-web.json" \
+            --security ".release/security/exact-candidate-security.json" \
+            --runtime-dir ".release/runtime" \
+            --output ".release/final/candidate-certification.json"
+
+      - name: Preserve the final immutable candidate receipt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          path: .release/final/candidate-certification.json
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 90
 
   publish:
     name: Publish the certified artifact after protected approval
-    needs: certify
+    needs: [certify, exact-candidate-security, exact-candidate-runtime, finalize-candidate-receipt]
     if: github.ref == 'refs/heads/main' && inputs.mode != 'certify'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -125,6 +447,7 @@ jobs:
       name: npm-release
       url: https://www.npmjs.com/package/@skopos/cli
     env:
+      CANDIDATE_SHA: ${{ needs.certify.outputs.candidate_sha }}
       PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
     steps:
       - name: Install the trusted-publishing runtime
@@ -143,6 +466,12 @@ jobs:
           name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
+      - name: Download the final immutable candidate receipt
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          path: .release/final
+
       - name: Verify the transferred package identity
         shell: bash
         run: |
@@ -150,6 +479,7 @@ jobs:
           cd .release
           sha256sum --check --strict skopos-cli.sha256
           test "$(find packed -maxdepth 1 -name "skopos-cli-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
+          node -e "const fs=require('node:fs');const r=require('./final/candidate-certification.json');const digest=fs.readFileSync('skopos-cli.sha256','utf8').trim().split(/\s+/)[0];if(r.kind!=='skopos.release-candidate-certification'||r.candidateCommit!==process.env.CANDIDATE_SHA||r.artifact?.sha256!==digest||r.effectiveGateResult?.passed!==20||r.effectiveGateResult?.pending!==0||r.effectiveGateResult?.failed!==0)process.exit(1)"
           tar -xOf "packed/skopos-cli-${PACKAGE_VERSION}.tgz" package/package.json > package.json
           node -e "const p=require('./package.json'); if(p.name!=='@skopos/cli'||p.version!==process.env.PACKAGE_VERSION||p.publishConfig?.tag!=='next'||p.publishConfig?.access!=='public') process.exit(1)"
 
@@ -171,16 +501,58 @@ jobs:
           test -z "${NODE_AUTH_TOKEN:-}"
           npm publish ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --tag next --access public
 
-      - name: Verify published registry identity
-        shell: bash
+  verify-published-registry:
+    name: Verify registry identity and installed lifecycle
+    needs: [certify, finalize-candidate-receipt, publish]
+    if: github.ref == 'refs/heads/main' && inputs.mode != 'certify'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
+    steps:
+      - name: Check out the exact published candidate
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          ref: ${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: Install pnpm from packageManager
+        uses: pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9 # v6.0.8
+
+      - name: Install the registry verification runtime
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+
+      - name: Install the locked verification harness
         run: |
-          set -euo pipefail
-          for attempt in 1 2 3 4 5 6; do
-            version="$(npm view @skopos/cli@next version --json 2>/dev/null | tr -d '\"')"
-            if [[ "$version" == "$PACKAGE_VERSION" ]]; then
-              npm view "@skopos/cli@${PACKAGE_VERSION}" name version dist.integrity dist.tarball --json
-              exit 0
-            fi
-            sleep 10
-          done
-          exit 1
+          npm install --global npm@11.15.0
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Download the immutable candidate receipt
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          path: .release/final
+
+      - name: Verify registry metadata, launchers, lifecycle, and bundled UI
+        run: |
+          pnpm release:registry:test
+          pnpm release:registry:verify -- \
+            --version "$PACKAGE_VERSION" \
+            --receipt ".release/final/candidate-certification.json" \
+            --output ".release/evidence/published-registry-verification.json"
+
+      - name: Preserve published-registry Evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: skopos-cli-published-registry-${{ needs.certify.outputs.candidate_sha }}
+          path: .release/evidence/published-registry-verification.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 90

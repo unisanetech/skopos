@@ -23,7 +23,6 @@ import {
   runReadinessCommand,
   runVerifyCommand,
 } from './commands/verification.js';
-import { runUnderstandCommand } from './commands/understanding.js';
 import { runUiCommand } from './commands/ui.js';
 import { runActionsCommand } from './commands/actions.js';
 import { runEvidenceCommand } from './commands/evidence.js';
@@ -57,7 +56,6 @@ export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> =
   impact: runImpactCommand,
   instructions: runInstructionsCommand,
   ui: runUiCommand,
-  understand: runUnderstandCommand,
   integrations: runIntegrationsCommand,
   storage: runStorageCommand,
 };

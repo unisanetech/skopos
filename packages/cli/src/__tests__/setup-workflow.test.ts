@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -15,6 +15,7 @@ import {
   confirmSkoposSetupHostDelivery,
 } from '../../../runtime/src/application/setup/setup.service.js';
 import { reconstructTrackedSkoposAdoptionReadinessRuntime } from '../../../runtime/src/application/adoption/adoption.service.js';
+import { buildSkoposSetupAnswerRuntime } from '../../../runtime/src/application/understanding/understanding.service.js';
 
 const temporaryRoots: string[] = [];
 
@@ -34,6 +35,9 @@ describe('unified intelligent project setup', () => {
     });
 
     expect(['inspection-required', 'questions-open']).toContain(initial.state.stage);
+    expect(initial.state.materialQuestions.map((question) => question.id)).toEqual(
+      expect.arrayContaining(['bootstrap.project-archetype', 'bootstrap.docs-root']),
+    );
     expect(initial.state.lanes.map((lane) => lane.id)).toEqual([
       'understanding',
       'scopes',
@@ -44,6 +48,9 @@ describe('unified intelligent project setup', () => {
       'instructions',
       'host-delivery',
     ]);
+    expect(initial.state.lanes.find((lane) => lane.id === 'skills')?.evidencePaths).toContain(
+      'tools/skopos/skills',
+    );
     expect(initial.state.recommendations).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ applyKind: 'capability-candidate' }),
@@ -80,6 +87,151 @@ describe('unified intelligent project setup', () => {
     await writeFile(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`);
     const refreshed = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
     expect(refreshed.state.invalidatedDispositionIds).toContain(optional.id);
+  });
+
+  it('reuses an existing exact Action and recommends only one provider for each missing capability', async () => {
+    const root = await createNodeWorkspace();
+    const candidates = await discoverSkoposCapabilityCandidates({ cwd: root });
+    const testCandidate = candidates.find((entry) => entry.name === 'test')!;
+    const candidateActionIds = new Map(
+      candidates.map((candidate) => [candidate.id, candidate.suggestedAction?.id]),
+    );
+    const initial = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    const initialActionIds = initial.state.recommendations
+      .filter((entry) => entry.applyKind === 'capability-candidate')
+      .map((entry) => candidateActionIds.get(entry.applyRef!));
+
+    expect(initialActionIds).toContain('quality.test');
+    expect(new Set(initialActionIds).size).toBe(initialActionIds.length);
+
+    await Promise.all([
+      mkdir(join(root, 'tools/skopos/actions'), { recursive: true }),
+      mkdir(join(root, 'tools/skopos/guards'), { recursive: true }),
+    ]);
+    await writeFile(
+      join(root, 'tools/skopos/actions/quality-test.yaml'),
+      `${JSON.stringify({ ...testCandidate.suggestedAction, sourcePath: undefined }, null, 2)}\n`,
+    );
+    const loneAction = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const loneActionIds = loneAction.state.recommendations
+      .filter((entry) => entry.applyKind === 'capability-candidate')
+      .map((entry) => candidateActionIds.get(entry.applyRef!));
+
+    expect(loneActionIds).toContain('quality.test');
+
+    await writeFile(
+      join(root, 'tools/skopos/guards/quality-test.yaml'),
+      `${JSON.stringify({ ...testCandidate.suggestedGuard, sourcePath: undefined }, null, 2)}\n`,
+    );
+    const reused = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const reusedActionIds = reused.state.recommendations
+      .filter((entry) => entry.applyKind === 'capability-candidate')
+      .map((entry) => candidateActionIds.get(entry.applyRef!));
+
+    expect(reusedActionIds).not.toContain('quality.test');
+    expect(reused.state.failedApply).toBeUndefined();
+
+    await writeFile(
+      join(root, 'tools/skopos/actions/quality-test.yaml'),
+      `${JSON.stringify({
+        ...testCandidate.suggestedAction,
+        command: 'npm run stale-test',
+        sourcePath: undefined,
+      }, null, 2)}\n`,
+    );
+    const drifted = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const driftedActionIds = drifted.state.recommendations
+      .filter((entry) => entry.applyKind === 'capability-candidate')
+      .map((entry) => candidateActionIds.get(entry.applyRef!));
+
+    expect(driftedActionIds).toContain('quality.test');
+  });
+
+  it('applies an accepted source-bound update to a stale same-id Action and Guard', async () => {
+    const root = await createNodeWorkspace();
+    await Promise.all([
+      mkdir(join(root, 'docs/architecture'), { recursive: true }),
+      mkdir(join(root, 'tools/skopos/actions'), { recursive: true }),
+      mkdir(join(root, 'tools/skopos/guards'), { recursive: true }),
+    ]);
+    await Promise.all([
+      writeFile(join(root, 'AGENTS.md'), '# Project instructions\n'),
+      writeFile(join(root, 'docs/00-start-here.md'), '# Project docs\n'),
+      writeFile(join(root, 'docs/architecture/overview.md'), '# Architecture\n'),
+    ]);
+    await writeConfiguredSkoposProject(root);
+    const candidates = await discoverSkoposCapabilityCandidates({ cwd: root });
+    const candidate = candidates.find(
+      (entry) => entry.suggestedAction?.id === 'quality.test' && entry.source === 'configured-command',
+    )!;
+    await Promise.all([
+      writeFile(
+        join(root, 'tools/skopos/actions/quality-test.yaml'),
+        `${JSON.stringify({
+          ...candidate.suggestedAction,
+          command: 'pnpm stale-test',
+          sourcePath: undefined,
+        }, null, 2)}\n`,
+      ),
+      writeFile(
+        join(root, 'tools/skopos/guards/quality-test.yaml'),
+        `${JSON.stringify({
+          ...candidate.suggestedGuard,
+          description: 'Stale Guard awaiting reviewed setup repair.',
+          sourcePath: undefined,
+        }, null, 2)}\n`,
+      ),
+    ]);
+
+    let setup = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    while (setup.state.materialQuestions.length > 0) {
+      const question = setup.state.materialQuestions[0]!;
+      await answerSkoposSetupQuestionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        questionId: question.id,
+        optionId: question.recommendedOptionId,
+      });
+      setup = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    }
+    const capability = setup.state.recommendations.find(
+      (entry) => entry.applyKind === 'capability-candidate' && entry.applyRef === candidate.id,
+    );
+    expect(capability).toBeDefined();
+    for (const recommendation of setup.state.recommendations) {
+      await recordSkoposSetupDispositionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        recommendationId: recommendation.id,
+        disposition:
+          recommendation.id === capability!.id || recommendation.required
+            ? 'accept'
+            : 'defer',
+      });
+    }
+
+    await resumeSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const [action, guard] = await Promise.all([
+      readFile(join(root, 'tools/skopos/actions/quality-test.yaml'), 'utf8'),
+      readFile(join(root, 'tools/skopos/guards/quality-test.yaml'), 'utf8'),
+    ]);
+    expect(JSON.parse(action)).toMatchObject({
+      id: 'quality.test',
+      command: candidate.command,
+    });
+    expect(JSON.parse(guard)).toMatchObject({
+      id: 'quality.test',
+      description: candidate.suggestedGuard!.description,
+      requires: { actionIds: ['quality.test'], evidence: 'source-bound-action' },
+    });
   });
 
   it('keeps fresh Understand and Review local while dry-run writes nothing', async () => {
@@ -163,6 +315,328 @@ describe('unified intelligent project setup', () => {
     expect(await readFile(join(root, 'tools/skopos/scopes.yaml'), 'utf8')).toBe(existingScopes);
   });
 
+  it('reads configured project truth from the real workspace during fresh setup', async () => {
+    const root = await createNodeWorkspace();
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n');
+    await writeConfiguredSkoposProject(root);
+
+    const setup = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    const bootstrap = JSON.parse(
+      await readFile(join(root, '.skopos/index/bootstrap.json'), 'utf8'),
+    ) as {
+      detected: { docsRoots: string[] };
+      recommendedQuestions: Array<{ id: string }>;
+      recommendedNextSteps: string[];
+    };
+
+    expect(bootstrap.detected.docsRoots).toContain('docs');
+    expect(bootstrap.recommendedQuestions.map((question) => question.id)).not.toEqual(
+      expect.arrayContaining(['bootstrap.project-archetype', 'bootstrap.docs-root']),
+    );
+    expect(setup.state.materialQuestions.map((question) => question.id)).not.toEqual(
+      expect.arrayContaining(['bootstrap.project-archetype', 'bootstrap.docs-root']),
+    );
+    expect(bootstrap.recommendedNextSteps.join(' ')).not.toContain(
+      'confirm project archetype',
+    );
+  });
+
+  it('keeps a missing configured docs root as a material setup question', async () => {
+    const root = await createNodeWorkspace();
+    await writeConfiguredSkoposProject(root, 'guides');
+
+    const setup = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+
+    expect(setup.state.materialQuestions.map((question) => question.id)).toContain(
+      'bootstrap.docs-root',
+    );
+    expect(setup.state.materialQuestions.map((question) => question.id)).not.toContain(
+      'bootstrap.project-archetype',
+    );
+  });
+
+  it('refreshes cached setup discovery when initialization is explicitly requested', async () => {
+    const root = await createNodeWorkspace();
+    const initial = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    expect(initial.state.materialQuestions.map((question) => question.id)).toContain(
+      'bootstrap.project-archetype',
+    );
+
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n');
+    await writeConfiguredSkoposProject(root);
+    const refreshed = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+
+    expect(refreshed.state.materialQuestions.map((question) => question.id)).not.toEqual(
+      expect.arrayContaining(['bootstrap.project-archetype', 'bootstrap.docs-root']),
+    );
+  });
+
+  it('restores cached discovery bytes after a refreshed dry-run', async () => {
+    const root = await createNodeWorkspace();
+    await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
+    const previewPaths = [
+      '.skopos/index/bootstrap.json',
+      '.skopos/index/scopes.json',
+      '.skopos/index/diagnosis.json',
+      '.skopos/index/architecture.json',
+      '.skopos/index/enforcement.json',
+    ];
+    const before = await Promise.all(
+      previewPaths.map((path) => readFile(join(root, path), 'utf8')),
+    );
+    await writeFile(join(root, 'docs-new.md'), '# Newly discovered source\n');
+
+    await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+      dryRun: true,
+    });
+
+    const after = await Promise.all(
+      previewPaths.map((path) => readFile(join(root, path), 'utf8')),
+    );
+    expect(after).toEqual(before);
+  });
+
+  it('restores the preview boundary when a dry-run preview write fails', async () => {
+    const root = await createNodeWorkspace();
+    const indexRoot = join(root, '.skopos/index');
+    await mkdir(indexRoot, { recursive: true });
+    const originalEnforcement = '{"sentinel":"original-enforcement"}\n';
+    await writeFile(join(indexRoot, 'enforcement.json'), originalEnforcement);
+    await symlink(
+      join(root, '.skopos/missing-preview-parent/architecture.json'),
+      join(indexRoot, 'architecture.json'),
+    );
+
+    await expect(
+      buildSkoposSetupRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        initialize: true,
+        dryRun: true,
+      }),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+
+    expect(await readFile(join(indexRoot, 'enforcement.json'), 'utf8')).toBe(
+      originalEnforcement,
+    );
+    for (const path of [
+      'bootstrap.json',
+      'scopes.json',
+      'diagnosis.json',
+      'architecture.json',
+    ]) {
+      await expect(readFile(join(indexRoot, path), 'utf8')).rejects.toMatchObject({
+        code: 'ENOENT',
+      });
+    }
+    await expect(
+      readFile(join(root, '.skopos/setup/state.json'), 'utf8'),
+    ).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  it('respects configured custom instructions and config-only commands', async () => {
+    const root = await createNodeWorkspace();
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await Promise.all([
+      writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n'),
+      writeFile(join(root, 'PROJECT_AGENT.md'), '# Project agent instructions\n'),
+      writeFile(join(root, 'package.json'), JSON.stringify({ name: 'example' })),
+    ]);
+    await writeConfiguredSkoposProject(root, 'docs', 'PROJECT_AGENT.md');
+
+    const setup = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    const bootstrap = JSON.parse(
+      await readFile(join(root, '.skopos/index/bootstrap.json'), 'utf8'),
+    ) as {
+      detected: {
+        instructionFiles: string[];
+        commands: Record<string, string>;
+        findings: string[];
+      };
+      recommendedNextSteps: string[];
+    };
+
+    expect(bootstrap.detected.instructionFiles).toContain('PROJECT_AGENT.md');
+    expect(bootstrap.detected.commands).toMatchObject({
+      build: 'pnpm build',
+      test: 'pnpm test',
+      typecheck: 'pnpm typecheck',
+    });
+    expect(bootstrap.detected.findings.join(' ')).not.toContain('instruction source');
+    expect(bootstrap.detected.findings.join(' ')).not.toContain('command surface');
+    expect(bootstrap.recommendedNextSteps.join(' ')).not.toContain(
+      'Add the configured canonical instruction source',
+    );
+    expect(setup.state.materialQuestions.map((question) => question.id)).not.toEqual(
+      expect.arrayContaining(['bootstrap.instructions-source', 'bootstrap.commands']),
+    );
+  });
+
+  it('asks when the configured canonical instruction source is missing even if AGENTS.md exists', async () => {
+    const root = await createNodeWorkspace();
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await Promise.all([
+      writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n'),
+      writeFile(join(root, 'AGENTS.md'), '# An unrelated instruction file\n'),
+    ]);
+    await writeConfiguredSkoposProject(root, 'docs', 'PROJECT_AGENT.md');
+
+    const setup = await buildSkoposSetupRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      initialize: true,
+    });
+    const bootstrap = JSON.parse(
+      await readFile(join(root, '.skopos/index/bootstrap.json'), 'utf8'),
+    ) as { detected: { findings: string[] } };
+
+    expect(setup.state.materialQuestions.map((question) => question.id)).toContain(
+      'bootstrap.instructions-source',
+    );
+    expect(bootstrap.detected.findings.join(' ')).toContain(
+      'No canonical PROJECT_AGENT.md instruction source detected.',
+    );
+
+    expect(
+      setup.state.materialQuestions.find((question) => question.id === 'bootstrap.instructions-source'),
+    ).toMatchObject({
+      recommendedOptionId: 'restore-configured-instructions',
+      options: expect.arrayContaining([
+        expect.objectContaining({ id: 'switch-instruction-source:AGENTS.md' }),
+      ]),
+    });
+
+    await answerSkoposSetupQuestionRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      questionId: 'bootstrap.instructions-source',
+      optionId: 'restore-configured-instructions',
+    });
+    const config = await readFile(join(root, 'skopos.config.yaml'), 'utf8');
+    expect(config).toContain('canonicalInstructions: PROJECT_AGENT.md');
+    const answers = JSON.parse(
+      await readFile(join(root, '.skopos/index/understanding/setup-answers.json'), 'utf8'),
+    ) as { answers: Array<{ questionId: string; appliedEffects: Array<{ path?: string; summary: string }> }> };
+    expect(
+      answers.answers.find((answer) => answer.questionId === 'bootstrap.instructions-source')?.appliedEffects,
+    ).toContainEqual(expect.objectContaining({
+      path: 'PROJECT_AGENT.md',
+      summary: expect.stringContaining('without changing project configuration'),
+    }));
+
+    let review = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    for (const question of review.state.materialQuestions) {
+      if (question.id === 'bootstrap.instructions-source') continue;
+      await answerSkoposSetupQuestionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        questionId: question.id,
+        optionId: question.recommendedOptionId,
+      });
+    }
+    review = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const instructionSync = review.state.recommendations.find(
+      (recommendation) => recommendation.id === 'instructions.sync',
+    );
+    expect(instructionSync).toBeDefined();
+    for (const recommendation of review.state.recommendations) {
+      await recordSkoposSetupDispositionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        recommendationId: recommendation.id,
+        disposition: recommendation.required ? 'accept' : 'defer',
+      });
+    }
+    review = await resumeSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+
+    const [restoredInstructions, codexReadme, claudePostEditHook, manualGuide] =
+      await Promise.all([
+        readFile(join(root, 'PROJECT_AGENT.md'), 'utf8'),
+        readFile(join(root, '.skopos/cache/tooling/codex/README.md'), 'utf8'),
+        readFile(
+          join(root, '.skopos/cache/tooling/claude-code/hooks/post-edit-hook.mjs'),
+          'utf8',
+        ),
+        readFile(join(root, '.skopos/cache/tooling/manual-hosts/README.md'), 'utf8'),
+      ]);
+    expect(restoredInstructions).toContain('# PROJECT_AGENT.md instructions for example');
+    expect(restoredInstructions).toContain('Canonical instruction source: `PROJECT_AGENT.md`');
+    expect(restoredInstructions).toContain('Read `PROJECT_AGENT.md` first');
+    expect(codexReadme).toContain('`PROJECT_AGENT.md` plus');
+    expect(claudePostEditHook).toContain('const instructionSourcePath = "PROJECT_AGENT.md"');
+    expect(manualGuide).toContain('Read `PROJECT_AGENT.md`');
+    expect(
+      review.state.recommendations.some(
+        (recommendation) => recommendation.id === 'instructions.sync',
+      ),
+    ).toBe(false);
+    expect(review.state.lanes.find((lane) => lane.id === 'instructions')?.status).toBe(
+      'ready',
+    );
+  });
+
+  it('removes a selected canonical instruction source from mirror targets atomically', async () => {
+    const root = await createNodeWorkspace();
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await Promise.all([
+      writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n'),
+      writeFile(join(root, 'AGENTS.md'), '# Original source\n'),
+      writeFile(join(root, 'PROJECT_AGENT.md'), '# Project source\n'),
+    ]);
+    await writeConfiguredSkoposProject(root, 'docs', 'MISSING_AGENT.md');
+    const configPath = join(root, 'skopos.config.yaml');
+    await writeFile(
+      configPath,
+      (await readFile(configPath, 'utf8')).replace(
+        '  syncMirrors: []',
+        '  syncMirrors:\n    - AGENTS.md\n    - CLAUDE.md',
+      ),
+      'utf8',
+    );
+
+    await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
+    const review = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    const question = review.state.materialQuestions.find((entry) => entry.id === 'bootstrap.instructions-source');
+    expect(question?.options).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'switch-instruction-source:AGENTS.md' }),
+    ]));
+    await buildSkoposSetupAnswerRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      questionId: 'bootstrap.instructions-source',
+      optionId: 'switch-instruction-source:AGENTS.md',
+    });
+    const nextConfig = await readFile(configPath, 'utf8');
+    expect(nextConfig).toContain('canonicalInstructions: AGENTS.md');
+    expect(nextConfig).toContain('    - CLAUDE.md');
+    expect(nextConfig).not.toContain('    - AGENTS.md');
+  });
+
   it('discovers mixed-stack project-owned checks without making Node the product boundary', async () => {
     const root = await mkdtemp(join(tmpdir(), 'skopos-setup-mixed-'));
     temporaryRoots.push(root);
@@ -237,6 +711,89 @@ describe('unified intelligent project setup', () => {
     expect(receipt).toMatchObject({ host: 'codex', sessionId: 'setup-session-1', deliveryAuthority: 'host-confirmed' });
     expect(receipt.communicationContractDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(receipt.instructionSourceDigest).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it('keeps setup certification identity independent of ignored generated evidence paths', async () => {
+    const root = await createNodeWorkspace();
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await mkdir(join(root, 'docs/architecture'), { recursive: true });
+    await Promise.all([
+      writeFile(join(root, 'docs/00-start-here.md'), '# Canonical project docs\n'),
+      writeFile(join(root, 'docs/architecture/overview.md'), '# Architecture\n'),
+      writeFile(join(root, 'AGENTS.md'), '# Example instructions\n'),
+    ]);
+    await writeConfiguredSkoposProject(root);
+    const candidates = await discoverSkoposCapabilityCandidates({ cwd: root });
+    await mkdir(join(root, 'tools/skopos/actions'), { recursive: true });
+    const actionsById = new Map(
+      candidates
+        .filter((candidate) => candidate.suggestedAction)
+        .map((candidate) => [candidate.suggestedAction!.id, candidate.suggestedAction!]),
+    );
+    await Promise.all([...actionsById.values()].map((action) =>
+      writeFile(
+        join(root, 'tools/skopos/actions', `${action.id.replaceAll('.', '-')}.yaml`),
+        `${JSON.stringify({ ...action, sourcePath: undefined }, null, 2)}\n`,
+      ),
+    ));
+    let initial = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
+    expect(initial.state.lanes.find((lane) => lane.id === 'understanding')?.evidencePaths[0]).toContain(
+      '/.skopos/',
+    );
+
+    const lifecycle = initial.state.materialQuestions.find(
+      (question) => question.id === 'understanding.lifecycle',
+    );
+    if (lifecycle) {
+      await answerSkoposSetupQuestionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        questionId: lifecycle.id,
+        optionId: 'existing-project',
+      });
+      initial = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    }
+    const analysisPath = join(root, '.skopos/setup/identity-analysis.json');
+    await writeFile(analysisPath, JSON.stringify({
+      claims: [{
+        id: 'fact-project',
+        kind: 'fact',
+        summary: 'The configured project sources were reviewed.',
+        evidencePaths: ['package.json', 'docs/architecture/overview.md'],
+      }],
+      materialQuestions: [],
+      scopeProposals: [],
+      documentOperations: [],
+    }));
+    initial = await submitSkoposSetupAnalysisRuntime({
+      cwd: root,
+      inputPath: analysisPath,
+      actor: 'setup-test',
+    });
+    for (const recommendation of initial.state.recommendations) {
+      await recordSkoposSetupDispositionRuntime({
+        cwd: root,
+        actor: 'setup-test',
+        recommendationId: recommendation.id,
+        disposition: recommendation.required ? 'accept' : 'defer',
+      });
+    }
+
+    const first = await resumeSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    if (!first.state.certificationTaskId) {
+      throw new Error(JSON.stringify({
+        stage: first.state.stage,
+        lanes: first.state.lanes,
+        recommendations: first.state.recommendations,
+      }));
+    }
+    expect(first.state.certificationTaskId).toMatch(/^T-setup[a-f0-9]{8}$/);
+    await writeFile(
+      join(root, '.skopos/index/understanding/agent-analysis-brief.json'),
+      '{"ignored":"generated-state-changed"}\n',
+    );
+    const second = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    expect(second.state.certificationTaskId).toBe(first.state.certificationTaskId);
   });
 
   it('turns contradictory canonical project truth into one understandable material question', async () => {
@@ -452,6 +1009,22 @@ describe('unified intelligent project setup', () => {
     expect(answers.answers).toContainEqual(expect.objectContaining({ optionId: 'new-project' }));
   });
 
+  it('records project lifecycle without overwriting an explicit operating mode', async () => {
+    const root = await createNodeWorkspace();
+    await writeConfiguredSkoposProject(root);
+    await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
+    await answerSkoposSetupQuestionRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      questionId: 'understanding.lifecycle',
+      optionId: 'existing-project',
+    });
+
+    const config = await readFile(join(root, 'skopos.config.yaml'), 'utf8');
+    expect(config).toContain('mode: clean-refactor');
+    expect(config).not.toContain('mode: brownfield');
+  });
+
   it('turns edit into a source-bound revised recommendation before approval', async () => {
     const root = await createNodeWorkspace(false);
     const initial = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
@@ -550,4 +1123,47 @@ const createNodeWorkspace = async (includeReadme = true): Promise<string> => {
     }, null, 2)}\n`),
   ]);
   return root;
+};
+
+const writeConfiguredSkoposProject = async (
+  root: string,
+  docsRoot = 'docs',
+  canonicalInstructions = 'AGENTS.md',
+): Promise<void> => {
+  await writeFile(join(root, 'skopos.config.yaml'), [
+    'schemaVersion: 1',
+    'project:',
+    '  name: example',
+    '  archetype: library',
+    '  repoMode: monorepo',
+    '  scopeStrategy: package',
+    '  mode: clean-refactor',
+    'commands:',
+    '  build: pnpm build',
+    '  test: pnpm test',
+    '  typecheck: pnpm typecheck',
+    'workspace:',
+    '  ignore: []',
+    'docs:',
+    `  root: ${docsRoot}`,
+    `  startHerePath: ${docsRoot}/00-start-here.md`,
+    '  usePerDomainArchive: true',
+    '  strictMetadata: true',
+    '  strictLinking: true',
+    'agents:',
+    `  canonicalInstructions: ${canonicalInstructions}`,
+    '  syncMirrors: []',
+    '  mcp: true',
+    'verification:',
+    '  mode: balanced',
+    '  requireDocsSync: true',
+    '  requireEvidenceForReadiness: true',
+    'decisions:',
+    '  mode: balanced',
+    '  askFor: []',
+    'security:',
+    '  privacyMode: local-only',
+    '  redactSecrets: true',
+    '',
+  ].join('\n'));
 };

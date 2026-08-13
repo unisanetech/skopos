@@ -81,7 +81,6 @@ Usage:
   skopos impact [changed-path...] [--cwd <target>] [--actor <id>] [--phase <phase>] [--risk <risk>] [--why] [--collection <changed|matched-guards|required-actions|guard-decisions|action-decisions>] [--cursor <token>] [--limit <1-100>] [--json]
   skopos instructions scaffold [target] [--mode existing|greenfield] [--force] [--dry-run] [--actor <id>] [--json]
   skopos instructions sync [target] [--dry-run] [--actor <id>] [--json]
-  skopos understand [target] [--actor <id>] [--dry-run] [--json]
   skopos ui render [target] [--output <path>] [--dry-run] [--json]
   skopos ui build [target] [--output-dir <path>] [--dry-run] [--json]
   skopos ui dev [target] [--host <host>] [--port <port>] [--json]        # live workspace UI with auto-refreshing state

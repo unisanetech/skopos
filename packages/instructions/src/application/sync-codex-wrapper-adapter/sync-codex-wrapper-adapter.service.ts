@@ -1,15 +1,18 @@
 import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
 
 import { SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH } from '../communication-contract/communication-contract.js';
 import { buildHostActorBinding } from '../host-actor-binding/host-actor-binding.js';
+import { normalizeInstructionSourcePath } from '../scaffold-project-instructions/scaffold-project-instructions.service.js';
+import { resolveWorkspaceContainedPath } from '../shared/workspace-contained-path.js';
 
 export interface SyncCodexWrapperAdapterOptions {
   cwd: string;
   dryRun?: boolean;
   projectionModel?: SkoposHostProjectionModel;
+  instructionSourcePath?: string;
 }
 
 export interface CodexWrapperAdapterWrite {
@@ -31,11 +34,17 @@ export const syncCodexWrapperAdapter = async ({
   cwd,
   dryRun = false,
   projectionModel,
+  instructionSourcePath: providedInstructionSourcePath,
 }: SyncCodexWrapperAdapterOptions): Promise<SyncCodexWrapperAdapterResult> => {
   const workspaceRoot = resolve(cwd);
-  const manifestPath = join(workspaceRoot, MANIFEST_RELATIVE_PATH);
-  const entrypointPath = join(workspaceRoot, ENTRYPOINT_RELATIVE_PATH);
-  const readmePath = join(workspaceRoot, README_RELATIVE_PATH);
+  const instructionSourcePath = normalizeInstructionSourcePath(
+    providedInstructionSourcePath ?? projectionModel?.instructionSourcePath,
+  );
+  const [manifestPath, entrypointPath, readmePath] = await Promise.all([
+    resolveWorkspaceContainedPath({ workspaceRoot, path: MANIFEST_RELATIVE_PATH, label: 'Codex adapter manifest' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: ENTRYPOINT_RELATIVE_PATH, label: 'Codex adapter entrypoint' }),
+    resolveWorkspaceContainedPath({ workspaceRoot, path: README_RELATIVE_PATH, label: 'Codex adapter guide' }),
+  ]);
   const files = [
     {
       path: manifestPath,
@@ -47,7 +56,7 @@ export const syncCodexWrapperAdapter = async ({
     },
     {
       path: readmePath,
-      contents: renderCodexReadme(),
+      contents: renderCodexReadme(instructionSourcePath),
     },
   ];
   const writes: CodexWrapperAdapterWrite[] = [];
@@ -393,9 +402,9 @@ if (typeof result.stderr === 'string' && result.stderr.length > 0) {
 process.exit(result.status ?? 0);
 `;
 
-const renderCodexReadme = (): string => `# Codex Discussion Adapter
+const renderCodexReadme = (instructionSourcePath: string): string => `# Codex Discussion Adapter
 
-This wrapper-mediated adapter keeps Codex on the same Task, Session, and discussion-memory contract as Claude Code. The wrapper should treat \`AGENTS.md\` plus \`${SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH}\` as the default agent operating contract.
+This wrapper-mediated adapter keeps Codex on the same Task, Session, and discussion-memory contract as Claude Code. The wrapper should treat \`${instructionSourcePath}\` plus \`${SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH}\` as the default agent operating contract.
 
 ## Actor binding
 

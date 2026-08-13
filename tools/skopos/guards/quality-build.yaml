@@ -1,0 +1,30 @@
+{
+  "id": "quality.build",
+  "title": "Build affected project",
+  "description": "Select quality.build from changed paths, phase, risk, and Scope.",
+  "owner": "project",
+  "scope": [
+    "workspace"
+  ],
+  "strength": "required",
+  "appliesTo": {
+    "paths": [
+      "**/*"
+    ],
+    "phases": [
+      "stabilization",
+      "closure"
+    ],
+    "risks": [
+      "light",
+      "standard",
+      "high-impact"
+    ]
+  },
+  "requires": {
+    "actionIds": [
+      "quality.build"
+    ],
+    "evidence": "source-bound-action"
+  }
+}

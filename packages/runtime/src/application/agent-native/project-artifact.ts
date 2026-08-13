@@ -6,6 +6,7 @@ import { loadSkoposConfig } from '@skopos/config';
 import type {
   SkoposProjectArtifact,
   SkoposProjectSourceFile,
+  SkoposRootConfig,
 } from '@skopos/model';
 import { buildSkoposProjectArtifact } from '@skopos/verification';
 
@@ -16,9 +17,11 @@ export const PROJECT_ARTIFACT_PATH = '.skopos/project.json';
 export const writeSkoposProjectArtifact = async ({
   workspaceRoot: providedWorkspaceRoot,
   dryRun = false,
+  config: providedConfig,
 }: {
   workspaceRoot: string;
   dryRun?: boolean;
+  config?: SkoposRootConfig;
 }): Promise<{
   projectPath: string;
   write: 'written' | 'dry-run';
@@ -26,7 +29,7 @@ export const writeSkoposProjectArtifact = async ({
 }> => {
   const workspaceRoot = resolve(providedWorkspaceRoot);
   const configPath = join(workspaceRoot, 'skopos.config.yaml');
-  const config = await loadSkoposConfig(configPath);
+  const config = providedConfig ?? await loadSkoposConfig(configPath);
   if (!config) {
     throw new Error('Cannot compile .skopos/project.json without skopos.config.yaml.');
   }

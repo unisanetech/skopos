@@ -1,0 +1,30 @@
+{
+  "id": "quality.test",
+  "title": "Test affected behavior",
+  "description": "Select quality.test from changed paths, phase, risk, and Scope.",
+  "owner": "project",
+  "scope": [
+    "workspace"
+  ],
+  "strength": "required",
+  "appliesTo": {
+    "paths": [
+      "**/*"
+    ],
+    "phases": [
+      "stabilization",
+      "closure"
+    ],
+    "risks": [
+      "light",
+      "standard",
+      "high-impact"
+    ]
+  },
+  "requires": {
+    "actionIds": [
+      "quality.test"
+    ],
+    "evidence": "source-bound-action"
+  }
+}

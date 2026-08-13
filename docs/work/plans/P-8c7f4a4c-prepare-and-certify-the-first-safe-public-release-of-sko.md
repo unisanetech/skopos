@@ -29,19 +29,27 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Closed release-contract ambiguity without claiming candidate proof.
+  Gate `16` now requires production-origin website verification plus six supported
+  runtime receipts that install and exercise the single digest-bound tarball. Unified
+  setup is executed during clean reconstruction, the final `20 / 20` receipt is
+  downstream of exact security and runtime proof, and a post-publication job verifies
+  registry identity, provenance, launchers, installed lifecycle, and bundled UI.
 - `2026-08-13`: Accepted company-owned repository governance and a truthful
   Codex-first host boundary. The canonical source and release identity is
   `unisanetech/skopos`; Codex is the sole real-host-certified launch adapter. Claude
   Code, Cursor, and GitHub Copilot verification is later support-expansion work, not a
   blocker while those hosts remain explicitly unverified and are not claimed
-  supported. The scorecard is now `13 yes / 4 no`.
+  supported. The full canonical scorecard is now `16 yes / 4 no`; an immutable
+  external receipt must overlay the four candidate-bound gates for an effective
+  `20 / 20` release result.
 - `2026-08-12`: Reconciled the release-control boundary without claiming new product
   proof. The accepted Product Interface Design boundary no longer contradicts the
   runbook hard stops. The protected publication workflow now fails closed on the
   accepted non-candidate scorecard gates before certification and reconstructs
   Project Memory and registered capabilities from a fresh checkout. Real Claude
   parity remains an explicit blocker; candidate-bound
-  reconstruction, adoption, packed-install, and full-matrix gates are earned only by
+  reconstruction, unified setup, packed-install, and full-matrix gates are earned only by
   the frozen-candidate workflow.
 - `2026-08-11`: Reconciled the local pre-freeze truth. The north-star continuation
   operation now records a source-linked `3 / 3` real Codex baseline without treating
@@ -184,8 +192,9 @@ Current release blockers are:
 The hosted website is a parallel product track, not part of the first npm artifact.
 Its former build-time Google Fonts dependency is resolved through local Geist assets,
 and `pnpm web:verify` owns its current typecheck, focused-test, and static production
-build gate. Hosting-provider configuration and actual deployment remain separate web
-work and do not block an otherwise valid CLI candidate.
+build gate. Although hosting-provider configuration and deployment remain separate web
+work, the first public-release candidate must pass that gate with the repository's
+configured `SKOPOS_PUBLIC_SITE_URL` HTTPS origin; root CLI checks do not cover it.
 
 ## Ordered Workstreams
 
@@ -250,7 +259,8 @@ Tasks:
 
 Exit gate:
 
-- all 17 canonical first-release questions answer `yes` with linked Evidence
+- all 20 canonical first-release questions pass with linked Evidence, combining the
+  accepted tracked prerequisites with the immutable exact-candidate receipt
 - the convergence Plan is complete or its remaining work is explicitly non-blocking by
   an accepted replacement decision
 
@@ -313,9 +323,12 @@ Tasks:
 3. reconstruct it in a clean clone with a frozen lockfile and no local Skopos state
 4. run the complete release matrix in fail-fast order
 5. build and inspect one tarball from that exact commit
-6. install the tarball into fresh Node projects and exercise the complete lifecycle,
-   bundled UI, Actions, coordination, Evidence, and Readiness
-7. produce a release scorecard mapping every gate to immutable Evidence
+6. in every supported OS/Node cell, download and verify the same tarball, install it
+   into fresh projects, and exercise the complete lifecycle, bundled UI, Actions,
+   coordination, Evidence, and Readiness
+7. produce an external release-certification receipt mapping every gate to immutable
+   Evidence, the candidate SHA, and the one reviewed tarball digest; do not mutate the
+   tracked candidate scorecard to certify itself
 
 Exit gate:
 
@@ -335,10 +348,12 @@ that Task after the final scorecard is reviewed.
 1. check out the protected release tag in the trusted GitHub workflow
 2. install the frozen lockfile without a release build cache
 3. run the certified build, typecheck, test, proof, audit, release-check, release-smoke,
-   claimed-host support, adoption, deterministic Skill, responsive, and accessibility
+   production-origin website, claimed-host support, unified setup, deterministic Skill,
+   responsive, and accessibility
    lanes
 4. pack and compare the artifact identity with the reviewed manifest
-5. publish `@skopos/cli@0.1.0` to `next` through OIDC
+5. publish `@skopos/cli@0.1.0` to `next` through the bounded one-time bootstrap token;
+   configure and require OIDC trusted publishing for every later version
 6. verify registry metadata, integrity, provenance, and dist tags
 7. run real registry `npx`, `npm exec`, and `pnpm dlx` smoke in clean projects
 8. exercise installed `init`, Session, Task, Action, Evidence, Readiness, and bundled UI

@@ -1,18 +1,21 @@
 import { createHash } from 'node:crypto';
-import { cp, lstat, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { lstat, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 
 import { loadSkoposConfig, writeSkoposConfig } from '@skopos/config';
 import { checkInstructionMirrorParity } from '@skopos/instructions';
 import {
   loadSkoposActionManifests,
+  loadSkoposGuardManifests,
   loadSkoposScopeRegistry,
 } from '@skopos/indexer';
 import {
   SKOPOS_SCOPE_KINDS,
 } from '@skopos/model';
 import type {
+  SkoposActionManifest,
+  SkoposCapabilityCandidate,
+  SkoposGuardManifest,
   SkoposSetupAgentPacketArtifact,
   SkoposSetupAnalysisArtifact,
   SkoposSetupCompletionReceiptArtifact,
@@ -270,19 +273,31 @@ export const buildSkoposSetupRuntime = async ({
     '.skopos/index/architecture.json',
     '.skopos/index/enforcement.json',
   ];
-  const previewArtifactsInitiallyPresent = new Set(
-    (await Promise.all(previewArtifactPaths.map(async (path) =>
-      (await readOptionalJson<unknown>(join(workspaceRoot, path))) ? path : undefined,
-    ))).filter((path): path is string => Boolean(path)),
+  const hadSkoposIndexDirectory = await lstat(join(workspaceRoot, '.skopos/index'))
+    .then(() => true)
+    .catch((error: NodeJS.ErrnoException) => {
+      if (error.code === 'ENOENT') return false;
+      throw error;
+    });
+  const initialPreviewArtifactContents = new Map(
+    await Promise.all(previewArtifactPaths.map(async (path) => [
+      path,
+      await readFile(join(workspaceRoot, path), 'utf8').catch(
+        (error: NodeJS.ErrnoException) => {
+          if (error.code === 'ENOENT') return undefined;
+          throw error;
+        },
+      ),
+    ] as const)),
   );
-  const existingConfig = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
-  const bootstrapPreview = await ensureLocalSetupBootstrap({
-    workspaceRoot,
-    actorId,
-    dryRun,
-    refresh: initialize,
-  });
   try {
+    const existingConfig = await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'));
+    const bootstrapPreview = await ensureLocalSetupBootstrap({
+      workspaceRoot,
+      actorId,
+      dryRun,
+      refresh: initialize,
+    });
     if (!existingConfig && !dryRun) {
       await writeJsonArtifact({
         artifactPath: join(workspaceRoot, '.skopos/setup/bootstrap-recommendation.json'),
@@ -301,7 +316,7 @@ export const buildSkoposSetupRuntime = async ({
     ? await setupAnalysisMatchesCurrentSources(workspaceRoot, storedSetupAnalysis)
     : true;
   const setupAnalysis = setupAnalysisCurrent ? storedSetupAnalysis : undefined;
-  const [understanding, adoption, capabilities, policies, skills, actions, scopes] =
+  const [understanding, adoption, capabilities, policies, skills, actions, guards, scopes] =
     await Promise.all([
       buildSkoposUnderstandingRuntime({ cwd: workspaceRoot, actor: actorId, dryRun }),
       buildSkoposAdoptionAssessmentRuntime({ cwd: workspaceRoot, actor: actorId, dryRun: true }),
@@ -309,6 +324,7 @@ export const buildSkoposSetupRuntime = async ({
       recommendSkoposPolicyPacksRuntime({ cwd: workspaceRoot, dryRun }),
       recommendSkoposSkillPacksRuntime({ cwd: workspaceRoot, dryRun }),
       loadSkoposActionManifests({ cwd: workspaceRoot }),
+      loadSkoposGuardManifests({ cwd: workspaceRoot }),
       readOptionalJson<SkoposScopesLiteArtifact>(
         join(workspaceRoot, '.skopos', 'index', 'scopes.json'),
       ),
@@ -351,6 +367,7 @@ export const buildSkoposSetupRuntime = async ({
     policies,
     skills,
     actions,
+    guards,
     scopes: scopes?.scopes ?? [],
     instructionIssueCount: instructionParity.issues.length,
     hostDelivered,
@@ -447,6 +464,7 @@ export const buildSkoposSetupRuntime = async ({
     scopes: scopes?.scopes ?? [],
     hostDelivered,
     completedApplyIds,
+    instructionSourcePath,
   });
   const openQuestionCount = materialQuestions.length;
   const deferredRecommendationCount = dispositions.filter(
@@ -463,7 +481,7 @@ export const buildSkoposSetupRuntime = async ({
   });
   const durableLanesReady = openQuestionCount === 0 && setupDurableLanesReady(lanes);
   const certification = durableLanesReady
-    ? await inspectSetupCertification({ workspaceRoot, lanes })
+    ? await inspectSetupCertification({ workspaceRoot, lanes, instructionSourcePath })
     : undefined;
   const stage = certification && certification.status !== 'complete'
     ? 'verification-blocked'
@@ -527,12 +545,17 @@ export const buildSkoposSetupRuntime = async ({
   } finally {
     if (dryRun) {
       await Promise.all(
-        previewArtifactPaths
-          .filter((path) => !previewArtifactsInitiallyPresent.has(path))
-          .map((path) => rm(join(workspaceRoot, path), { force: true })),
+        previewArtifactPaths.map((path) => {
+          const initialContents = initialPreviewArtifactContents.get(path);
+          return initialContents === undefined
+            ? rm(join(workspaceRoot, path), { force: true })
+            : writeFile(join(workspaceRoot, path), initialContents);
+        }),
       );
       if (!hadSkoposDirectory) {
         await rm(join(workspaceRoot, '.skopos'), { recursive: true, force: true });
+      } else if (!hadSkoposIndexDirectory) {
+        await rm(join(workspaceRoot, '.skopos/index'), { recursive: true, force: true });
       }
     }
   }
@@ -786,9 +809,13 @@ export const resumeSkoposSetupRuntime = async (
   ) {
     return refreshed;
   }
+  const refreshedConfig = await loadSkoposConfig(
+    join(refreshed.workspaceRoot, 'skopos.config.yaml'),
+  );
   const certification = await inspectSetupCertification({
     workspaceRoot: refreshed.workspaceRoot,
     lanes: refreshed.state.lanes,
+    instructionSourcePath: refreshedConfig?.agents.canonicalInstructions ?? 'AGENTS.md',
   });
   if (certification.status === 'required') {
     await createSetupCertificationTask({
@@ -808,6 +835,7 @@ const buildRecommendations = ({
   policies,
   skills,
   actions,
+  guards,
   scopes,
   instructionIssueCount,
   hostDelivered,
@@ -819,6 +847,7 @@ const buildRecommendations = ({
   policies: Awaited<ReturnType<typeof recommendSkoposPolicyPacksRuntime>>;
   skills: Awaited<ReturnType<typeof recommendSkoposSkillPacksRuntime>>;
   actions: Awaited<ReturnType<typeof loadSkoposActionManifests>>;
+  guards: Awaited<ReturnType<typeof loadSkoposGuardManifests>>;
   scopes: SkoposScopesLiteArtifact['scopes'];
   instructionIssueCount: number;
   hostDelivered: boolean;
@@ -840,8 +869,6 @@ const buildRecommendations = ({
       applyKind: 'setup-bootstrap',
     }));
   }
-  const existingCommands = new Set(actions.map((action) => action.command));
-  const recommendedActionIds = new Set<string>();
   for (const proposal of setupAnalysis?.scopeProposals ?? []) {
     recommendations.push(recommendation({
       id: `scope.${proposal.id}`,
@@ -903,21 +930,24 @@ const buildRecommendations = ({
       applyKind: 'scope-review',
     }));
   }
-  for (const candidate of capabilities.candidates.filter(
-    (entry) => entry.suggestedAction && entry.suggestedGuard && !existingCommands.has(entry.command),
-  )) {
+  for (const candidate of selectSetupCapabilityCandidates({
+    candidates: capabilities.candidates,
+    actions,
+    guards,
+  })) {
     const actionId = candidate.suggestedAction?.id;
     if (!actionId) continue;
-    const providerKey = `${candidate.source}:${candidate.sourcePath}:${actionId}`;
-    if (recommendedActionIds.has(providerKey)) continue;
-    recommendedActionIds.add(providerKey);
     recommendations.push(recommendation({
       id: `capability.${candidate.id}`,
       laneId: 'capabilities',
       title: `Use ${candidate.name} as a project check`,
       summary: candidate.command,
       reason: candidate.rationale,
-      source: candidate,
+      source: {
+        candidate,
+        existingAction: actions.find((entry) => entry.id === actionId),
+        existingGuard: guards.find((entry) => entry.id === candidate.suggestedGuard?.id),
+      },
       required: ['quality.test', 'quality.typecheck'].includes(actionId),
       risk: 'low',
       defaultDisposition: ['quality.test', 'quality.typecheck'].includes(actionId) ? 'accept' : 'defer',
@@ -1014,6 +1044,75 @@ const buildRecommendations = ({
     .sort((left, right) => left.id.localeCompare(right.id));
 };
 
+const selectSetupCapabilityCandidates = ({
+  candidates,
+  actions,
+  guards,
+}: {
+  candidates: SkoposCapabilityCandidate[];
+  actions: SkoposActionManifest[];
+  guards: SkoposGuardManifest[];
+}): SkoposCapabilityCandidate[] => {
+  const actionsById = new Map(actions.map((action) => [action.id, action]));
+  const guardsById = new Map(guards.map((guard) => [guard.id, guard]));
+  const candidatesByActionId = new Map<string, SkoposCapabilityCandidate[]>();
+  for (const candidate of candidates) {
+    const actionId = candidate.suggestedAction?.id;
+    if (!actionId || !candidate.suggestedGuard) continue;
+    const group = candidatesByActionId.get(actionId) ?? [];
+    group.push(candidate);
+    candidatesByActionId.set(actionId, group);
+  }
+
+  return [...candidatesByActionId.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .flatMap(([actionId, group]) => {
+      const existingAction = actionsById.get(actionId);
+      const existingGuard = guardsById.get(actionId);
+      const represented = group.some((candidate) =>
+        existingAction &&
+        existingGuard &&
+        normalizeCapabilityCommand(existingAction.command) ===
+          normalizeCapabilityCommand(candidate.command) &&
+        existingAction.cwd === candidate.cwd &&
+        existingGuard.requires.actionIds.includes(existingAction.id) &&
+        existingGuard.requires.evidence === candidate.suggestedGuard?.requires.evidence,
+      );
+      if (represented) return [];
+      return [
+        [...group].sort((left, right) =>
+          compareSetupCapabilityCandidates(actionId, left, right),
+        )[0]!,
+      ];
+    });
+};
+
+const compareSetupCapabilityCandidates = (
+  actionId: string,
+  left: SkoposCapabilityCandidate,
+  right: SkoposCapabilityCandidate,
+): number => {
+  const canonicalName = actionId.split('.').at(-1) ?? actionId;
+  const rank = (candidate: SkoposCapabilityCandidate): [number, number, number, string] => [
+    candidate.source === 'configured-command' ? 0 : 1,
+    normalizeCapabilityName(candidate.name) === canonicalName ? 0 : 1,
+    candidate.command.length,
+    candidate.id,
+  ];
+  const leftRank = rank(left);
+  const rightRank = rank(right);
+  return leftRank[0] - rightRank[0]
+    || leftRank[1] - rightRank[1]
+    || leftRank[2] - rightRank[2]
+    || leftRank[3].localeCompare(rightRank[3]);
+};
+
+const normalizeCapabilityCommand = (command: string): string =>
+  command.trim().replaceAll(/\s+/gu, ' ');
+
+const normalizeCapabilityName = (name: string): string =>
+  name.trim().toLowerCase().replaceAll(/[^a-z0-9]+/gu, '');
+
 const recommendation = (
   input: Omit<SkoposSetupRecommendation, 'sourceDigest' | 'options'> & { source: unknown },
 ): SkoposSetupRecommendation => {
@@ -1037,6 +1136,7 @@ const buildLanes = ({
   scopes,
   hostDelivered,
   completedApplyIds,
+  instructionSourcePath,
 }: {
   understanding: Awaited<ReturnType<typeof buildSkoposUnderstandingRuntime>>;
   recommendations: SkoposSetupRecommendation[];
@@ -1044,6 +1144,7 @@ const buildLanes = ({
   scopes: SkoposScopesLiteArtifact['scopes'];
   hostDelivered: boolean;
   completedApplyIds: string[];
+  instructionSourcePath: string;
 }): SkoposSetupLane[] => {
   const lane = (
     id: SkoposSetupLane['id'],
@@ -1107,8 +1208,8 @@ const buildLanes = ({
     lane('memory', 'Project Memory', understanding.agentAnalysisBrief.analysisStatus === 'agent-reviewed', understanding.agentAnalysisBrief.durableOutputs.map((entry) => entry.path)),
     lane('capabilities', 'Project checks and capabilities', true, ['tools/skopos/actions', 'tools/skopos/guards']),
     lane('policies', 'Project rules', true, ['tools/skopos/policies.yaml']),
-    lane('skills', 'Task-selective specialist guidance', true, ['skill-packs', 'tools/skopos/skill-bindings']),
-    lane('instructions', 'Coding-agent instructions', true, ['AGENTS.md']),
+    lane('skills', 'Task-selective specialist guidance', true, ['skill-packs', 'tools/skopos/skills']),
+    lane('instructions', 'Coding-agent instructions', true, [instructionSourcePath]),
     lane('host-delivery', 'Coding-agent context delivery', hostDelivered, ['.skopos/cache/tooling']),
   ];
 };
@@ -1228,15 +1329,29 @@ const setupAnalysisMatchesCurrentSources = async (
   return digestSkoposTaskPathStates(current) === analysis.sourceDigest;
 };
 
-const collectSetupCertificationPaths = (state: Pick<SkoposSetupStateArtifact, 'lanes'>): string[] =>
+const collectSetupCertificationPaths = ({
+  workspaceRoot,
+  lanes,
+  instructionSourcePath,
+}: {
+  workspaceRoot: string;
+  lanes: SkoposSetupLane[];
+  instructionSourcePath: string;
+}): string[] =>
   [...new Set([
     'skopos.config.yaml',
-    'AGENTS.md',
-    ...state.lanes
+    instructionSourcePath,
+    ...lanes
       .filter((lane) => lane.id !== 'host-delivery')
       .flatMap((lane) => lane.evidencePaths),
-  ])]
-    .filter((path) => !path.startsWith('.skopos/'))
+  ].map((path) => relative(workspaceRoot, resolve(workspaceRoot, path)) || '.'))]
+    .filter((path) =>
+      path !== '.skopos' &&
+      !path.startsWith('.skopos/') &&
+      path !== '..' &&
+      !path.startsWith('../') &&
+      !isAbsolute(path),
+    )
     .sort();
 
 const setupDurableLanesReady = (lanes: SkoposSetupLane[]): boolean =>
@@ -1252,11 +1367,13 @@ interface SetupCertificationStatus {
 const resolveSetupCertificationIdentity = async ({
   workspaceRoot,
   lanes,
+  instructionSourcePath,
 }: {
   workspaceRoot: string;
   lanes: SkoposSetupLane[];
+  instructionSourcePath: string;
 }): Promise<{ taskId: string; paths: string[] }> => {
-  const paths = collectSetupCertificationPaths({ lanes });
+  const paths = collectSetupCertificationPaths({ workspaceRoot, lanes, instructionSourcePath });
   const sourceStates = await captureSkoposTaskPathStates({ workspaceRoot, paths });
   return {
     taskId: `T-setup${digestSkoposTaskPathStates(sourceStates).slice(0, 8)}`,
@@ -1267,11 +1384,13 @@ const resolveSetupCertificationIdentity = async ({
 const inspectSetupCertification = async ({
   workspaceRoot,
   lanes,
+  instructionSourcePath,
 }: {
   workspaceRoot: string;
   lanes: SkoposSetupLane[];
+  instructionSourcePath: string;
 }): Promise<SetupCertificationStatus> => {
-  const identity = await resolveSetupCertificationIdentity({ workspaceRoot, lanes });
+  const identity = await resolveSetupCertificationIdentity({ workspaceRoot, lanes, instructionSourcePath });
   const tasks = await reconstructTrackedSkoposTasksRuntime({ cwd: workspaceRoot });
   const task = tasks.find((entry) =>
     entry.id === identity.taskId &&
@@ -1294,11 +1413,19 @@ const createSetupCertificationTask = async ({
   actorId?: string;
   dryRun: boolean;
 }): Promise<SetupCertificationStatus> => {
+  const instructionSourcePath = (
+    await loadSkoposConfig(join(workspaceRoot, 'skopos.config.yaml'))
+  )?.agents.canonicalInstructions ?? 'AGENTS.md';
   const identity = await resolveSetupCertificationIdentity({
     workspaceRoot,
     lanes: state.lanes,
+    instructionSourcePath,
   });
-  const existing = await inspectSetupCertification({ workspaceRoot, lanes: state.lanes });
+  const existing = await inspectSetupCertification({
+    workspaceRoot,
+    lanes: state.lanes,
+    instructionSourcePath,
+  });
   if (existing.status !== 'required') return existing;
   const plan = await prepareSkoposPlanRuntime({
     cwd: workspaceRoot,
@@ -2025,7 +2152,9 @@ const ensureLocalSetupBootstrap = async ({
   const bootstrap = await readOptionalJson<import('@skopos/model').SkoposBootstrapArtifact>(
     join(workspaceRoot, '.skopos/index/bootstrap.json'),
   );
-  if (bootstrap) return { bootstrap } as Awaited<ReturnType<typeof initSkoposProject>>;
+  if (bootstrap && !refresh) {
+    return { bootstrap } as Awaited<ReturnType<typeof initSkoposProject>>;
+  }
   return previewFreshSetupBootstrap({ workspaceRoot, actorId });
 };
 
@@ -2036,56 +2165,28 @@ const previewFreshSetupBootstrap = async ({
   workspaceRoot: string;
   actorId?: string;
 }): Promise<Awaited<ReturnType<typeof initSkoposProject>>> => {
-  const previewRoot = await mkdtemp(join(tmpdir(), 'skopos-setup-preview-'));
-  try {
-    const entries = [
-      'package.json', 'pnpm-workspace.yaml', 'README.md', 'AGENTS.md', 'skopos.config.yaml',
-      'apps', 'packages', 'src', 'pyproject.toml', 'go.mod', 'Cargo.toml',
-      'pom.xml', 'gradlew',
-    ];
-    for (const entry of entries) {
-      await cp(join(workspaceRoot, entry), join(previewRoot, entry), {
-        recursive: true,
-        force: false,
-        errorOnExist: false,
-        filter: (source) => !source.includes(`${join('node_modules')}`),
-      }).catch((error: NodeJS.ErrnoException) => {
-        if (error.code !== 'ENOENT') throw error;
-      });
-    }
-    const preview = await initSkoposProject({
-      cwd: previewRoot,
-      mode: 'existing',
-      actor: actorId,
-      buildAdoptionAssessment: false,
-      scaffoldInstructions: false,
-      scaffoldMemoryBoundary: false,
-    });
-    const relocate = <T>(value: T): T =>
-      JSON.parse(JSON.stringify(value).replaceAll(previewRoot, workspaceRoot)) as T;
-    await mkdir(join(workspaceRoot, '.skopos/index'), { recursive: true });
-    await Promise.all([
-      writeFile(join(workspaceRoot, '.skopos/index/bootstrap.json'), `${JSON.stringify(relocate(preview.bootstrap), null, 2)}\n`),
-      writeFile(join(workspaceRoot, '.skopos/index/scopes.json'), `${JSON.stringify(relocate(preview.scopesLite), null, 2)}\n`),
-      writeFile(join(workspaceRoot, '.skopos/index/diagnosis.json'), `${JSON.stringify(relocate(preview.diagnosis), null, 2)}\n`),
-      writeFile(join(workspaceRoot, '.skopos/index/architecture.json'), `${JSON.stringify(relocate(preview.architecture), null, 2)}\n`),
-      writeFile(join(workspaceRoot, '.skopos/index/enforcement.json'), `${JSON.stringify(relocate(preview.enforcement), null, 2)}\n`),
-    ]);
-    return relocate({
-      ...preview,
-      configWrite: 'dry-run' as const,
-      bootstrapWrite: 'dry-run' as const,
-      scopesLiteWrite: 'dry-run' as const,
-      diagnosisWrite: 'dry-run' as const,
-      architectureWrite: 'dry-run' as const,
-      enforcementWrite: 'dry-run' as const,
-      indexWrite: 'dry-run' as const,
-      logWrite: 'dry-run' as const,
-      workspaceGraphWrite: 'dry-run' as const,
-    });
-  } finally {
-    await rm(previewRoot, { recursive: true, force: true });
-  }
+  const preview = await initSkoposProject({
+    cwd: workspaceRoot,
+    mode: 'existing',
+    actor: actorId,
+    dryRun: true,
+    buildAdoptionAssessment: false,
+    scaffoldInstructions: false,
+    scaffoldMemoryBoundary: false,
+  });
+  await mkdir(join(workspaceRoot, '.skopos/index'), { recursive: true });
+  const previewWrites = await Promise.allSettled([
+    writeFile(join(workspaceRoot, '.skopos/index/bootstrap.json'), `${JSON.stringify(preview.bootstrap, null, 2)}\n`),
+    writeFile(join(workspaceRoot, '.skopos/index/scopes.json'), `${JSON.stringify(preview.scopesLite, null, 2)}\n`),
+    writeFile(join(workspaceRoot, '.skopos/index/diagnosis.json'), `${JSON.stringify(preview.diagnosis, null, 2)}\n`),
+    writeFile(join(workspaceRoot, '.skopos/index/architecture.json'), `${JSON.stringify(preview.architecture, null, 2)}\n`),
+    writeFile(join(workspaceRoot, '.skopos/index/enforcement.json'), `${JSON.stringify(preview.enforcement, null, 2)}\n`),
+  ]);
+  const failedWrite = previewWrites.find(
+    (result): result is PromiseRejectedResult => result.status === 'rejected',
+  );
+  if (failedWrite) throw failedWrite.reason;
+  return preview;
 };
 
 const applyRecordedSetupAnswers = async ({

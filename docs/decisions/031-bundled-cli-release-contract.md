@@ -21,6 +21,8 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Bound first-release launcher examples to the `next` dist tag so they do
+  not depend on a nonexistent or unverified `latest` tag.
 - `2026-08-13`: Replaced launch-facing `init` examples with the unified `setup`
   workflow, retained `init` only as a low-level reconstruction primitive, and required
   packed smoke to reject the removed public `adopt` command.
@@ -65,9 +67,9 @@ The first public CLI release version is `0.1.0` and must publish with the `next`
 10. Do not publish `latest` until the registry-published `next` package passes real install smoke from npm.
 11. The binary name is `skopos`.
 12. Supported first-run commands are:
-   - `npx @skopos/cli setup .`
-   - `npm exec --package @skopos/cli -- skopos setup .`
-   - `pnpm dlx @skopos/cli setup .`
+   - `npx @skopos/cli@next setup .`
+   - `npm exec --package @skopos/cli@next -- skopos setup .`
+   - `pnpm dlx @skopos/cli@next setup .`
 13. Release smoke must prove the packed CLI works from a fresh project outside the monorepo.
 14. Installed `skopos ui dev` must use bundled app assets when source UI assets are
     unavailable; it must not require a separately installed internal `@skopos/ui`

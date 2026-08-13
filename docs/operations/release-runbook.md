@@ -26,6 +26,15 @@ authorize publication. The first release is only `@skopos/cli@0.1.0` under the n
 
 ## Changelog
 
+- `2026-08-13`: Required every supported runtime cell to install and exercise the same
+  digest-bound candidate tarball, required the production website gate to use the
+  configured HTTPS origin, and added fail-closed post-publication verification for npm
+  integrity, provenance, repository, maintainers, dist tags, launchers, installed
+  lifecycle, and bundled UI.
+- `2026-08-13`: Required immutable external candidate receipts, one packed artifact
+  reused across certification, exact-SHA security proof, and machine-readable
+  reconstruction and unified-setup Evidence. Clarified that the first package uses
+  the bounded bootstrap token and only later versions use OIDC.
 - `2026-08-13`: Bound repository and trusted-publisher identity to
   `unisanetech/skopos` and changed the host gate to proof for every host actually
   claimed supported. The first release certifies Codex only; other host projections
@@ -68,19 +77,29 @@ Do not tag or publish when any of these is true:
    supported. External adopter migrations are not part of Skopos release authority.
 7. From the fresh checkout with no `.skopos/**` state, run
    `pnpm release:reconstruct:validate` to rebuild Project Memory and registered
-   capabilities from tracked truth without changing tracked files.
-8. Build one tarball, record its SHA-256 digest, and use only that artifact for the
-   remaining certification.
+   capabilities from tracked truth without changing tracked files. This check must
+   invoke source `skopos setup` with the Codex host/session, preserve the configured
+   canonical docs root, reject redundant archetype/docs-root questions, and prove that
+   tracked setup certification still reconstructs as ready.
+8. Build one tarball, record its SHA-256 digest, and use only that artifact for packed
+   smoke, security inspection, publication dry-run, protected transfer, and any
+   approved publication. A test that silently repacks does not certify this artifact.
 9. Inspect `npm pack --json` output and every extracted file. Reject development
    scripts, workspace references, private paths, source-checkout dependencies,
    credentials, unexpected brands, or undeclared runtime assets.
-10. Install that tarball into fresh projects on the supported Node and operating-system
-   matrix and exercise version, help, unified setup, Session, Task, Action, Evidence,
-   Readiness, storage, Product Interface Design portability, and the bundled UI. Prove
+10. In every supported Node and operating-system cell, download the protected candidate
+   artifact, verify its SHA-256, install that exact tarball into fresh projects, and
+   exercise version, help, unified setup, Session, Task, Action, Evidence, Readiness,
+   storage, Product Interface Design portability, and the bundled UI. Bind every
+   machine receipt to both candidate SHA and tarball SHA-256; source-only proof is not
+   runtime-matrix proof. Prove
    that the removed public `adopt` command is rejected; exercise low-level `init` only
    in the reconstruction lane.
-11. Produce a scorecard that maps each R1–R6 gate to the candidate SHA, tarball digest,
-   workflow run, and immutable evidence.
+11. Preserve machine-readable clean-reconstruction and unified-setup Evidence, then
+   preserve production-web Evidence and produce an external certification receipt that
+   maps all 20 canonical gates and each R1–R6 gate to the candidate SHA, tarball digest,
+   workflow run, and immutable evidence. Never change the tracked candidate merely to
+   turn its candidate-bound scorecard rows from `No` to `Yes`.
 
 Any source, dependency, lockfile, documentation, or package-content change after the
 freeze creates a new candidate and invalidates certification.
@@ -106,6 +125,13 @@ source licensing, a test run, or this runbook is not approval to publish.
 The protected GitHub workflow is `.github/workflows/publish.yml`. It is manual-only,
 accepts one exact tag, defaults to certification without publication, refuses dispatch
 from anything except `main`, and always uses the `npm-release` environment.
+Before certification, configure the repository variable `SKOPOS_PUBLIC_SITE_URL` to
+the one reviewed public HTTPS origin with no path or trailing slash. A missing,
+non-HTTPS, or path-bearing value fails the independent website gate.
+The production web build must also receive `SKOPOS_WEB_CANDIDATE_SHA` from its deployment
+provider's exact source revision. It exposes that value with the canonical product and
+repository identity at `/.well-known/skopos-release`; certification fetches the live
+endpoint and fails unless its SHA equals the tagged candidate.
 
 ### One-Time First-Package Bootstrap
 
@@ -145,15 +171,21 @@ The protected GitHub workflow must:
 
 1. check out the approved tag and verify it resolves to the approved commit
 2. install the frozen lockfile with no retained checkout credentials
-3. run the complete certified validation matrix
+3. run the complete certified validation matrix and require the exact tagged SHA's
+   security, dependency, license, secret-scan, and SBOM job to pass; require
+   `SKOPOS_PUBLIC_SITE_URL` to be one HTTPS origin, run `pnpm web:verify` with it, and
+   require the live `/.well-known/skopos-release` identity to match the candidate SHA
 4. rebuild and compare the package identity and file manifest with the approved
    candidate
 5. publish the first package through the bounded bootstrap above, or an existing
    package through npm OIDC trusted publishing, always with `--tag next`
-6. record npm integrity, provenance, repository binding, maintainers, and dist tags
-7. install `@skopos/cli@next` through real-registry `npx`, `npm exec`, and `pnpm dlx`
+6. fail closed after publication unless machine verification records npm integrity,
+   provenance, repository binding, maintainers, and dist tags and proves the downloaded
+   registry tarball is byte-identical to the certified candidate digest
+7. execute `@skopos/cli@next` through real-registry `npx`, `npm exec`, and `pnpm dlx`
    in clean projects
-8. exercise the installed lifecycle and bundled UI
+8. exercise the registry-installed lifecycle and bundled UI and preserve
+   `published-registry-verification.json`
 9. publish honest release notes only after registry-installed proof passes
 
 Never set `latest` during this sequence.
@@ -171,7 +203,11 @@ pnpm dlx @skopos/cli@next --version
 ```
 
 The expected version is `0.1.0`; `next` must point to it and `latest` must not be
-created or moved by this release.
+created or moved by this release. The protected workflow runs
+`pnpm release:registry:verify` after publication; it validates the same fields and
+commands, compares the downloaded registry tarball to the final candidate receipt,
+exercises the complete packed lifecycle, builds the installed UI, and uploads its
+machine-readable Evidence. A version-only registry lookup is not sufficient.
 
 ## Rollback And Incident Response
 

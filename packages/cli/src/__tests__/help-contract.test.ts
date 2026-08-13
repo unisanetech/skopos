@@ -89,6 +89,15 @@ describe('public command help contract', () => {
     expect(instructions).toContain('does not absorb unrelated dirty-worktree changes');
   });
 
+  it('keeps project understanding inside setup instead of exposing a duplicate command', async () => {
+    const output = await captureStdout(() => runSkoposCli(['--help']));
+    expect(output).toContain('skopos setup [target]');
+    expect(output).not.toContain('skopos understand ');
+    await expect(runSkoposCli(['understand'])).rejects.toThrow(
+      'Unknown Skopos command: understand',
+    );
+  });
+
   it('renders human and JSON recovery guidance for failed commands', () => {
     const human = renderSkoposCliFailure(
       new Error('Unknown Skopos task flag: --wat.'),

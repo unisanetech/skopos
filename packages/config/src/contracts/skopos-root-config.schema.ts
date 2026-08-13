@@ -133,6 +133,29 @@ export const skoposRootConfigSchema = z
         message: `Skopos docs start-here path must stay inside the configured memory root ${config.docs.root}: ${startHerePath}`,
       });
     }
+
+    const canonicalInstructions = normalizeWorkspacePath(config.agents.canonicalInstructions);
+    const seenMirrors = new Map<string, number>();
+    for (const [index, mirror] of config.agents.syncMirrors.entries()) {
+      const normalizedMirror = normalizeWorkspacePath(mirror);
+      if (normalizedMirror === canonicalInstructions) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['agents', 'syncMirrors', index],
+          message: `Skopos canonical instruction source cannot also be an instruction mirror: ${mirror}`,
+        });
+      }
+      const previousIndex = seenMirrors.get(normalizedMirror);
+      if (previousIndex !== undefined) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['agents', 'syncMirrors', index],
+          message: `Skopos instruction mirrors must be unique: ${mirror} duplicates index ${previousIndex}`,
+        });
+      } else {
+        seenMirrors.set(normalizedMirror, index);
+      }
+    }
   });
 
 export type ParsedSkoposRootConfig = z.infer<typeof skoposRootConfigSchema>;

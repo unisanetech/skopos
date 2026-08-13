@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product Interface Design skill pack.",
-  "updatedAt": "2026-08-13T10:15:46.493Z",
+  "updatedAt": "2026-08-13T13:46:03.207Z",
   "bindingId": "skopos.ui.product-interface-design",
   "packId": "ui.product-interface-design",
   "packVersion": "0.5.0",
@@ -46,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-13T10:15:46.493Z",
-    "acceptedBy": "codex-root",
-    "reason": "Revalidated the accepted Product Interface Design binding against the final public web and UI sources during release-candidate consolidation.",
+    "acceptedAt": "2026-08-13T13:46:03.207Z",
+    "acceptedBy": "codex-release",
+    "reason": "Re-accept the existing publishable Product Interface Design binding after the final project capability and instruction sources changed; no new efficacy claim is made.",
     "identity": {
       "packSourceDigest": "sha256:cbd4969882f38d88e717e56aa680629a46e1dbda490c8b273758c89ddcd6efb2",
-      "bindingSourceDigest": "sha256:990e31b4f75b58b03c5eb2af25bd88679048c31547e318781bd0e3713f1af0d0",
-      "projectSourceDigest": "sha256:19859c71b494c3b9e541ed069a2e322e84fe570ab87e52f8965df2ae5f797fce",
-      "capabilityCatalogDigest": "sha256:416b78023d732ea17df231090d22e05bb9069ed14cc916113d8a989556d0124c",
+      "bindingSourceDigest": "sha256:5a741ebe7d83eecccde2e975db7e79c8373a6c912bc78c3e37a6bff736be3b82",
+      "projectSourceDigest": "sha256:91913a1d41c46e95f9f9642228e6e55e30cdbf7b11b9baa78d9bf49c8d2a352d",
+      "capabilityCatalogDigest": "sha256:f87965e7e5e87726be663c412c4618a82b06a2e75b0109ef0bfb72c6781177a2",
       "evaluationSourceDigest": "sha256:ef99367deaa60ad4c606be01aaf7935932b3a9ce63f940602afa1ac8dbc66396",
-      "combinedDigest": "sha256:9d10f1842205f499f926706a596532322c00e66c678092eb79b03e21d3cf496f"
+      "combinedDigest": "sha256:38df74836279cf68f5939b65294256dc6d440bb9b4e5346735b72aa81e24115c"
     }
   }
 }

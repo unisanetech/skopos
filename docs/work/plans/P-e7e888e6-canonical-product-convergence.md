@@ -1436,7 +1436,7 @@ Do not publish until all answers are `yes`:
 1. Does the source expose only the canonical vocabulary?
 2. Is `.skopos/**` safely disposable?
 3. Can a clean clone rebuild Project Memory and capabilities?
-4. Does full adoption converge docs to the standard?
+4. Does unified setup converge docs to the standard?
 5. Do nested Scopes work without hardcoded adopter paths?
 6. Do Guards, not Actions, decide required Evidence?
 7. Does one Task own execution?

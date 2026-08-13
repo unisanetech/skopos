@@ -18,13 +18,13 @@ export const parseCanonicalReleaseAnswers = (source) => {
 
 export const validatePreCandidateReleaseGates = (source) => {
   const answers = parseCanonicalReleaseAnswers(source);
-  assert.equal(answers.size, 17, 'The canonical release scorecard must contain exactly 17 answers.');
+  assert.equal(answers.size, 20, 'The canonical release scorecard must contain exactly 20 answers.');
 
   // Candidate-bound gates are proved inside the protected workflow:
-  // 3 = clean-checkout reconstruction, 4 = final adoption matrix,
+  // 3 = clean-checkout reconstruction, 4 = unified setup matrix,
   // 15 = packed-install smoke, and 16 = the complete candidate proof matrix.
   const candidateBoundGateIds = new Set([3, 4, 15, 16]);
-  const requiredBeforeCandidateCertification = Array.from({ length: 17 }, (_, index) => index + 1)
+  const requiredBeforeCandidateCertification = Array.from({ length: 20 }, (_, index) => index + 1)
     .filter((gateId) => !candidateBoundGateIds.has(gateId));
   const unresolved = requiredBeforeCandidateCertification.filter(
     (gateId) => answers.get(gateId) !== 'Yes',
@@ -41,7 +41,11 @@ export const validatePreCandidateReleaseGates = (source) => {
     'The accepted Product Interface Design release boundary must remain explicit.',
   );
 
-  return { candidateBoundGateIds: [...candidateBoundGateIds], requiredBeforeCandidateCertification };
+  return {
+    answers,
+    candidateBoundGateIds: [...candidateBoundGateIds],
+    requiredBeforeCandidateCertification,
+  };
 };
 
 if (fileURLToPath(import.meta.url) === resolve(process.argv[1] ?? '')) {

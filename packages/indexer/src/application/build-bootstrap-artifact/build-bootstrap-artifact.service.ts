@@ -68,6 +68,10 @@ export const buildSkoposBootstrapArtifacts = async ({
     scopesLite,
     subtreeTarget,
   });
+  const recommendedQuestions = buildBootstrapQuestions({
+    scanSummary: detected,
+    existingConfig: rootConfig,
+  });
 
   return {
     bootstrap: {
@@ -85,10 +89,11 @@ export const buildSkoposBootstrapArtifacts = async ({
       detected,
       sourceDependencies: detected.sourceDependencies,
       recommendedConfig,
-      recommendedQuestions: buildBootstrapQuestions({
-        scanSummary: detected,
-      }),
-      recommendedNextSteps: buildRecommendedNextSteps(detected.findings),
+      recommendedQuestions,
+      recommendedNextSteps: buildRecommendedNextSteps(
+        detected.findings,
+        recommendedQuestions,
+      ),
     },
     scopesLite,
     diagnosis,
@@ -96,16 +101,24 @@ export const buildSkoposBootstrapArtifacts = async ({
   };
 };
 
-const buildRecommendedNextSteps = (findings: string[]): string[] => {
+const buildRecommendedNextSteps = (
+  findings: string[],
+  questions: Array<{ id: string }>,
+): string[] => {
+  const questionIds = new Set(questions.map((question) => question.id));
   const steps = [
-    'Review the recommended root config and confirm project archetype and scope strategy.',
-    'Confirm the canonical command surface for dev, build, test, typecheck, and lint.',
+    questionIds.has('bootstrap.project-archetype')
+      ? 'Review the recommended root config and confirm project archetype and Scope strategy.'
+      : 'Review the configured root settings and confirm only any proposed Scope changes.',
+    questionIds.has('bootstrap.commands')
+      ? 'Confirm the canonical command surface for dev, build, test, typecheck, and lint.'
+      : 'Use the configured canonical command surface for setup checks.',
     'Review findings and promote any durable repo rules into canonical docs before broad agent use.',
   ];
 
-  if (findings.some((finding) => finding.includes('AGENTS.md'))) {
+  if (findings.some((finding) => finding.includes('instruction source'))) {
     steps.push(
-      'Add AGENTS.md as the canonical instruction source before generating tool-specific mirrors.',
+      'Add the configured canonical instruction source before generating tool-specific mirrors.',
     );
   }
 

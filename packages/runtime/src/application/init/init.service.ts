@@ -269,6 +269,7 @@ export const initSkoposProject = async ({
   const projectArtifact = await writeSkoposProjectArtifact({
     workspaceRoot,
     dryRun,
+    config: bootstrap.recommendedConfig,
   });
   const fallbackRegistry = buildFallbackRegistryArtifact({
     projectMode: bootstrap.recommendedConfig.project.mode,
@@ -297,16 +298,19 @@ export const initSkoposProject = async ({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   await syncCodexWrapperAdapter({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   await syncManualHostAdapter({
     cwd: workspaceRoot,
     dryRun,
     projectionModel: enforcement.hostProjectionModel,
+    instructionSourcePath: bootstrap.recommendedConfig.agents.canonicalInstructions,
   });
   const workspaceGraphWrite = await writeJsonArtifact({
     artifactPath: workspaceGraphPath,

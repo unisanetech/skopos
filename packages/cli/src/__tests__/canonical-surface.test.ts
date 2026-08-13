@@ -41,6 +41,7 @@ describe('canonical CLI surface', () => {
   it('keeps onboarding on setup without a public adoption compatibility command', () => {
     expect(skoposCliCommandRegistry.setup).toBeTypeOf('function');
     expect(skoposCliCommandRegistry).not.toHaveProperty('adopt');
+    expect(skoposCliCommandRegistry).not.toHaveProperty('understand');
     expect(skoposCliCommandRegistry.init).toBeTypeOf('function');
   });
 

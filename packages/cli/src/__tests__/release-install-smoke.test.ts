@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { isAbsolute, join } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
@@ -762,6 +762,9 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
 });
 
 const packCli = (packDirectory: string): string => {
+  if (process.env.SKOPOS_RELEASE_TARBALL) {
+    return resolve(process.env.SKOPOS_RELEASE_TARBALL);
+  }
   const output = execFileSync('pnpm', ['pack', '--pack-destination', packDirectory], {
     cwd: cliPackageRoot,
     encoding: 'utf8',

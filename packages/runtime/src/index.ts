@@ -62,7 +62,6 @@ export const skoposRuntimeCommands = [
   'impact',
   'knowledge',
   'guards',
-  'understand',
   'integrations',
   'storage',
 ] as const;

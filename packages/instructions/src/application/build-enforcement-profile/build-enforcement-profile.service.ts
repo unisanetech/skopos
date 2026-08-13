@@ -9,6 +9,8 @@ import type {
   SkoposGuardManifest,
 } from '@skopos/model';
 
+import { normalizeInstructionSourcePath } from '../scaffold-project-instructions/scaffold-project-instructions.service.js';
+
 const CLAUDE_CODE_SETTINGS_PATH = '.skopos/cache/tooling/claude-code/settings.json';
 const CLAUDE_CODE_GENERATED_FILES = [
   CLAUDE_CODE_SETTINGS_PATH,
@@ -61,13 +63,14 @@ export const buildSkoposEnforcementProfile = ({
   cwd,
   actions,
   guards,
-  instructionSourcePath = 'AGENTS.md',
+  instructionSourcePath: providedInstructionSourcePath = 'AGENTS.md',
   instructionMirrorPaths = [
     'CLAUDE.md',
     '.cursor/rules/project.mdc',
     '.github/copilot-instructions.md',
   ],
 }: BuildSkoposEnforcementProfileOptions): SkoposEnforcementProfileArtifact => {
+  const instructionSourcePath = normalizeInstructionSourcePath(providedInstructionSourcePath);
   const requiredGuardCount = guards.filter((guard) => guard.strength === 'required').length;
   const approvalRequiredActionCount = actions.filter(
     (action) => action.requiresApproval,
@@ -94,7 +97,7 @@ export const buildSkoposEnforcementProfile = ({
       trigger: 'after-instruction-source-edit',
       command: 'skopos instructions sync <project-root> --json',
       blocking: false,
-      summary: 'Auto-sync generated instruction mirrors after AGENTS.md changes.',
+      summary: `Auto-sync generated instruction mirrors after ${instructionSourcePath} changes.`,
     },
     {
       id: 'enforcement.before-context-compact',

@@ -169,7 +169,9 @@ export const runExternalSkillPortability = async ({
     category: 'skopos-portability',
     stage: 'pack-cli',
     project: 'harness',
-    command: 'pnpm pack --pack-destination <temporary-pack-root>',
+    command: process.env.SKOPOS_RELEASE_TARBALL
+      ? 'reuse SKOPOS_RELEASE_TARBALL'
+      : 'pnpm pack --pack-destination <temporary-pack-root>',
   };
   try {
     const tarballPath = packCli(packRoot);
@@ -965,6 +967,9 @@ const installExternalProjectDependencies = (
 };
 
 const packCli = (packRoot: string): string => {
+  if (process.env.SKOPOS_RELEASE_TARBALL) {
+    return resolve(process.env.SKOPOS_RELEASE_TARBALL);
+  }
   const output = execFileSync(
     'pnpm',
     ['pack', '--pack-destination', packRoot],

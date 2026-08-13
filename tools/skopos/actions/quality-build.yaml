@@ -1,0 +1,48 @@
+{
+  "id": "quality.build",
+  "title": "Build affected project",
+  "description": "Run the project-owned build proof.",
+  "category": "quality-check",
+  "scope": [
+    "workspace"
+  ],
+  "command": "pnpm build",
+  "cwd": ".",
+  "timeoutMs": 900000,
+  "inputs": [
+    "."
+  ],
+  "outputs": [],
+  "affects": [
+    "."
+  ],
+  "capabilities": {
+    "process": "required",
+    "network": "none",
+    "browser": "none",
+    "tools": [],
+    "secrets": [],
+    "services": []
+  },
+  "effects": {
+    "workspace": "declared",
+    "artifacts": "none",
+    "external": "none"
+  },
+  "concurrency": "exclusive",
+  "workspaceMode": "overlay-safe",
+  "safety": "mutating",
+  "requiresApproval": true,
+  "whenToUse": "Use when a matching Guard selects quality.build for Task impact.",
+  "phases": [
+    "stabilization",
+    "closure"
+  ],
+  "risks": [
+    "light",
+    "standard",
+    "high-impact"
+  ],
+  "recommendedAfter": [],
+  "owner": "project"
+}
