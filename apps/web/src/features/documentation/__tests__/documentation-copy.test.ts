@@ -81,5 +81,7 @@ describe("Documentation public journey", () => {
     expect(freshSessionStages.find((stage) => stage.id === "deliver")?.truth).toContain("real host outcome");
     expect(freshSessionStages.find((stage) => stage.id === "accept")?.commands.join(" ")).toContain("handoff accept");
     expect(hostDeliveryTruth.map((host) => host.label)).toEqual(["Codex", "Claude Code", "Any manual host"]);
+    expect(hostDeliveryTruth.find((host) => host.label === "Codex")?.status).toBe("Certified for first release");
+    expect(hostDeliveryTruth.find((host) => host.label === "Claude Code")?.status).toContain("verification planned");
   });
 });

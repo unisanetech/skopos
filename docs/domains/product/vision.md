@@ -11,12 +11,13 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../../overview.md
   - positioning.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when product purpose changes
 ---
@@ -29,6 +30,9 @@ evidence-backed closure.
 
 ## Changelog
 
+- `2026-08-13`: Separated the host-neutral product vision from first-release support
+  claims. The launch certifies Codex; every additional supported host requires its own
+  current real-host Evidence.
 - `2026-08-12`: Made intelligent project onboarding part of the product promise. A
   coding agent investigates and explains the project, while Skopos bounds decisions,
   approval, durable outcomes, and setup Readiness.
@@ -40,8 +44,11 @@ evidence-backed closure.
 
 ## Vision
 
-Developers should be able to open Codex, Claude Code, or another capable coding agent
-in an adopted repository and discuss the work they want.
+Developers should be able to open a supported coding agent in an adopted repository
+and discuss the work they want. Codex is the real-host-certified adapter for the first
+public release. Claude Code, Cursor, GitHub Copilot, and future hosts remain part of
+the host-neutral direction, but are not called supported until matching real-host
+Evidence exists.
 
 The agent should immediately know:
 
@@ -128,7 +135,8 @@ Skopos succeeds when:
 7. expensive checks are not repeated when fresh Evidence remains valid
 8. false completion is blocked
 9. deleting `.skopos/**` loses no durable project truth
-10. Codex and Claude Code receive equivalent operating context
+10. every coding-agent host claimed as supported receives the verified operating
+    context and lifecycle named in that claim
 11. the first public release contains no prototype compatibility layer
 12. a developer can complete setup through a clear conversation without operating
     internal artifacts or separate subsystem workflows

@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -23,6 +23,7 @@ relatedDocs:
   - policy-applicability-and-fixture-governance.md
   - public-package-content-and-provenance.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: when owning truth changes
 ---
 
@@ -34,6 +35,9 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-13`: Separated host-neutral adapter architecture from certified host
+  support and recorded the standalone company-owned repository boundary. The first
+  release certifies Codex only; generated projections never imply support.
 - `2026-08-12`: Added one unified intelligent onboarding workflow. It composes
   coding-agent investigation with reviewed Scope, Memory, capability, Policy, Skill,
   instruction, and host-delivery outcomes while preserving their existing authorities.
@@ -109,6 +113,15 @@ The public website is not part of the core SDK package family, does not import t
 internal console, and has no dependency on Skopos runtime or compiled local project
 state. Its initial Next.js route is static-first; backend, authentication, analytics,
 and hosting-provider contracts require separate Decisions.
+
+## Repository Ownership Boundary
+
+The canonical source and release-provenance repository is
+`https://github.com/unisanetech/skopos`. `unisanetech` owns company governance around
+the standalone Skopos product; it is not a runtime namespace or an adopter-specific
+architecture layer. Skopos core and its public package remain project-agnostic and may
+not acquire a private Unisane dependency, registry, Action, Guard, path, or product
+workflow through repository ownership.
 
 ## Canonical Operating Loop
 
@@ -245,6 +258,11 @@ Split activation therefore has three explicit delivery states:
 3. when any required host capability is unavailable or fails, the adapter reports the
    failed stage and preserves the same prompt and follow-up for reviewed manual copy
 
+This implemented Codex delivery path is the sole real-host-certified adapter for the
+first public release. Claude Code, Cursor, and GitHub Copilot configuration or
+instruction projections remain unverified until the exact real host produces matching
+Evidence. Host-neutral shape and generated output are not support proof.
+
 The originating Session releases its parent Task reservation and resource claims,
 reconciles open mutations and contamination, then explicitly transitions from
 `writer` to `reviewer`. The transition is actor-bound, live-Session-only, audited, and
@@ -272,3 +290,5 @@ into runtime core.
     without the required user decision
 13. setup readiness is lane-specific; configured adapters never masquerade as verified
     host delivery
+14. a host is publicly called supported only when current real-host Evidence covers
+    the exact capabilities claimed

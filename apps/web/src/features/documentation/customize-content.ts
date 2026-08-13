@@ -99,7 +99,7 @@ export const customizeGuides: readonly CustomizeGuide[] = [
     label: "Connect coding agents",
     title: "Keep one project truth across different agent hosts.",
     description:
-      "Connect Codex, Claude Code, or a manual workflow to the same Project Memory, Task lifecycle, and completion rules.",
+      "Use the certified Codex integration—or an explicitly described projection or manual workflow in another host—with the same Project Memory, Task lifecycle, and completion rules.",
     promise: "Changing agents or starting a fresh conversation does not reset the project.",
     prompt:
       "Set up this coding-agent host to load compact Skopos Session context at the start of work. Show me which context, handoff, child-Task, compaction, and completion capabilities the host can actually provide, and use the documented manual fallback for anything unsupported.",
@@ -108,7 +108,7 @@ export const customizeGuides: readonly CustomizeGuide[] = [
       { title: "Project the lifecycle", description: "Host-native features may open Sessions, deliver child work, or return completion without inventing new Task semantics." },
       { title: "Fall back honestly", description: "Unsupported automation returns an exact reviewed prompt or command instead of pretending delivery happened." },
     ],
-    examples: ["Start a fresh Codex Task with bounded work", "Resume after conversation compaction", "Use Claude Code hooks for context", "Copy a reviewed assignment into another host"],
+    examples: ["Start a fresh Codex Task with bounded work", "Resume after conversation compaction", "Review the available Claude Code hook projection", "Copy a reviewed assignment into another host"],
     terms: [
       { term: "Host adapter", meaning: "A bridge that projects the Skopos lifecycle into a coding-agent environment." },
       { term: "MCP", meaning: "Structured access to the same Skopos runtime authorities used by the CLI." },

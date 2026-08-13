@@ -19,6 +19,7 @@ relatedDocs:
   - ../architecture/docs-governance.md
   - ../patterns/PAT-23c981d4-mutation-before-admission-validation.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: per convergence phase
 ---
@@ -29,6 +30,8 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Changelog
 
+- `2026-08-13`: Clarified that first-release verified host binding uses Codex. Other
+  host projections remain unverified and cannot satisfy a supported-host claim.
 - `2026-08-13`: Replaced the visible init and adoption ceremony with the unified
   coding-agent-led setup workflow. Init remains a low-level reconstruction primitive.
 - `2026-07-31`: Removed retired setup-review command examples and aligned bootstrap
@@ -61,8 +64,9 @@ Use this workflow when setting up Skopos on itself or any future project.
 4. review one consolidated plan with `skopos setup review <repo-root>`
 5. accept, edit, defer, or reject the recommendations you want
 6. run `skopos setup resume <repo-root> --actor <id>`
-7. bind a supported coding-agent Session, let the real host inject current context,
-   then record the host's explicit delivery confirmation
+7. bind a verified coding-agent Session, let the real host inject current context,
+   then record the host's explicit delivery confirmation; the first release certifies
+   this lane for Codex only
 8. continue normal work only after required setup lanes are ready
 
 After the user accepts the relevant Apply recommendations, existing-project setup may

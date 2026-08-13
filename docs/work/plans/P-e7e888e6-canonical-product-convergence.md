@@ -14,6 +14,7 @@ lastUpdated: 2026-08-13
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../decisions/D-20260803-task-local-proof-and-project-integration-readiness-boundary.md
   - ../../domains/product/vision.md
   - ../../architecture/00-architecture.md
@@ -41,6 +42,12 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-13`: Reconciled the host-neutral target with the first-release support
+  boundary. Codex is the sole real-host-certified launch adapter; every later host
+  support claim requires its own current real-host Evidence. Claude Code, Cursor, and
+  GitHub Copilot projections remain unverified and do not block the first release.
+  Recorded `unisanetech/skopos` as company-owned governance without introducing
+  Unisane runtime or product coupling.
 - `2026-08-13`: Added the compact human-response implementation slice. The target uses
   one canonical contract, mode-selective Session injection, stage-specific onboarding
   guidance, plain-language rendering, measured token targets, and offline response
@@ -266,7 +273,8 @@ At completion:
 9. Readiness explains whether work can start, integrate, or close.
 10. `.skopos/**` is disposable and rebuildable.
 11. several coding-agent Sessions can work safely in one branch and working directory.
-12. Codex and Claude Code receive the same lifecycle and project truth.
+12. every host claimed supported receives the verified lifecycle and project truth
+    named in that claim; the first release certifies Codex only.
 13. adopter-specific workflows and integrations remain owned by their projects.
 14. no adopter-specific rule or path exists in Skopos core.
 15. the first public package contains no legacy prototype API.
@@ -1138,9 +1146,9 @@ Make Skopos automatic and consistent across supported coding agents.
 
 ### Exit Criteria
 
-1. Codex and Claude receive equivalent Project, Scope, Task, Action, Guard, and
-   Readiness truth
-2. continuation works across hosts
+1. every host claimed supported receives verified Project, Scope, Task, Action, Guard,
+   and Readiness truth for the capabilities named in that claim
+2. continuation works for every host claimed supported
 3. pre-compaction handoff is sufficient without transcript replay
 4. users do not need to remind agents to follow Skopos
 5. CLI, MCP, and UI agree on status and next action
@@ -1230,7 +1238,7 @@ Prove the product contract before the first public launch.
 3. no old command or schema is reachable
 4. no active doc describes old concepts as current or target
 5. clean installs and clean-clone reconstruction pass
-6. supported host parity passes
+6. every claimed supported host has current real-host proof
 7. first release documentation reflects only the clean product
 8. installed-package UI behavior passes from a fresh external project
 9. no P1 proof artifact is counted as proof until its target regression passes
@@ -1435,7 +1443,7 @@ Do not publish until all answers are `yes`:
 8. Is Work Queue derived and Session-aware?
 9. Can several same-directory Sessions work without unsafe overlap?
 10. Is closure proof bound to an immutable Task snapshot?
-11. Are Codex and Claude behaviorally equivalent?
+11. Does every host claimed supported have current real-host behavioral proof?
 12. Do external-project integrations remain project-owned?
 13. Is Skopos core free of adopter-specific grammar?
 14. Are all superseded decisions and prototype work docs historical?

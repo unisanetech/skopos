@@ -122,9 +122,9 @@ upload, or share that directory wholesale. Use `skopos storage status` and the d
 
 ## Help, Bugs, And Security
 
-- Usage questions and reproducible bugs: <https://github.com/Croodo/skopos/issues>
-- Security reports: <https://github.com/Croodo/skopos/security/advisories/new>
-- Source and full documentation: <https://github.com/Croodo/skopos>
+- Usage questions and reproducible bugs: <https://github.com/unisanetech/skopos/issues>
+- Security reports: <https://github.com/unisanetech/skopos/security/advisories/new>
+- Source and full documentation: <https://github.com/unisanetech/skopos>
 
 Please do not post suspected vulnerabilities or sensitive project evidence in a public
 issue.

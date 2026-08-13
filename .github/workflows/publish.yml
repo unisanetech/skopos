@@ -66,7 +66,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
           git fetch --no-tags origin main
           git merge-base --is-ancestor HEAD origin/main
-          node -e "const p=require('./packages/cli/package.json'); const tag=process.env.RELEASE_TAG.slice(1); if(p.name!=='@skopos/cli'||p.version!==tag||p.publishConfig?.access!=='public'||p.publishConfig?.tag!=='next'||p.repository?.url!=='git+https://github.com/Croodo/skopos.git') process.exit(1)"
+          node -e "const p=require('./packages/cli/package.json'); const tag=process.env.RELEASE_TAG.slice(1); if(p.name!=='@skopos/cli'||p.version!==tag||p.publishConfig?.access!=='public'||p.publishConfig?.tag!=='next'||p.repository?.url!=='git+https://github.com/unisanetech/skopos.git') process.exit(1)"
           test "$(npm --version)" = "11.15.0"
           echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "package_version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"

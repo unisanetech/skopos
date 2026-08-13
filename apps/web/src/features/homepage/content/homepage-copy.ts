@@ -9,7 +9,7 @@ export const heroCopy = {
   title: "Your agents write the code. Skopos keeps the work coherent.",
   titleLines: ["Your agents write the code.", "Skopos keeps the work coherent."],
   description:
-    "Project context, intent, rules, and proof stay in the repository—so any coding agent can continue.",
+    "Project context, intent, rules, and proof stay in the repository—so work can continue without depending on one coding agent or conversation.",
 } as const;
 
 export const heroOnboarding = {
@@ -46,13 +46,13 @@ export const heroOnboarding = {
 } as const;
 
 export const agentCompatibilityCopy = {
-  eyebrow: "Agent-compatible",
-  title: "Works with the coding agents you already use.",
+  eyebrow: "First-release host support",
+  title: "Codex certified. Portable project truth everywhere else.",
   agents: [
-    { name: "Codex", icon: "codex" },
-    { name: "Claude Code", icon: "claude-code" },
-    { name: "Cursor", icon: "cursor" },
-    { name: "GitHub Copilot", icon: "github-copilot" },
+    { name: "Codex", icon: "codex", status: "Certified" },
+    { name: "Claude Code", icon: "claude-code", status: "Adapter available · verification planned" },
+    { name: "Cursor", icon: "cursor", status: "Instructions available · manual workflow" },
+    { name: "GitHub Copilot", icon: "github-copilot", status: "Instructions available · manual workflow" },
   ],
 } as const;
 

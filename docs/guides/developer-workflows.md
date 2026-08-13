@@ -16,6 +16,7 @@ relatedDocs:
   - ../standards/validation.md
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
   - semantic-guards.md
 reviewCycle: when CLI behavior changes
@@ -25,6 +26,8 @@ reviewCycle: when CLI behavior changes
 
 ## Changelog
 
+- `2026-08-13`: Clarified first-release host status: Codex is certified; Claude Code,
+  Cursor, and GitHub Copilot projections remain unverified until real-host proof.
 - `2026-08-13`: Documented the unified coding-agent-led setup, consolidated review,
   source-bound decisions, staged resume, and low-level-only `init` boundary.
 - `2026-08-11`: Documented reviewed parent/child Task splitting, exact linked-child
@@ -241,6 +244,11 @@ pre-compaction, and completion hooks but not proven fresh-process creation or pr
 injection. Manual hosts provide no automation: review and copy the rendered prompt.
 In every case, generated or rendered is not delivered, native resume is not a fresh
 Session, and the originating Session is never archived or deleted implicitly.
+
+For the first public release, only the Codex path is real-host certified and called
+supported. Claude Code, Cursor, and GitHub Copilot remain unverified projections;
+their generated surfaces are useful for verification work but do not imply support or
+parity.
 
 ## Run Project Capabilities
 

@@ -5,9 +5,10 @@
 Skopos helps coding agents remember how your project works, continue unfinished work
 safely, coordinate changes, and prove when work is actually complete.
 
-Its knowledge lives with the repository. A new Codex, Claude Code, Cursor, or other
-agent session can recover the project's rules, current work, decisions, and validation
-commands without rediscovering everything from scratch.
+Its knowledge lives with the repository. A new Codex session can recover the project's
+rules, current work, decisions, and validation commands without rediscovering
+everything from scratch. Host-neutral projections exist for Claude Code, Cursor, and
+GitHub Copilot, but those hosts remain unverified until real-host proof exists.
 
 Skopos does not replace the coding agent. The agent still reasons, writes code, chooses
 tools, and talks with the developer. Skopos gives that agent a durable operating layer
@@ -19,6 +20,8 @@ for the parts that should survive beyond one chat.
 > Design is included under the accepted first-release boundary. Its deterministic
 > selection, identity, containment, bounded-cost, packed-install, and project-binding
 > checks remain required; material efficacy is explicitly unproven and is not claimed.
+> Codex is the only real-host-certified adapter for the first release. Other generated
+> host projections are not support or parity claims.
 > See
 > [Current status](#current-status) for details.
 
@@ -117,7 +120,7 @@ grows the structure only when the project develops real knowledge that needs a h
 
 ## How It Works
 
-The same basic lifecycle is used across supported coding-agent hosts:
+Skopos defines one host-neutral lifecycle:
 
 ```text
 Understand the project
@@ -137,6 +140,22 @@ Behind that lifecycle, Skopos has five responsibilities:
 3. **Coordinate** — connect a Task, its owned paths, and cooperating sessions.
 4. **Prove** — run project-defined checks and bind their evidence to the work.
 5. **Continue** — preserve decisions and progress for closure, handoff, or recovery.
+
+## Coding-Agent Support
+
+Support means the real host has current Evidence for the exact setup, context,
+continuation, delivery, and lifecycle capabilities Skopos claims. Generated files or
+local contract tests alone do not qualify.
+
+| Host | First-release status |
+| --- | --- |
+| **Codex** | Real-host certified and supported for the verified first-release lifecycle. |
+| **Claude Code** | Projection available; real-host verification planned. Not yet claimed supported. |
+| **Cursor** | Instruction/manual projection available; real-host verification planned. Not yet claimed supported. |
+| **GitHub Copilot** | Instruction/manual projection available; real-host verification planned. Not yet claimed supported. |
+
+The portable CLI and MCP model remains the common authority. Additional hosts can join
+the supported matrix after their own real-host proof passes.
 
 ## Core Terms in Plain Language
 
@@ -303,6 +322,11 @@ them.
 
 Skopos is **pre-release**. It has not launched or been published as a public package.
 
+The canonical source and future release-provenance repository is
+[unisanetech/skopos](https://github.com/unisanetech/skopos). Company ownership changes
+governance, not the product boundary: Skopos remains standalone and project-agnostic,
+with no Unisane runtime or product dependency.
+
 The working source implements the first-release model for Project Memory, Scopes,
 Plans, Tasks, Sessions, Work Queue, Actions, Guards, Evidence, Readiness, coordination,
 unified setup, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed the
@@ -322,10 +346,14 @@ a blocker for the first `next` release; broader Skill-catalog expansion remains 
 that release. See the [first public release scorecard](docs/operations/first-public-release-scorecard.md)
 and [Product Interface Design efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
 
-Before publication, Skopos must also configure the external npm scope, protected
-GitHub environment, one-time first-package bootstrap, OIDC trust, and final
-clean-clone/immutable-candidate gates in the
+Before publication, Skopos must also configure the external npm scope, manually
+approved GitHub release environment, one-time first-package bootstrap, OIDC trust, and
+final clean-clone/immutable-candidate gates in the
 [first public release Plan](docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md).
+
+The first release claims Codex support only. Claude Code, Cursor, and GitHub Copilot
+verification remains later support-expansion work; their projections do not imply
+support or parity.
 
 There is no prototype compatibility promise or old-state migration contract. Until the
 release gate is fully accepted, APIs, commands, and project structure may still change.
@@ -342,6 +370,7 @@ release gate is fully accepted, APIs, commands, and project structure may still 
 - [Contributing](CONTRIBUTING.md) — setup, review, proof, and contribution expectations
 - [Release and rollback runbook](docs/operations/release-runbook.md) — the fail-closed operator checklist
 - [Accepted product decision](docs/decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md) — why this model exists
+- [Ownership and first-release host support](docs/decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md) — repository governance and truthful compatibility claims
 
 ## Contributing
 

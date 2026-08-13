@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-10
+lastUpdated: 2026-08-13
 relatedDocs:
   - 00-architecture.md
   - ../decisions/031-bundled-cli-release-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: before every public package release or imported-source change
 ---
 
@@ -33,6 +34,13 @@ the npm tarball are separate review surfaces:
 The public package manifest exposes the `skopos` binary and import export only.
 Repository build, test, benchmark, proof, release, and UI-capture scripts are owned by
 the private workspace root and must not appear in the installed package manifest.
+
+The canonical source and npm-provenance repository is
+`https://github.com/unisanetech/skopos`. Exact owner, repository, workflow, and
+environment identity must agree across the package manifest, trusted publisher, and
+release Evidence. Company ownership does not widen the tarball boundary or permit a
+private Unisane package, registry, configuration, or product integration to enter the
+Skopos runtime.
 
 ## Product Interface Design Runtime Assets
 
@@ -102,6 +110,9 @@ Before publication, the release gate must show:
 
 ## Changelog
 
+- `2026-08-13`: Bound current package and trusted-publisher provenance to
+  `unisanetech/skopos` while preserving Skopos as a standalone product with no private
+  Unisane runtime or registry dependency.
 - `2026-08-10`: Kept the required Product Interface Design three-module core in the
   package while excluding four unproven Design Context development assets. The copy
   step now validates the complete 42-file source inventory as 38 public files plus four

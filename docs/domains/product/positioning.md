@@ -11,11 +11,12 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-07-28
+lastUpdated: 2026-08-13
 relatedDocs:
   - vision.md
   - ../../overview.md
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when market or product boundary changes
 ---
@@ -26,6 +27,10 @@ Skopos is the repo-native operating memory and trust layer for coding agents.
 
 ## Changelog
 
+- `2026-08-13`: Bound first-release host claims to real-host Evidence. Codex is the
+  sole certified launch adapter; Claude Code, Cursor, and GitHub Copilot projections
+  remain unverified until their own real-host proof exists. Recorded company-owned
+  repository governance without changing Skopos into a Unisane product dependency.
 - `2026-07-28`: Classified product positioning as durable canonical domain Memory.
 - `2026-07-28`: Removed versioned and Node-only product framing. Positioned the first
   release as one clean, project-agnostic Memory and Readiness layer whose implementation
@@ -90,10 +95,23 @@ The first release must prove:
 3. healthy and messy brownfield projects
 4. at least one non-Node adopter fixture
 5. custom project Actions and Guards
-6. Codex and Claude Code host parity
+6. real-host behavior for every coding-agent host it publicly claims to support
 
 Claims stay limited to what the proof matrix passes. The product is not described as a
 versioned compatibility step.
+
+The first `next` release claims Codex support only. Claude Code, Cursor, and GitHub
+Copilot may receive host-neutral instructions, generated projections, or a reviewed
+manual workflow, but those surfaces are described as unverified until current
+real-host Evidence proves the exact capabilities claimed. Their verification is a
+later support expansion, not a first-release blocker.
+
+## Product And Repository Identity
+
+Skopos is governed from `https://github.com/unisanetech/skopos` and released as
+`@skopos/cli`. Company ownership provides durable source and release governance; it
+does not make Skopos part of a Unisane application or introduce Unisane-specific
+runtime dependencies, configuration, Actions, Guards, or product language into core.
 
 ## Non-Goals
 

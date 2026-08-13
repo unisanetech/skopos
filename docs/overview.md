@@ -11,12 +11,13 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - domains/product/vision.md
   - domains/product/positioning.md
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
   - architecture/00-architecture.md
 reviewCycle: when the operating model changes
@@ -29,6 +30,8 @@ agents.
 
 ## Changelog
 
+- `2026-08-13`: Added the first-release host-support boundary and company-owned
+  repository identity. Codex is certified; other host projections remain unverified.
 - `2026-08-12`: Replaced the target onboarding story with one intelligent setup
   conversation that covers project understanding, Scopes, Memory, capabilities,
   Policies, Skills, agent instructions, and verified delivery.
@@ -156,6 +159,18 @@ Skopos coordinates:
 Worktrees remain useful stronger isolation for broad work, but are not the normal
 product assumption.
 
+## Host Support
+
+Skopos keeps one host-neutral Project, Task, Evidence, and Readiness model. Host
+support is nevertheless capability-specific: a generated projection or manual prompt
+does not prove delivery by the real host.
+
+The first public release certifies Codex. Claude Code, Cursor, and GitHub Copilot
+projections are available for development and verification, but remain explicitly
+unverified and are not support claims. A host joins the supported matrix only after
+current real-host Evidence proves the exact lifecycle and delivery capabilities named
+in public copy.
+
 ## Project-Specific Needs
 
 Skopos core stays generic. Projects contribute:
@@ -184,6 +199,7 @@ coordinates, and proves them.
 The current source implements the canonical Project Memory, Scope, Plan, Task, Session,
 Work Queue, Action, Guard, Evidence, Readiness, coordination, adoption, Skill, handoff,
 CLI, MCP, and UI model without a prototype compatibility surface. Skopos remains
-pre-release while the convergence Plan is active, Product Interface Design efficacy still has
-an open promotion Finding, and the complete clean-clone and packed-install release gate
-has not been certified from one committed candidate.
+pre-release while the convergence Plan is active and the complete clean-clone and
+packed-install release gate has not been certified from one committed candidate. Its
+canonical repository identity is `https://github.com/unisanetech/skopos`; the ownership
+cutover changes governance and release provenance, not the standalone product boundary.

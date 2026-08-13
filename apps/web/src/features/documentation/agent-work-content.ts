@@ -142,7 +142,7 @@ export const freshSessionStages: readonly FreshSessionStage[] = [
 ] as const;
 
 export const hostDeliveryTruth = [
-  { label: "Codex", status: "Native when verified", detail: "Can report creation, prompt injection, origin messaging, pre-compaction, and completion capabilities." },
-  { label: "Claude Code", status: "Partial capability", detail: "Provides origin identity and lifecycle hooks, but fresh-process creation and prompt injection are not treated as proven." },
+  { label: "Codex", status: "Certified for first release", detail: "Real-host proof covers fresh Task creation, prompt injection, Session binding, and return to the originating reviewer." },
+  { label: "Claude Code", status: "Adapter available; verification planned", detail: "Generated lifecycle hooks exist, but the first release does not claim real-host Claude Code certification." },
   { label: "Any manual host", status: "Exact fallback", detail: "Review and copy the rendered prompt, then accept it with the real receiving Session identity." },
 ] as const;

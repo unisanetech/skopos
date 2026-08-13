@@ -41,6 +41,11 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(certifyBlock, /pnpm install --frozen-lockfile/u);
   assert.match(certifyBlock, /git merge-base --is-ancestor HEAD origin\/main/u);
   assert.match(certifyBlock, /p\.version!==tag\|\|p\.publishConfig/u);
+  assert.ok(
+    certifyBlock.includes(
+      "p.repository?.url!=='git+https://github.com/unisanetech/skopos.git'",
+    ),
+  );
   assert.match(certifyBlock, /pnpm release:security:validate/u);
   assert.match(certifyBlock, /pnpm release:publish:validate/u);
   assert.match(certifyBlock, /pnpm release:scorecard:validate/u);
@@ -70,7 +75,7 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.equal(packageManifest.version, '0.1.0');
   assert.equal(packageManifest.publishConfig?.access, 'public');
   assert.equal(packageManifest.publishConfig?.tag, 'next');
-  assert.equal(packageManifest.repository?.url, 'git+https://github.com/Croodo/skopos.git');
+  assert.equal(packageManifest.repository?.url, 'git+https://github.com/unisanetech/skopos.git');
 };
 
 validatePublishWorkflowContract(workflow, cliPackage);
@@ -83,6 +88,7 @@ for (const weakened of [
   workflow.replace('${{ secrets.NPM_BOOTSTRAP_TOKEN }}', '${{ secrets.NPM_TOKEN }}'),
   workflow.replace('          pnpm release:scorecard:validate\n', ''),
   workflow.replace('        run: pnpm release:reconstruct:validate\n', '        run: echo skipped-reconstruction\n'),
+  workflow.replace('git+https://github.com/unisanetech/skopos.git', 'git+https://github.com/Croodo/skopos.git'),
   workflow.replace('sha256sum --check --strict skopos-cli.sha256', 'echo skipped-digest-check'),
   workflow.replaceAll('--tag next', '--tag latest'),
 ]) {

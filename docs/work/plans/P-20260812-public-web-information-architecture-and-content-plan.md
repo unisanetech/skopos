@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: planned
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - P-7dde6750-design-and-deliver-the-public-skopos-homepage.md
   - ../../domains/product/vision.md
@@ -20,6 +20,7 @@ relatedDocs:
   - ../../architecture/docs-governance.md
   - ../../architecture/evidence-and-readiness-model.md
   - ../../operations/first-public-release-scorecard.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
 reviewCycle: when the public product story, supported-host proof, or documentation model changes
 ---
 
@@ -27,6 +28,9 @@ reviewCycle: when the public product story, supported-host proof, or documentati
 
 ## Changelog
 
+- `2026-08-13`: Bound the `/agents` story to the accepted Codex-first support matrix.
+  Codex is certified; Claude Code, Cursor, and GitHub Copilot remain unverified and
+  may not receive logo-implied support or parity claims.
 - `2026-08-12`: Created and accepted the broader public-web information architecture,
   route-level copy contract, conversation-first documentation model, content
   governance, and staged delivery backlog. This Plan preserves the existing
@@ -339,7 +343,11 @@ Allowed states are `Verified`, `Beta`, `Manual workflow`, `Planned`, and
 limitations. Logos never imply parity. The launch copy must reflect the current proof
 matrix, including manual fallback where host automation is not proven.
 
-**Primary action:** `Set up a supported agent`
+The first-release matrix marks Codex `Verified`. Claude Code, Cursor, and GitHub
+Copilot are `Planned` or `Manual workflow` only where the exact fallback exists; none
+is described as supported until real-host proof exists.
+
+**Primary action:** `Set up Codex`
 
 ### Trust And Control — `/trust`
 

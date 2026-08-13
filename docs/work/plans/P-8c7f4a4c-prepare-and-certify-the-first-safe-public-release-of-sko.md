@@ -15,6 +15,7 @@ relatedDocs:
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
   - ../../decisions/031-bundled-cli-release-contract.md
   - ../../decisions/D-20260811-product-interface-design-first-release-boundary.md
+  - ../../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../../findings/F-20260804-skill-selection-proof-and-portability-gap.md
   - ../../operations/first-public-release-scorecard.md
   - ../../decisions/D-20260811-topology-aware-task-scope-authority.md
@@ -28,6 +29,12 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Accepted company-owned repository governance and a truthful
+  Codex-first host boundary. The canonical source and release identity is
+  `unisanetech/skopos`; Codex is the sole real-host-certified launch adapter. Claude
+  Code, Cursor, and GitHub Copilot verification is later support-expansion work, not a
+  blocker while those hosts remain explicitly unverified and are not claimed
+  supported. The scorecard is now `13 yes / 4 no`.
 - `2026-08-12`: Reconciled the release-control boundary without claiming new product
   proof. The accepted Product Interface Design boundary no longer contradicts the
   runbook hard stops. The protected publication workflow now fails closed on the
@@ -145,6 +152,11 @@ into one ordered program and may close only after their relevant gates are satis
 7. No Task created from this Plan may publish, tag, promote, deprecate, or unpublish a
    package without a separate explicit human-approved release Task.
 8. A changed candidate invalidates release certification and must be proved again.
+9. The canonical repository and trusted-publisher identity is
+   `unisanetech/skopos`; Skopos remains a standalone product with no Unisane runtime
+   or product coupling.
+10. Codex is the only host claimed supported in the first release. Any additional host
+    needs current real-host Evidence before support or parity is claimed.
 
 ## Current Baseline
 
@@ -158,7 +170,7 @@ change requires a new exact-commit run.
 Current release blockers are:
 
 1. the canonical convergence Plan remains active and the current release scorecard has
-   five `no` answers
+   four `no` answers
 2. the GitHub repository is private, so npm public-package provenance cannot bind to
    public source; the `npm-release` environment and its protection rules do not exist
 3. the local npm client is not authenticated, `@skopos/cli` does not exist, and
@@ -228,7 +240,8 @@ Purpose: finish the product-level promises that cannot be inferred from package 
 Tasks:
 
 1. confirm external-project integrations remain project-owned without leaking adopter grammar into core
-2. prove Codex and Claude lifecycle parity
+2. prove the claimed Codex lifecycle from the real host and keep every unverified host
+   out of supported-host claims
 3. complete every missing scenario in the canonical proof matrix
 4. record the north-star fresh-session continuation metric
 5. confirm `.skopos/**` deletion and reconstruction from tracked truth
@@ -237,7 +250,7 @@ Tasks:
 
 Exit gate:
 
-- all 17 canonical final-release questions answer `yes` with linked Evidence
+- all 17 canonical first-release questions answer `yes` with linked Evidence
 - the convergence Plan is complete or its remaining work is explicitly non-blocking by
   an accepted replacement decision
 
@@ -274,9 +287,9 @@ Tasks:
    and supported runtime matrix
 2. retain the GitHub-hosted manual publication workflow and create its manually
    approved `npm-release` environment
-3. verify npm `@skopos` ownership, package creation rights, exact repository binding,
-   workflow filename, environment, allowed action, protected tags, and publisher
-   permissions
+3. verify npm `@skopos` ownership, package creation rights, exact
+   `unisanetech/skopos` repository binding, workflow filename, environment, allowed
+   action, protected tags, and publisher permissions
 4. ensure only the tagged commit can produce the published artifact
 5. preserve provenance and record registry integrity after publication
 
@@ -322,7 +335,8 @@ that Task after the final scorecard is reviewed.
 1. check out the protected release tag in the trusted GitHub workflow
 2. install the frozen lockfile without a release build cache
 3. run the certified build, typecheck, test, proof, audit, release-check, release-smoke,
-   host-parity, adoption, deterministic Skill, responsive, and accessibility lanes
+   claimed-host support, adoption, deterministic Skill, responsive, and accessibility
+   lanes
 4. pack and compare the artifact identity with the reviewed manifest
 5. publish `@skopos/cli@0.1.0` to `next` through OIDC
 6. verify registry metadata, integrity, provenance, and dist tags

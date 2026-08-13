@@ -21,6 +21,7 @@ relatedDocs:
   - ../findings/archive/F-20260803-session-task-recovery-and-disposition-gap.md
   - ../decisions/021-discussion-memory-checkpoints-and-handoff-contract.md
   - ../decisions/026-multi-agent-discussion-memory-adapter-lifecycle-contract.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - ../work/archive/P-20260805-conversation-aware-session-continuation-plan.md
 reviewCycle: when agent lifecycle changes
 ---
@@ -32,6 +33,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-13`: Separated host-neutral lifecycle projection from public support
+  certification. Codex is the only real-host-certified first-release adapter; other
+  projections remain unverified until their own real-host proof exists.
 - `2026-08-13`: Refined the response contract into selectively transported layers,
   defined mode-specific response shapes and plain-language translation at the user
   boundary, and made response evaluation a development/release concern rather than a
@@ -382,6 +386,12 @@ Claude Code, Codex, and manual adapters project the same lifecycle. They may:
 
 An adapter never invents a host-specific work model or silently claims preventive
 safety.
+
+Projection is not certification. For the first public release, Codex is the only
+adapter with real-host Evidence sufficient for a support claim. Claude Code, Cursor,
+and GitHub Copilot projections remain available but unverified; their presence does
+not imply parity or automated delivery. A host becomes supported only when current
+real-host Evidence proves the exact capabilities named in that claim.
 
 Adapters also declare whether they can create a fresh Session, inject an initial
 prompt, identify or message the originating Session, detect pre-compaction, and report

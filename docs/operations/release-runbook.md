@@ -12,6 +12,7 @@ view: current
 lastUpdated: 2026-08-13
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
+  - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - release-security.md
   - ../../SECURITY.md
   - ../../SUPPORT.md
@@ -22,6 +23,13 @@ relatedDocs:
 This runbook turns the release Plan into a repeatable operator checklist. It does not
 authorize publication. The first release is only `@skopos/cli@0.1.0` under the npm
 `next` dist tag.
+
+## Changelog
+
+- `2026-08-13`: Bound repository and trusted-publisher identity to
+  `unisanetech/skopos` and changed the host gate to proof for every host actually
+  claimed supported. The first release certifies Codex only; other host projections
+  remain unverified and non-blocking.
 
 ## Hard Stop Conditions
 
@@ -44,6 +52,8 @@ Do not tag or publish when any of these is true:
    is already configured would contradict npm's first-package constraint.
 6. The requested action would publish from a developer laptop or require a long-lived
    npm write token.
+7. A release, package, website, or documentation surface calls a host supported
+   without current real-host Evidence for the exact lifecycle capabilities claimed.
 
 ## Candidate Freeze
 
@@ -54,8 +64,8 @@ Do not tag or publish when any of these is true:
 5. Install the frozen lockfile and run the release matrix without a release build
    cache.
 6. Run `pnpm release:scorecard:validate` to fail closed unless every non-candidate
-   product gate is already `Yes`, including real Claude host parity. External adopter
-   migrations are not part of Skopos release authority.
+   product gate is already `Yes`, including real-host proof for every host claimed
+   supported. External adopter migrations are not part of Skopos release authority.
 7. From the fresh checkout with no `.skopos/**` state, run
    `pnpm release:reconstruct:validate` to rebuild Project Memory and registered
    capabilities from tracked truth without changing tracked files.
@@ -120,7 +130,7 @@ After every R1–R6 gate and the exact release Task receive human approval:
    `mode=bootstrap-publish`
 6. after registry verification, immediately delete the environment secret and revoke
    the token
-7. configure the package's npm trusted publisher with GitHub owner `Croodo`, repository
+7. configure the package's npm trusted publisher with GitHub owner `unisanetech`, repository
    `skopos`, workflow filename `publish.yml`, environment `npm-release`, and allowed
    action `npm publish`
 8. set package publishing access to require 2FA and disallow traditional tokens

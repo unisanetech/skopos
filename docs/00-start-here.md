@@ -9,10 +9,11 @@ lifecycle: active
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
   - domains/product/vision.md
   - overview.md
@@ -36,6 +37,9 @@ Skopos.
 
 ## Changelog
 
+- `2026-08-13`: Added the company-owned repository and truthful first-release host
+  support boundary. The launch certifies Codex only; other generated host projections
+  remain explicitly unverified until real-host Evidence exists.
 - `2026-08-12`: Added the accepted intelligent project onboarding contract and its
   canonical architecture route. The target setup journey is one coding-agent-led
   Understand, Clarify, Review, Apply, and Verify workflow.
@@ -62,12 +66,13 @@ Skopos.
 Read target truth in this order:
 
 1. [Canonical product decision](decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md)
-2. [Overview](overview.md)
-3. [Vision](domains/product/vision.md)
-4. [Glossary](standards/terminology.md)
-5. [Canonical product convergence Plan](work/plans/P-e7e888e6-canonical-product-convergence.md)
-6. [Architecture baseline](architecture/00-architecture.md)
-7. [Intelligent project onboarding](architecture/intelligent-project-onboarding.md)
+2. [Company ownership and first-release host support](decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md)
+3. [Overview](overview.md)
+4. [Vision](domains/product/vision.md)
+5. [Glossary](standards/terminology.md)
+6. [Canonical product convergence Plan](work/plans/P-e7e888e6-canonical-product-convergence.md)
+7. [Architecture baseline](architecture/00-architecture.md)
+8. [Intelligent project onboarding](architecture/intelligent-project-onboarding.md)
 
 The decision owns what the first released product is. The Plan owns how the current
 prototype becomes that product.

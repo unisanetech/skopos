@@ -14,7 +14,7 @@ basis and does not include an uptime or response-time guarantee.
 
 ## Where To Ask
 
-Use [GitHub Issues](https://github.com/Croodo/skopos/issues) for reproducible bugs,
+Use [GitHub Issues](https://github.com/unisanetech/skopos/issues) for reproducible bugs,
 documentation gaps, compatibility problems, and focused feature requests. Search open
 and closed issues first.
 

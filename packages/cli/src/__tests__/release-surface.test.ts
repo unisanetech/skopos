@@ -122,11 +122,11 @@ describe('skopos release surface contract', () => {
     expect(cliPackage.description).toContain('Project memory');
     expect(cliPackage.repository).toEqual({
       type: 'git',
-      url: 'git+https://github.com/Croodo/skopos.git',
+      url: 'git+https://github.com/unisanetech/skopos.git',
       directory: 'packages/cli',
     });
-    expect(cliPackage.homepage).toBe('https://github.com/Croodo/skopos#readme');
-    expect(cliPackage.bugs).toEqual({ url: 'https://github.com/Croodo/skopos/issues' });
+    expect(cliPackage.homepage).toBe('https://github.com/unisanetech/skopos#readme');
+    expect(cliPackage.bugs).toEqual({ url: 'https://github.com/unisanetech/skopos/issues' });
     expect(cliPackage.author).toEqual(expect.objectContaining({ name: 'Croodo' }));
     expect(cliPackage.maintainers).toEqual([
       expect.objectContaining({ name: 'Croodo' }),

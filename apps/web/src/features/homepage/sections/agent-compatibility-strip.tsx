@@ -10,11 +10,14 @@ export function AgentCompatibilityStrip() {
           <p className={`${pageType.label} text-[#777]`}>{agentCompatibilityCopy.eyebrow}</p>
           <h2 className="mt-3 max-w-[260px] text-[clamp(1rem,1.5vw,1.25rem)] leading-[1.2] font-bold tracking-[-0.025em]" id="agent-compatibility-title">{agentCompatibilityCopy.title}</h2>
         </div>
-        <ul className="grid list-none grid-cols-2 p-0 md:grid-cols-4" aria-label="Supported coding agents">
+        <ul className="grid list-none grid-cols-2 p-0 md:grid-cols-4" aria-label="Coding agent support status">
           {agentCompatibilityCopy.agents.map((agent) => (
-            <li className="flex min-h-24 items-center justify-center gap-3 border-r border-b border-[var(--skopos-rule-light)] px-3 text-sm font-bold nth-[2n]:border-r-0 md:min-h-28 md:border-b-0 md:nth-[2n]:border-r md:last:border-r-0" key={agent.name}>
+            <li className="flex min-h-28 items-center gap-3 border-r border-b border-[var(--skopos-rule-light)] px-4 nth-[2n]:border-r-0 md:min-h-32 md:border-b-0 md:nth-[2n]:border-r md:last:border-r-0" key={agent.name}>
               <AgentLogo name={agent.icon} />
-              <span>{agent.name}</span>
+              <span className="min-w-0">
+                <strong className="block text-sm">{agent.name}</strong>
+                <span className="mt-1.5 block text-[10px] leading-[1.35] font-medium tracking-[0.02em] text-[#777]">{agent.status}</span>
+              </span>
             </li>
           ))}
         </ul>

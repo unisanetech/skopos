@@ -13,7 +13,7 @@ import {
 } from "./content";
 
 function StateBadge({ state }: { state: SupportState }) {
-  return <span className={cn("inline-flex min-h-7 items-center border px-2.5 font-mono text-[10px] font-bold tracking-[0.04em] uppercase", state === "Verified" && "border-[#267a42] bg-[#e6f5eb] text-[#17602f]", state === "Beta" && "border-[#83732d] bg-[#f7f2d8] text-[#685b21]", state === "Manual workflow" && "border-[#888] bg-[#eee] text-[#555]", state === "Not supported" && "border-[#bda5a5] bg-[#f6eaea] text-[#855]")}>{state}</span>;
+  return <span className={cn("inline-flex min-h-7 items-center border px-2.5 font-mono text-[10px] font-bold tracking-[0.04em] uppercase", state === "Codex certified" && "border-[#267a42] bg-[#e6f5eb] text-[#17602f]", state === "Projection available" && "border-[#83732d] bg-[#f7f2d8] text-[#685b21]", state === "Manual workflow" && "border-[#888] bg-[#eee] text-[#555]", state === "Not supported" && "border-[#bda5a5] bg-[#f6eaea] text-[#855]")}>{state}</span>;
 }
 
 export function AgentSupportScreen() {
@@ -22,7 +22,7 @@ export function AgentSupportScreen() {
       <article className="bg-[var(--skopos-paper)]">
         <header><PageHero visual={<div className="w-full border border-[var(--skopos-rule-light)]" aria-label="Current agent support overview">
               {supportedHosts.map((host) => <article key={host.id} className="flex min-h-20 items-center justify-between gap-4 border-b border-[var(--skopos-rule-light)] px-5 last:border-b-0"><div className="flex items-center gap-3"><AgentLogo name={host.id} /><strong>{host.shortName}</strong></div><StateBadge state={host.headlineState} /></article>)}
-              <p className="m-0 flex gap-3 border-t border-[var(--skopos-rule-light)] p-5 text-xs leading-[1.5] text-[var(--skopos-muted)]"><Icon symbol="info" size="sm" />Support labels describe integration depth—not which agent is best for writing code.</p>
+              <p className="m-0 flex gap-3 border-t border-[var(--skopos-rule-light)] p-5 text-xs leading-[1.5] text-[var(--skopos-muted)]"><Icon symbol="info" size="sm" />Only “Codex certified” is a first-release real-host support claim.</p>
             </div>}><h1 className={pageType.hero}>{agentSupportCopy.title}</h1><p className="mt-8 max-w-[680px] text-[clamp(1rem,1.3vw,1.2rem)] leading-[1.65] text-[var(--skopos-muted)]">{agentSupportCopy.description}</p><div className="mt-9"><a className="inline-flex min-h-[52px] items-center gap-7 border border-[var(--skopos-ink)] bg-[var(--skopos-ink)] px-[18px] text-[13px] font-bold text-white" href="#support-matrix">
                 Compare support
                 <Icon symbol="arrow_downward" size="sm" />
@@ -39,7 +39,7 @@ export function AgentSupportScreen() {
               </p>
             </div></PageFrame></PageSection>
 
-        <PageSection id="support-matrix" aria-labelledby="agent-support-matrix-title"><PageFrame><SectionIntro number="02" id="agent-support-matrix-title" title="What works in each host today." description="Every label inherits the proof date and limitation link shown for its host below." />
+        <PageSection id="support-matrix" aria-labelledby="agent-support-matrix-title"><PageFrame><SectionIntro number="02" id="agent-support-matrix-title" title="What the first release can prove." description="A projection can exist in source without being certified in its real host. The labels keep that difference explicit." />
             <p className="flex items-center gap-2 border-t border-[var(--skopos-rule-light)] px-[var(--page-gutter)] py-3 text-xs text-[#777] md:hidden">
               Swipe to compare hosts
               <Icon symbol="arrow_forward" size="sm" />
@@ -95,7 +95,7 @@ export function AgentSupportScreen() {
                     <StateBadge state={host.headlineState} />
                   </header>
                   <p className="mt-8 leading-[1.6] text-[var(--skopos-muted)]">{host.summary}</p>
-                  <footer className="mt-auto border-t border-[var(--skopos-rule-light)] pt-6 text-xs"><span className="text-[#777]">Proof reviewed {host.proofDate}</span><div className="mt-4 flex flex-wrap gap-5 font-bold">
+                  <footer className="mt-auto border-t border-[var(--skopos-rule-light)] pt-6 text-xs"><span className="text-[#777]">Status reviewed {host.proofDate}</span><div className="mt-4 flex flex-wrap gap-5 font-bold">
                       <Link className="inline-flex items-center gap-2" href={host.setupHref}>Setup <Icon symbol="arrow_forward" size="sm" /></Link>
                       <a className="inline-flex items-center gap-2" href={host.proofHref} target="_blank" rel="noreferrer">
                         {host.proofLabel} <Icon symbol="arrow_outward" size="sm" />
@@ -105,7 +105,7 @@ export function AgentSupportScreen() {
               ))}
             </div></PageFrame></PageSection>
 
-        <ClosingSection title="Change agents without changing the project truth." description="Use the strongest available integration. When automation stops, the same reviewed Skopos workflow continues manually."><PageAction href="/docs" primary light>Set up a supported agent</PageAction><PageAction href="/trust" light>See trust boundaries</PageAction></ClosingSection>
+        <ClosingSection title="Change agents without changing the project truth." description="Start with the certified Codex integration. In another host, use only the projection or manual workflow described here until real-host verification is complete."><PageAction href="/docs" primary light>Set up with Codex</PageAction><PageAction href="/trust" light>See trust boundaries</PageAction></ClosingSection>
       </article>
     </SiteShell>
   );

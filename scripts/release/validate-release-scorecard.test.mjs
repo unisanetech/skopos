@@ -15,28 +15,27 @@ describe('public-release scorecard guard', () => {
     const answers = parseCanonicalReleaseAnswers(source);
 
     assert.equal(answers.size, 17);
-    assert.equal(answers.get(11), 'No');
+    assert.equal(answers.get(11), 'Yes');
     assert.equal(answers.get(12), 'Yes');
   });
 
-  it('rejects the current scorecard while real Claude proof remains open', async () => {
+  it('accepts the current claimed-host certification boundary', async () => {
     const source = await readFile(scorecardPath, 'utf8');
 
-    assert.throws(
-      () => validatePreCandidateReleaseGates(source),
-      /unresolved non-candidate gates: 11/u,
-    );
+    const result = validatePreCandidateReleaseGates(source);
+    assert.deepEqual(result.candidateBoundGateIds, [3, 4, 15, 16]);
   });
 
-  it('permits candidate certification after only non-candidate gates are accepted', async () => {
+  it('rejects a scorecard that loses claimed-host certification', async () => {
     const source = await readFile(scorecardPath, 'utf8');
-    const accepted = source
-      .replace(
-        /\| 11 \| Codex and Claude are behaviorally equivalent \| No \|/u,
-        '| 11 | Codex and Claude are behaviorally equivalent | Yes |',
-      );
+    const weakened = source.replace(
+      /\| 11 \| Every host claimed supported has real-host behavioral proof \| Yes \|/u,
+      '| 11 | Every host claimed supported has real-host behavioral proof | No |',
+    );
 
-    const result = validatePreCandidateReleaseGates(accepted);
-    assert.deepEqual(result.candidateBoundGateIds, [3, 4, 15, 16]);
+    assert.throws(
+      () => validatePreCandidateReleaseGates(weakened),
+      /unresolved non-candidate gates: 11/u,
+    );
   });
 });
