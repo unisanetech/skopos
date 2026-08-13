@@ -3,7 +3,7 @@ import {
   createSkoposLogoMaskableSvg,
 } from "../../src/features/brand/skopos-brand.ts";
 
-export const unisaneBrandAssets = {
+export const skoposBrandAssets = {
   name: "Skopos",
   logoMarkSvg: createSkoposLogoMarkSvg(),
   maskableLogoSvg: createSkoposLogoMaskableSvg(),

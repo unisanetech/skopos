@@ -35,14 +35,14 @@ describe('external workspace pilot report', () => {
   it('renders scope limits and a reproducible command', () => {
     const markdown = renderExternalWorkspacePilotReport(fixture());
     expect(markdown).toContain('Actions executed by pilot: 0');
-    expect(markdown).toContain('does not certify Unisane product implementation');
+    expect(markdown).toContain('does not certify the external project implementation');
     expect(markdown).toContain('pnpm benchmark:external-workspace');
   });
 });
 
 const fixture = (): ExternalWorkspacePilotReport => ({
   schemaVersion: 1,
-  workspace: 'Unisane',
+  workspace: 'external-project',
   dirtyStatusEntryCount: 1_858,
   surfaces: [{ name: 'session', bytes: 2_000, durationMs: 5 }],
   queue: {
@@ -72,6 +72,6 @@ const fixture = (): ExternalWorkspacePilotReport => ({
   tasksCreated: 0,
   compactBudgetBytes: 32_768,
   limitations: [
-    'The pilot does not certify Unisane product implementation or production deployment.',
+    'The pilot does not certify the external project implementation or production deployment.',
   ],
 });

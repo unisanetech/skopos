@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-10
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - release-security.md
@@ -54,8 +54,8 @@ Do not tag or publish when any of these is true:
 5. Install the frozen lockfile and run the release matrix without a release build
    cache.
 6. Run `pnpm release:scorecard:validate` to fail closed unless every non-candidate
-   product gate is already `Yes`, including real Claude host parity and final Unisane
-   replacement certification.
+   product gate is already `Yes`, including real Claude host parity. External adopter
+   migrations are not part of Skopos release authority.
 7. From the fresh checkout with no `.skopos/**` state, run
    `pnpm release:reconstruct:validate` to rebuild Project Memory and registered
    capabilities from tracked truth without changing tracked files.
@@ -65,8 +65,10 @@ Do not tag or publish when any of these is true:
    scripts, workspace references, private paths, source-checkout dependencies,
    credentials, unexpected brands, or undeclared runtime assets.
 10. Install that tarball into fresh projects on the supported Node and operating-system
-   matrix and exercise version, help, init, Session, Task, Action, Evidence, Readiness,
-   storage, Product Interface Design portability, and the bundled UI.
+   matrix and exercise version, help, unified setup, Session, Task, Action, Evidence,
+   Readiness, storage, Product Interface Design portability, and the bundled UI. Prove
+   that the removed public `adopt` command is rejected; exercise low-level `init` only
+   in the reconstruction lane.
 11. Produce a scorecard that maps each R1–R6 gate to the candidate SHA, tarball digest,
    workflow run, and immutable evidence.
 

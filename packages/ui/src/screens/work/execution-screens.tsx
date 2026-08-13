@@ -36,7 +36,7 @@ import {
   getExecutionOverviewContext,
   getTaskDetailContext,
   getTaskListContext,
-  requiresAdoptionOrientation,
+  requiresSetupOrientation,
 } from '../../platform/console-state/work-selectors.js';
 import {
   getTaskDiscussionContext,
@@ -61,7 +61,7 @@ export function ExecutionOverviewView(): React.JSX.Element {
     getOverviewDiscussionContext(state);
   const showProjectOrientation =
     activeTasks.length === 0 ||
-    requiresAdoptionOrientation(state);
+    requiresSetupOrientation(state);
 
   return (
     <ReviewPage
@@ -82,10 +82,10 @@ export function ExecutionOverviewView(): React.JSX.Element {
             tone={toneForTaskState(state.sessionContext.currentTask.state)}
           />
         ) : null,
-        state.sessionContext?.adoption && state.sessionContext.adoption.state !== 'agent-ready' ? (
+        state.sessionContext && state.sessionContext.setupReadiness.state !== 'ready' ? (
           <StatusPill
-            key="adoption"
-            value={`adoption ${state.readinessReport.readiness}`}
+            key="setup"
+            value={`setup ${state.sessionContext.setupReadiness.state}`}
             tone={toneForReadiness(state.readinessReport.readiness)}
           />
         ) : null,

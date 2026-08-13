@@ -9,10 +9,11 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-13
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
+  - intelligent-project-onboarding.md
   - evidence-and-readiness-model.md
   - ../standards/terminology.md
   - ../decisions/D-20260803-audited-stale-session-task-recovery.md
@@ -31,6 +32,13 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-13`: Refined the response contract into selectively transported layers,
+  defined mode-specific response shapes and plain-language translation at the user
+  boundary, and made response evaluation a development/release concern rather than a
+  second runtime model call.
+- `2026-08-12`: Added the onboarding response contract and executable agent packet.
+  Setup agents explain project-specific findings, recommend defaults, ask only
+  material questions, and translate natural-language choices into reviewed decisions.
 - `2026-08-11`: Completed the approved Codex delivery lifecycle. The origin releases
   writing authority and becomes an explicit reviewer; the Codex adapter creates real
   child tasks only after user approval, binds returned thread identities to Skopos
@@ -281,9 +289,44 @@ an irreversible operation. A question contains:
 
 Questions belong to the Task and are persisted in its tracked portable state.
 
+Setup questions use the same communication grammar but belong to the resumable setup
+workflow until their accepted outcomes are promoted to the owning tracked subsystem.
+The setup agent also receives an executable packet with required reads, prior answers,
+the output contract, the local submission path, allowed actions, approval boundaries,
+prohibited claims, and the exact continuation step. It must not make the agent infer
+Skopos's internal schema or command sequence.
+
+Optional setup recommendations support `accept`, `edit`, `defer`, and `reject`.
+Questions normally arrive one at a time; related reversible recommendations may be
+grouped. The user sees evidence, a recommended answer, alternatives, trade-offs, the
+effect of the answer, and the safe deferral behavior. See
+[Intelligent Project Onboarding](intelligent-project-onboarding.md).
+
 ## Response Contract
 
-User-facing responses lead with the outcome:
+The stable always-on contract is deliberately small. It tells the agent to answer
+directly, use clear simple English, avoid unexplained Skopos terminology, ask only
+material questions, recommend a default when asking, and never claim completion
+without proof. It is projected from one canonical source into `AGENTS.md`, declared
+instruction mirrors, and compact Session context; those projections do not become
+independent authorities.
+
+Session context selects one response mode and adds only the state needed for that mode:
+
+| Mode | User-facing shape |
+| --- | --- |
+| `direct-answer` | answer first; include only explanation that helps the user act |
+| `work-start` | intended outcome, bounded work, first meaningful step, material risk if useful |
+| `progress` | completed work, current work, blockers, and proof still needed |
+| `decision` | decision, recommendation, reason, alternatives, default behavior, and what follows |
+| `completion` | changed behavior, focused proof, Memory updates, and remaining risk |
+
+Empty parts are omitted. These are semantic shapes rather than mandatory headings or a
+reason to expose internal ceremony. Detailed communication guidance is retrieved only
+for setup, a material decision, high-risk work, closure, recovery, or handoff. Ordinary
+turns do not receive the full communication brief repeatedly.
+
+User-facing completion responses lead with the outcome:
 
 1. direct answer or current result
 2. changed behavior
@@ -294,16 +337,39 @@ User-facing responses lead with the outcome:
 Progress reports state completed work, current work, blockers, and proof still needed.
 They do not expose internal ceremony or false precision.
 
+Internal state is translated at the rendering boundary. For example, an unresolved
+Memory obligation is explained as the concrete project document or decision that still
+needs review; the user is not expected to understand artifact ids, digests, lifecycle
+states, or Skopos vocabulary to decide what happens next. Exact internal terms remain
+available when requested or when they are necessary to diagnose a failure.
+
+During setup, responses lead with the agent's plain-language project understanding,
+then recommendations and reasons, then the one material decision needed, and finally
+what happens next. Progress names meaningful outcomes rather than scanner counts or
+artifact writes. Completion explains how future coding-agent work improved and lists
+deferred or unverified lanes honestly.
+
 ## Context Economy
 
-1. start from Task and Scope, not the whole repository
-2. load canonical sources before generated views
-3. load linked Patterns only when applicable
-4. load history only when current truth is insufficient
-5. return deltas after initial context
-6. never inject every document, Action, Policy, or Skill by default
-7. return bounded JSON by default on agent hot paths; require `--full` for detailed
+1. keep the stable response contract near 100–150 tokens
+2. keep the ordinary mode-specific instruction near 20–80 tokens
+3. target 100–250 dynamic tokens for progress and 150–350 for a material decision
+4. treat the 1,200-token communication budget as a ceiling, not a per-turn target
+5. inject at Session start and material state changes, not unchanged on every turn
+6. start from Task and Scope, not the whole repository
+7. load canonical sources before generated views
+8. load linked Patterns only when applicable
+9. load history only when current truth is insufficient
+10. return deltas after initial context
+11. never inject every document, Action, Policy, Skill, or full communication brief by
+    default
+12. return bounded JSON by default on agent hot paths; require `--full` for detailed
    portable or diagnostic state
+
+Response-quality scenarios run in focused development and release evaluation. They
+check answer-first ordering, plain language, terminology translation, useful defaults,
+one-material-question behavior, truthful progress, and ready/blocked/deferred
+distinctions. Runtime does not add an LLM judge or rewrite pass to each response.
 
 ## Host Adapters
 

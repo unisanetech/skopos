@@ -5,6 +5,9 @@ describe("Trust and Control public story", () => {
   it("separates durable truth from rebuildable local state", () => {
     expect(trustControlCopy.trackedTruth.every((item) => !item.path.startsWith(".skopos"))).toBe(true);
     expect(trustControlCopy.localState.every((item) => item.path.startsWith(".skopos"))).toBe(true);
+    expect(trustControlCopy.localState.find((item) => item.label.includes("Session"))?.path).toBe(
+      ".skopos/coordination.sqlite",
+    );
   });
 
   it("names the four different control strengths without collapsing them", () => {

@@ -11,7 +11,7 @@ provenance: declared
 view: current
 appliesTo:
   - workspace
-lastUpdated: 2026-07-31
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../00-start-here.md
   - ../architecture/config-model.md
@@ -29,6 +29,8 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Changelog
 
+- `2026-08-13`: Replaced the visible init and adoption ceremony with the unified
+  coding-agent-led setup workflow. Init remains a low-level reconstruction primitive.
 - `2026-07-31`: Removed retired setup-review command examples and aligned bootstrap
   follow-up with Understanding, adoption state, Session context, Work Queue, Findings,
   Tasks, and Readiness.
@@ -51,36 +53,20 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Workflow
 
-1. run a bootstrap dry-run first:
-   - `node --import tsx src/cli.ts init --dry-run --json <repo-root>`
-2. review the detected repo shape:
-   - repo mode
-   - archetype suggestion
-   - canonical commands
-   - docs roots
-   - instruction files
-   - findings
-3. confirm or adjust the recommended `skopos.config.yaml`
-4. write `skopos.config.yaml`
-5. write the initial `.skopos/index/bootstrap.json`
-6. write the initial `.skopos/index/scopes.json`
-7. write the initial `.skopos/index/diagnosis.json`
-8. write the initial `.skopos/graph/workspace.json`
-9. write the initial `.skopos/graph/docs.json`
-10. write the initial `.skopos/graph/commands.json`
-11. write the initial `.skopos/graph/scope-relations.json`
-12. run `skopos understand . --json` to create compact repository Understanding
-13. review the returned facts, inferences, assumptions, contradictions, and material
-    adoption questions through `skopos session context . --json`
-14. confirm material adoption decisions through the proposal and approval flow before
-    accepting policy packs, broad docs cleanup, or long-running agent work
-15. run `skopos scan . --json` when the repo is messy or inconsistent and turn
-    actionable gaps into Findings or bounded Tasks
-16. run `skopos adopt assess .` and `skopos session context . --json` to inspect
-    remaining adoption or instruction gaps
-17. review recommended next steps before enabling broader agent use
+1. run `skopos setup <repo-root> --actor <id>`
+2. let the coding agent follow the generated setup packet and inspect real project
+   evidence
+3. answer only questions that change product truth, architecture, ownership,
+   authority, security, or public behavior
+4. review one consolidated plan with `skopos setup review <repo-root>`
+5. accept, edit, defer, or reject the recommendations you want
+6. run `skopos setup resume <repo-root> --actor <id>`
+7. bind a supported coding-agent Session, let the real host inject current context,
+   then record the host's explicit delivery confirmation
+8. continue normal work only after required setup lanes are ready
 
-For an existing project, first-time init may also create or update:
+After the user accepts the relevant Apply recommendations, existing-project setup may
+also create or update:
 
 1. `AGENTS.md` with the managed Skopos operating contract
 2. `docs/00-start-here.md` as the docs router when the project does not already have one
@@ -93,7 +79,7 @@ Readiness should not require a Task only because these first-time onboarding fil
 
 ## Target Boundary
 
-The path passed to `skopos init` is the workspace boundary for that Skopos adoption.
+The path passed to `skopos setup` is the workspace boundary for Skopos.
 Every configured docs root, docs router, instruction source, instruction mirror, and
 ignored project path must remain inside it.
 
@@ -109,28 +95,19 @@ ignored project path must remain inside it.
 5. Rejection leaves the target and its parent byte-for-byte unchanged: no config,
    `.gitignore`, `.skopos/**`, docs, instructions, or success log may be written.
 
-## Current Slice
+## Low-Level Reconstruction
 
-The current implemented bootstrap slice does this today:
+`skopos init` still rebuilds configuration, indexes, graphs, instruction scaffolding,
+and clean-checkout state. It is intentionally not the user-facing setup journey. Use
+it only for diagnostics, recovery, or Skopos internals.
 
-1. scans an existing repo surface
-2. suggests a root config
-3. prepares `.skopos/index/bootstrap.json`
-4. prepares `.skopos/index/scopes.json`
-5. prepares `.skopos/index/diagnosis.json`
-6. prepares `.skopos/graph/workspace.json`, `.skopos/graph/docs.json`, `.skopos/graph/commands.json`, and `.skopos/graph/scope-relations.json`
-7. writes or updates the root Skopos onboarding files when not already present
-8. reports findings and recommended next steps
+## Setup Understanding Review
 
-Later phases may extend this flow with richer generated guidance and additional
-preventive host integration. Current project Readiness, Findings, and Tasks remain the
-canonical reporting and remediation surfaces.
+The understanding stage of `skopos setup` must not only explain the project. It must
+also show which parts of that understanding are confirmed by files and which parts are
+still assumptions.
 
-## Post-Init Understanding Review
-
-`skopos understand` must not only explain the project. It must also show which parts of that understanding are confirmed by files and which parts are still assumptions.
-
-The Understanding and adoption review should include:
+The unified setup review should include:
 
 1. observed facts with evidence
 2. likely inferences with confidence
@@ -141,12 +118,13 @@ The Understanding and adoption review should include:
 For existing projects, do not treat generated Skopos docs as automatically stronger than existing project docs. First map what exists, then suggest improvements. For new projects, Skopos can recommend a clearer default structure because there is less existing project truth to protect.
 
 Durable project choices belong in their tracked owner, such as `skopos.config.yaml`.
-Material document-authority or restructuring choices use the adoption proposal and
-approval artifacts; generated Understanding remains evidence, not a second authority.
+Material document-authority or restructuring choices use the unified setup review;
+generated Understanding remains evidence, not a second authority.
 
-## Current Decision Output
+## Setup Decision Output
 
-The current `init` slice now emits recommended bootstrap questions in JSON output.
+The unified setup review emits only material project questions and keeps them blocking
+until the user answers or explicitly defers the affected setup lane.
 
 Those questions:
 

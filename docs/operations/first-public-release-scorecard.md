@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -47,7 +47,7 @@ no**. No additional efficacy work is required for the first `next` release.
 | 1 | Canonical vocabulary only | Yes | Current product and host contracts use the canonical Project, Scope, Task, Session, Action, Guard, Evidence, and Readiness model. |
 | 2 | `.skopos/**` is disposable | Yes | Tracked Memory and Task projections reconstruct local derived state. |
 | 3 | Clean clone rebuilds current Memory and capabilities | No | Earlier proof passed, but the accumulated candidate has changed and needs one fresh clean-clone run. |
-| 4 | Full adoption converges docs to the standard | No | The exact final-candidate adoption matrix is not yet consolidated. |
+| 4 | Unified setup converges docs to the standard | No | The exact final-candidate setup and documentation-convergence matrix is not yet consolidated. |
 | 5 | Nested Scopes work generically | Yes | Topology-aware admission, expansion, reconstruction, and packed fixtures pass. |
 | 6 | Guards decide required Evidence | Yes | Actions execute; Guards select Evidence obligations. |
 | 7 | One Task owns execution | Yes | Session reservation and Task ownership are canonical. |
@@ -55,14 +55,14 @@ no**. No additional efficacy work is required for the first `next` release.
 | 9 | Same-directory Sessions avoid unsafe overlap | Yes | Reservations, exact claims, recovery, and reviewer transitions fail closed on conflicting authority. |
 | 10 | Closure proof binds to an immutable Task snapshot | Yes | High-impact closure requires and records immutable snapshots. |
 | 11 | Codex and Claude are behaviorally equivalent | No | Host-neutral contracts exist, but equivalent real-host child-delivery proof is not current for Claude. |
-| 12 | Unisane deleted its parallel LLM workflow | No | Final adopter-side replacement certification is not linked in the current release scorecard. |
-| 13 | Core is free of Unisane grammar | Yes | Project-specific integration remains outside the generic core package family. |
+| 12 | External-project integrations remain project-owned | Yes | Adopter-specific workflows, commands, and checks stay outside the Skopos core and release boundary. |
+| 13 | Core is free of adopter-specific grammar | Yes | Project-specific integration remains outside the generic core package family. |
 | 14 | Superseded decisions and prototype work are historical | Yes | Superseded sequential Decisions and completed prototype Plans live under archive routes with historical/transition metadata; the remaining active Plans are current release, convergence, and homepage work rather than prototypes. |
 | 15 | Packed-install smoke passes for the exact candidate | No | Earlier packed smoke passed; the changed candidate must be frozen and rerun. |
 | 16 | Full proof matrix passes for the exact candidate | No | Final immutable-candidate certification has not run. |
 | 17 | North-star continuation metric is recorded | Yes | The canonical operation records the eligibility rule and a source-linked `3 / 3` real Codex baseline, explicitly limited to that cohort. |
 
-Current canonical score: **11 yes / 6 no**.
+Current canonical score: **12 yes / 5 no**.
 
 ### Gate execution boundary
 
@@ -70,14 +70,14 @@ The protected publication workflow divides these answers into two groups so it c
 silently substitute candidate tests for adopter or host proof:
 
 1. Gates `1`, `2`, `5`–`14`, and `17` must already be `Yes` in this accepted
-   scorecard before candidate certification starts. This includes real Claude parity
-   and final Unisane replacement; generated adapters and local inference do not count.
+   scorecard before candidate certification starts. This includes real Claude parity;
+   generated adapters and local inference do not count.
 2. Gates `3`, `4`, `15`, and `16` are candidate-bound. The protected workflow earns
-   them from a fresh exact checkout through reconstruction, the adoption matrix,
+   them from a fresh exact checkout through reconstruction, the unified setup matrix,
    packed-install smoke, and the complete candidate proof commands.
 
 `pnpm release:scorecard:validate` enforces the first group. It is expected to fail
-while questions `11` or `12` remain `No`. `pnpm release:reconstruct:validate` enforces
+while question `11` remains `No`. `pnpm release:reconstruct:validate` enforces
 the clean-checkout portion of the second group and refuses a checkout that already has
 derived `.skopos/**` state or tracked-file drift.
 
@@ -87,18 +87,17 @@ derived `.skopos/**` state or tracked-file drift.
 | --- | --- | --- |
 | R1 — security and dependency baseline | No | Rerun on the frozen candidate commit. |
 | R2 — Product Interface Design boundary | Yes | Publishable with efficacy explicitly unproven. |
-| R3 — canonical product and adoption closure | No | Close the six remaining `No` canonical answers: current-candidate reconstruction, adoption convergence, real Claude parity, Unisane replacement, packed smoke, and the full proof matrix. |
+| R3 — canonical product and setup closure | No | Close the five remaining `No` canonical answers: current-candidate reconstruction, setup convergence, real Claude parity, packed smoke, and the full proof matrix. |
 | R4 — public package and user contract | No | Inspect and certify the final tarball and launch-facing documentation. |
 | R5 — CI and trusted publishing | No | Public repository, npm scope rights, protected environment, bootstrap, and OIDC remain external setup. |
 | R6 — immutable candidate certification | No | Commit, freeze, clean-clone, run the full matrix, and bind one tarball digest. |
 
 ## Next Release Work
 
-1. obtain real Claude host-parity and final Unisane replacement Evidence; neither may
-   be inferred from generated adapters, project docs that merely declare Skopos the
-   authority, or the earlier read-only pilot
+1. obtain real Claude host-parity Evidence; it may not be inferred from generated
+   adapters or local contract tests
 2. integrate and commit the accumulated work, then freeze one candidate
-3. rerun adoption, clean-clone, packed-install, security, runtime, and full proof on
+3. rerun unified setup, clean-clone, packed-install, security, runtime, and full proof on
    that exact commit
 4. configure the public repository, npm scope, protected release environment, and
    trusted publisher

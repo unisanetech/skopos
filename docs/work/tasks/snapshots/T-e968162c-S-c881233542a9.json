@@ -1,0 +1,52 @@
+{
+  "snapshotId": "S-c881233542a9",
+  "taskId": "T-e968162c",
+  "sessionId": "codex-intelligent-onboarding-docs-20260812",
+  "actorId": "codex-root",
+  "baseRevision": "c430050b64c54d773139cdfa83d1a678e685376f",
+  "paths": [
+    {
+      "path": "docs/00-start-here.md",
+      "digest": "75574401ba8dde437f9467f2782ddea364db7c869f1427822a3615419c1e119a"
+    },
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "9586448dc83f899aad1cd2e9ff4923978a3bc96ee4abed0663469a6818689d33"
+    },
+    {
+      "path": "docs/architecture/agent-native-operating-model.md",
+      "digest": "a853a1a8d7b69ccb3c0efd96325a3b7a85e5f7dccea5481420d1bf27f89f748c"
+    },
+    {
+      "path": "docs/architecture/artifact-model.md",
+      "digest": "a945ff429f0fcdd617a294a88738fa15d84a46d9bb0859ff4915122231834a67"
+    },
+    {
+      "path": "docs/architecture/docs-governance.md",
+      "digest": "b9ffb3907520238d2cc89b70397d2409cc507beb8395ecda1aaa1e1df3b1ba04"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "bc4541e43ec2ad88fd5b6cc91000b680cf5c6db646aaf74d61b5835489837e4c"
+    },
+    {
+      "path": "docs/decisions",
+      "digest": "0c98b28cf74b0ac7b3dbc5d88084f0c18b6f3315fb4eadd5413f26a0b55c1345"
+    },
+    {
+      "path": "docs/domains/product/vision.md",
+      "digest": "8b52579f4182b0f52159a23527f22b55bd6be524542119df4338e57c397dfc49"
+    },
+    {
+      "path": "docs/overview.md",
+      "digest": "10521144058cfb59e68deb0574b31a80425de7106aeb86c17848e15a92ce30e3"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "2200c4286d82a17f99f84523b4e7cf19368f2f7dc52c056cac2d221c84e28f33"
+    }
+  ],
+  "digest": "c881233542a99d3db6c6efb2320ece3e23ede01d0e8951628669de4d74982232",
+  "createdAt": "2026-08-12T18:26:47.855Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-e968162c-S-c881233542a9.json"
+}

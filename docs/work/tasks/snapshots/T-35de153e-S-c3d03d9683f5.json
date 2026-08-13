@@ -1,0 +1,152 @@
+{
+  "snapshotId": "S-c3d03d9683f5",
+  "taskId": "T-35de153e",
+  "sessionId": "release-separation-20260812",
+  "actorId": "codex-root",
+  "baseRevision": "c430050b64c54d773139cdfa83d1a678e685376f",
+  "paths": [
+    {
+      "path": "NOTICE",
+      "digest": "5c191a0118cda3fb63d1a4ab9c0973b03bb9797537b8dac5b3754c823fff47b2"
+    },
+    {
+      "path": "apps/web/config/ui/brand.ts",
+      "digest": "7cc281c6970eb6818e1cddcdb276694f1e932a3e2282d7b59eb84934dceb2532"
+    },
+    {
+      "path": "apps/web/public/brand/publish-manifest.json",
+      "digest": "7ad9f7aec0edf3a5251430c61d1d340c0603bd74006984dd362284994b222534"
+    },
+    {
+      "path": "apps/web/src/app/globals.css",
+      "digest": "7270e1872d5ce76b704dd1934fe507a86e97d6f4bec4a2570158f5092d48eb98"
+    },
+    {
+      "path": "apps/web/ui-registry.json",
+      "digest": "27e70dc63dcbf6a4df80bdf8db2db75183d634f55f7168345004246416a9eba1"
+    },
+    {
+      "path": "apps/web/unisane-ui.json",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "design-qa.md",
+      "digest": "9130ef014d0368e0842f5c9fcae43d4cbc44602b425c6822e1df8b26dac1b6c9"
+    },
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "6c2349d5e2c6665cad59a650ba16f0fe1b45a19c1e803226737104ac7278dc73"
+    },
+    {
+      "path": "docs/decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md",
+      "digest": "bda367b3b8fc86072d880e93176dac892ea4014e97f51f5a925cf0a43594cb7d"
+    },
+    {
+      "path": "docs/domains/product/implementation-map.md",
+      "digest": "0b4ea759d10276d98a432db3f13160fb2420b094493aa6e54172b56be39f0327"
+    },
+    {
+      "path": "docs/domains/product/vision.md",
+      "digest": "2739d23bad4bc1072085fa513b2b93a6e8250e0ad9308bde0ced7a4d620594ac"
+    },
+    {
+      "path": "docs/operations/first-public-release-scorecard.md",
+      "digest": "55021d81d2593232e1cef0ef01c160844ef425d53c5342e3aea5174211d15a3f"
+    },
+    {
+      "path": "docs/operations/release-runbook.md",
+      "digest": "5070e57d50296541397f08b7170a6edd709fe64e5c35c411aa926f364c4aea87"
+    },
+    {
+      "path": "docs/overview.md",
+      "digest": "0f233388eac234d5f716c0ccf4a2426cdf7da41989bacba1fc1b990348bd5d3e"
+    },
+    {
+      "path": "docs/reference/generated/archive/unisane-external-workspace-pilot.md",
+      "digest": "b09231208e7811691f4d1411cb5eb50be0f7967ca7f958cc23e642c44352f1b7"
+    },
+    {
+      "path": "docs/reference/generated/unisane-external-workspace-pilot.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/architecture/00-architecture.md",
+      "digest": "54d547d54337da691c6a61b338c7d4a72d2f1c2d4082b0f186f244b8cda696c1"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/008-system-ui-routed-app-stack.md",
+      "digest": "b919ebeea7f710188649602bb89aa03a3b175cff3cd7c05f898516f6b18cd978"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/D-20260804-browser-history-and-unisane-ui-registry-delivery.md",
+      "digest": "9c32bd3a9645aab633434fd1b54a5b6c1e7659e40e788cba8b01f48b57df1aea"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/D-20260804-human-first-supervision-projection.md",
+      "digest": "fbed080f970d259a417edca7a274d8a70955b79a1fedd40b8bdf1b3fff1485dc"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/D-20260804-unisane-ui-visual-ownership.md",
+      "digest": "e75506ea07efbb40b8c2a961f328c3a59cbfd6a73044da606a49f72bd000970b"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/D-20260812-locally-owned-ui-source-and-visual-authority.md",
+      "digest": "a88249d25431876f92267dc0684b2e427d52ba81b555213176c957b824cba0b7"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/archive/D-20260804-browser-history-and-unisane-ui-registry-delivery.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/decisions/archive/D-20260804-unisane-ui-visual-ownership.md",
+      "digest": "ffa63583dfa6706b87d284b86b0d693a161e4840aad2c5cf6b5d27c3b9621f7d"
+    },
+    {
+      "path": "docs/scopes/skopos-ui/overview.md",
+      "digest": "68dd2b877b55b778289684b6aafc688ceed79b26c855482670b66a09474505e7"
+    },
+    {
+      "path": "docs/scopes/skopos-web/overview.md",
+      "digest": "68324fb28b298cad634b0b62f146d145a984993dff62c80db88ab4e5d33979b6"
+    },
+    {
+      "path": "docs/work/plans/P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md",
+      "digest": "e1b63f61a2c4edd7534e08de7e233536f5f597988e7c91fb329f54b795efa2ec"
+    },
+    {
+      "path": "docs/work/plans/P-7dde6750-design-and-deliver-the-public-skopos-homepage.md",
+      "digest": "76a128d8fcdb2dea9c89ebe38a7faca177c60b174c46d21428f88c4222a169f7"
+    },
+    {
+      "path": "docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md",
+      "digest": "19c279d7316ddae705e9da180903d263527241369bdd96ee4533df5e5cad35a7"
+    },
+    {
+      "path": "docs/work/plans/P-e7e888e6-canonical-product-convergence.md",
+      "digest": "3f0c24986a3081a4ac87b607bd91e909177746204602d503ecabd7b5da7fc045"
+    },
+    {
+      "path": "packages/cli/src/__tests__/external-workspace-pilot.test.ts",
+      "digest": "1810eede3650b5333f49330ebfbd3cb3518e7c3615f3a4c3c52bafe88ed3f073"
+    },
+    {
+      "path": "packages/cli/src/__tests__/host-projection-model.test.ts",
+      "digest": "7c7e7c406b0399994aabae2f38354e53f9036749fe22195fc72ea3186f8d91ed"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-skill-portability.ts",
+      "digest": "8cfeeeddd24685e9501a835dc31a31c0efeeeea4d7c9235b1ca4c7d294094c35"
+    },
+    {
+      "path": "packages/cli/src/benchmarks/external-workspace-pilot.ts",
+      "digest": "35e9926166ba47095438161973d3db0450dbe8ecdc94a9a9d9e256376014d839"
+    },
+    {
+      "path": "scripts/release/validate-release-scorecard.test.mjs",
+      "digest": "f0aefe529f9fed3357350d87586ab1c604c6747a736574de6056ff0358ca5f5b"
+    }
+  ],
+  "digest": "c3d03d9683f5bdbee857da45995399026275685ae3345339299a71b60abfc217",
+  "createdAt": "2026-08-12T16:42:07.615Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-35de153e-S-c3d03d9683f5.json"
+}

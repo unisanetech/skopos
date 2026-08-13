@@ -38,5 +38,5 @@ export const projectMemoryCopy = {
     { capability: "Connects completion to fresh Evidence", chat: "No", instructions: "No", privateMemory: "No", docs: "No", skopos: "Yes" },
     { capability: "Portable across supported agents", chat: "No", instructions: "Partial", privateMemory: "No", docs: "Yes", skopos: "Yes" },
   ],
-  adoptionOperations: ["Keep", "Move", "Merge", "Split", "Rewrite", "Archive", "Delete"],
+  setupOperations: ["Keep", "Move", "Merge", "Split", "Rewrite", "Archive", "Delete"],
 } as const;

@@ -1,5 +1,4 @@
 import { runImpactCommand } from './commands/impact.js';
-import { runAdoptCommand } from './commands/adoption.js';
 import { runDiscussionCommand } from './commands/discussion.js';
 import { runGuardsCommand } from './commands/guards.js';
 import { runInitCommand } from './commands/init.js';
@@ -33,7 +32,6 @@ import { runStorageCommand } from './commands/storage.js';
 import type { SkoposCliCommandHandler } from './types.js';
 
 export const skoposCliCommandRegistry: Record<string, SkoposCliCommandHandler> = {
-  adopt: runAdoptCommand,
   init: runInitCommand,
   scan: runScanCommand,
   session: runSessionCommand,

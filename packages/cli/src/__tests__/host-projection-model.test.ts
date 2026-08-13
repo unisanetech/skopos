@@ -110,7 +110,7 @@ describe('host projection model', () => {
     await writeFile(join(workspaceRoot, 'AGENTS.md'), '# Canonical instructions\n', 'utf8');
     const configuredMirrorPaths = [
       'CLAUDE.md',
-      '.cursor/rules/unisane-core.mdc',
+      '.cursor/rules/product-core.mdc',
       '.github/copilot-instructions.md',
     ];
 
@@ -132,7 +132,7 @@ describe('host projection model', () => {
     });
 
     expect(
-      await readFile(join(workspaceRoot, '.cursor/rules/unisane-core.mdc'), 'utf8'),
+      await readFile(join(workspaceRoot, '.cursor/rules/product-core.mdc'), 'utf8'),
     ).toContain('# Canonical instructions');
     await expect(
       readFile(join(workspaceRoot, '.cursor/rules/project.mdc'), 'utf8'),

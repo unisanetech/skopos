@@ -11,11 +11,12 @@ provenance: accepted
 view: target
 appliesTo:
   - workspace
-lastUpdated: 2026-08-06
+lastUpdated: 2026-08-12
 relatedDocs:
   - domains/product/vision.md
   - domains/product/positioning.md
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
+  - decisions/D-20260812-intelligent-project-onboarding-contract.md
   - work/plans/P-e7e888e6-canonical-product-convergence.md
   - architecture/00-architecture.md
 reviewCycle: when the operating model changes
@@ -23,10 +24,14 @@ reviewCycle: when the operating model changes
 
 # Skopos Overview
 
-Skopos turns a repository into a durable, agent-ready working environment.
+Skopos turns a repository into a durable, coherent working environment for coding
+agents.
 
 ## Changelog
 
+- `2026-08-12`: Replaced the target onboarding story with one intelligent setup
+  conversation that covers project understanding, Scopes, Memory, capabilities,
+  Policies, Skills, agent instructions, and verified delivery.
 - `2026-08-06`: Reconciled the current-status statement with the implemented canonical
   CLI and runtime. Skopos remains pre-release while the active convergence Plan,
   Skill-efficacy Finding, and release proof are open.
@@ -82,29 +87,40 @@ Project
 
 Tracked sources own durable truth. `.skopos/**` compiles disposable local state.
 
-## How Adoption Works
+## How Setup Works
 
-### Existing Project
+The developer runs `skopos setup .` or asks a supported coding agent to set up Skopos.
+The visible journey is:
 
-1. discover the project without changing human docs
-2. have the coding agent analyze real source and documentation
-3. separate facts, inference, assumptions, contradictions, and questions
-4. propose the target Memory structure
-5. show keep/move/merge/split/rewrite/archive/delete operations
-6. obtain approval
-7. restructure docs and instructions
-8. verify the standard
-9. activate full agent Readiness
+```text
+Understand -> Clarify -> Review -> Apply -> Verify
+```
 
-Mapping an arbitrary tree is an intake mechanism. A project that declines
-restructuring may use assessment output, but it is not reported as fully adopted.
+The coding agent inspects real source, tests, configuration, CI, docs, instructions,
+and permitted history. It separates facts, inferences, user-confirmed intent,
+contradictions, and unknowns, then explains what it understands in plain language.
 
-### New Project
+One consolidated plan covers:
 
-1. create the minimum workspace Memory
-2. ask only material product questions
-3. add Scope Memory as real areas appear
-4. add Plans, Decisions, Findings, Patterns, and Policies only when durable truth exists
+1. meaningful project Scopes and ownership
+2. existing Memory restructuring and missing Memory created from Evidence
+3. project commands proposed as Actions selected by Guards
+4. proportional Policy recommendations
+5. relevant Skills with generated project bindings
+6. coding-agent instructions, adapters, and delivery verification
+
+The user may accept, edit, defer, or reject each optional recommendation. The agent
+asks only when the answer changes project truth, architecture, ownership, authority,
+security, public behavior, or information retention. After approval it applies only
+the revised envelope and verifies readiness by lane.
+
+New projects receive the minimum useful Memory and grow new roles only when durable
+truth exists. Existing projects may begin with no docs or a chaotic tree;
+`create-from-evidence` and reviewed restructuring converge both cases without treating
+scanner inference as accepted truth.
+
+Setup is a workflow over the existing canonical owners, not a new durable entity. See
+[Intelligent Project Onboarding](architecture/intelligent-project-onboarding.md).
 
 ## How Work Operates
 
@@ -152,8 +168,8 @@ Skopos core stays generic. Projects contribute:
 6. Skills
 7. optional bounded extensions
 
-For Unisane, its architecture checks, generators, package boundaries, and docs rules
-remain Unisane project sources. Skopos only owns the generic model that selects,
+For any adopter, architecture checks, generators, package boundaries, and documentation
+rules remain that project's sources. Skopos only owns the generic model that selects,
 coordinates, and proves them.
 
 ## Generated Output

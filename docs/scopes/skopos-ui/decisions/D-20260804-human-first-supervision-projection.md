@@ -11,11 +11,12 @@ provenance: accepted
 view: target
 date: 2026-08-04
 implementationStatus: implemented
-lastUpdated: 2026-08-04
+lastUpdated: 2026-08-12
 relatedDocs:
   - ../overview.md
   - ../findings/archive/F-20260804-human-supervision-projection-drift.md
   - ../work/archive/P-20260804-human-first-ui-convergence.md
+  - D-20260812-locally-owned-ui-source-and-visual-authority.md
   - D-20260804-browser-history-and-unisane-ui-registry-delivery.md
   - D-20260804-unisane-ui-visual-ownership.md
   - archive/009-system-ui-app-shell-and-layout-doctrine.md
@@ -140,11 +141,10 @@ The UI stays derived and read-only. It may show, copy, or hand off an exact cano
 CLI or MCP command. It does not invent a second Task, approval, mutation, Evidence, or
 Readiness authority.
 
-`@skopos/ui` remains the product pattern owner. The successor delivery Decision accepts
-Unisane UI external registry installation as the shared primitive boundary: Skopos owns
-the installed source and CSS locally and introduces no direct Unisane workspace runtime
-dependency. The visual ownership Decision makes those installed component defaults and
-semantic tokens authoritative while Skopos retains workflow composition and language.
+`@skopos/ui` remains the product pattern owner. The local-source ownership Decision
+makes reviewed component source, CSS, semantic tokens, and defaults Skopos authority
+without introducing a private external workspace runtime dependency. Skopos retains
+workflow composition, language, package, and release authority.
 
 ### Interaction quality
 
@@ -166,7 +166,7 @@ semantic tokens authoritative while Skopos retains workflow composition and lang
    until other subjects are projected
 4. source changes should favor selectors and reusable supervision patterns over
    route-local dashboards
-5. Unisane UI convergence is implemented by the separate registry delivery Decision
+5. local UI-source ownership is implemented by the separate visual-authority Decision
    without changing this supervision projection
 6. Project Map projection must join canonical Scope, document, relationship, and work
    data before rendering instead of hardcoding package knowledge in React components
@@ -183,13 +183,15 @@ intent.
 Rejected because short-term familiarity would weaken the shared human-agent contract.
 Canonical terms remain, with clear explanations.
 
-### Rebuild Skopos UI directly on private Unisane workspace packages
+### Build Skopos UI directly on private external workspace packages
 
 Rejected because it would couple independent product distribution and release
 authority before that contract is proven.
 
 ## Changelog
 
+- `2026-08-12`: Linked the locally owned UI-source authority and removed the external
+  adopter from the current supervision projection boundary.
 - `2026-08-04`: Tightened Now to truthful blocking language, selected current-state
   pressure, current-Task discussion, and an explicit copyable CLI handoff.
 - `2026-08-04`: Defined Project Map as canonical Scope orientation derived from the

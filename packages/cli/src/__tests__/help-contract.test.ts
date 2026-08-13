@@ -17,6 +17,10 @@ describe('public command help contract', () => {
 
   it.each([
     {
+      args: ['setup', '--help'],
+      expected: ['Skopos setup', 'normal project onboarding entry point', 'accept|edit|defer|reject', 'Use init only as a low-level'],
+    },
+    {
       args: ['start', '--help'],
       expected: ['Task risk:', '--risk <light|standard|high-impact>', 'goal, owned paths, affected Scopes', 'Fast path:', 'Proof subjects:', 'task-closure', 'project-integration'],
     },

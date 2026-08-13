@@ -10,14 +10,14 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-04-10
-lastUpdated: 2026-08-05
+lastUpdated: 2026-08-12
 relatedDocs:
   - ../../../work/archive/P-11229565-system-ui.md
   - ../../../work/archive/P-37fa9180-prototype-roadmap.md
   - ../../../work/archive/P-b4e43e34-prototype-implementation-checklist.md
   - ../overview.md
   - D-20260804-human-first-supervision-projection.md
-  - D-20260804-browser-history-and-unisane-ui-registry-delivery.md
+  - D-20260812-locally-owned-ui-source-and-visual-authority.md
 ---
 
 # Decision: System UI Routed App Stack

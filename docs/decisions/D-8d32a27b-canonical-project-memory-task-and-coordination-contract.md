@@ -11,7 +11,7 @@ provenance: accepted
 view: target
 date: 2026-07-28
 implementationStatus: partial
-lastUpdated: 2026-07-30
+lastUpdated: 2026-08-12
 relatedDocs:
   - ../domains/product/vision.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
@@ -20,6 +20,7 @@ relatedDocs:
   - ../architecture/artifact-model.md
   - ../architecture/config-model.md
   - ../architecture/docs-governance.md
+  - D-20260812-intelligent-project-onboarding-contract.md
   - ../patterns/README.md
   - ../findings/archive/F-c1e8c13d-prototype-product-contract-convergence-gap.md
 reviewCycle: per implementation phase
@@ -29,6 +30,10 @@ reviewCycle: per implementation phase
 
 ## Changelog
 
+- `2026-08-12`: Accepted the intelligent project onboarding decision as the clean
+  user-facing refinement of agent-guided adoption. It composes Scope, Memory,
+  capabilities, Policies, Skills, instructions, and host verification without adding
+  a second durable authority.
 - `2026-07-30`: Fixed the validation authority boundary. Goal prose and root command
   names never select proof. Tracked Guards match declared/current Task impact and
   require explicit project Actions or agent observations. Accepted Policies reference
@@ -1016,7 +1021,7 @@ action—not the raw transcript.
 
 Minimum human and agent CLI:
 
-1. `skopos adopt`
+1. `skopos setup`
 2. `skopos knowledge`
 3. `skopos session context`
 4. `skopos start`

@@ -1,15 +1,41 @@
 export const SKOPOS_COMMUNICATION_CONTRACT_VERSION = 1 as const;
+export const SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH =
+  '.skopos/cache/agent/communication-brief.json' as const;
+
+export type SkoposCommunicationResponseMode =
+  | 'direct-answer'
+  | 'work-start'
+  | 'progress'
+  | 'decision'
+  | 'completion';
+
+const RESPONSE_MODE_RULES: Record<SkoposCommunicationResponseMode, readonly string[]> = {
+  'direct-answer': [
+    'Lead with the answer; include only explanation that helps the user act.',
+  ],
+  'work-start': [
+    'State the intended outcome, bounded work, first meaningful step, and only material risk.',
+  ],
+  progress: [
+    'Report completed work, current work, blockers, and proof still needed without false precision.',
+  ],
+  decision: [
+    'Explain the decision, recommendation, reason, alternatives, default behavior, and what follows.',
+  ],
+  completion: [
+    'State changed behavior, focused proof, project-memory updates, and remaining risk.',
+  ],
+};
 
 export const SKOPOS_COMMUNICATION_CONTRACT = {
   marker: '[SKOPOS_SESSION_CONTEXT_V1]',
   tokenBudget: 1_200,
   coreRules: [
     'Answer the user directly before process detail.',
-    'Use the response mode that fits the moment; do not announce a lane unless risk or execution scope makes it useful.',
+    'Use clear, calm, simple English and explain necessary Skopos terms in project language.',
     'Ask only when the answer changes direction, risk, policy, or public behavior.',
     'When asking, show the recommendation, reason, alternatives, and the default behavior if the user has no preference.',
-    'For progress, report completed work, current work, blockers, and proof still needed without false precision.',
-    'For closure, state changed behavior, focused proof, memory updates, and remaining risk.',
+    'Do not claim completion until required proof and Readiness agree.',
   ],
   responseModes: [
     'direct-answer',
@@ -17,8 +43,13 @@ export const SKOPOS_COMMUNICATION_CONTRACT = {
     'progress',
     'decision',
     'completion',
-  ],
+  ] satisfies readonly SkoposCommunicationResponseMode[],
+  responseModeRules: RESPONSE_MODE_RULES,
 } as const;
+
+export const resolveSkoposCommunicationResponseModeRules = (
+  mode: SkoposCommunicationResponseMode,
+): readonly string[] => SKOPOS_COMMUNICATION_CONTRACT.responseModeRules[mode];
 
 export const renderSkoposCommunicationContractLines = (): string[] => [
   '### Agent Response Contract',

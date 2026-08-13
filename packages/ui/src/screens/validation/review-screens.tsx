@@ -85,7 +85,7 @@ export function ReadinessView(): React.JSX.Element {
       badges={[
         <StatusPill
           key="readiness"
-          value={`adoption ${state.readinessReport.readiness}`}
+          value={`setup ${state.readinessReport.readiness}`}
           tone={toneForReadiness(state.readinessReport.readiness)}
         />,
       ]}
@@ -145,7 +145,7 @@ const buildReadinessSentence = ({
   warningCount: number;
   failureCount: number;
 }): string =>
-  `Adoption readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
+  `Setup readiness is ${readiness} with ${passCount} ${passCount === 1 ? 'passing check' : 'passing checks'}, ${warningCount} ${warningCount === 1 ? 'warning' : 'warnings'}, and ${failureCount} ${failureCount === 1 ? 'failure' : 'failures'}.`;
 
 const buildReadinessTitle = (readiness: string): string => {
   if (readiness === 'ready' || readiness === 'agent-ready') {
@@ -175,11 +175,11 @@ function ReadinessSubjectsCard({
   return (
     <ContentSection
       title="What this page answers"
-      description="This page checks project adoption. Task progress, Task closure, and project integration are separate questions."
+      description="This page checks project setup. Task progress, Task closure, and project integration are separate questions."
     >
       <div className="border-y border-outline-weak">
         <ReadinessSubjectRow
-          title="Project adoption"
+          title="Project setup"
           state={state.readinessReport.readiness}
           explanation="Whether Skopos understands this Project well enough to guide work safely. This is the assessment shown on this page."
         />
@@ -210,7 +210,7 @@ function ReadinessSubjectsCard({
           state={task ? 'verify before finishing' : 'not in scope'}
           explanation={
             task
-              ? `Run closure verification for ${task.id}; the adoption assessment does not certify its Evidence.`
+              ? `Run closure verification for ${task.id}; setup readiness does not certify its Evidence.`
               : 'Task closure is evaluated against one Task contract and its Evidence.'
           }
         />

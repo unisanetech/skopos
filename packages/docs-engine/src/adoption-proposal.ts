@@ -48,7 +48,7 @@ export const buildSkoposAdoptionProposal = async ({
 
   if (input.intakeDigest !== intake.inputDigest) {
     throw new Error(
-      'Adoption analysis is stale: its intakeDigest does not match the current intake. Run `skopos adopt assess` and review the refreshed intake.',
+      'Setup analysis is stale because its project evidence changed. Run `skopos setup . --actor <id>` and review the refreshed recommendations.',
     );
   }
 

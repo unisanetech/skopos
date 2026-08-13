@@ -1,0 +1,76 @@
+{
+  "snapshotId": "S-099f00c3a15e",
+  "taskId": "T-ec263b6a",
+  "sessionId": "clean-checkout-readiness-closure",
+  "actorId": "codex-clean-checkout-readiness",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": ".cursor/rules/project.mdc",
+      "digest": "e2904a353f522668d6dcaf8fa0699270d2fdfc48763d9216bcd11d42d25c0219"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "digest": "83d99dd6bd16ec336cad037f9aa202f68b01e967ddf2029f5107b4b19f219559"
+    },
+    {
+      "path": "AGENTS.md",
+      "digest": "32cb8a8b5f861c5140edb44f56e3461041426804f4971242a0feacc6ccbfb7e9"
+    },
+    {
+      "path": "CLAUDE.md",
+      "digest": "1e36b11cba1d5da0be161dea215ea9ef154c363d58c9d6bf8e447e8a10b624de"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "86952ed52cf86c105fa43d9f67e077f3c09a79efd62c16d0192d6ec4a5fe46e5"
+    },
+    {
+      "path": "docs/findings/F-20260813-clean-checkout-setup-readiness-reconstruction-gap.md",
+      "digest": "052f0cdafcfa315cf3acb1ed90cb3c5afdf40b6ff9ec97e9dcc384dae942a12c"
+    },
+    {
+      "path": "docs/work/archive/tasks/T-8b569157-implement-compact-mode-specific-human-friendly-response-.md",
+      "digest": "9dc786fd8e29bdc940aa477e630b8c45e27e46780341ba834d123b88539fa2d5"
+    },
+    {
+      "path": "docs/work/tasks/snapshots/T-8b569157-S-1717ae59ba19.json",
+      "digest": "ca411c103d66fa7e2220a86d21540de9d95a3021463f428e7a4d3f045ba9867b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/adoption-assessment.test.ts",
+      "digest": "bce26ff9336a4aa9d66aed3fb279d68542d8b9972b421dc21e67528b8cf78498"
+    },
+    {
+      "path": "packages/cli/src/__tests__/session-context-contract.test.ts",
+      "digest": "97c208111253400579ecf579cc3eee1208f12f37eb757b26dd0c0678939c7807"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-adoption.ts",
+      "digest": "aec5a8e2cfdb48735e6d3071d331a4783ff885c656d21a94b019b338e71999be"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-bootstrap-artifact.ts",
+      "digest": "fb464dc5b40e5c81b9aef07f523e4f6107dd6e5c70166b2edfd2147d28dea2ba"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-session-context.ts",
+      "digest": "02b5ed6c8b5ef2a26b5c726db8b2e040211aadf527081e7e43fcdddb47d54722"
+    },
+    {
+      "path": "packages/runtime/src/application/adoption/adoption.service.ts",
+      "digest": "28298c8316b59731634f6b9b55a107c35ac257a49c0c9e1e24044ee02e224f70"
+    },
+    {
+      "path": "packages/runtime/src/application/init/init.service.ts",
+      "digest": "f2912a33c3357cde48a8225d8c628af3b405c4fc588d7f19f6b45554b7fcd59b"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "5465b0e36fbc4a8d8c995935667ee8cbd66068ac56ac713860ba4f0dc8cbe779"
+    }
+  ],
+  "digest": "099f00c3a15e3615f36d239f9f423702434d8388ae1f0581fce76f7e46c0b58a",
+  "createdAt": "2026-08-12T19:46:22.383Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-ec263b6a-S-099f00c3a15e.json"
+}

@@ -81,7 +81,7 @@ export const customizeGuides: readonly CustomizeGuide[] = [
       "Review the Skills available to this project. Recommend only the guidance that matches the current Scope and Task, explain what project context it needs, and show any missing Actions or Guards as gaps. Do not accept or bind a Skill automatically.",
     steps: [
       { title: "Recommend", description: "Skopos compares versioned Skill packs with observable project and Task needs." },
-      { title: "Accept and bind", description: "A user explicitly reviews the pack, version, project binding, and reason before adoption." },
+      { title: "Accept and bind", description: "A user explicitly reviews the pack, version, project binding, and reason before it becomes active." },
       { title: "Select narrowly", description: "Only applicable modules enter the current Task context within a controlled budget." },
     ],
     examples: ["Product interface structure and behavior", "Accessibility review guidance", "Architecture-specific review criteria", "Domain-aware implementation practices"],

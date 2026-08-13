@@ -698,13 +698,14 @@ const buildAgentCommunicationBrief = ({
   startupRules: [
     'Read AGENTS.md first.',
     'Run or inspect `skopos session context . --json` before broad scanning or implementation.',
-    'If Skopos state is missing or stale, run `skopos init .` and re-check Session context.',
+    'If Skopos state is missing or stale, run `skopos setup .` and re-check Session context.',
     'Use the host-injected `skopos session context . --json` payload when available.',
     'Use the Task risk and detail selected for substantial editing, but mention it only when useful.',
   ],
   tone: [
     'Use clear, calm, simple English.',
     'Explain important tradeoffs without assuming the user knows Skopos internals.',
+    'Translate internal artifact, digest, lifecycle, and Readiness terms into concrete project language unless exact diagnostic wording is necessary.',
     'Keep small-task updates brief and make risky-work updates more explicit.',
   ],
   defaultResponseShape: [

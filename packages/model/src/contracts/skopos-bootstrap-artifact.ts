@@ -12,7 +12,10 @@ import type { SkoposScanSummary } from './skopos-scan-summary.js';
 import type { SkoposDecisionQuestion } from './skopos-decision-question.js';
 import type { SkoposScopesLiteArtifact } from './skopos-scope-lite.js';
 import type { SkoposSourceDependency } from './skopos-source-dependency.js';
-import type { SkoposAdoptionAssessmentRuntimeResult } from './skopos-adoption.js';
+import type {
+  SkoposAdoptionAssessmentRuntimeResult,
+  SkoposTrackedAdoptionReadiness,
+} from './skopos-adoption.js';
 
 export type SkoposInitMode = 'existing' | 'greenfield';
 
@@ -110,6 +113,7 @@ export interface SkoposInitResult {
   gitignoreScaffold?: SkoposGitignoreScaffoldArtifact;
   instructionScaffold?: SkoposInstructionScaffoldArtifact;
   adoptionAssessment?: SkoposAdoptionAssessmentRuntimeResult;
+  adoptionReconstruction?: SkoposTrackedAdoptionReadiness;
   configWrite: SkoposWriteStatus;
   projectWrite?: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;
   bootstrapWrite: Extract<SkoposWriteStatus, 'written' | 'dry-run'>;

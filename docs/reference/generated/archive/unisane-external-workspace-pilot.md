@@ -1,18 +1,19 @@
 ---
 title: Unisane External Workspace Pilot
-status: generated
+status: archived
 owner: skopos-core
 id: DOC-unisane-external-workspace-pilot
 scope: skopos
 role: reference
-lifecycle: durable
+lifecycle: historical
 authority: generated
 provenance: observed
-view: current
+view: transition
+defaultVisible: false
 lastUpdated: 2026-08-03
 relatedDocs:
-  - ../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
-  - ../../work/plans/P-e7e888e6-canonical-product-convergence.md
+  - ../../../decisions/024-token-control-compact-agent-transport-and-progressive-retrieval.md
+  - ../../../work/plans/P-e7e888e6-canonical-product-convergence.md
 ---
 
 # Unisane External Workspace Pilot

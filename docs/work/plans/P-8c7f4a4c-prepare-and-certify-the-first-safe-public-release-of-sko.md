@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-13
 relatedDocs:
   - P-e7e888e6-canonical-product-convergence.md
   - P-20260804-skill-capability-hard-cut-and-judgment-pack-plan.md
@@ -33,15 +33,16 @@ relatedDocs:
   runbook hard stops. The protected publication workflow now fails closed on the
   accepted non-candidate scorecard gates before certification and reconstructs
   Project Memory and registered capabilities from a fresh checkout. Real Claude
-  parity and final Unisane replacement remain explicit blockers; candidate-bound
+  parity remains an explicit blocker; candidate-bound
   reconstruction, adoption, packed-install, and full-matrix gates are earned only by
   the frozen-candidate workflow.
 - `2026-08-11`: Reconciled the local pre-freeze truth. The north-star continuation
   operation now records a source-linked `3 / 3` real Codex baseline without treating
   it as Claude parity or general efficacy. The superseded-decision/prototype-document
   gate is closed after confirming historical routing and metadata. The canonical
-  score is now `11 yes / 6 no`; real Claude parity, final Unisane replacement, and the
-  four exact-candidate certification answers remain release blockers.
+  score is now `12 yes / 5 no`; real Claude parity and the four exact-candidate
+  certification answers remain release blockers. External adopter migrations are
+  outside the Skopos release boundary.
 
 - `2026-08-11`: Accepted Product Interface Design `0.5.0` as publishable for the first
   `next` release without claiming certified efficacy. Its deterministic selection,
@@ -157,7 +158,7 @@ change requires a new exact-commit run.
 Current release blockers are:
 
 1. the canonical convergence Plan remains active and the current release scorecard has
-   six `no` answers
+   five `no` answers
 2. the GitHub repository is private, so npm public-package provenance cannot bind to
    public source; the `npm-release` environment and its protection rules do not exist
 3. the local npm client is not authenticated, `@skopos/cli` does not exist, and
@@ -226,7 +227,7 @@ Purpose: finish the product-level promises that cannot be inferred from package 
 
 Tasks:
 
-1. complete the Unisane replacement pilot without leaking adopter grammar into core
+1. confirm external-project integrations remain project-owned without leaking adopter grammar into core
 2. prove Codex and Claude lifecycle parity
 3. complete every missing scenario in the canonical proof matrix
 4. record the north-star fresh-session continuation metric

@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-06-26
-lastUpdated: 2026-07-29
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/package-boundaries.md
   - ../work/archive/P-b4e43e34-prototype-implementation-checklist.md
@@ -21,6 +21,9 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Replaced launch-facing `init` examples with the unified `setup`
+  workflow, retained `init` only as a low-level reconstruction primitive, and required
+  packed smoke to reject the removed public `adopt` command.
 - `2026-08-03`: Extended release smoke to certify the Action effect contract from the
   packed CLI in a fresh offline-installed project: isolated JSON artifacts remain
   stable, unavailable external services prevent command execution, and undeclared
@@ -62,9 +65,9 @@ The first public CLI release version is `0.1.0` and must publish with the `next`
 10. Do not publish `latest` until the registry-published `next` package passes real install smoke from npm.
 11. The binary name is `skopos`.
 12. Supported first-run commands are:
-   - `npx @skopos/cli init .`
-   - `npm exec --package @skopos/cli -- skopos init .`
-   - `pnpm dlx @skopos/cli init .`
+   - `npx @skopos/cli setup .`
+   - `npm exec --package @skopos/cli -- skopos setup .`
+   - `pnpm dlx @skopos/cli setup .`
 13. Release smoke must prove the packed CLI works from a fresh project outside the monorepo.
 14. Installed `skopos ui dev` must use bundled app assets when source UI assets are
     unavailable; it must not require a separately installed internal `@skopos/ui`
@@ -92,13 +95,14 @@ The first public CLI release version is `0.1.0` and must publish with the `next`
 The release smoke test must pack `@skopos/cli`, install it into a fresh project, and run:
 
 1. installed `skopos --help`
-2. installed `skopos init .`
+2. installed `skopos setup . --actor <id>` and its consolidated review
 3. installed `skopos session context . --json`
-4. `npm exec --package <packed-cli> -- skopos init <target>`
-5. `pnpm dlx <packed-cli> init <target>`
+4. `npm exec --package <packed-cli> -- skopos setup <target>`
+5. `pnpm dlx <packed-cli> setup <target>`
 6. installed `skopos ui build <target>`
 7. installed `skopos ui dev <target>` plus live state refresh
 8. installed artifact-producing Action execution with an isolated run-owned reference
 9. installed declared external capability preflight with no command execution when the
    service is unavailable
 10. installed rejection of undeclared workspace mutation in a Git-backed project
+11. installed rejection of the removed `skopos adopt` public command

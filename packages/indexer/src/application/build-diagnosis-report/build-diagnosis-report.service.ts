@@ -531,11 +531,11 @@ const remediationCommandForFamily = (findingId: string): string | undefined => {
   }
 
   if (findingId === 'docs-root') {
-    return 'skopos init --dry-run --json <repo-root>';
+    return 'skopos setup <repo-root> --actor <id> --dry-run --json';
   }
 
   if (findingId === 'docs-freshness') {
-    return 'skopos adopt assess <repo-root> --json';
+    return 'skopos setup <repo-root> --json';
   }
 
   return undefined;

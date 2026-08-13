@@ -1,0 +1,88 @@
+{
+  "snapshotId": "S-1717ae59ba19",
+  "taskId": "T-8b569157",
+  "sessionId": "response-guidance-closure-20260813",
+  "actorId": "codex-response-guidance-implementation",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": ".cursor/rules/project.mdc",
+      "digest": "e2904a353f522668d6dcaf8fa0699270d2fdfc48763d9216bcd11d42d25c0219"
+    },
+    {
+      "path": ".github/copilot-instructions.md",
+      "digest": "83d99dd6bd16ec336cad037f9aa202f68b01e967ddf2029f5107b4b19f219559"
+    },
+    {
+      "path": "AGENTS.md",
+      "digest": "32cb8a8b5f861c5140edb44f56e3461041426804f4971242a0feacc6ccbfb7e9"
+    },
+    {
+      "path": "CLAUDE.md",
+      "digest": "1e36b11cba1d5da0be161dea215ea9ef154c363d58c9d6bf8e447e8a10b624de"
+    },
+    {
+      "path": "docs/findings/F-20260813-clean-checkout-setup-readiness-reconstruction-gap.md",
+      "digest": "37db4a14ece7d3b4aad1792ee545ab20e20fb1a4b20c46691d0fdfc10d197b51"
+    },
+    {
+      "path": "docs/work/tasks/T-ec263b6a-reconstruct-clean-checkout-adoption-readiness-from-track.md",
+      "digest": "c19d8cef1ce828b8f6e5d9400ef84d9d16c4013e06ba360ae7b4cf225c2a77f0"
+    },
+    {
+      "path": "packages/cli/src/__tests__/session-context-contract.test.ts",
+      "digest": "97c208111253400579ecf579cc3eee1208f12f37eb757b26dd0c0678939c7807"
+    },
+    {
+      "path": "packages/instructions/src/application/communication-contract",
+      "digest": "0d6808f3ec9fb6c05b16695aca583384d6c1f4e861987dcedb7cf366c3379c0f"
+    },
+    {
+      "path": "packages/instructions/src/application/scaffold-project-instructions",
+      "digest": "1960eefb56c06e7f99039a81426f2498335926062c41e326f1992bc90392e2cb"
+    },
+    {
+      "path": "packages/instructions/src/application/sync-claude-code-hook-adapter",
+      "digest": "379c0a751eef48a0ba3129ec239c6e1e202d0f0669ad1f20764210aef2e1c690"
+    },
+    {
+      "path": "packages/instructions/src/application/sync-codex-wrapper-adapter",
+      "digest": "7a9d8e52ad8ded411d18d9607f0a0d12d281bf860abb1d8d9be7bf1c5806bd39"
+    },
+    {
+      "path": "packages/instructions/src/application/sync-manual-host-adapter",
+      "digest": "ca060ab5a0e8f21c98c34afe600412edbb56a36ab07a335eee11b42e1df677f4"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-discussion.ts",
+      "digest": "85b347e08544a2efcf5ad6b327ed87b91310092c1d49761b392e66c3789a2150"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-session-context.ts",
+      "digest": "8564581625c569d7604056374448891c24f60cdf65b1214d28a0a8f04debe2b1"
+    },
+    {
+      "path": "packages/runtime/src/application/discussion/discussion.service.ts",
+      "digest": "c8bbc31c15cfec15e4894312b0cc0a66380cb8d5e2be9c73dbec7f490a12757d"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "56c88c3c94d7f3aeca0a323662298023f097e496f63f9077c4466c843b37bff7"
+    },
+    {
+      "path": "packages/runtime/src/application/shared/current-task-state.ts",
+      "digest": "d1fe8afb7c31f4c088872cb508647537b39e3ef8caef6401defe9505dd8b166a"
+    },
+    {
+      "path": "packages/runtime/src/application/shared/memory-state.ts",
+      "digest": "3238f8af0b4c29c7d820b57683d989d361f554ad9f5af6c58be4caf603821723"
+    },
+    {
+      "path": "packages/runtime/src/application/shared/token-control-constants.ts",
+      "digest": "ce4d28ed481abb8e0bc0de01b2ad4486832bfef548eabc39d27271baf8659513"
+    }
+  ],
+  "digest": "1717ae59ba196295fcbf8038e8c70b5b7f4debc3cedb51d3f260c7b2acfe6d44",
+  "createdAt": "2026-08-12T19:21:32.855Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-8b569157-S-1717ae59ba19.json"
+}

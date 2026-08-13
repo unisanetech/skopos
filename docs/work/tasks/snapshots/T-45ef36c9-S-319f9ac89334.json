@@ -1,0 +1,56 @@
+{
+  "snapshotId": "S-319f9ac89334",
+  "taskId": "T-45ef36c9",
+  "sessionId": "setup-flow-closure-20260813",
+  "actorId": "codex-root",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": "apps/web/src/features/documentation",
+      "digest": "8eb10099774b8dd9bf89de824e3ec752a7d70f71817913a79127efa3933c5799"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "9c2a105ac6ba2b30a771b996eff12ad815e905d4879d1ccc43233bacd36b7092"
+    },
+    {
+      "path": "docs/decisions/D-20260812-intelligent-project-onboarding-contract.md",
+      "digest": "ffcb5ec89ac71bc90980199d185598a8132046ac8edbf7ca9e9ceb5c5bdb7a5a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/session-context-contract.test.ts",
+      "digest": "1013a870ee2b17536f4f0253d045da83bb986a896eb51ba6e1d2053216430c6b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/setup-workflow.test.ts",
+      "digest": "09294a2b5ecbf38584437922041cb6f7c786a0fbb28a8663f9e28eaacd566fb1"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-session-context.ts",
+      "digest": "108abd4bec96cc023a93037e4a9776798047db38c35219bbd9b7ae4d112c38fd"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-setup.ts",
+      "digest": "47b212e14a2865de0ec180c6f54ad16ec4cee748f59ffe476c323611a1874a17"
+    },
+    {
+      "path": "packages/runtime/src/application/adoption/adoption.service.ts",
+      "digest": "5998c495194e26611a3d42263f0cf64e0b271b534bd10a40a97043389b74e330"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "629faf43ad27343dd6c249a1491fc7dab1ef4f427225b9afdeedefcd89f7a4fa"
+    },
+    {
+      "path": "packages/runtime/src/application/setup",
+      "digest": "036e413c207fcac3a058ad4ec659897d416c436555cce7160cc74ac4f1d1401b"
+    },
+    {
+      "path": "packages/runtime/src/application/understanding/understanding.service.ts",
+      "digest": "c8bb2a90c4031c9c51a203c32214b6b3fdfc4d68832eef19596e221aca9d36b6"
+    }
+  ],
+  "digest": "319f9ac893348d6aed377316a42de83e869b790fcb7a48c3df98032a93fec04f",
+  "createdAt": "2026-08-12T22:59:13.386Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-45ef36c9-S-319f9ac89334.json"
+}

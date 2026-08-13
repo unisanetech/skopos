@@ -126,6 +126,8 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(help).toContain('skopos storage status');
       expect(help).toContain('skopos storage prune');
       expect(help).toContain('skopos evidence record-browser');
+      expect(help).toContain('skopos setup [target]');
+      expect(help).not.toContain('skopos adopt');
       expect(help).not.toContain('skopos mission');
       expect(help).not.toContain('skopos trust');
       expect(help).not.toContain('skopos done');
@@ -133,12 +135,57 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(run(projectDirectory, ['--version']).trim()).toBe('0.1.0');
       expect(run(projectDirectory, ['-v']).trim()).toBe('0.1.0');
 
-      const initialized = runJson<{ bootstrapWrite?: string; indexWrite?: string }>(
+      const setup = runJson<{
+        statePath?: string;
+        state?: { stage?: string; lanes?: Array<{ id?: string }> };
+      }>(
         projectDirectory,
-        ['init', '.', '--mode', 'greenfield', '--actor', 'release-smoke', '--json'],
+        ['setup', '.', '--actor', 'release-smoke', '--json'],
       );
-      expect(initialized.bootstrapWrite).toBe('written');
-      expect(initialized.indexWrite).toBe('written');
+      expect(setup.statePath).toContain('.skopos/setup/state.json');
+      expect(setup.state?.stage).toMatch(
+        /^(inspection-required|questions-open|plan-ready|verification-blocked|setup-ready(?:-with-deferred-options)?)$/u,
+      );
+      expect(setup.state?.lanes?.map((lane) => lane.id)).toEqual(
+        expect.arrayContaining(['understanding', 'scopes', 'memory', 'host-delivery']),
+      );
+      const setupReview = runJson<{
+        statePath?: string;
+        state?: {
+          stage?: string;
+          recommendations?: Array<{ id?: string; laneId?: string }>;
+          nextCommand?: string;
+        };
+      }>(projectDirectory, [
+        'setup',
+        'review',
+        '.',
+        '--actor',
+        'release-smoke',
+        '--json',
+      ]);
+      expect(setupReview.statePath).toBe(setup.statePath);
+      expect(setupReview.state?.stage).toBe(setup.state?.stage);
+      expect(setupReview.state?.recommendations).toEqual(expect.any(Array));
+      expect(setupReview.state?.nextCommand).toEqual(expect.any(String));
+
+      const setupResume = runJson<{
+        state?: { stage?: string; nextCommand?: string };
+      }>(projectDirectory, [
+        'setup',
+        'resume',
+        '.',
+        '--actor',
+        'release-smoke',
+        '--json',
+      ]);
+      expect(setupResume.state?.stage).toMatch(
+        /^(inspection-required|questions-open|plan-ready|verification-blocked|setup-ready(?:-with-deferred-options)?)$/u,
+      );
+      expect(setupResume.state?.nextCommand).toEqual(expect.any(String));
+      expect(runFailure(projectDirectory, ['adopt', 'assess', '.', '--json'])).toContain(
+        'Unknown Skopos command: adopt',
+      );
 
       const storageStatus = runJson<{
         privacyWarning?: string;
@@ -206,6 +253,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(session.currentTaskId).toBe(started.task?.id);
 
       await Promise.all([
+        mkdir(join(projectDirectory, 'tools', 'skopos'), { recursive: true }),
         mkdir(join(projectDirectory, 'apps', 'storefront', 'src'), { recursive: true }),
         mkdir(join(projectDirectory, 'docs', 'scopes', 'storefront'), { recursive: true }),
         mkdir(join(projectDirectory, 'packages', 'shared', 'src'), { recursive: true }),
@@ -685,15 +733,15 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
   });
 
   it('emits a classified machine-readable failure report with partial proof and cleanup', async () => {
-    const missingBillquest = join(tmpdir(), 'skopos-portability-missing-billquest');
-    const report = await runExternalSkillPortability({ canaryRoot: missingBillquest });
+    const missingExternalProject = join(tmpdir(), 'skopos-portability-missing-external-project');
+    const report = await runExternalSkillPortability({ canaryRoot: missingExternalProject });
 
     expect(report).toMatchObject({
       result: 'fail',
       failure: {
         category: 'external-project',
         stage: 'read-live-canary-status-before',
-        project: 'billquest',
+        project: 'external',
         command: 'git status --short',
       },
       cleanup: {

@@ -44,7 +44,7 @@ export const docsLandingCopy = {
   library: [
     {
       label: "Start",
-      description: "Installation, adoption, host setup, and first verification.",
+      description: "Installation, guided setup, host context, and first verification.",
       links: [
         { label: "Quickstart", href: "/docs/quickstart" },
         { label: "Work with your coding agent", href: "/docs/work-with-your-agent" },
@@ -104,17 +104,18 @@ export const quickstartModes = {
     id: "existing-project",
     tabLabel: "Existing project",
     title: "Bring the project you already have.",
-    description: "Skopos first learns the repository boundary and preserves current truth. Material documentation restructuring remains a reviewed adoption step.",
+    description: "Skopos first learns the repository boundary and preserves current truth. Material documentation changes stay inside one review before anything is applied.",
     prompt:
       "Set up Skopos in this repository. First inspect the source, existing documentation, project instructions, and working commands. Do not restructure or overwrite anything yet. Show me what is canonical, what conflicts, what is missing, and the proposed Project Memory structure before applying changes.",
     commands: [
-      "npm install --save-dev @skopos/cli",
-      "npx skopos init . --mode existing --actor <id>",
-      "npx skopos session context . --actor <id> --json",
+      "npm install --save-dev @skopos/cli@next",
+      "npx skopos setup . --actor <id>",
+      "npx skopos setup review . --actor <id>",
+      "npx skopos setup resume . --actor <id>",
     ],
     review: [
       "The repository root and inferred project boundary",
-      "Generated or updated AGENTS.md, docs router, config, and ignore rules",
+      "Generated project instructions, config, and ignore rules, plus any docs-router change proposed for your approval",
       "Observed facts versus assumptions and contradictions",
       "Any proposed material documentation change before approval",
     ],
@@ -127,9 +128,10 @@ export const quickstartModes = {
     prompt:
       "Set up Skopos for this new project. Help me define the project purpose, initial Scope, durable decisions, and working checks before implementation. Keep project truth in the repository and show me the proposed structure.",
     commands: [
-      "npm install --save-dev @skopos/cli",
-      "npx skopos init . --mode greenfield --actor <id>",
-      "npx skopos session context . --actor <id> --json",
+      "npm install --save-dev @skopos/cli@next",
+      "npx skopos setup . --actor <id>",
+      "npx skopos setup review . --actor <id>",
+      "npx skopos setup resume . --actor <id>",
     ],
     review: [
       "The project purpose and initial repository boundary",
@@ -146,7 +148,7 @@ export const continueWorkPrompt =
 export const quickstartDoneWhen = [
   "The generated tracked files match the repository you intend to govern.",
   "Local .skopos/** state is excluded from source control.",
-  "Session context loads the project and returns either agent-ready status or one specific adoption step.",
+  "Setup reports either setup-ready status or one specific question, recommendation, or verification step.",
   "Your coding agent can explain the current project boundary and next safe action without replaying the setup conversation.",
 ] as const;
 
@@ -157,7 +159,7 @@ export const quickstartProblems = [
   },
   {
     title: "Existing documentation conflicts",
-    recovery: "Do not overwrite it. Build Understanding, assess adoption, and review the exact proposal before approving material operations.",
+    recovery: "Do not overwrite it. Run setup review, compare the conflicting sources, and approve only the exact material changes you want.",
   },
   {
     title: "The host did not load context automatically",

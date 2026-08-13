@@ -1,7 +1,9 @@
+import { SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH } from '@skopos/instructions';
+
 export const AGENT_BRIEF_DIRECTORY = '.skopos/cache/agent';
 export const POLICY_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/policy-brief.json`;
 export const PROMPT_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/prompt-brief.json`;
-export const COMMUNICATION_BRIEF_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/communication-brief.json`;
+export const COMMUNICATION_BRIEF_ARTIFACT_PATH = SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH;
 export const TOKEN_TELEMETRY_ARTIFACT_PATH = `${AGENT_BRIEF_DIRECTORY}/token-telemetry.json`;
 
 export const DISCUSSION_DIRECTORY = '.skopos/sessions';

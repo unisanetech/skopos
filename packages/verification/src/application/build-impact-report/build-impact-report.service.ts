@@ -358,7 +358,7 @@ const buildRecommendedCommands = ({
 
   if (categories.has('root-config') && !bootstrapConfigFresh) {
     actions.push(
-      'Run `skopos init` to refresh generated bootstrap artifacts after config changes.',
+      'Run `skopos setup` to refresh generated project artifacts after config changes.',
     );
   }
 

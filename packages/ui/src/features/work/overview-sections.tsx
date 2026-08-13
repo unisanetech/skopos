@@ -405,7 +405,7 @@ export function OverviewUnderstandingCard({
       ) : (
         <EmptyMessage
           title="No repo understanding yet"
-          description="Run `skopos understand` after bootstrap to generate a compact project summary, feature inventory, and implementation hotspots."
+          description="Run `skopos setup` to build or refresh the project summary, feature inventory, and implementation hotspots."
         />
       )}
     </ContentSection>
@@ -479,7 +479,7 @@ export function OverviewProjectKnowledgeCard({
       ) : (
         <EmptyMessage
           title="Project knowledge is not available"
-          description="Run `skopos init` or `skopos readiness` to generate the project knowledge view."
+          description="Run `skopos setup` to build or refresh the project knowledge view."
         />
       )}
     </ContentSection>

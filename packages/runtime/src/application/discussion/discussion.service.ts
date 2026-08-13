@@ -209,6 +209,7 @@ export const buildSkoposDiscussionRecentRuntime = async ({
     recentCheckpoints,
     latestJournalPath: latestJournal?.path,
     latestJournalTurnCount: latestJournal?.turnCount ?? 0,
+    latestJournalTurnAt: latestJournal?.latestTurnAt,
     additionalContext,
   };
 };

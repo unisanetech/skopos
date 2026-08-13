@@ -18,7 +18,7 @@ export const useCasesCopy = {
   summary: ["Existing codebases", "Everyday agent work", "Solo builders and teams"],
   cases: [
     {
-      id: "adopt-existing-project",
+      id: "set-up-existing-project",
       number: "01",
       category: "Start",
       title: "Bring an existing repository into Skopos.",
@@ -27,8 +27,8 @@ export const useCasesCopy = {
       outcome:
         "Skopos discovers what exists, proposes how it should fit the Memory standard, and waits for approval before material documentation changes.",
       prompt:
-        "Install and adopt Skopos in this existing repository. Preserve its current docs and commands as project truth. Build understanding, assess gaps, and show me any documentation proposal before applying it.",
-      guideLabel: "Adopt an existing project",
+        "Set up Skopos in this existing repository. Preserve its current docs and commands as project truth. Explain what you find, show me one consolidated recommendation, and ask before applying material changes.",
+      guideLabel: "Set up an existing project",
       guideHref: "/docs",
     },
     {

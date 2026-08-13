@@ -4,37 +4,26 @@ import { join, resolve } from 'node:path';
 import {
   SKOPOS_COMMUNICATION_CONTRACT,
   SKOPOS_COMMUNICATION_CONTRACT_VERSION,
+  resolveSkoposCommunicationResponseModeRules,
   resolveDecisionDefaultBehavior,
 } from '@skopos/instructions';
-import {
-  SKOPOS_ADOPTION_ANALYSIS_PATH,
-  SKOPOS_ADOPTION_ANALYSIS_BRIEF_PATH,
-  SKOPOS_ADOPTION_ACTIVATION_PATH,
-  SKOPOS_ADOPTION_APPROVAL_PATH,
-  SKOPOS_ADOPTION_EXECUTION_BRIEF_PATH,
-  SKOPOS_ADOPTION_INTAKE_PATH,
-  SKOPOS_ADOPTION_PROPOSAL_PATH,
-  SKOPOS_ADOPTION_VERIFICATION_PATH,
-} from '@skopos/docs-engine';
 import type {
-  SkoposAdoptionApprovalArtifact,
-  SkoposAdoptionActivationArtifact,
-  SkoposAdoptionIntakeArtifact,
-  SkoposAdoptionRestructuringProposalArtifact,
-  SkoposAdoptionReviewedAnalysisArtifact,
-  SkoposAdoptionState,
-  SkoposAdoptionVerificationArtifact,
   SkoposAgentResponseMode,
   SkoposActionRunArtifact,
   SkoposSessionContextRunResult,
   SkoposSessionPendingDecision,
   SkoposTaskQuestionArtifact,
   SkoposTaskQuestion,
+  SkoposSetupStateArtifact,
 } from '@skopos/model';
 
 import { buildSkoposDiscussionRecentRuntime } from '../discussion/discussion.service.js';
+import { reconstructTrackedSkoposAdoptionReadinessRuntime } from '../adoption/adoption.service.js';
 import { buildSkoposWorkQueueRuntime } from '../work-queue/work-queue.service.js';
-import { resolveCurrentTaskState } from '../shared/current-task-state.js';
+import {
+  resolveCurrentTaskState,
+  resolveLatestCompletedTaskState,
+} from '../shared/current-task-state.js';
 import { resolveSkoposRuntimeActorId } from '../shared/runtime-actor.js';
 import {
   ensureSkoposCoordinationSession,
@@ -117,6 +106,17 @@ export const buildSkoposSessionContextRuntime = async ({
     workspaceRoot,
     actorId,
   }).catch(() => undefined);
+  const latestCompletedTask = currentTask
+    ? undefined
+    : await resolveLatestCompletedTaskState({ workspaceRoot, actorId }).catch(
+        () => undefined,
+      );
+  const completedTask = isCompletionPending({
+    completedAt: latestCompletedTask?.task.updatedAt,
+    latestJournalTurnAt: discussion?.latestJournalTurnAt,
+  })
+    ? buildCompletedTaskContext(latestCompletedTask!.task)
+    : undefined;
   const openQuestions = currentTask
     ? await loadOpenQuestions(currentTask.questionsPath, warnings)
     : [];
@@ -126,8 +126,27 @@ export const buildSkoposSessionContextRuntime = async ({
   const taskPendingDecision = orderedQuestions[0]
     ? buildPendingDecision(orderedQuestions[0])
     : undefined;
-  const adoption = await buildSkoposAdoptionSessionState(workspaceRoot, warnings);
-  const pendingDecision = adoption?.pendingDecision ?? taskPendingDecision;
+  const setup = await readOptionalJson<SkoposSetupStateArtifact>(
+    join(workspaceRoot, '.skopos/setup/state.json'),
+    warnings,
+    'Unified setup state',
+  );
+  const setupActive = setup && !['setup-ready', 'setup-ready-with-deferred-options'].includes(setup.stage)
+    ? setup
+    : undefined;
+  // Setup state is checkout-local derived data and may have been written by an
+  // earlier candidate. Treat newly added collections as empty so upgrading the
+  // CLI cannot make Session context unusable before the next setup refresh.
+  const setupQuestions = setupActive?.materialQuestions ?? [];
+  const setupQuestion = setupQuestions[0];
+  const setupPendingDecision = setupQuestion
+    ? buildSetupPendingDecision(setupQuestion)
+    : undefined;
+  const setupReadiness = await buildSkoposSetupReadinessSessionState(
+    workspaceRoot,
+    warnings,
+  );
+  const pendingDecision = setupPendingDecision ?? taskPendingDecision;
   const resumeSummary = compactText(
     discussion?.latestHandoff?.resumeSummary ?? discussion?.additionalContext,
     420,
@@ -138,7 +157,7 @@ export const buildSkoposSessionContextRuntime = async ({
     ? buildSessionTaskContext(currentTask.task)
     : undefined;
   const recommendedWork =
-    !currentTaskContext && workQueue?.recommendedEntry
+    !currentTaskContext && !completedTask && workQueue?.recommendedEntry
       ? {
           id: workQueue.recommendedEntry.id,
           sourceKind: workQueue.recommendedEntry.sourceKind,
@@ -159,18 +178,21 @@ export const buildSkoposSessionContextRuntime = async ({
     ? undefined
     : currentTask
       ? interruptedAction?.resumeCommand ?? taskNextCommand
-      : adoption?.state !== 'agent-ready' && adoption?.nextCommand
-        ? adoption.nextCommand
+      : setupActive?.nextCommand
+        ? setupActive.nextCommand
+        : setupReadiness.state !== 'ready'
+        ? `skopos setup . --actor ${actorId ?? '<id>'} --json`
         : recommendedWork
           ? `skopos work next . --actor ${actorId ?? '<id>'} --json`
           : undefined;
-  const responseMode = resolveResponseMode({
+  const responseMode = resolveSkoposResponseMode({
     pendingDecision,
-    currentTaskId,
+    currentTaskState: currentTask?.task.state,
+    completionPending: Boolean(completedTask),
     resumeSummary,
   });
-  const additionalPendingDecisionCount = adoption?.pendingDecision
-    ? adoption.additionalDecisionCount + orderedQuestions.length
+  const additionalPendingDecisionCount = setupPendingDecision
+    ? Math.max(0, setupQuestions.length - 1) + orderedQuestions.length
     : Math.max(0, orderedQuestions.length - 1);
   const result: SkoposSessionContextRunResult = {
     schemaVersion: SKOPOS_COMMUNICATION_CONTRACT_VERSION,
@@ -179,30 +201,34 @@ export const buildSkoposSessionContextRuntime = async ({
       ? `A ${pendingDecision.blocking ? 'blocking ' : ''}user decision is pending.`
       : currentTaskId
         ? 'Current work and response guidance are ready.'
-        : 'Response guidance is ready; no current Task is selected.',
+        : completedTask
+          ? 'The latest Task is complete; closure response guidance is ready.'
+          : 'Response guidance is ready; no current Task is selected.',
     responseMode,
     communicationContract: {
       marker: SKOPOS_COMMUNICATION_CONTRACT.marker,
       tokenBudget: SKOPOS_COMMUNICATION_CONTRACT.tokenBudget,
       coreRules: SKOPOS_COMMUNICATION_CONTRACT.coreRules,
+      modeRules: resolveSkoposCommunicationResponseModeRules(responseMode),
     },
     currentTaskId,
     currentTask: currentTaskContext,
+    completedTask,
     interruptedAction,
     recommendedWork,
     workQueueSummary,
     nextCommand,
     resumeSummary,
     pendingDecision,
-    adoption: adoption
+    setup: setupActive
       ? {
-          state: adoption.state,
-          assessmentOnly: adoption.assessmentOnly,
-          ...(adoption.proposalDigest
-            ? { proposalDigest: adoption.proposalDigest }
-            : {}),
+          stage: setupActive.stage,
+          currentStep: setupActive.currentStep,
+          lanes: setupActive.lanes,
+          agentPacketPath: setupActive.agentPacketPath,
         }
       : undefined,
+    setupReadiness,
     coordination,
     additionalPendingDecisionCount,
     warnings,
@@ -213,200 +239,50 @@ export const buildSkoposSessionContextRuntime = async ({
   return result;
 };
 
-export interface SkoposAdoptionSessionState {
-  state: SkoposAdoptionState;
-  assessmentOnly: boolean;
-  proposalDigest?: string;
-  pendingDecision?: SkoposSessionPendingDecision;
-  additionalDecisionCount: number;
-  nextCommand?: string;
-}
-
-export const buildSkoposAdoptionSessionState = async (
-  workspaceRoot: string,
-  warnings: string[],
-): Promise<SkoposAdoptionSessionState | undefined> => {
-  const [intake, analysis, proposal, approval, verification, activation] =
-    await Promise.all([
-    readOptionalJson<SkoposAdoptionIntakeArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_INTAKE_PATH}`,
-      warnings,
-      'Adoption intake',
-    ),
-    readOptionalJson<SkoposAdoptionReviewedAnalysisArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_ANALYSIS_PATH}`,
-      warnings,
-      'Adoption reviewed analysis',
-    ),
-    readOptionalJson<SkoposAdoptionRestructuringProposalArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_PROPOSAL_PATH}`,
-      warnings,
-      'Adoption restructuring proposal',
-    ),
-    readOptionalJson<SkoposAdoptionApprovalArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_APPROVAL_PATH}`,
-      warnings,
-      'Adoption proposal approval',
-    ),
-    readOptionalJson<SkoposAdoptionVerificationArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_VERIFICATION_PATH}`,
-      warnings,
-      'Adoption standard verification',
-    ),
-    readOptionalJson<SkoposAdoptionActivationArtifact>(
-      `${workspaceRoot}/${SKOPOS_ADOPTION_ACTIVATION_PATH}`,
-      warnings,
-      'Adoption activation',
-    ),
-  ]);
-
-  if (!intake && !analysis && !proposal && !approval && !verification && !activation) {
-    return undefined;
-  }
-
-  if (
-    activation &&
-    verification &&
-    proposal &&
-    activation.proposalDigest === proposal.proposalDigest &&
-    verification.proposalDigest === proposal.proposalDigest
-  ) {
-    return {
-      state: 'agent-ready',
-      assessmentOnly: false,
-      proposalDigest: proposal.proposalDigest,
-      additionalDecisionCount: 0,
-      nextCommand: 'Project Memory adoption is active; continue through normal Skopos task routing.',
-    };
-  }
-
-  if (
-    verification &&
-    proposal &&
-    approval &&
-    verification.proposalDigest === proposal.proposalDigest &&
-    approval.proposalDigest === proposal.proposalDigest
-  ) {
-    return {
-      state: 'standard-verified',
-      assessmentOnly: false,
-      proposalDigest: proposal.proposalDigest,
-      additionalDecisionCount: 0,
-      nextCommand:
-        'Standard verification passed. Complete explicit adoption activation before claiming agent-ready.',
-    };
-  }
-
-  if (
-    approval &&
-    proposal &&
-    approval.proposalDigest === proposal.proposalDigest
-  ) {
-    return {
-      state: 'restructuring',
-      assessmentOnly: false,
-      proposalDigest: proposal.proposalDigest,
-      additionalDecisionCount: 0,
-      nextCommand: `Open ${SKOPOS_ADOPTION_EXECUTION_BRIEF_PATH}, execute only its approved operations through project-aware coding-agent tools, complete its evidence template, then run its verification command.`,
-    };
-  }
-
-  if (proposal) {
-    return {
-      state: 'restructuring-proposed',
-      assessmentOnly: true,
-      proposalDigest: proposal.proposalDigest,
-      pendingDecision: buildProposalApprovalDecision(proposal),
-      additionalDecisionCount: 0,
-    };
-  }
-
-  if (analysis?.materialQuestions.length) {
-    const [question, ...additionalQuestions] = analysis.materialQuestions;
-    return {
-      state: 'questions-open',
-      assessmentOnly: true,
-      pendingDecision: {
-        id: question!.id,
-        question: question!.question,
-        escalation: 'must-ask',
-        blocking: true,
-        whyItMatters: question!.whyItMatters,
-        recommendedOptionId: question!.recommendedOptionId,
-        recommendedOption: question!.options.find(
-          (option) => option.id === question!.recommendedOptionId,
-        ),
-        alternatives: question!.options.filter(
-          (option) => option.id !== question!.recommendedOptionId,
-        ),
-        defaultBehavior: 'wait-for-answer',
-        whatHappensAfterAnswer: question!.whatHappensAfterAnswer,
-        source: 'adoption-question',
-      },
-      additionalDecisionCount: additionalQuestions.length,
-    };
-  }
-
-  if (analysis) {
-    return {
-      state: analysis.adoptionState,
-      assessmentOnly: true,
-      additionalDecisionCount: 0,
-      nextCommand: `skopos adopt propose . --analysis <reviewed-analysis-input> --actor <id>`,
-    };
-  }
-
+const buildSetupPendingDecision = (
+  question: SkoposSetupStateArtifact['materialQuestions'][number],
+): SkoposSessionPendingDecision => {
+  const recommendedOption = question.options.find(
+    (option) => option.id === question.recommendedOptionId,
+  );
   return {
-    state: 'agent-analysis-required',
-    assessmentOnly: true,
-    additionalDecisionCount: 0,
-    nextCommand: `cat ${SKOPOS_ADOPTION_ANALYSIS_BRIEF_PATH}`,
+    id: question.id,
+    question: question.question,
+    escalation: 'must-ask',
+    blocking: true,
+    whyItMatters: question.whyItMatters,
+    recommendedOptionId: question.recommendedOptionId,
+    recommendedOption,
+    alternatives: question.options.filter(
+      (option) => option.id !== question.recommendedOptionId,
+    ),
+    defaultBehavior: 'wait-for-answer',
+    whatHappensAfterAnswer: question.answerCommand,
+    source: 'setup-question',
   };
 };
 
-const buildProposalApprovalDecision = (
-  proposal: SkoposAdoptionRestructuringProposalArtifact,
-): SkoposSessionPendingDecision => {
-  const materialRiskCount = proposal.informationLossRisks.filter(
-    (entry) => entry.risk === 'material',
-  ).length;
-  const approveOption = {
-    id: 'approve-proposal',
-    label: 'Approve exact proposal',
-    rationale:
-      materialRiskCount > 0
-        ? `Authorizes ${proposal.operations.length} exact operations and explicitly accepts ${materialRiskCount} material information-loss risk${materialRiskCount === 1 ? '' : 's'}.`
-        : `Authorizes only the ${proposal.operations.length} operations bound to this proposal digest.`,
-  };
-  const reviseOption = {
-    id: 'revise-proposal',
-    label: 'Request revision',
-    rationale: 'Return the proposal to agent review without authorizing document changes.',
-  };
-  const cancelOption = {
-    id: 'cancel-adoption',
-    label: 'Stop at assessment',
-    rationale: 'Keep the project assessment-only and do not claim full adoption.',
-  };
-  const recommendedOption = materialRiskCount > 0 ? reviseOption : approveOption;
-
+export const buildSkoposSetupReadinessSessionState = async (
+  workspaceRoot: string,
+  warnings: string[],
+): Promise<SkoposSessionContextRunResult['setupReadiness']> => {
+  const tracked = await reconstructTrackedSkoposAdoptionReadinessRuntime({
+    cwd: workspaceRoot,
+  }).catch((error: unknown) => {
+    warnings.push(`Tracked setup readiness unavailable: ${errorMessage(error)}`);
+    return undefined;
+  });
+  if (!tracked) {
+    return {
+      state: 'uncertified',
+      source: 'missing-certification',
+    };
+  }
   return {
-    id: `adoption.proposal.${proposal.proposalDigest.slice(0, 12)}`,
-    question: `Approve restructuring proposal ${proposal.proposalDigest.slice(0, 12)} with ${proposal.operations.length} document operation${proposal.operations.length === 1 ? '' : 's'}?`,
-    escalation: 'must-ask',
-    blocking: true,
-    whyItMatters:
-      materialRiskCount > 0
-        ? `The proposal includes ${materialRiskCount} material information-loss risk${materialRiskCount === 1 ? '' : 's'} and cannot execute without explicit acknowledgement.`
-        : 'Approval authorizes exact moves, merges, splits, rewrites, archives, or deletions; Skopos must not infer consent.',
-    recommendedOptionId: recommendedOption.id,
-    recommendedOption,
-    alternatives: [approveOption, reviseOption, cancelOption].filter(
-      (option) => option.id !== recommendedOption.id,
-    ),
-    defaultBehavior: 'require-explicit-approval',
-    whatHappensAfterAnswer: `If approved, run \`skopos adopt approve . --proposal ${proposal.proposalDigest} --actor <id> --reason <text>${materialRiskCount > 0 ? ' --accept-material-risk' : ''}\`. Revision or cancellation leaves all project documents unchanged.`,
-    source: 'adoption-approval',
+    state: tracked.state === 'agent-ready' ? 'ready' : 'stale',
+    source: 'tracked-certification',
+    certificationTaskId: tracked.certificationTaskId,
+    readinessLanes: tracked.lanes,
   };
 };
 
@@ -466,20 +342,27 @@ const buildPendingDecision = (
   };
 };
 
-const resolveResponseMode = ({
+export const resolveSkoposResponseMode = ({
   pendingDecision,
-  currentTaskId,
+  currentTaskState,
+  completionPending,
   resumeSummary,
 }: {
   pendingDecision?: SkoposSessionPendingDecision;
-  currentTaskId?: string;
+  currentTaskState?: SkoposSessionContextRunResult['currentTask'] extends infer _Current
+    ? NonNullable<SkoposSessionContextRunResult['currentTask']>['state']
+    : never;
+  completionPending?: boolean;
   resumeSummary?: string;
 }): SkoposAgentResponseMode => {
   if (pendingDecision) {
     return 'decision';
   }
-  if (currentTaskId) {
+  if (currentTaskState) {
     return resumeSummary ? 'progress' : 'work-start';
+  }
+  if (completionPending) {
+    return 'completion';
   }
   return 'direct-answer';
 };
@@ -491,6 +374,9 @@ export const renderSkoposSessionAdditionalContext = (
     context.communicationContract.marker,
     `Response mode: ${context.responseMode}`,
     ...context.communicationContract.coreRules.map((rule) => `- ${rule}`),
+    ...(context.communicationContract.modeRules ??
+      resolveSkoposCommunicationResponseModeRules(context.responseMode)
+    ).map((rule) => `- ${rule}`),
   ];
 
   if (context.resumeSummary) {
@@ -518,6 +404,13 @@ export const renderSkoposSessionAdditionalContext = (
         `Owned paths: ${context.currentTask.ownedPaths.join(', ')}${context.currentTask.additionalOwnedPathCount > 0 ? ` (+${context.currentTask.additionalOwnedPathCount} more)` : ''}.`,
       );
     }
+  } else if (context.completedTask) {
+    lines.push(
+      '',
+      `Completed Task: ${context.completedTask.id} — ${context.completedTask.title}`,
+      `Outcome: ${context.completedTask.goal}`,
+      `Scope: ${context.completedTask.scopeId}; completed: ${context.completedTask.completedAt}.`,
+    );
   } else if (context.recommendedWork) {
     lines.push(
       '',
@@ -531,12 +424,16 @@ export const renderSkoposSessionAdditionalContext = (
   if (context.nextCommand) {
     lines.push(`Next command: ${context.nextCommand}`);
   }
-  if (context.adoption) {
+  if (context.setup) {
     lines.push(
-      `Adoption state: ${context.adoption.state}${context.adoption.assessmentOnly ? ' (assessment only)' : ''}`,
+      `Setup stage: ${context.setup.stage}; current step: ${context.setup.currentStep}.`,
+      `Setup brief: ${context.setup.agentPacketPath}`,
     );
-    if (context.adoption.proposalDigest) {
-      lines.push(`Adoption proposal: ${context.adoption.proposalDigest}`);
+  }
+  if (context.setupReadiness.state !== 'ready') {
+    lines.push(`Setup readiness: ${context.setupReadiness.state}.`);
+    if (context.setupReadiness.certificationTaskId) {
+      lines.push(`Setup certification: ${context.setupReadiness.certificationTaskId}.`);
     }
   }
   if (context.coordination) {
@@ -596,6 +493,28 @@ export const renderSkoposSessionAdditionalContext = (
 
   return lines.join('\n');
 };
+
+const isCompletionPending = ({
+  completedAt,
+  latestJournalTurnAt,
+}: {
+  completedAt?: string;
+  latestJournalTurnAt?: string;
+}): boolean => {
+  if (!completedAt) return false;
+  if (!latestJournalTurnAt) return true;
+  return Date.parse(completedAt) > Date.parse(latestJournalTurnAt);
+};
+
+const buildCompletedTaskContext = (
+  task: NonNullable<Awaited<ReturnType<typeof resolveLatestCompletedTaskState>>>['task'],
+): NonNullable<SkoposSessionContextRunResult['completedTask']> => ({
+  id: task.id,
+  title: task.title,
+  goal: task.goal,
+  scopeId: task.scope.scope.id,
+  completedAt: task.updatedAt ?? task.generatedAt ?? new Date(0).toISOString(),
+});
 
 const compactText = (value: string | undefined, limit: number): string | undefined => {
   const compact = value?.replace(/\s+/g, ' ').trim();

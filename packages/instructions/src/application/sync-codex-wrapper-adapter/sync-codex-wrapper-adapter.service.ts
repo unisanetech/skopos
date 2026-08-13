@@ -3,6 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 
 import type { SkoposHostProjectionModel } from '@skopos/model';
 
+import { SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH } from '../communication-contract/communication-contract.js';
 import { buildHostActorBinding } from '../host-actor-binding/host-actor-binding.js';
 
 export interface SyncCodexWrapperAdapterOptions {
@@ -394,7 +395,7 @@ process.exit(result.status ?? 0);
 
 const renderCodexReadme = (): string => `# Codex Discussion Adapter
 
-This wrapper-mediated adapter keeps Codex on the same Task, Session, and discussion-memory contract as Claude Code. The wrapper should treat \`AGENTS.md\` plus \`.skopos/agent/communication-brief.json\` as the default agent operating contract.
+This wrapper-mediated adapter keeps Codex on the same Task, Session, and discussion-memory contract as Claude Code. The wrapper should treat \`AGENTS.md\` plus \`${SKOPOS_COMMUNICATION_BRIEF_ARTIFACT_PATH}\` as the default agent operating contract.
 
 ## Actor binding
 

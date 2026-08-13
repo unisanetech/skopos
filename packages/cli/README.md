@@ -16,10 +16,10 @@ the operating layer that helps an agent answer four questions:
 
 ## Release Status
 
-`0.1.x` is a pre-release line published under the npm `next` tag. Product contracts
-and command details may still change before promotion to `latest`. Use an exact
-version in automation and review the repository's current limitations before adopting
-it for important work.
+`0.1.x` is the planned pre-release line for the npm `next` tag. It is not public until
+the repository's release scorecard and protected publication workflow certify one
+immutable candidate. Product contracts and command details may still change before
+promotion to `latest`; use an exact version in automation after publication.
 
 ## Requirements
 
@@ -30,20 +30,20 @@ it for important work.
 The first release is certified on Linux, macOS, and Windows through the runtime matrix
 documented in the repository.
 
-## Install And Initialize
+## Install And Set Up
 
 Run one of these commands inside the project you want Skopos to understand:
 
 ```bash
-npx @skopos/cli@next init .
+npx @skopos/cli@next setup .
 ```
 
 ```bash
-pnpm dlx @skopos/cli@next init .
+pnpm dlx @skopos/cli@next setup .
 ```
 
 ```bash
-npm exec --package @skopos/cli@next -- skopos init .
+npm exec --package @skopos/cli@next -- skopos setup .
 ```
 
 Then load a compact project briefing:
@@ -115,9 +115,10 @@ upload, or share that directory wholesale. Use `skopos storage status` and the d
   editing the same files.
 - Skopos selects and records project checks, but the project remains responsible for
   the quality and correctness of those commands.
-- Product Interface Design ships in the package. Its release efficacy gate must pass before
-  `0.1.0` is approved for publication; inclusion is not a claim that the open gate has
-  already passed.
+- Product Interface Design ships in the package under the accepted first-release
+  boundary. Its deterministic selection, authority, containment, bounded-cost, packed
+  installation, and project-binding checks must pass. Material efficacy remains
+  explicitly unproven, so inclusion is not an efficacy claim.
 
 ## Help, Bugs, And Security
 

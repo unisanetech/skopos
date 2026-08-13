@@ -5,7 +5,7 @@
   "status": "active",
   "authority": "canonical",
   "summary": "Skopos self-hosting binding for the Product Interface Design skill pack.",
-  "updatedAt": "2026-08-12T15:10:32.646Z",
+  "updatedAt": "2026-08-13T10:15:46.493Z",
   "bindingId": "skopos.ui.product-interface-design",
   "packId": "ui.product-interface-design",
   "packVersion": "0.5.0",
@@ -46,16 +46,16 @@
     "Search packages/ui/src and existing screen symbols before creating a component; follow established Skopos role names instead of mirroring task wording."
   ],
   "acceptance": {
-    "acceptedAt": "2026-08-12T15:10:32.646Z",
+    "acceptedAt": "2026-08-13T10:15:46.493Z",
     "acceptedBy": "codex-root",
-    "reason": "Recompute the exact accepted project-source identity after the reviewed public website and release-control changes; do not change the pack, selector, binding boundary, or efficacy claim.",
+    "reason": "Revalidated the accepted Product Interface Design binding against the final public web and UI sources during release-candidate consolidation.",
     "identity": {
       "packSourceDigest": "sha256:cbd4969882f38d88e717e56aa680629a46e1dbda490c8b273758c89ddcd6efb2",
-      "bindingSourceDigest": "sha256:b11b6b9cf1789a92d631ada5d90c77a76caef9759dfe05d73ac5bebbcc1ba7a8",
-      "projectSourceDigest": "sha256:52aed08c6d25a2f76bf3ce6f7a65105180b3c5631f3bdf4a69a5bdfd68968191",
+      "bindingSourceDigest": "sha256:990e31b4f75b58b03c5eb2af25bd88679048c31547e318781bd0e3713f1af0d0",
+      "projectSourceDigest": "sha256:19859c71b494c3b9e541ed069a2e322e84fe570ab87e52f8965df2ae5f797fce",
       "capabilityCatalogDigest": "sha256:416b78023d732ea17df231090d22e05bb9069ed14cc916113d8a989556d0124c",
       "evaluationSourceDigest": "sha256:ef99367deaa60ad4c606be01aaf7935932b3a9ce63f940602afa1ac8dbc66396",
-      "combinedDigest": "sha256:638ebf5f84d51eff1210d8bf1041b2194d1bb0dc1644d5a91e7290b25b09eccb"
+      "combinedDigest": "sha256:9d10f1842205f499f926706a596532322c00e66c678092eb79b03e21d3cf496f"
     }
   }
 }

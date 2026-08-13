@@ -1,0 +1,32 @@
+{
+  "snapshotId": "S-d1f4c08c6329",
+  "taskId": "T-390f0665",
+  "sessionId": "9c5fb937-5a64-41dd-b1bc-73519bf7283a",
+  "actorId": "codex-setup-memory-boundary",
+  "baseRevision": "d233a2a0587b0be9f52ad6189a40c05d1d9e0cd2",
+  "paths": [
+    {
+      "path": "docs/architecture/00-architecture.md",
+      "digest": "1e2312b7e9249ae2a9ac7565b1736aac8fa69d0ac7c3935eba740a17f68b3175"
+    },
+    {
+      "path": "packages/cli/src/__tests__/release-install-smoke.test.ts",
+      "digest": "0244cc03648fe0b9843c6722c0149455b9a07fdc932a01bfdd946e54a855914a"
+    },
+    {
+      "path": "packages/cli/src/__tests__/setup-workflow.test.ts",
+      "digest": "779d041da17db2d170d8233a232da024314537aca5717ae0d5d6a2e3f66333df"
+    },
+    {
+      "path": "packages/runtime/src/application/init/init.service.ts",
+      "digest": "0018297df3f2f785ded171d4f956299affc0d046d6c487f8742dc65a330f4a7d"
+    },
+    {
+      "path": "packages/runtime/src/application/setup/setup.service.ts",
+      "digest": "7ff71ab96e121447f532423cf176592b9f731875b178d4ea52685871cc3ac093"
+    }
+  ],
+  "digest": "d1f4c08c63293efdabdb215e4b558ad0adbd07fd92cf3b0f65b3c87d7f38e25c",
+  "createdAt": "2026-08-12T21:21:22.957Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-390f0665-S-d1f4c08c6329.json"
+}

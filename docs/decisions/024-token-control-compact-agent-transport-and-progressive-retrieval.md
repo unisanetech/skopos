@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: current
 date: 2026-04-12
-lastUpdated: 2026-08-03
+lastUpdated: 2026-08-13
 relatedDocs:
   - ../architecture/retrieval-and-query-strategy.md
   - ../architecture/agent-native-operating-model.md
@@ -21,6 +21,11 @@ relatedDocs:
 
 ## Changelog
 
+- `2026-08-13`: Defined selective response-guidance transport. A small canonical
+  contract remains always available, Session context injects only the current response
+  mode and material state, and detailed communication or onboarding guidance is loaded
+  only when the interaction requires it. Runtime clarity does not require a second
+  model call for every response.
 - `2026-08-03`: Certified the compact transport contract against the live Unisane
   monorepo. Seven Session, Work Queue, Task, Action-catalog, and Plan payloads remained
   below 32 KiB across 1,789 dirty status entries and 69 queue items; cursor pages did
@@ -61,6 +66,34 @@ The communication brief has a bounded token budget and stable marker. Logs, raw
 transcripts, full graphs, every Policy, and every document are never injected by
 default. Compact output must preserve blockers, approvals, next action, and proof
 status rather than hiding them for brevity.
+
+Response guidance uses three layers:
+
+1. an always-available canonical contract of roughly 100–150 tokens states the stable
+   rules: answer directly, use clear simple English, translate internal terminology,
+   ask only material questions, recommend a default, and do not claim unproved
+   completion
+2. Session context adds only the selected response mode and its current material
+   state; the mode-specific instruction should normally cost 20–80 tokens
+3. detailed communication and onboarding guidance is retrieved only for setup,
+   material decisions, high-risk operations, closure, recovery, or handoff
+
+Representative dynamic targets are 100–250 tokens for progress context and 150–350
+tokens for a material decision. Full onboarding packets may be larger because they
+carry bounded project evidence and resumable state, but they are staged and are not
+repeated on ordinary turns. These figures are implementation and benchmark targets,
+not a promise that arbitrary project state will fit without progressive retrieval.
+
+The declared 1,200-token communication budget is a hard compact-envelope ceiling, not
+a per-turn target or an instruction to fill the budget. Host integrations inject the
+compact context at Session start and after material state changes. They must not replay
+it unchanged on every user turn.
+
+Response quality is improved by deterministic rendering, mode selection, concise
+templates, and release-time scenario evaluations. Skopos does not run a second language
+model to judge or rewrite every response. Deterministic authorities continue to
+enforce facts that must not be softened by prose: approval boundaries, Evidence,
+Readiness, and safe defaults.
 
 Exact project-level Action Evidence enters a Task through one explicit batch operation,
 not repeated Action calls and not a hidden Verify mutation. Compact reuse output
@@ -115,5 +148,5 @@ built CLI against an existing project without executing Actions or creating Task
 measures dirty-worktree scale, compact payload bytes, cursor overlap, existing Task
 selection, Action-catalog declarations, and dry-run question classification. The
 generated Unisane observation lives at
-`docs/reference/generated/unisane-external-workspace-pilot.md`; it is evidence about
+`docs/reference/generated/archive/unisane-external-workspace-pilot.md`; it is historical evidence about
 Skopos integration behavior, not Unisane product or deployment readiness.

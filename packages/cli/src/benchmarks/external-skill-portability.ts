@@ -40,13 +40,13 @@ type FailureCategory =
 type FailureRecord = {
   category: FailureCategory;
   stage: string;
-  project: 'harness' | 'minimal' | 'billquest';
+  project: 'harness' | 'minimal' | 'external';
   command?: string;
   message: string;
 };
 
 type ProjectProof = {
-  label: 'minimal' | 'billquest';
+  label: 'minimal' | 'external';
   externalRoot: string;
   installedCliRoot: string;
   initialized: boolean;
@@ -200,26 +200,26 @@ export const runExternalSkillPortability = async ({
       currentFailure = {
         category: 'external-project',
         stage: 'read-live-canary-status-before',
-        project: 'billquest',
+        project: 'external',
         command: 'git status --short',
       };
       originalCanaryStatusBefore = readGitStatus(resolve(canaryRoot));
       currentFailure = {
         category: 'project-adaptation',
-        stage: 'billquest-sanitized-project',
-        project: 'billquest',
+        stage: 'external-sanitized-project',
+        project: 'external',
       };
       projects.push(
-        await proveBillquestProject({
+        await proveExternalProject({
           originalRoot: resolve(canaryRoot),
-          projectRoot: join(projectsRoot, 'billquest-sanitized'),
+          projectRoot: join(projectsRoot, 'external-sanitized'),
           tarballPath,
         }),
       );
       currentFailure = {
         category: 'external-project',
         stage: 'read-live-canary-status-after',
-        project: 'billquest',
+        project: 'external',
         command: 'git status --short',
       };
       originalCanaryStatusAfter = readGitStatus(resolve(canaryRoot));
@@ -232,9 +232,9 @@ export const runExternalSkillPortability = async ({
       throw new PortabilityFailure({
         category: 'external-project',
         stage: 'live-canary-integrity',
-        project: 'billquest',
+        project: 'external',
         command: 'git status --short',
-        message: 'The live Billquest Git status changed during sanitized proof.',
+        message: 'The external project Git status changed during sanitized proof.',
       });
     }
   } catch (error) {
@@ -367,7 +367,7 @@ const proveMinimalProject = async ({
   });
 };
 
-const proveBillquestProject = async ({
+const proveExternalProject = async ({
   originalRoot,
   projectRoot,
   tarballPath,
@@ -378,25 +378,25 @@ const proveBillquestProject = async ({
 }): Promise<ProjectProof> => {
   await copySanitizedProject(originalRoot, projectRoot);
   const commands: CommandRecord[] = [];
-  installBillquestDependencies(projectRoot, commands);
+  installExternalProjectDependencies(projectRoot, commands);
   const installed = await installPackedCli({ projectRoot, tarballPath, nested: true });
-  await writeBillquestScopeRegistry(projectRoot);
+  await writeExternalScopeRegistry(projectRoot);
   runJson(installed.cliPath, projectRoot, commands, [
     'init', '.', '--mode', 'existing', '--actor', actor, '--json',
   ]);
-  await writeProjectCapabilityBinding({ projectRoot, kind: 'billquest' });
+  await writeProjectCapabilityBinding({ projectRoot, kind: 'external' });
   initializeGitBaseline(projectRoot);
   return proveProjectBehavior({
-    label: 'billquest',
+    label: 'external',
     projectRoot,
     cliPath: installed.cliPath,
     installedCliRoot: installed.installedCliRoot,
     commands,
     relevant: {
-      goal: 'Establish the hierarchy, layout, brand expression, and reading order of the rendered Billquest product workspace while preserving the existing form and preview behavior.',
+      goal: 'Establish the hierarchy, layout, brand expression, and reading order of the rendered product workspace while preserving the existing form and preview behavior.',
       acceptance: 'Responsive layout preserves reading order through desktop and mobile viewport adaptation.',
       ownedPath: 'components/features/tool-workspace/ToolWorkspacePage.tsx',
-      scopeId: 'billquest-ui',
+      scopeId: 'product-ui',
       risk: 'standard',
       expectedModuleIds: [
         'interface-design.structure',
@@ -411,8 +411,8 @@ const proveBillquestProject = async ({
     forbiddenRoots: [workspaceRoot, originalRoot],
     capabilityActionIds: ['ui.accessibility-lint'],
     limitations: [
-      'The sanitized canary executes Billquest\'s existing lint command as static accessibility evidence; it does not provide or claim a rendered Axe audit.',
-      'The responsive browser Action is bound to Billquest\'s existing generator runtime proof but is not executed by this portability run because it requires a separately managed development server.',
+      'The sanitized canary executes the external project\'s existing lint command as static accessibility evidence; it does not provide or claim a rendered Axe audit.',
+      'The responsive browser Action is bound to the external project\'s existing runtime proof but is not executed by this portability run because it requires a separately managed development server.',
     ],
   });
 };
@@ -619,9 +619,9 @@ const proveProjectBehavior = async ({
     },
     containment,
     executedCapabilityActions: capabilityActionIds,
-    adaptationGaps: label === 'billquest'
+    adaptationGaps: label === 'external'
       ? [
-          'Rendered accessibility remains unbound: Billquest declares no Axe audit, so this proof certifies static lint only.',
+          'Rendered accessibility remains unbound: the external project declares no Axe audit, so this proof certifies static lint only.',
           'Responsive browser execution remains outside this portability run because the declared generator proof requires a separately managed development server.',
         ]
       : [],
@@ -859,7 +859,7 @@ const installPackedCli = async ({
     throw new PortabilityFailure({
       category: 'skopos-portability',
       stage: 'install-packed-cli',
-      project: nested ? 'billquest' : 'minimal',
+      project: nested ? 'external' : 'minimal',
       command: `pnpm add --prefer-offline --ignore-scripts --lockfile=false ${basename(tarballPath)}`,
       message: compactCommandError(failure),
     });
@@ -913,14 +913,14 @@ const runJson = <T>(
     throw new PortabilityFailure({
       category: 'skopos-portability',
       stage: 'installed-cli-command',
-      project: normalize(cwd).includes('/billquest-sanitized') ? 'billquest' : 'minimal',
+      project: normalize(cwd).includes('/external-sanitized') ? 'external' : 'minimal',
       command,
       message: summary,
     });
   }
 };
 
-const installBillquestDependencies = (
+const installExternalProjectDependencies = (
   projectRoot: string,
   commands: CommandRecord[],
 ): void => {
@@ -956,8 +956,8 @@ const installBillquestDependencies = (
     });
     throw new PortabilityFailure({
       category: 'external-project',
-      stage: 'install-billquest-dependencies',
-      project: 'billquest',
+      stage: 'install-external-dependencies',
+      project: 'external',
       command,
       message: summary,
     });
@@ -979,10 +979,10 @@ const packCli = (packRoot: string): string => {
   return isAbsolute(reported) ? reported : resolve(cliPackageRoot, reported);
 };
 
-const writeBillquestScopeRegistry = async (projectRoot: string): Promise<void> => {
+const writeExternalScopeRegistry = async (projectRoot: string): Promise<void> => {
   await Promise.all([
     mkdir(join(projectRoot, 'tools/skopos'), { recursive: true }),
-    mkdir(join(projectRoot, 'docs/scopes/billquest-ui'), { recursive: true }),
+    mkdir(join(projectRoot, 'docs/scopes/product-ui'), { recursive: true }),
   ]);
   await writeFile(
     join(projectRoot, 'tools/skopos/scopes.yaml'),
@@ -990,7 +990,7 @@ const writeBillquestScopeRegistry = async (projectRoot: string): Promise<void> =
       'schemaVersion: 1',
       'scopes:',
       '  - id: workspace',
-      '    title: Billquest Workspace',
+      '    title: External Project Workspace',
       '    kind: workspace',
       '    path: .',
       '    memoryRoot: docs',
@@ -1002,15 +1002,15 @@ const writeBillquestScopeRegistry = async (projectRoot: string): Promise<void> =
       '    owners:',
       `      - ${actor}`,
       '    aliases:',
-      '      - billquest',
-      '  - id: billquest-ui',
-      '    title: Billquest Product UI',
+      '      - external-project',
+      '  - id: product-ui',
+      '    title: Product UI',
       '    kind: application',
       '    path: components/features/tool-workspace',
-      '    memoryRoot: docs/scopes/billquest-ui',
+      '    memoryRoot: docs/scopes/product-ui',
       '    codeRoots:',
       '      - components/features/tool-workspace',
-      '      - components/ui/unisane',
+      '      - components/ui',
       '      - app',
       '    parent: workspace',
       '    profile: core.application',
@@ -1018,7 +1018,7 @@ const writeBillquestScopeRegistry = async (projectRoot: string): Promise<void> =
       '    owners:',
       `      - ${actor}`,
       '    aliases:',
-      '      - billquest-product-ui',
+      '      - product-interface',
       '',
     ].join('\n')}`,
     'utf8',
@@ -1040,13 +1040,13 @@ const writeProjectCapabilityBinding = async ({
     mkdir(guardRoot, { recursive: true }),
     mkdir(skillRoot, { recursive: true }),
   ]);
-  const sourceBindings = kind === 'billquest'
+  const sourceBindings = kind === 'external'
     ? {
         'brand-doctrine': ['docs/formats-library-marketplace-blueprint.md'],
-        'design-tokens': ['app/globals.css', 'components/ui/unisane/styles.css'],
-        'component-catalog': ['components/ui/unisane'],
+        'design-tokens': ['app/globals.css'],
+        'component-catalog': ['components/ui'],
         'approved-screen-precedents': ['components/features/tool-workspace'],
-        'domain-language': ['docs/unisane-tool-workspace-execution-plan.md'],
+        'domain-language': ['README.md'],
         'ui-failure-patterns': ['docs/revamp/navigation-convergence/README.md'],
       }
     : {
@@ -1079,12 +1079,12 @@ const writeProjectCapabilityBinding = async ({
       'accessibility-proof': 'ui.accessibility-proof',
       'client-boundary-review': 'quality.typecheck',
     },
-    adaptationNotes: kind === 'billquest'
+    adaptationNotes: kind === 'external'
       ? [
-          'Use the existing tool workspace and Unisane component sources as project authority.',
-          'Use the existing generator runtime proof for responsive and interaction evidence.',
-          'Bind the accessibility Guard to Billquest\'s executed static Next lint capability, never to responsive proof.',
-          'Leave the recommended accessibility-audit Action role unresolved because Billquest declares no rendered Axe audit.',
+          'Use the existing product workspace and component sources as project authority.',
+          'Use the external project\'s existing runtime proof for responsive and interaction evidence.',
+          'Bind the accessibility Guard to the external project\'s executed static lint capability, never to responsive proof.',
+          'Leave the recommended accessibility-audit Action role unresolved because the external project declares no rendered Axe audit.',
         ]
       : ['This generated project exists only to certify deterministic packed CLI behavior.'],
   };
@@ -1099,8 +1099,8 @@ const writeProjectCapabilityBinding = async ({
       actionManifest({
         id: 'quality.typecheck',
         title: 'External project typecheck',
-        command: kind === 'billquest' ? 'npm run typecheck' : 'node --check src/runtime/adapter.ts',
-        inputs: kind === 'billquest' ? ['package.json', 'tsconfig.json', 'app', 'components', 'lib'] : ['src'],
+        command: kind === 'external' ? 'npm run typecheck' : 'node --check src/runtime/adapter.ts',
+        inputs: kind === 'external' ? ['package.json', 'tsconfig.json', 'app', 'components', 'lib'] : ['src'],
       }),
       'utf8',
     ),
@@ -1109,8 +1109,8 @@ const writeProjectCapabilityBinding = async ({
       actionManifest({
         id: 'quality.run-proof-phase',
         title: 'External focused frontend proof',
-        command: kind === 'billquest' ? 'npm run test:ci' : 'node --check src/runtime/adapter.ts',
-        inputs: kind === 'billquest' ? ['package.json', 'tests', 'components'] : ['src'],
+        command: kind === 'external' ? 'npm run test:ci' : 'node --check src/runtime/adapter.ts',
+        inputs: kind === 'external' ? ['package.json', 'tests', 'components'] : ['src'],
       }),
       'utf8',
     ),
@@ -1119,27 +1119,27 @@ const writeProjectCapabilityBinding = async ({
       actionManifest({
         id: 'ui.capture-responsive-proof',
         title: 'External responsive UI proof',
-        command: kind === 'billquest'
+        command: kind === 'external'
           ? 'npm run check:generator-runtime-proofs'
           : 'node --check src/runtime/adapter.ts',
-        inputs: kind === 'billquest'
+        inputs: kind === 'external'
           ? ['package.json', 'scripts/templates/proof-generator-runtime.ts', 'components/features/tool-workspace']
           : ['src/ui'],
-        browser: kind === 'billquest' ? 'required' : 'none',
+        browser: kind === 'external' ? 'required' : 'none',
       }),
       'utf8',
     ),
     writeFile(
       join(actionRoot, 'ui-accessibility-proof.yaml'),
       actionManifest({
-        id: kind === 'billquest' ? 'ui.accessibility-lint' : 'ui.accessibility-fixture',
-        title: kind === 'billquest'
-          ? 'Billquest static accessibility lint'
+        id: kind === 'external' ? 'ui.accessibility-lint' : 'ui.accessibility-fixture',
+        title: kind === 'external'
+          ? 'External project static accessibility lint'
           : 'Minimal accessibility capability fixture',
-        command: kind === 'billquest'
+        command: kind === 'external'
           ? 'npm run lint:ci -- --no-cache'
           : 'node --check src/runtime/adapter.ts',
-        inputs: kind === 'billquest'
+        inputs: kind === 'external'
           ? ['package.json', '.eslintrc.json', 'app', 'components']
           : ['src'],
       }),
@@ -1154,7 +1154,7 @@ const writeProjectCapabilityBinding = async ({
       join(guardRoot, 'ui-accessibility-proof.yaml'),
       guardManifest(
         'ui.accessibility-proof',
-        kind === 'billquest' ? 'ui.accessibility-lint' : 'ui.accessibility-fixture',
+        kind === 'external' ? 'ui.accessibility-lint' : 'ui.accessibility-fixture',
       ),
       'utf8',
     ),
@@ -1255,7 +1255,7 @@ const copySanitizedProject = async (sourceRoot: string, destinationRoot: string)
     '.tmp',
     '.skopos',
     '.skopos-portability-runner',
-    '.unisane',
+    '.project-local',
   ]);
   await cp(sourceRoot, destinationRoot, {
     recursive: true,

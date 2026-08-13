@@ -59,6 +59,21 @@ assert.ok(actions.totalActionCount > 0, 'Tracked capability sources did not reco
 assert.equal(resolve(session.workspaceRoot), workspaceRoot);
 assert.deepEqual(session.warnings, []);
 assert.equal(
+  session.setupReadiness?.state,
+  'ready',
+  'Tracked unified-setup certification did not reconstruct as ready in the clean checkout.',
+);
+assert.equal(
+  session.setupReadiness?.source,
+  'tracked-certification',
+  'Clean-checkout readiness must come from tracked setup certification.',
+);
+assert.match(
+  session.setupReadiness?.certificationTaskId ?? '',
+  /^T-/u,
+  'Clean-checkout readiness did not identify its tracked certification Task.',
+);
+assert.equal(
   run('git', ['status', '--porcelain']),
   '',
   'Reconstructing disposable state must not mutate tracked candidate files.',
@@ -72,7 +87,8 @@ console.log(
       knownAreaCount: knowledge.knownAreaCount,
       totalAreaCount: knowledge.totalAreaCount,
       actionCount: actions.totalActionCount,
-      sessionAdoptionState: session.adoption?.state ?? 'unknown',
+      sessionSetupReadiness: session.setupReadiness.state,
+      setupCertificationTaskId: session.setupReadiness.certificationTaskId,
       trackedWorktreeClean: true,
     },
     null,

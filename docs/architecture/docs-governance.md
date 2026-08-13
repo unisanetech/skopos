@@ -10,14 +10,16 @@ authority: canonical
 provenance: declared
 view: target
 implementationStatus: partial
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-12
 relatedDocs:
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../decisions/D-20260811-topology-aware-task-scope-authority.md
+  - ../decisions/D-20260812-intelligent-project-onboarding-contract.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
   - ../patterns/README.md
   - artifact-model.md
   - retrieval-and-query-strategy.md
+  - intelligent-project-onboarding.md
 reviewCycle: when Memory structure or lifecycle changes
 ---
 
@@ -28,6 +30,12 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-08-13`: Completed the public setup cut. `skopos setup` now owns first-time
+  review and safely refreshes stale project analysis; `skopos init` remains a low-level
+  reconstruction primitive and the former public adoption commands are removed.
+- `2026-08-12`: Added evidence-bound Memory creation for undocumented projects and
+  moved existing-project convergence into the unified setup workflow. Accepted Scope
+  roots now precede restructuring targets; directory inference remains discovery only.
 - `2026-08-11`: Accepted topology-aware Task Scope authority. Task admission now has a
   project-generic narrowest-owner target contract, while multi-Scope work requires an
   explicit common ancestor, parent/child structure, or integration boundary.
@@ -40,9 +48,8 @@ project to keep its own application code architecture.
 
 - `2026-08-02`: Bound tracked Task projections to their declared Scope Memory roots
   and made cross-root catalog discovery the reconstruction authority.
-- `2026-07-31`: Kept verified adoption active during routine `skopos init` knowledge
-  refreshes. Normal Project Memory evolution no longer reopens brownfield assessment;
-  `skopos adopt assess` remains the explicit command for restarting adoption review.
+- `2026-07-31`: Established the now-superseded split between routine initialization
+  and explicit adoption review. The unified setup workflow replaces that public split.
 - `2026-07-29`: Made canonical adoption intake part of actual initialization.
   Existing-project init performs assessment without creating a docs router or declared
   Scope registry; greenfield init creates the minimum router and registry directly.
@@ -103,14 +110,22 @@ project to keep its own application code architecture.
 16. adopted documents use one YAML-frontmatter grammar; Markdown metadata sections and
     alias fields are discovery inputs, never a second adopted schema
 17. `failure-pattern` is a Pattern kind, not a separate `failure-patterns/` family
-18. existing-project init starts with non-mutating assessment; greenfield init creates
-    the minimum standard router and declared Scope registry directly
-19. after verified activation, routine init refreshes generated project state without
-    discarding adoption; only explicit adoption assessment reopens the review workflow
+18. first-time and renewed project onboarding enter through unified setup; its initial
+    inspection is non-mutating and greenfield creation still uses the minimum safe
+    tracked structure
+19. `skopos init` is a low-level reconstruction and diagnostic primitive; users reopen
+    setup review through `skopos setup`, never through a separate adoption command
 20. a tracked Task is stored at `work/tasks/**` relative to its declared Scope Memory
     root, and portable reconstruction catalogs every declared Memory root
 21. before adoption, only the inferred default workspace Scope may use the standard
     `docs/` root; a declared Scope with missing or unsafe Memory authority fails closed
+22. undocumented projects may create missing Memory only through reviewed
+    `create-from-evidence` operations that keep facts, inferences, intent, and unknowns
+    distinct
+23. existing-project setup approves meaningful Scope roots before document operations
+    target those roots
+24. onboarding creates the minimum useful Memory; missing optional role families do
+    not cause empty scaffolding
 
 ## Workspace Memory Root
 
@@ -427,22 +442,33 @@ inferred fields resemble a canonical Decision, Pattern, or another adopted role.
 4. generated output is never hand-edited
 5. target runtime UI lives only under `.skopos/ui/**`
 
-## Existing-Project Restructuring
+## Existing-Project Memory Convergence
 
-The adoption agent:
+The setup agent:
 
-1. inventories existing docs and instructions
-2. identifies authority conflicts and missing roles
-3. classifies reusable preferred and failure knowledge separately from one-off
+1. inventories existing docs, instructions, and relevant code evidence
+2. explains its understanding and identifies authority conflicts and missing roles
+3. proposes and obtains approval for meaningful Scopes and Memory roots
+4. classifies reusable preferred and failure knowledge separately from one-off
    Findings and normative Standards
-4. proposes keep/move/merge/split/rewrite/archive/delete operations
-5. shows the target tree and relationship impact
-6. asks only material questions
-7. waits for approval
-8. gives the coding agent the exact approved operations and Evidence template
-9. performs Git-aware moves and edits
-10. repairs links and agent instructions
-11. verifies metadata, Scope coverage, lifecycle, and retrieval
+5. proposes keep/move/merge/split/rewrite/archive/delete/create-from-evidence operations
+6. shows the target tree, retained truth, relationship impact, and information-loss risk
+7. asks only material questions in the human onboarding contract
+8. waits for exact approval and applies natural-language exceptions to the envelope
+9. gives the coding agent the exact approved operations and Evidence contract
+10. performs Git-aware moves and edits
+11. repairs links and agent instructions
+12. verifies metadata, Scope coverage, lifecycle, authority, provenance, and retrieval
+
+For a project with no useful documentation, `create-from-evidence` drafts the minimum
+router, overview, architecture, development, or other actually required Memory. Each
+draft cites supporting source paths, labels verified facts, keeps inferences and
+unknowns explicit, records user-confirmed intent separately, and proposes its Scope,
+role, owner, and authority. A draft cannot promote itself to canonical truth.
+
+Implementation is evidence of current behavior, not automatic authority over intended
+behavior. When code, tests, docs, and user intent disagree, the conflict remains
+visible until accepted authority resolves it.
 
 A project that keeps an arbitrary layout may use assessment output, but does not pass
 full adoption Readiness.
@@ -459,7 +485,8 @@ colocated Memory-root discovery, and Scope-aware relevance selection across ever
 active or durable Memory role. Preferred and failure Patterns use the same `patterns/`
 family; relevant failure Patterns become negative knowledge.
 
-Archived Task T-62a045f9 records the completed self-adoption proof. Actual init now
+Archived Task T-62a045f9 records the completed self-adoption proof. The current
+prototype init now
 starts canonical adoption automatically. Existing projects receive non-mutating
 assessment, while greenfield projects receive the minimum standard router and declared
 Scope registry. Generic proposal, exact approval, coding-agent execution brief and
@@ -469,3 +496,9 @@ the coding agent performs only the approved operations. Task T-db2a2a6c certifie
 greenfield, healthy brownfield, and blocked-then-reviewed messy brownfield lifecycle,
 including shared Session truth and overview-UI orientation. Complete Profile
 enforcement and promotion validation remain owned by the active convergence Plan.
+
+The accepted target replaces that visible prototype ceremony with the unified setup
+workflow, adds approved Scope creation and evidence-bound missing-Memory creation, and
+composes capability, Policy, Skill, instruction, and host-delivery readiness. See
+[Intelligent Project Onboarding](intelligent-project-onboarding.md). No compatibility
+contract preserves the prototype command sequence.

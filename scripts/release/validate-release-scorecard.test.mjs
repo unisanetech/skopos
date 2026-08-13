@@ -16,15 +16,15 @@ describe('public-release scorecard guard', () => {
 
     assert.equal(answers.size, 17);
     assert.equal(answers.get(11), 'No');
-    assert.equal(answers.get(12), 'No');
+    assert.equal(answers.get(12), 'Yes');
   });
 
-  it('rejects the current scorecard while Claude and Unisane proof remain open', async () => {
+  it('rejects the current scorecard while real Claude proof remains open', async () => {
     const source = await readFile(scorecardPath, 'utf8');
 
     assert.throws(
       () => validatePreCandidateReleaseGates(source),
-      /unresolved non-candidate gates: 11, 12/u,
+      /unresolved non-candidate gates: 11/u,
     );
   });
 
@@ -34,10 +34,6 @@ describe('public-release scorecard guard', () => {
       .replace(
         /\| 11 \| Codex and Claude are behaviorally equivalent \| No \|/u,
         '| 11 | Codex and Claude are behaviorally equivalent | Yes |',
-      )
-      .replace(
-        /\| 12 \| Unisane deleted its parallel LLM workflow \| No \|/u,
-        '| 12 | Unisane deleted its parallel LLM workflow | Yes |',
       );
 
     const result = validatePreCandidateReleaseGates(accepted);

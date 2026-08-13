@@ -16,8 +16,10 @@ for the parts that should survive beyond one chat.
 > **Current status:** Skopos is pre-release and is not yet published for public use.
 > The remote source passes the current cross-platform security, package, and lifecycle
 > workflow, but there is no approved immutable release candidate yet. Product Interface
-> Design is required and remains included; its latest full paired evaluation ended 4–4
-> and did not pass the efficacy gate. See
+> Design is included under the accepted first-release boundary. Its deterministic
+> selection, identity, containment, bounded-cost, packed-install, and project-binding
+> checks remain required; material efficacy is explicitly unproven and is not claimed.
+> See
 > [Current status](#current-status) for details.
 
 ## The Problem Skopos Solves
@@ -103,7 +105,7 @@ This coordination is intentionally reported as **cooperative**. Skopos does not 
 someone from changing files or Git state outside its workflow, and it does not claim to
 be a filesystem sandbox.
 
-### Guided adoption for real projects
+### Guided setup for real projects
 
 For an existing project, Skopos first discovers code, documentation, instructions,
 commands, CI, and conventions without rewriting them. It separates facts from
@@ -169,11 +171,11 @@ Skopos is currently used directly from its source workspace.
 ```bash
 pnpm install
 pnpm build
-pnpm skopos:init
+pnpm skopos:setup
 pnpm skopos:session
 ```
 
-The build step comes before initialization because this repository runs the local
+The build step comes before setup because this repository runs the local
 source CLI against its internal workspace packages. The final command prints compact
 session context: current work, material decisions, project health, and the recommended
 next action.
@@ -224,7 +226,7 @@ skopos finish <task-id> . --actor <id> --json
 ```
 
 Use `skopos --help` for the complete CLI and `skopos <command> --help` for a command's
-exact contract. Common supporting commands include `skopos knowledge`, `skopos adopt`,
+exact contract. Common supporting commands include `skopos setup`, `skopos knowledge`,
 `skopos task show`, `skopos decide`, `skopos actions`, `skopos evidence`,
 `skopos readiness`, and `skopos coordination`.
 
@@ -303,21 +305,21 @@ Skopos is **pre-release**. It has not launched or been published as a public pac
 
 The working source implements the first-release model for Project Memory, Scopes,
 Plans, Tasks, Sessions, Work Queue, Actions, Guards, Evidence, Readiness, coordination,
-adoption, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed the
+unified setup, Skills, handoff, CLI, MCP, and UI. Release-hardening work has passed the
 cross-platform Node 22/24 matrix on Ubuntu, macOS, and Windows, plus production audit,
 secret scanning, license review, SBOM generation, clean packed installation, package
 content, lifecycle, storage, responsive UI, and accessibility checks. These results
 are strong preparation Evidence; final certification must still bind every gate to
 one unchanged approved candidate.
 
-Product Interface Design `0.3.0` has deterministic selection proof, 21 concise
-Bad-to-Better patterns, external packed portability, and a complete safe paired run.
-That frozen run ended evenly: the Skill won 4 cases and the no-Skill control won 4.
-It therefore did not demonstrate material improvement, and no independent blind human
-adjudication is complete. This is a real release blocker, not a launch-quality result.
-Product Interface Design will not be removed to bypass the gate. A materially improved,
-separately approved efficacy cycle and independent review are required, alongside the
-remaining [canonical product convergence Plan](docs/work/plans/P-e7e888e6-canonical-product-convergence.md)
+Product Interface Design `0.5.0` has deterministic selection, exact identity,
+containment, bounded-cost, external packed-install, and project-binding proof. Its
+latest exact fresh smoke did not demonstrate material improvement, and no independent
+blind human efficacy adjudication is complete. The accepted first-release boundary
+therefore says **publishable: yes** and **efficacy-certified: no**. Release and
+marketing surfaces must not claim certified efficacy. Additional efficacy work is not
+a blocker for the first `next` release; broader Skill-catalog expansion remains outside
+that release. See the [first public release scorecard](docs/operations/first-public-release-scorecard.md)
 and [Product Interface Design efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
 
 Before publication, Skopos must also configure the external npm scope, protected

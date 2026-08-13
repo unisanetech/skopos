@@ -4,7 +4,7 @@ description: Rebuild the local Skopos compiled knowledge artifacts for the Skopo
 category: maintenance
 scope:
   - workspace
-command: pnpm skopos:init
+command: pnpm exec node --import tsx packages/cli/src/cli.ts init . --json
 cwd: .
 inputs:
   - package.json

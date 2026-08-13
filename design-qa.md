@@ -2,10 +2,8 @@
 
 ## Comparison Target
 
-- Source visual truth, desktop:
-  `/Users/bhaskarbarma/.codex/generated_images/019feb11-71c6-7543-a5a3-28f3c019172b/exec-79b9b977-b1b1-49d4-829a-81c374762be2.png`
-- Source visual truth, mobile:
-  `/Users/bhaskarbarma/.codex/generated_images/019feb11-71c6-7543-a5a3-28f3c019172b/exec-954497c1-2e2b-49af-94e6-17fe51824531.png`
+- Source visual truth: the approved desktop and mobile concepts from the design
+  review session. They are review inputs rather than repository dependencies.
 - Rendered implementation: `http://127.0.0.1:4173/`
 - Route and theme: `/`, initial checkout-recovery state, fixed editorial light/dark
   composition.
@@ -184,10 +182,10 @@ normalized full-view comparison alone.
 - Copy and content: hero and story promises match the approved narrative. Workstream
   data remains truthful about cooperative coordination, Task closure, skipped broad
   checks, and project-owned Evidence.
-- Hero onboarding copy models the intended npm release surface: install, initialize,
-  recover Session context, or hand a guarded init/understand/adopt-assess brief to a
-  coding agent. No source-checkout or pre-release caveat remains in the released view.
-- Icons: all interface icons come from the app-local Unisane Icon component backed by
+- Hero onboarding copy models the intended npm release surface: install, run unified
+  setup, recover Session context, or give the generated setup brief to a coding agent.
+  No source-checkout or pre-release caveat remains in the released view.
+- Icons: all interface icons come from the app-local Icon component backed by
   Material Symbols; sizes, optical weight, and state colors are consistent.
 - Accessibility and behavior: semantic landmarks and headings, skip link, labelled
   navigation, alt text, visible focus, `44px` targets, keyboard stage controls,
@@ -486,7 +484,8 @@ final result: passed
 
 Source visual truth:
 
-- `/var/folders/5h/v4t5vlh146z2wcg11rdyxh400000gn/T/TemporaryItems/NSIRD_screencaptureui_bIJ3Zk/Screenshot 2026-08-11 at 3.01.20 AM.png`
+- The approved wide-desktop homepage capture from the August 11 review session. The
+  temporary source file is not a repository dependency.
 - Source capture dimensions: `2048 × 1187` pixels. The visible state shows the selected
   hero copy at a wide desktop viewport with the installation tab active.
 

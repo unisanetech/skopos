@@ -3,8 +3,8 @@ import type {
   SkoposUiConsoleState,
 } from '../../contracts/skopos-ui-console-state.js';
 
-export const requiresAdoptionOrientation = (state: SkoposUiConsoleState): boolean =>
-  Boolean(state.sessionContext?.adoption && state.sessionContext.adoption.state !== 'agent-ready');
+export const requiresSetupOrientation = (state: SkoposUiConsoleState): boolean =>
+  state.sessionContext?.setupReadiness.state !== 'ready';
 
 export interface ExecutionOverviewContext {
   activeTasks: SkoposUiConsoleTaskView[];

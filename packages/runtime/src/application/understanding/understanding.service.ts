@@ -493,7 +493,7 @@ const buildAgentAnalysisBriefArtifact = async ({
     nextAgentAction:
       analysisStatus === 'agent-reviewed'
         ? 'Use the mapped project understanding sources as durable context before broad source scans.'
-        : 'Have a coding agent follow this brief, inspect the project, write the durable understanding docs, then rerun `skopos understand .` and `skopos adopt assess .`.',
+        : 'Have a coding agent follow this brief, inspect the project, write the approved durable understanding docs, then run `skopos setup resume .`.',
     nextCommand:
       analysisStatus === 'agent-reviewed'
         ? 'skopos session context . --json'
@@ -1078,7 +1078,7 @@ const buildSetupRecommendedActions = (
   if (readiness === 'ready') {
     return [
       'Use the repo summary and hotspots as the compact first-read context for future agent work.',
-      'Run `skopos adopt assess .` before closing onboarding so Memory and instruction surfaces stay aligned.',
+      'Run `skopos setup resume .` before closing onboarding so Memory and instruction surfaces stay aligned.',
     ];
   }
 
@@ -1176,6 +1176,18 @@ const applySetupAnswerToConfig = async ({
       kind: 'config-updated',
       path: 'skopos.config.yaml',
       summary: `Project mode set to ${optionId}.`,
+    });
+  }
+
+  if (questionId === 'understanding.lifecycle') {
+    const selectedMode = optionId === 'new-project' ? 'new-project' : 'brownfield';
+    nextConfig.project.mode = selectedMode;
+    candidateEffects.push({
+      kind: 'config-updated',
+      path: 'skopos.config.yaml',
+      summary: optionId === 'new-project'
+        ? 'Project mode set to new-project so setup uses clean defaults instead of brownfield preservation.'
+        : 'Project mode set to brownfield so setup preserves current project behavior and structure first.',
     });
   }
 

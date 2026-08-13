@@ -9,13 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-11
+lastUpdated: 2026-08-12
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
   - config-model.md
   - artifact-model.md
   - agent-native-operating-model.md
+  - intelligent-project-onboarding.md
   - design-context-model.md
   - docs-governance.md
   - evidence-and-readiness-model.md
@@ -33,6 +34,9 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-12`: Added one unified intelligent onboarding workflow. It composes
+  coding-agent investigation with reviewed Scope, Memory, capability, Policy, Skill,
+  instruction, and host-delivery outcomes while preserving their existing authorities.
 - `2026-08-11`: Completed the Codex host-delivery boundary for linked children. An
   approved split produces truthful undelivered assignments; the Codex adapter may
   create real tasks, bind returned thread identities as Sessions, and wait for results
@@ -98,8 +102,8 @@ Skopos has two deliberately separate application surfaces:
 1. `packages/ui` is the private, local supervision console projected from compiled
    Skopos state and bundled through the CLI.
 2. `apps/web` is the independently deployable public product website. It owns public
-   narrative, marketing compositions, metadata, assets, and reviewed app-local
-   Unisane UI registry source.
+   narrative, marketing compositions, metadata, assets, and reviewed app-owned UI
+   source.
 
 The public website is not part of the core SDK package family, does not import the
 internal console, and has no dependency on Skopos runtime or compiled local project
@@ -107,6 +111,8 @@ state. Its initial Next.js route is static-first; backend, authentication, analy
 and hosting-provider contracts require separate Decisions.
 
 ## Canonical Operating Loop
+
+The currently implemented operating loop is:
 
 ```text
 adopt Project Memory
@@ -122,6 +128,16 @@ adopt Project Memory
 
 Plan is optional durable direction across Tasks. Work Queue is compiled from tracked
 Tasks, Plans, Findings, material questions, dependencies, and Readiness blockers.
+
+The accepted clean-refactor target replaces the visible adoption ceremony with one
+`Understand -> Clarify -> Review -> Apply -> Verify` setup journey. Setup is not another
+product primitive: its local resumable workflow composes the existing Scope registry,
+Project Memory, Actions, Guards, Policies, Skill bindings, instructions, adapters, and
+Readiness authorities. Accepted outcomes live with those owners; local drafts and
+receipts remain under `.skopos/**`. See
+[Intelligent Project Onboarding](intelligent-project-onboarding.md). The target command
+surface is implemented through `skopos setup`; lower-level primitives remain available
+to the runtime without becoming a second public onboarding journey.
 
 ## Project Memory
 
@@ -144,8 +160,10 @@ Reconstruction discovers those portable projections through the Project Memory
 catalog across all declared roots, so no project layout or domain convention is built
 into Task persistence.
 
-During pre-adoption intake, only the inferred default workspace Scope may use the
-standard `docs/` Memory root before a registry exists. Once a Scope is declared, a
+During first setup, Skopos may non-destructively scaffold only the missing workspace
+Scope registry with the standard `docs/` Memory root. It does not create inferred
+sub-Scopes or overwrite an existing registry; those boundaries stay reviewable setup
+recommendations. Once a Scope is declared, a
 missing or unsafe `memoryRoot` is an invalid authority declaration and fails closed.
 
 Task admission creates an open Memory obligation when declared ownership overlaps
@@ -249,3 +267,8 @@ into runtime core.
 10. retrieval is Scope- and Task-selective, not a broad documentation dump
 11. detected commands remain proposals until reviewed approval creates tracked
     declarations and provider validation activates them
+12. onboarding gives coding agents broad project investigation authority but never
+    promotes inference, widens approved mutation, or accepts an optional extension
+    without the required user decision
+13. setup readiness is lane-specific; configured adapters never masquerade as verified
+    host delivery
