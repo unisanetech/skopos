@@ -17,7 +17,7 @@ export const heroOnboarding = {
     tabLabel: "npm @next on release",
     label: "First public release install",
     commands: [
-      "npm install --save-dev @skopos/cli@next",
+      "npm install --save-dev @unisane/skopos@next",
       "npx skopos setup . --actor <id>",
       "npx skopos setup review . --actor <id>",
     ],
@@ -42,7 +42,7 @@ export const heroOnboarding = {
     ],
     copyLabel: "Copy agent brief",
   },
-  packageLabel: "planned · @skopos/cli@next",
+  packageLabel: "planned · @unisane/skopos@next",
 } as const;
 
 export const agentCompatibilityCopy = {

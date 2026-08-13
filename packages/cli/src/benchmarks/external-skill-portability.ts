@@ -110,7 +110,7 @@ export type ExternalSkillPortabilityReport = {
   result: 'pass' | 'fail';
   generatedAt: string;
   package?: {
-    name: '@skopos/cli';
+    name: '@unisane/skopos';
     version: string;
     tarballName: string;
     sha256: string;
@@ -179,7 +179,7 @@ export const runExternalSkillPortability = async ({
       await readFile(join(cliPackageRoot, 'package.json'), 'utf8'),
     ) as { version: string };
     packageIdentity = {
-      name: '@skopos/cli' as const,
+      name: '@unisane/skopos' as const,
       version: packageJson.version,
       tarballName: basename(tarballPath),
       sha256: createHash('sha256')
@@ -455,7 +455,7 @@ const proveProjectBehavior = async ({
   const productUi = listed.packs.find((pack) => pack.packId === 'ui.product-interface-design');
   assert(productUi, 'Packed CLI did not discover Product Interface Design.');
   assert(
-    normalize(productUi.sourcePath).includes('node_modules/@skopos/cli/dist/skill-packs/'),
+    normalize(productUi.sourcePath).includes('node_modules/@unisane/skopos/dist/skill-packs/'),
     `Product Interface Design resolved outside the installed package: ${productUi.sourcePath}`,
   );
   const recommendation = runJson<{
@@ -866,7 +866,7 @@ const installPackedCli = async ({
       message: compactCommandError(failure),
     });
   }
-  const installedCliRoot = await realpath(join(installRoot, 'node_modules/@skopos/cli'));
+  const installedCliRoot = await realpath(join(installRoot, 'node_modules/@unisane/skopos'));
   return {
     cliPath: join(installedCliRoot, 'dist/cli.js'),
     installedCliRoot,

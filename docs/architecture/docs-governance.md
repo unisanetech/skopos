@@ -10,7 +10,7 @@ authority: canonical
 provenance: declared
 view: target
 implementationStatus: partial
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../decisions/D-20260811-topology-aware-task-scope-authority.md
@@ -30,6 +30,9 @@ project to keep its own application code architecture.
 
 ## Changelog
 
+- `2026-08-14`: Recorded the clean pre-launch package identity `@unisane/skopos` as
+  release metadata only. Project Memory remains independent of company-specific
+  runtime grammar or adopter conventions.
 - `2026-08-13`: Completed the public setup cut. `skopos setup` now owns first-time
   review and safely refreshes stale project analysis; `skopos init` remains a low-level
   reconstruction primitive and the former public adoption commands are removed.

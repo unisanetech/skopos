@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGE_NAME = '@skopos/cli';
+const PACKAGE_NAME = '@unisane/skopos';
 const EXPECTED_REPOSITORY = 'github.com/unisanetech/skopos';
 
 const sha = (algorithm, bytes, encoding) =>
@@ -16,6 +16,7 @@ const sha = (algorithm, bytes, encoding) =>
 export const validatePublishedMetadata = ({ metadata, distTags, version }) => {
   assert.equal(metadata.name, PACKAGE_NAME);
   assert.equal(metadata.version, version);
+  assert.deepEqual(metadata.bin, { skopos: 'dist/cli.js' });
   assert.equal(distTags.next, version, 'The npm next tag does not select the published candidate.');
   assert.notEqual(
     distTags.latest,
@@ -24,7 +25,10 @@ export const validatePublishedMetadata = ({ metadata, distTags, version }) => {
   );
 
   assert.match(metadata.dist?.integrity ?? '', /^sha512-[A-Za-z0-9+/=]+$/u);
-  assert.match(metadata.dist?.tarball ?? '', /^https:\/\/registry\.npmjs\.org\//u);
+  assert.equal(
+    metadata.dist?.tarball,
+    `https://registry.npmjs.org/@unisane/skopos/-/skopos-${version}.tgz`,
+  );
   const repository = typeof metadata.repository === 'string'
     ? metadata.repository
     : metadata.repository?.url;
@@ -191,7 +195,7 @@ export const verifyPublishedRelease = async ({
       ['install', registryTarballPath, '--omit=dev', '--ignore-scripts'],
       installedRoot,
     );
-    const installedCli = resolve(installedRoot, 'node_modules/@skopos/cli/dist/cli.js');
+    const installedCli = resolve(installedRoot, 'node_modules/@unisane/skopos/dist/cli.js');
     assert.equal(run(process.execPath, [installedCli, '--version'], installedRoot).trim(), version);
     runJson(process.execPath, [
       installedCli,

@@ -17,7 +17,7 @@ lastUpdated: 2026-08-13
 ## Changelog
 
 - `2026-08-13`: Aligned the active homepage Plan with the truthful pre-release
-  candidate. The site names `@skopos/cli@next` as the planned first-release channel,
+  candidate. The site names `@unisane/skopos@next` as the planned first-release channel,
   links status to release progress, and does not claim that the package is already
   available.
 - `2026-08-11`: Reconciled the production candidate without redesigning it. Replaced
@@ -102,7 +102,7 @@ The homepage conversion contract is:
    candidate and public package exist
 
 The checked-in implementation is a truthful pre-release candidate. It names
-`@skopos/cli@next` as the planned first-release channel, marks the install path as
+`@unisane/skopos@next` as the planned first-release channel, marks the install path as
 planned, and directs status clicks to public release progress. It must not claim npm
 availability or make the npm package page the release-status destination until
 registry verification passes. Showing the planned command is not proof that npm

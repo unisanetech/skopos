@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - package-boundaries.md
   - runtime-model.md
@@ -35,6 +35,10 @@ truth, Task continuity, deterministic constraints, coordination, and proof.
 
 ## Changelog
 
+- `2026-08-14`: Bound the public npm artifact to `@unisane/skopos` because the
+  third-party `@skopos` namespace is unavailable. The internal package graph and
+  `skopos` executable are unchanged; the company scope is release identity, not a
+  runtime architecture layer.
 - `2026-08-13`: Separated host-neutral adapter architecture from certified host
   support and recorded the standalone company-owned repository boundary. The first
   release certifies Codex only; generated projections never imply support.
@@ -122,6 +126,11 @@ the standalone Skopos product; it is not a runtime namespace or an adopter-speci
 architecture layer. Skopos core and its public package remain project-agnostic and may
 not acquire a private Unisane dependency, registry, Action, Guard, path, or product
 workflow through repository ownership.
+
+The first public npm artifact is `@unisane/skopos`, exposing the `skopos` executable.
+The `@unisane` scope is the company-owned publisher identity selected because the
+third-party `@skopos` namespace is unavailable. It does not rename the product, alter
+the internal `@skopos/*` workspace graph, or permit Unisane-specific runtime coupling.
 
 ## Canonical Operating Loop
 

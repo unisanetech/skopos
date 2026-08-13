@@ -15,8 +15,8 @@ describe("homepage hero onboarding", () => {
 
   it("presents the planned first-release npm path without claiming publication", () => {
     expect(heroOnboarding.source.label).toBe("First public release install");
-    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @skopos/cli@next");
-    expect(heroOnboarding.packageLabel).toContain("@skopos/cli@next");
+    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
+    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@next");
     expect(releaseStatusCopy).toBe("First release targets npm @next");
     expect(releaseStatusCopy).not.toContain("Available");
   });

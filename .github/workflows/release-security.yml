@@ -97,10 +97,10 @@ jobs:
         run: |
           pnpm build
           mkdir -p .release/packed .release/package .release/install
-          pnpm --filter @skopos/cli pack --pack-destination "$GITHUB_WORKSPACE/.release/packed"
-          tar -xzf .release/packed/skopos-cli-0.1.0.tgz -C .release/package
+          pnpm --filter @unisane/skopos pack --pack-destination "$GITHUB_WORKSPACE/.release/packed"
+          tar -xzf .release/packed/unisane-skopos-0.1.0.tgz -C .release/package
           node -e "require('node:fs').writeFileSync('.release/install/package.json', '{\"name\":\"@skopos/release-proof\",\"version\":\"0.0.0\",\"private\":true,\"license\":\"Apache-2.0\",\"type\":\"module\"}\n')"
-          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/skopos-cli-0.1.0.tgz" --omit=dev --ignore-scripts
+          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/unisane-skopos-0.1.0.tgz" --omit=dev --ignore-scripts
 
       - name: Install checksum-pinned known-good Gitleaks
         shell: bash
@@ -148,21 +148,21 @@ jobs:
         with:
           path: .release/install
           format: cyclonedx-json
-          output-file: .release/skopos-cli.cdx.json
+          output-file: .release/unisane-skopos.cdx.json
           upload-artifact: false
           upload-release-assets: false
 
       - name: Validate SBOM structure
         shell: bash
-        run: node -e "const x=require('./.release/skopos-cli.cdx.json'); if(x.bomFormat!=='CycloneDX'||!Array.isArray(x.components)||x.components.length===0) process.exit(1)"
+        run: node -e "const x=require('./.release/unisane-skopos.cdx.json'); if(x.bomFormat!=='CycloneDX'||!Array.isArray(x.components)||x.components.length===0) process.exit(1)"
 
       - name: Upload non-secret release evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-release-security-${{ github.sha }}
+          name: unisane-skopos-release-security-${{ github.sha }}
           path: |
             .release/licenses.json
-            .release/skopos-cli.cdx.json
+            .release/unisane-skopos.cdx.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 30

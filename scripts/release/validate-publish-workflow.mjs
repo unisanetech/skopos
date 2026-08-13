@@ -109,7 +109,11 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
     /name: Build workspace packages for source-level certification\n\s+run: pnpm build/u,
   );
   assert.match(certifyBlock, /git merge-base --is-ancestor HEAD origin\/main/u);
-  assert.match(certifyBlock, /p\.version!==tag\|\|p\.publishConfig/u);
+  assert.ok(certifyBlock.includes("p.name!=='@unisane/skopos'"));
+  assert.ok(certifyBlock.includes("p.bin?.skopos!=='dist/cli.js'"));
+  assert.match(certifyBlock, /p\.version!==tag/u);
+  assert.match(certifyBlock, /p\.publishConfig\?\.access!=='public'/u);
+  assert.match(certifyBlock, /p\.publishConfig\?\.tag!=='next'/u);
   assert.ok(
     certifyBlock.includes(
       "p.repository?.url!=='git+https://github.com/unisanetech/skopos.git'",
@@ -146,11 +150,11 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(certifyBlock, /pnpm release:smoke:artifact/u);
   assert.doesNotMatch(certifyBlock, /pnpm release:smoke(?:\s|$)/mu);
   assert.equal(
-    certifyBlock.match(/pnpm --filter @skopos\/cli pack --pack-destination/gu)?.length,
+    certifyBlock.match(/pnpm --filter @unisane\/skopos pack --pack-destination/gu)?.length,
     1,
     'Candidate certification must pack exactly once.',
   );
-  assert.match(certifyBlock, /sha256sum "packed\/skopos-cli-\$\{PACKAGE_VERSION\}\.tgz"/u);
+  assert.match(certifyBlock, /sha256sum "packed\/unisane-skopos-\$\{PACKAGE_VERSION\}\.tgz"/u);
   assert.match(certifyBlock, /release:receipt:write/u);
   assert.match(certifyBlock, /clean-checkout-reconstruction\.json/u);
   assert.match(certifyBlock, /unified-setup-reconstruction\.json/u);
@@ -164,7 +168,7 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(securityBlock, /format: cyclonedx-json/u);
   assert.match(securityBlock, /exact-candidate-security\.json/u);
   assert.match(securityBlock, /tarballSha256:digest/u);
-  assert.match(securityBlock, /sha256sum --check --strict skopos-cli\.sha256/u);
+  assert.match(securityBlock, /sha256sum --check --strict unisane-skopos\.sha256/u);
   assert.doesNotMatch(securityBlock, /pnpm .* pack --pack-destination/u);
   for (const runtime of [
     "os: ubuntu-24.04\n            node: '22.13.0'",
@@ -177,15 +181,15 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
     assert.ok(runtimeBlock.includes(runtime));
   }
   assert.match(runtimeBlock, /test "\$\(git rev-parse HEAD\)" = "\$CANDIDATE_SHA"/u);
-  assert.match(runtimeBlock, /name: skopos-cli-publish-candidate-/u);
+  assert.match(runtimeBlock, /name: unisane-skopos-publish-candidate-/u);
   assert.match(runtimeBlock, /crypto\.createHash\('sha256'\)/u);
   assert.match(runtimeBlock, /actual!==expected/u);
   assert.match(runtimeBlock, /npm install --prefix \.release\/runtime-project/u);
-  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@skopos\/cli\/dist\/cli\.js --version/u);
-  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@skopos\/cli\/dist\/cli\.js --help/u);
-  assert.match(runtimeBlock, /node node_modules\/@skopos\/cli\/dist\/cli\.js setup/u);
-  assert.match(runtimeBlock, /node node_modules\/@skopos\/cli\/dist\/cli\.js session context/u);
-  assert.match(runtimeBlock, /node node_modules\/@skopos\/cli\/dist\/cli\.js ui build/u);
+  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@unisane\/skopos\/dist\/cli\.js --version/u);
+  assert.match(runtimeBlock, /node \.release\/runtime-project\/node_modules\/@unisane\/skopos\/dist\/cli\.js --help/u);
+  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js setup/u);
+  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js session context/u);
+  assert.match(runtimeBlock, /node node_modules\/@unisane\/skopos\/dist\/cli\.js ui build/u);
   assert.match(runtimeBlock, /SKOPOS_RELEASE_TARBALL:/u);
   assert.match(runtimeBlock, /pnpm release:smoke:artifact/u);
   assert.match(runtimeBlock, /pnpm build/u);
@@ -197,7 +201,7 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(runtimeBlock, /setupCommand:'passed'/u);
   assert.match(runtimeBlock, /installedLifecycle:'passed'/u);
   assert.match(runtimeBlock, /bundledUi:'passed'/u);
-  assert.match(runtimeBlock, /skopos-cli-runtime-/u);
+  assert.match(runtimeBlock, /unisane-skopos-runtime-/u);
   assert.match(
     finalizationBlock,
     /needs: \[certify, exact-candidate-security, exact-candidate-runtime\]/u,
@@ -207,7 +211,7 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(finalizationBlock, /--web "\.release\/evidence\/production-web\.json"/u);
   assert.match(finalizationBlock, /merge-multiple: true/u);
   assert.match(finalizationBlock, /--output "\.release\/final\/candidate-certification\.json"/u);
-  assert.match(finalizationBlock, /skopos-cli-final-certification-/u);
+  assert.match(finalizationBlock, /unisane-skopos-final-certification-/u);
   assert.ok(
     source.indexOf('\n  exact-candidate-security:\n')
       < source.indexOf('\n  exact-candidate-runtime:\n')
@@ -215,13 +219,17 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
         < source.indexOf('\n  finalize-candidate-receipt:\n'),
     'Final candidate receipt must be downstream of exact security and runtime proof.',
   );
-  assert.match(publishBlock, /sha256sum --check --strict skopos-cli\.sha256/u);
+  assert.match(publishBlock, /sha256sum --check --strict unisane-skopos\.sha256/u);
   assert.match(publishBlock, /final\/candidate-certification\.json/u);
   assert.match(publishBlock, /r\.candidateCommit!==process\.env\.CANDIDATE_SHA/u);
+  assert.match(publishBlock, /r\.package\?\.name!=='@unisane\/skopos'/u);
   assert.match(publishBlock, /r\.artifact\?\.sha256!==digest/u);
   assert.match(publishBlock, /r\.effectiveGateResult\?\.passed!==20/u);
-  assert.match(certifyBlock, /\.release\/packed\/skopos-cli-\$\{\{ steps\.identity\.outputs\.package_version \}\}\.tgz/u);
-  assert.match(publishBlock, /name: skopos-cli-publish-candidate-\$\{\{ needs\.certify\.outputs\.candidate_sha \}\}/u);
+  assert.match(certifyBlock, /\.release\/packed\/unisane-skopos-\$\{\{ steps\.identity\.outputs\.package_version \}\}\.tgz/u);
+  assert.match(publishBlock, /name: unisane-skopos-publish-candidate-\$\{\{ needs\.certify\.outputs\.candidate_sha \}\}/u);
+  assert.match(publishBlock, /https:\/\/www\.npmjs\.com\/package\/@unisane\/skopos/u);
+  assert.ok(publishBlock.includes("p.name!=='@unisane/skopos'"));
+  assert.ok(publishBlock.includes("p.bin?.skopos!=='dist/cli.js'"));
   assert.match(certifyBlock, /--tag next --access public --dry-run/u);
   assert.match(publishBlock, /if: inputs\.mode == 'bootstrap-publish'/u);
   assert.match(publishBlock, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_BOOTSTRAP_TOKEN \}\}/u);
@@ -232,12 +240,12 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(registryBlock, /persist-credentials: false/u);
   assert.match(registryBlock, /pnpm install --frozen-lockfile/u);
   assert.match(registryBlock, /pnpm build/u);
-  assert.match(registryBlock, /skopos-cli-final-certification-/u);
+  assert.match(registryBlock, /unisane-skopos-final-certification-/u);
   assert.match(registryBlock, /pnpm release:registry:test/u);
   assert.match(registryBlock, /pnpm release:registry:verify/u);
   assert.match(registryBlock, /--receipt "\.release\/final\/candidate-certification\.json"/u);
   assert.match(registryBlock, /published-registry-verification\.json/u);
-  assert.match(registryBlock, /skopos-cli-published-registry-/u);
+  assert.match(registryBlock, /unisane-skopos-published-registry-/u);
   assert.doesNotMatch(source, /--tag latest/u);
   assert.doesNotMatch(source, /uses:\s+[^\n@]+@v\d+/u);
 
@@ -245,8 +253,9 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
     assert.match(triggerBlock, new RegExp(`- ${mode}`));
   }
 
-  assert.equal(packageManifest.name, '@skopos/cli');
+  assert.equal(packageManifest.name, '@unisane/skopos');
   assert.equal(packageManifest.version, '0.1.0');
+  assert.deepEqual(packageManifest.bin, { skopos: 'dist/cli.js' });
   assert.equal(packageManifest.publishConfig?.access, 'public');
   assert.equal(packageManifest.publishConfig?.tag, 'next');
   assert.equal(packageManifest.repository?.url, 'git+https://github.com/unisanetech/skopos.git');
@@ -257,6 +266,8 @@ validatePublishWorkflowContract(workflow, cliPackage);
 for (const weakened of [
   workflow.replace('  workflow_dispatch:', '  push:'),
   workflow.replace('      id-token: write\n', ''),
+  workflow.replace("p.name!=='@unisane/skopos'", "p.name!=='@example/skopos'"),
+  workflow.replace("p.bin?.skopos!=='dist/cli.js'||", ''),
   workflow.replace(
     '    needs: [certify, exact-candidate-security, exact-candidate-runtime, finalize-candidate-receipt]\n',
     '    needs: certify\n',
@@ -303,7 +314,7 @@ for (const weakened of [
   workflow.replace("tarballSha256:process.env.TARBALL_SHA", "tarballSha256:'unbound'"),
   workflow.replace("r.candidateCommit!==process.env.CANDIDATE_SHA", 'false'),
   workflow.replace('git+https://github.com/unisanetech/skopos.git', 'git+https://github.com/Croodo/skopos.git'),
-  workflow.replace('sha256sum --check --strict skopos-cli.sha256', 'echo skipped-digest-check'),
+  workflow.replace('sha256sum --check --strict unisane-skopos.sha256', 'echo skipped-digest-check'),
   workflow.replace(
     '    needs: [certify, finalize-candidate-receipt, publish]\n',
     '    needs: publish\n',

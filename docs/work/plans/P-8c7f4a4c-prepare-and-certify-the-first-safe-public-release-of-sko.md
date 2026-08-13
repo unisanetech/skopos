@@ -105,9 +105,11 @@ relatedDocs:
   Ubuntu, macOS, Windows, Node 22.13, and Node 24. Package metadata, version reporting,
   public support documents, and the runtime matrix are implemented. Added a
   manual-only exact-tag publication workflow and executable contract. npm registry
-  checks confirmed that `@skopos/cli` does not yet exist, the local npm client is not
-  authenticated, and no visible `skopos` organization membership is available. The
-  repository is still private and has no `npm-release` environment. Official npm
+  checks confirmed that the planned third-party `@skopos` namespace is unavailable.
+  The accepted clean pre-launch identity is now `@unisane/skopos`, using a
+  company-owned publisher scope without changing the Skopos executable or runtime
+  boundary. At that audit point, the repository was still private and had no
+  `npm-release` environment. Official npm
   behavior also requires a one-time temporary-token bootstrap before OIDC trust can be
   configured for a brand-new package. None of these facts authorize publication.
 - `2026-08-09`: Completed Product Interface Design `0.3.0` smoke and full machine
@@ -125,7 +127,7 @@ relatedDocs:
 
 ## Goal
 
-Prepare and certify the first safe public release of `@skopos/cli@0.1.0` under the
+Prepare and certify the first safe public release of `@unisane/skopos@0.1.0` under the
 `next` npm dist tag without publishing until every product, security, packaging,
 documentation, adoption, and release-proof gate is satisfied from one immutable
 committed candidate.
@@ -149,7 +151,7 @@ into one ordered program and may close only after their relevant gates are satis
 
 ## Fixed Release Contract
 
-1. The first public package is only `@skopos/cli`.
+1. The first public package is only `@unisane/skopos`; its executable remains `skopos`.
 2. The first version is `0.1.0`.
 3. The first publication uses the `next` dist tag, never `latest`.
 4. Internal SDK packages and `@skopos/ui` remain private.
@@ -179,10 +181,10 @@ Current release blockers are:
 
 1. the canonical convergence Plan remains active and the current release scorecard has
    four `no` answers
-2. the GitHub repository is private, so npm public-package provenance cannot bind to
-   public source; the `npm-release` environment and its protection rules do not exist
-3. the local npm client is not authenticated, `@skopos/cli` does not exist, and
-   ownership or creation rights for the `@skopos` scope are not certified
+2. public-repository provenance binding and the protected `npm-release` environment
+   must be certified against the exact release candidate
+3. `@unisane/skopos` does not exist yet, and ownership or creation rights for the
+   company-owned `@unisane` scope must be certified before the bootstrap
 4. npm cannot configure trusted publishing for a package that does not yet exist; the
    exact first release therefore needs one temporary-token GitHub bootstrap followed
    immediately by token revocation, OIDC trust configuration, and token disallowance
@@ -297,7 +299,7 @@ Tasks:
    and supported runtime matrix
 2. retain the GitHub-hosted manual publication workflow and create its manually
    approved `npm-release` environment
-3. verify npm `@skopos` ownership, package creation rights, exact
+3. verify npm `@unisane` ownership, package creation rights, exact
    `unisanetech/skopos` repository binding, workflow filename, environment, allowed
    action, protected tags, and publisher permissions
 4. ensure only the tagged commit can produce the published artifact
@@ -352,7 +354,7 @@ that Task after the final scorecard is reviewed.
    responsive, and accessibility
    lanes
 4. pack and compare the artifact identity with the reviewed manifest
-5. publish `@skopos/cli@0.1.0` to `next` through the bounded one-time bootstrap token;
+5. publish `@unisane/skopos@0.1.0` to `next` through the bounded one-time bootstrap token;
    configure and require OIDC trusted publishing for every later version
 6. verify registry metadata, integrity, provenance, and dist tags
 7. run real registry `npx`, `npm exec`, and `pnpm dlx` smoke in clean projects
@@ -392,7 +394,7 @@ Promotion to `latest` requires a separate human-approved Task and all of the fol
 This Plan completes only when:
 
 1. R1–R6 are closed with fresh Evidence
-2. the explicit release Task published and verified `@skopos/cli@0.1.0` on `next`
+2. the explicit release Task published and verified `@unisane/skopos@0.1.0` on `next`
 3. post-release monitoring ownership and escalation paths are active
 4. the release result, limitations, registry identity, and next promotion decision are
    recorded in durable project Memory

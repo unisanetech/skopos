@@ -109,9 +109,10 @@ later support expansion, not a first-release blocker.
 ## Product And Repository Identity
 
 Skopos is governed from `https://github.com/unisanetech/skopos` and released as
-`@skopos/cli`. Company ownership provides durable source and release governance; it
-does not make Skopos part of a Unisane application or introduce Unisane-specific
-runtime dependencies, configuration, Actions, Guards, or product language into core.
+`@unisane/skopos`, with the executable name `skopos`. The company-owned npm scope is
+publisher identity only. It does not make Skopos part of a Unisane application or
+introduce Unisane-specific runtime dependencies, configuration, Actions, Guards, or
+product language into core.
 
 ## Non-Goals
 

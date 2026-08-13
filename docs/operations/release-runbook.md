@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
@@ -21,11 +21,14 @@ relatedDocs:
 # First Public Release And Rollback Runbook
 
 This runbook turns the release Plan into a repeatable operator checklist. It does not
-authorize publication. The first release is only `@skopos/cli@0.1.0` under the npm
+authorize publication. The first release is only `@unisane/skopos@0.1.0` under the npm
 `next` dist tag.
 
 ## Changelog
 
+- `2026-08-14`: Replaced the unavailable third-party `@skopos` npm namespace with the
+  company-owned publisher identity `@unisane/skopos`. The executable remains `skopos`,
+  and the scope creates no Unisane runtime or product coupling.
 - `2026-08-13`: Required every supported runtime cell to install and exercise the same
   digest-bound candidate tarball, required the production website gate to use the
   configured HTTPS origin, and added fail-closed post-publication verification for npm
@@ -110,7 +113,7 @@ After every gate is green, create a separate high-impact `project-integration` r
 Task. It must name:
 
 - candidate commit SHA
-- `@skopos/cli@0.1.0`
+- `@unisane/skopos@0.1.0`
 - `next` dist tag
 - tarball SHA-256 and reviewed file manifest
 - protected trusted-publishing workflow and run
@@ -123,8 +126,9 @@ source licensing, a test run, or this runbook is not approval to publish.
 ## Trusted Release Sequence
 
 The protected GitHub workflow is `.github/workflows/publish.yml`. It is manual-only,
-accepts one exact tag, defaults to certification without publication, refuses dispatch
-from anything except `main`, and always uses the `npm-release` environment.
+accepts one exact tag, defaults to certification without publication, and refuses
+dispatch from anything except `main`. Certification is non-publishing and does not use
+release credentials; only the publication job enters the `npm-release` environment.
 Before certification, configure the repository variable `SKOPOS_PUBLIC_SITE_URL` to
 the one reviewed public HTTPS origin with no path or trailing slash. A missing,
 non-HTTPS, or path-bearing value fails the independent website gate.
@@ -137,18 +141,20 @@ endpoint and fails unless its SHA equals the tagged candidate.
 
 npm trusted publishing cannot create a brand-new package: npm requires the package to
 exist before a trusted publisher can be configured. Staged publishing has the same
-first-package restriction. Therefore `@skopos/cli@0.1.0` needs one explicit bootstrap;
-describing its first publication as pure OIDC would be incorrect.
+first-package restriction. Therefore `@unisane/skopos@0.1.0` needs one explicit
+bootstrap; describing its first publication as pure OIDC would be incorrect.
 
 After every R1–R6 gate and the exact release Task receive human approval:
 
 1. make the GitHub repository public so npm provenance can bind the public package to
    public source
-2. confirm npm account 2FA, create or verify the `skopos` npm organization, and confirm
+2. confirm npm account 2FA, verify the `unisane` npm organization, and confirm
    the publishing user can create public packages in that scope
-3. create the GitHub `npm-release` environment before running the workflow; restrict it
-   to release tags, require manual approval, prevent self-review when a second qualified
-   reviewer exists, and disable administrator bypass where the repository plan permits
+3. create the GitHub `npm-release` environment before running the workflow; allow only
+   the protected `main` branch because the manual workflow is dispatched from `main`
+   and separately verifies the immutable release tag, require manual approval, prevent
+   self-review when a second qualified reviewer exists, and disable administrator
+   bypass where the repository plan permits
 4. create one short-expiry granular npm token with bypass-2FA solely for the first
    package bootstrap; place it only in the protected environment as
    `NPM_BOOTSTRAP_TOKEN`
@@ -182,7 +188,7 @@ The protected GitHub workflow must:
 6. fail closed after publication unless machine verification records npm integrity,
    provenance, repository binding, maintainers, and dist tags and proves the downloaded
    registry tarball is byte-identical to the certified candidate digest
-7. execute `@skopos/cli@next` through real-registry `npx`, `npm exec`, and `pnpm dlx`
+7. execute `@unisane/skopos@next` through real-registry `npx`, `npm exec`, and `pnpm dlx`
    in clean projects
 8. exercise the registry-installed lifecycle and bundled UI and preserve
    `published-registry-verification.json`
@@ -195,11 +201,11 @@ Never set `latest` during this sequence.
 Verify and record:
 
 ```bash
-npm view @skopos/cli@0.1.0 version dist.integrity dist.tarball repository --json
-npm view @skopos/cli dist-tags --json
-npx @skopos/cli@next --version
-npm exec --package @skopos/cli@next -- skopos --version
-pnpm dlx @skopos/cli@next --version
+npm view @unisane/skopos@0.1.0 version dist.integrity dist.tarball repository --json
+npm view @unisane/skopos dist-tags --json
+npx @unisane/skopos@next --version
+npm exec --package @unisane/skopos@next -- skopos --version
+pnpm dlx @unisane/skopos@next --version
 ```
 
 The expected version is `0.1.0`; `next` must point to it and `latest` must not be

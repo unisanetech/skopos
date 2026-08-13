@@ -11,7 +11,7 @@ provenance: accepted
 view: current
 date: 2026-08-13
 implementationStatus: implemented
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../domains/product/positioning.md
   - ../domains/product/vision.md
@@ -27,6 +27,10 @@ reviewCycle: before adding a supported host or changing repository ownership
 
 ## Changelog
 
+- `2026-08-14`: Bound the first public package to the company-owned npm identity
+  `@unisane/skopos` after confirming the third-party `@skopos` namespace is
+  unavailable. The executable and product remain `skopos` and Skopos; npm publisher
+  identity creates no Unisane runtime or product coupling.
 - `2026-08-13`: Completed the private repository transfer. The existing repository,
   reviewed candidate branch, package provenance, and both verified local checkouts now
   resolve to `unisanetech/skopos`; the former personal URL redirects to that repository.
@@ -54,7 +58,8 @@ long-term multi-host target with the support actually claimed at launch.
 2. The existing repository is transferred instead of replaced so its Git history,
    issues, pull requests, and redirect continuity are preserved.
 3. `unisanetech` owns repository governance and release provenance. The product name
-   remains Skopos and the public package remains `@skopos/cli`.
+   remains Skopos, the executable remains `skopos`, and the public npm package is
+   `@unisane/skopos` because the third-party `@skopos` namespace is unavailable.
 4. Skopos remains a standalone, project-agnostic product and repository. Company
    ownership introduces no Unisane runtime dependency, product workflow, private
    registry requirement, adopter-specific Action, Guard, path, or policy into core.
@@ -72,7 +77,7 @@ deleting the prior local checkout.
 
 ### First-Release Host Support
 
-The first `@skopos/cli@0.1.0` release uses this public support matrix:
+The first `@unisane/skopos@0.1.0` release uses this public support matrix:
 
 | Host | First-release status | Allowed claim |
 | --- | --- | --- |

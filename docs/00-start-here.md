@@ -9,7 +9,7 @@ lifecycle: active
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - decisions/D-20260812-intelligent-project-onboarding-contract.md
@@ -37,6 +37,9 @@ Skopos.
 
 ## Changelog
 
+- `2026-08-14`: Recorded the clean pre-launch npm identity `@unisane/skopos` after the
+  third-party `@skopos` namespace proved unavailable. The binary remains `skopos`, and
+  company-owned publisher identity does not change the standalone product boundary.
 - `2026-08-13`: Added the company-owned repository and truthful first-release host
   support boundary. The launch certifies Codex only; other generated host projections
   remain explicitly unverified until real-host Evidence exists.

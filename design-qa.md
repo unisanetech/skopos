@@ -147,7 +147,7 @@ interaction gaps recorded in Passes 13 and 14 with fresh browser evidence.
 - Replaced the generic hero CTA pair with one compact, copyable onboarding surface.
   The default tab gives a coding agent a guarded existing-project setup brief organized
   as Understand, Review, and Apply. The second tab shows the planned first-release
-  `@skopos/cli@next` installation flow through the unified `skopos setup` command.
+  `@unisane/skopos@next` installation flow through the unified `skopos setup` command.
 - The visible release state now says the first release targets npm `@next`; it does not
   claim the unpublished package is already available. The planned package identifier
   remains visible beside the tabs without competing with the headline.

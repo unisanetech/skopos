@@ -66,7 +66,7 @@ jobs:
           test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
           git fetch --no-tags origin main
           git merge-base --is-ancestor HEAD origin/main
-          node -e "const p=require('./packages/cli/package.json'); const tag=process.env.RELEASE_TAG.slice(1); if(p.name!=='@skopos/cli'||p.version!==tag||p.publishConfig?.access!=='public'||p.publishConfig?.tag!=='next'||p.repository?.url!=='git+https://github.com/unisanetech/skopos.git') process.exit(1)"
+          node -e "const p=require('./packages/cli/package.json'); const tag=process.env.RELEASE_TAG.slice(1); if(p.name!=='@unisane/skopos'||p.version!==tag||p.bin?.skopos!=='dist/cli.js'||p.publishConfig?.access!=='public'||p.publishConfig?.tag!=='next'||p.repository?.url!=='git+https://github.com/unisanetech/skopos.git') process.exit(1)"
           test "$(npm --version)" = "11.15.0"
           echo "candidate_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "package_version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
@@ -114,25 +114,25 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .release/packed
-          pnpm --filter @skopos/cli pack --pack-destination "$GITHUB_WORKSPACE/.release/packed" --json > .release/pack.json
-          test "$(find .release/packed -maxdepth 1 -name "skopos-cli-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
-          (cd .release && sha256sum "packed/skopos-cli-${PACKAGE_VERSION}.tgz" > skopos-cli.sha256)
+          pnpm --filter @unisane/skopos pack --pack-destination "$GITHUB_WORKSPACE/.release/packed" --json > .release/pack.json
+          test "$(find .release/packed -maxdepth 1 -name "unisane-skopos-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
+          (cd .release && sha256sum "packed/unisane-skopos-${PACKAGE_VERSION}.tgz" > unisane-skopos.sha256)
 
       - name: Prove packed installation from the one reviewed artifact
         env:
-          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/skopos-cli-${{ steps.identity.outputs.package_version }}.tgz
+          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/unisane-skopos-${{ steps.identity.outputs.package_version }}.tgz
         run: pnpm release:smoke:artifact
 
       - name: Prove the reviewed artifact is publishable without publishing
         run: |
-          npm publish ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --tag next --access public --dry-run
+          npm publish ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --tag next --access public --dry-run
 
       - name: Write the provisional core candidate receipt
         run: |
           pnpm release:receipt:write -- \
             --candidate-sha "${{ steps.identity.outputs.candidate_sha }}" \
             --tag "${{ inputs.tag }}" \
-            --tarball ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" \
+            --tarball ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" \
             --reconstruction ".release/evidence/clean-checkout-reconstruction.json" \
             --setup ".release/evidence/unified-setup-reconstruction.json" \
             --web ".release/evidence/production-web.json" \
@@ -141,11 +141,11 @@ jobs:
       - name: Preserve the reviewed candidate artifact and manifest
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-publish-candidate-${{ steps.identity.outputs.candidate_sha }}
+          name: unisane-skopos-publish-candidate-${{ steps.identity.outputs.candidate_sha }}
           path: |
             .release/pack.json
-            .release/skopos-cli.sha256
-            .release/packed/skopos-cli-${{ steps.identity.outputs.package_version }}.tgz
+            .release/unisane-skopos.sha256
+            .release/packed/unisane-skopos-${{ steps.identity.outputs.package_version }}.tgz
             .release/evidence/clean-checkout-reconstruction.json
             .release/evidence/unified-setup-reconstruction.json
             .release/evidence/production-web.json
@@ -196,18 +196,18 @@ jobs:
       - name: Download the one reviewed artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
       - name: Verify, extract, and install the reviewed artifact
         shell: bash
         run: |
           set -euo pipefail
-          (cd .release && sha256sum --check --strict skopos-cli.sha256)
+          (cd .release && sha256sum --check --strict unisane-skopos.sha256)
           mkdir -p .release/package .release/install
-          tar -xzf ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" -C .release/package
+          tar -xzf ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" -C .release/package
           node -e "require('node:fs').writeFileSync('.release/install/package.json', '{\"name\":\"@skopos/release-proof\",\"version\":\"0.0.0\",\"private\":true,\"license\":\"Apache-2.0\",\"type\":\"module\"}\n')"
-          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
+          npm install --prefix .release/install "$GITHUB_WORKSPACE/.release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
 
       - name: Install checksum-pinned known-good Gitleaks
         shell: bash
@@ -250,22 +250,22 @@ jobs:
         with:
           path: .release/install
           format: cyclonedx-json
-          output-file: .release/evidence/skopos-cli.cdx.json
+          output-file: .release/evidence/unisane-skopos.cdx.json
           upload-artifact: false
           upload-release-assets: false
 
       - name: Validate and record exact-SHA security proof
         shell: bash
         run: |
-          node -e "const fs=require('node:fs');const x=require('./.release/evidence/skopos-cli.cdx.json');const digest=fs.readFileSync('.release/skopos-cli.sha256','utf8').trim().split(/\s+/)[0];if(x.bomFormat!=='CycloneDX'||!Array.isArray(x.components)||x.components.length===0||!/^[a-f0-9]{64}$/.test(digest))process.exit(1);fs.writeFileSync('.release/evidence/exact-candidate-security.json',JSON.stringify({schemaVersion:1,kind:'skopos.exact-candidate-security',candidateCommit:process.env.CANDIDATE_SHA,packageVersion:process.env.PACKAGE_VERSION,tarballSha256:digest,sourceAudit:'passed',historySecretScan:'passed',artifactSecretScan:'passed',licenseReview:'passed',sbom:'passed'},null,2)+'\n')"
+          node -e "const fs=require('node:fs');const x=require('./.release/evidence/unisane-skopos.cdx.json');const digest=fs.readFileSync('.release/unisane-skopos.sha256','utf8').trim().split(/\s+/)[0];if(x.bomFormat!=='CycloneDX'||!Array.isArray(x.components)||x.components.length===0||!/^[a-f0-9]{64}$/.test(digest))process.exit(1);fs.writeFileSync('.release/evidence/exact-candidate-security.json',JSON.stringify({schemaVersion:1,kind:'skopos.exact-candidate-security',candidateCommit:process.env.CANDIDATE_SHA,packageVersion:process.env.PACKAGE_VERSION,tarballSha256:digest,sourceAudit:'passed',historySecretScan:'passed',artifactSecretScan:'passed',licenseReview:'passed',sbom:'passed'},null,2)+'\n')"
 
       - name: Preserve exact-candidate security evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
           path: |
             .release/evidence/licenses.json
-            .release/evidence/skopos-cli.cdx.json
+            .release/evidence/unisane-skopos.cdx.json
             .release/evidence/exact-candidate-security.json
           include-hidden-files: true
           if-no-files-found: error
@@ -326,27 +326,27 @@ jobs:
       - name: Download the one reviewed artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
       - name: Verify, install, and exercise the reviewed artifact
         shell: bash
         run: |
           set -euo pipefail
-          node -e "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=process.env.GITHUB_WORKSPACE;const tarball=path.join(root,'.release','packed','skopos-cli-'+process.env.PACKAGE_VERSION+'.tgz');const expected=fs.readFileSync(path.join(root,'.release','skopos-cli.sha256'),'utf8').trim().split(/\s+/)[0];const actual=crypto.createHash('sha256').update(fs.readFileSync(tarball)).digest('hex');if(actual!==expected)process.exit(1);fs.appendFileSync(process.env.GITHUB_ENV,'TARBALL_SHA='+actual+'\n')"
+          node -e "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');const root=process.env.GITHUB_WORKSPACE;const tarball=path.join(root,'.release','packed','unisane-skopos-'+process.env.PACKAGE_VERSION+'.tgz');const expected=fs.readFileSync(path.join(root,'.release','unisane-skopos.sha256'),'utf8').trim().split(/\s+/)[0];const actual=crypto.createHash('sha256').update(fs.readFileSync(tarball)).digest('hex');if(actual!==expected)process.exit(1);fs.appendFileSync(process.env.GITHUB_ENV,'TARBALL_SHA='+actual+'\n')"
           node -e "const fs=require('node:fs');fs.mkdirSync('.release/runtime-project/src',{recursive:true});fs.writeFileSync('.release/runtime-project/package.json',JSON.stringify({name:'skopos-exact-runtime-proof',version:'0.0.0',private:true,type:'module'},null,2)+'\n');fs.writeFileSync('.release/runtime-project/src/index.ts','export {};\n')"
-          npm install --prefix .release/runtime-project ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
-          test "$(node .release/runtime-project/node_modules/@skopos/cli/dist/cli.js --version)" = "$PACKAGE_VERSION"
-          node .release/runtime-project/node_modules/@skopos/cli/dist/cli.js --help > .release/runtime-help.txt
+          npm install --prefix .release/runtime-project ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --omit=dev --ignore-scripts
+          test "$(node .release/runtime-project/node_modules/@unisane/skopos/dist/cli.js --version)" = "$PACKAGE_VERSION"
+          node .release/runtime-project/node_modules/@unisane/skopos/dist/cli.js --help > .release/runtime-help.txt
           grep -q "skopos setup" .release/runtime-help.txt
-          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js setup . --actor exact-runtime-proof --json > ../runtime-setup.json)
-          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js session context . --actor exact-runtime-proof --json > ../runtime-session.json)
-          (cd .release/runtime-project && node node_modules/@skopos/cli/dist/cli.js ui build . --output-dir .skopos/release-ui --json > ../runtime-ui.json)
+          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js setup . --actor exact-runtime-proof --json > ../runtime-setup.json)
+          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js session context . --actor exact-runtime-proof --json > ../runtime-session.json)
+          (cd .release/runtime-project && node node_modules/@unisane/skopos/dist/cli.js ui build . --output-dir .skopos/release-ui --json > ../runtime-ui.json)
           node -e "const fs=require('node:fs'),path=require('node:path');for(const p of ['.release/runtime-setup.json','.release/runtime-session.json']){const x=JSON.parse(fs.readFileSync(p,'utf8'));if(!x||typeof x!=='object')process.exit(1)}const ui=JSON.parse(fs.readFileSync('.release/runtime-ui.json','utf8'));for(const p of [ui.entryHtmlPath,ui.statePath,ui.searchIndexPath]){if(typeof p!=='string'||!fs.existsSync(path.resolve('.release/runtime-project',p)))process.exit(1)}if(!Array.isArray(ui.assetPaths)||ui.assetPaths.length===0)process.exit(1)"
 
       - name: Prove build, package boundary, and canonical lifecycle
         env:
-          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/skopos-cli-${{ needs.certify.outputs.package_version }}.tgz
+          SKOPOS_RELEASE_TARBALL: ${{ github.workspace }}/.release/packed/unisane-skopos-${{ needs.certify.outputs.package_version }}.tgz
         run: |
           pnpm build
           pnpm release:check
@@ -359,7 +359,7 @@ jobs:
       - name: Preserve the exact runtime Evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-runtime-${{ needs.certify.outputs.candidate_sha }}-${{ matrix.os }}-${{ matrix.node }}
+          name: unisane-skopos-runtime-${{ needs.certify.outputs.candidate_sha }}-${{ matrix.os }}-${{ matrix.node }}
           path: .release/evidence/runtime-${{ matrix.os }}-${{ matrix.node }}.json
           include-hidden-files: true
           if-no-files-found: error
@@ -392,19 +392,19 @@ jobs:
       - name: Download core candidate Evidence and reviewed artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
       - name: Download exact-candidate security Evidence
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-exact-candidate-security-${{ needs.certify.outputs.candidate_sha }}
           path: .release/security
 
       - name: Download the complete exact-candidate runtime matrix
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          pattern: skopos-cli-runtime-${{ needs.certify.outputs.candidate_sha }}-*
+          pattern: unisane-skopos-runtime-${{ needs.certify.outputs.candidate_sha }}-*
           path: .release/runtime
           merge-multiple: true
 
@@ -413,11 +413,11 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$CANDIDATE_SHA"
-          (cd .release && sha256sum --check --strict skopos-cli.sha256)
+          (cd .release && sha256sum --check --strict unisane-skopos.sha256)
           node scripts/release/write-candidate-certification-receipt.mjs \
             --candidate-sha "$CANDIDATE_SHA" \
             --tag "${{ inputs.tag }}" \
-            --tarball ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" \
+            --tarball ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" \
             --reconstruction ".release/evidence/clean-checkout-reconstruction.json" \
             --setup ".release/evidence/unified-setup-reconstruction.json" \
             --web ".release/evidence/production-web.json" \
@@ -428,7 +428,7 @@ jobs:
       - name: Preserve the final immutable candidate receipt
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-final-certification-${{ needs.certify.outputs.candidate_sha }}
           path: .release/final/candidate-certification.json
           include-hidden-files: true
           if-no-files-found: error
@@ -445,7 +445,7 @@ jobs:
       id-token: write
     environment:
       name: npm-release
-      url: https://www.npmjs.com/package/@skopos/cli
+      url: https://www.npmjs.com/package/@unisane/skopos
     env:
       CANDIDATE_SHA: ${{ needs.certify.outputs.candidate_sha }}
       PACKAGE_VERSION: ${{ needs.certify.outputs.package_version }}
@@ -463,13 +463,13 @@ jobs:
       - name: Download the exact certified artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-publish-candidate-${{ needs.certify.outputs.candidate_sha }}
           path: .release
 
       - name: Download the final immutable candidate receipt
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-final-certification-${{ needs.certify.outputs.candidate_sha }}
           path: .release/final
 
       - name: Verify the transferred package identity
@@ -477,11 +477,11 @@ jobs:
         run: |
           set -euo pipefail
           cd .release
-          sha256sum --check --strict skopos-cli.sha256
-          test "$(find packed -maxdepth 1 -name "skopos-cli-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
-          node -e "const fs=require('node:fs');const r=require('./final/candidate-certification.json');const digest=fs.readFileSync('skopos-cli.sha256','utf8').trim().split(/\s+/)[0];if(r.kind!=='skopos.release-candidate-certification'||r.candidateCommit!==process.env.CANDIDATE_SHA||r.artifact?.sha256!==digest||r.effectiveGateResult?.passed!==20||r.effectiveGateResult?.pending!==0||r.effectiveGateResult?.failed!==0)process.exit(1)"
-          tar -xOf "packed/skopos-cli-${PACKAGE_VERSION}.tgz" package/package.json > package.json
-          node -e "const p=require('./package.json'); if(p.name!=='@skopos/cli'||p.version!==process.env.PACKAGE_VERSION||p.publishConfig?.tag!=='next'||p.publishConfig?.access!=='public') process.exit(1)"
+          sha256sum --check --strict unisane-skopos.sha256
+          test "$(find packed -maxdepth 1 -name "unisane-skopos-${PACKAGE_VERSION}.tgz" -type f | wc -l | tr -d ' ')" = "1"
+          node -e "const fs=require('node:fs');const r=require('./final/candidate-certification.json');const digest=fs.readFileSync('unisane-skopos.sha256','utf8').trim().split(/\s+/)[0];if(r.kind!=='skopos.release-candidate-certification'||r.candidateCommit!==process.env.CANDIDATE_SHA||r.package?.name!=='@unisane/skopos'||r.artifact?.sha256!==digest||r.effectiveGateResult?.passed!==20||r.effectiveGateResult?.pending!==0||r.effectiveGateResult?.failed!==0)process.exit(1)"
+          tar -xOf "packed/unisane-skopos-${PACKAGE_VERSION}.tgz" package/package.json > package.json
+          node -e "const p=require('./package.json'); if(p.name!=='@unisane/skopos'||p.version!==process.env.PACKAGE_VERSION||p.bin?.skopos!=='dist/cli.js'||p.publishConfig?.tag!=='next'||p.publishConfig?.access!=='public') process.exit(1)"
 
       - name: Bootstrap the first package with a temporary token
         if: inputs.mode == 'bootstrap-publish'
@@ -491,7 +491,7 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$NODE_AUTH_TOKEN"
-          npm publish ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --tag next --access public --provenance
+          npm publish ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --tag next --access public --provenance
 
       - name: Publish an existing package through npm trusted publishing
         if: inputs.mode == 'oidc-publish'
@@ -499,7 +499,7 @@ jobs:
         run: |
           set -euo pipefail
           test -z "${NODE_AUTH_TOKEN:-}"
-          npm publish ".release/packed/skopos-cli-${PACKAGE_VERSION}.tgz" --tag next --access public
+          npm publish ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --tag next --access public
 
   verify-published-registry:
     name: Verify registry identity and installed lifecycle
@@ -537,7 +537,7 @@ jobs:
       - name: Download the immutable candidate receipt
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: skopos-cli-final-certification-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-final-certification-${{ needs.certify.outputs.candidate_sha }}
           path: .release/final
 
       - name: Verify registry metadata, launchers, lifecycle, and bundled UI
@@ -551,7 +551,7 @@ jobs:
       - name: Preserve published-registry Evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: skopos-cli-published-registry-${{ needs.certify.outputs.candidate_sha }}
+          name: unisane-skopos-published-registry-${{ needs.certify.outputs.candidate_sha }}
           path: .release/evidence/published-registry-verification.json
           include-hidden-files: true
           if-no-files-found: error

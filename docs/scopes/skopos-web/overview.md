@@ -19,7 +19,7 @@ reviewCycle: when public product behavior changes
 
 `apps/web` is the public Skopos product website. Its first route explains the product
 through one truthful coding-agent workstream. The checked-in homepage candidate names
-`@skopos/cli@next` as the planned first-release channel without claiming that the
+`@unisane/skopos@next` as the planned first-release channel without claiming that the
 package is already published.
 
 ## Changelog
@@ -38,7 +38,7 @@ package is already published.
    Skopos runtime.
 4. The first release is static-first and has no authentication, database, application
    API, analytics, or deployment-provider dependency.
-5. Pre-release surfaces may describe `@skopos/cli@next` only as the planned first
+5. Pre-release surfaces may describe `@unisane/skopos@next` only as the planned first
    release. They must not say the package is available until registry verification
    passes.
 6. Production builds require `NEXT_PUBLIC_SITE_URL` to contain the deployed HTTPS

@@ -108,7 +108,7 @@ export const quickstartModes = {
     prompt:
       "Set up Skopos in this repository. First inspect the source, existing documentation, project instructions, and working commands. Do not restructure or overwrite anything yet. Show me what is canonical, what conflicts, what is missing, and the proposed Project Memory structure before applying changes.",
     commands: [
-      "npm install --save-dev @skopos/cli@next",
+      "npm install --save-dev @unisane/skopos@next",
       "npx skopos setup . --actor <id>",
       "npx skopos setup review . --actor <id>",
       "npx skopos setup resume . --actor <id>",
@@ -128,7 +128,7 @@ export const quickstartModes = {
     prompt:
       "Set up Skopos for this new project. Help me define the project purpose, initial Scope, durable decisions, and working checks before implementation. Keep project truth in the repository and show me the proposed structure.",
     commands: [
-      "npm install --save-dev @skopos/cli@next",
+      "npm install --save-dev @unisane/skopos@next",
       "npx skopos setup . --actor <id>",
       "npx skopos setup review . --actor <id>",
       "npx skopos setup resume . --actor <id>",

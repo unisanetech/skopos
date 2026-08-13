@@ -33,7 +33,7 @@ reviewCycle: when package ownership changes
 | `@skopos/instructions` | communication contract, mirrors, host projections |
 | `@skopos/verification` | workspace identity, change scope, Evidence and Readiness primitives |
 | `@skopos/runtime` | application use cases and orchestration |
-| `@skopos/cli` | command-line surface |
+| `@unisane/skopos` | command-line workspace and first public package surface |
 | `@skopos/mcp` | model-context-protocol surface |
 | `@skopos/ui` | internal human projection |
 

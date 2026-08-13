@@ -10,7 +10,7 @@ authority: canonical
 provenance: accepted
 view: target
 implementationStatus: convergence-and-release-proof-in-progress
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../../decisions/D-20260812-intelligent-project-onboarding-contract.md
@@ -42,6 +42,10 @@ reviewCycle: per phase
 
 ## Changelog
 
+- `2026-08-14`: Bound the first public artifact to `@unisane/skopos` after confirming
+  the third-party `@skopos` npm namespace is unavailable. The executable remains
+  `skopos`; company-owned publisher identity creates no Unisane runtime, product, or
+  adopter coupling.
 - `2026-08-13`: Reconciled the host-neutral target with the first-release support
   boundary. Codex is the sole real-host-certified launch adapter; every later host
   support claim requires its own current real-host Evidence. Claude Code, Cursor, and
@@ -1323,7 +1327,7 @@ fixtures, snapshots, help output, and installed-package smoke must agree.
 | `@skopos/instructions` | host-neutral lifecycle and projections |
 | current trust package | Evidence, Verify, Readiness, and closure |
 | `@skopos/runtime` | Task, Work Queue, Actions, coordination broker, adoption |
-| `@skopos/cli` | canonical command surface |
+| `@unisane/skopos` | canonical command surface and first public package |
 | `@skopos/mcp` | canonical semantic tools |
 | `@skopos/ui` | Tasks, Plans, Actions, Evidence, Readiness, Sessions |
 | fixtures/evals | full cross-project and concurrency proof |

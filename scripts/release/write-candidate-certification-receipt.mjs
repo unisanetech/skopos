@@ -25,6 +25,11 @@ export const buildCandidateCertificationReceipt = ({
 }) => {
   assert.match(candidateCommit, /^[a-f0-9]{40}$/u, 'Candidate commit must be a full Git SHA.');
   assert.match(releaseTag, /^v\d+\.\d+\.\d+$/u, 'Release tag must be an exact semver tag.');
+  assert.equal(
+    tarballName,
+    `unisane-skopos-${releaseTag.slice(1)}.tgz`,
+    'Candidate tarball name must match the @unisane/skopos package identity.',
+  );
 
   const scorecard = validatePreCandidateReleaseGates(scorecardSource);
   const reconstruction = JSON.parse(reconstructionSource);
@@ -174,7 +179,7 @@ export const buildCandidateCertificationReceipt = ({
     candidateCommit,
     releaseTag,
     package: {
-      name: '@skopos/cli',
+      name: '@unisane/skopos',
       version: releaseTag.slice(1),
       distTag: 'next',
     },

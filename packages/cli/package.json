@@ -1,5 +1,5 @@
 {
-  "name": "@skopos/cli",
+  "name": "@unisane/skopos",
   "version": "0.1.0",
   "private": false,
   "type": "module",

@@ -21,7 +21,7 @@ reviewCycle: before every public package release or imported-source change
 
 ## Release Boundary
 
-The first public artifact is the bundled `@skopos/cli` npm package. GitHub source and
+The first public artifact is the bundled `@unisane/skopos` npm package. GitHub source and
 the npm tarball are separate review surfaces:
 
 1. the repository review covers authored source, fixtures, licenses, and provenance
@@ -83,7 +83,7 @@ On 2026-08-09, during the public-release hardening review, the copyright owner
 confirmed ownership of Unisane UI and explicitly authorized the Unisane UI source
 copied into Skopos for distribution under Apache-2.0. That authorization covers the
 source-installed UI implementation under `packages/ui/src/**`, its token and theme
-baseline, and the corresponding compiled object code bundled into `@skopos/cli`.
+baseline, and the corresponding compiled object code bundled into `@unisane/skopos`.
 Those files are distributed under the repository's root Apache-2.0 `LICENSE`.
 
 The copied UI source is therefore certified as Apache-2.0-compatible for this release

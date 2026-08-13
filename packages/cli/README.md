@@ -35,15 +35,15 @@ documented in the repository.
 Run one of these commands inside the project you want Skopos to understand:
 
 ```bash
-npx @skopos/cli@next setup .
+npx @unisane/skopos@next setup .
 ```
 
 ```bash
-pnpm dlx @skopos/cli@next setup .
+pnpm dlx @unisane/skopos@next setup .
 ```
 
 ```bash
-npm exec --package @skopos/cli@next -- skopos setup .
+npm exec --package @unisane/skopos@next -- skopos setup .
 ```
 
 Then load a compact project briefing:
@@ -52,7 +52,7 @@ Then load a compact project briefing:
 skopos session context . --actor <your-agent-id> --json
 ```
 
-If you prefer a project-local installation, install `@skopos/cli@next` as a development
+If you prefer a project-local installation, install `@unisane/skopos@next` as a development
 dependency and run it through your package manager.
 
 ## A Typical Workflow

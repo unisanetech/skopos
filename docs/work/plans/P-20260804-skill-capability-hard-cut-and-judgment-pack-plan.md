@@ -249,8 +249,9 @@ reviewCycle: per phase
   Task, executable declarations match commands, and containment wording is limited to
   the paths and environment controls the harness actually observes.
 - `2026-08-05`: Completed packed non-Skopos adoption for Product UI Craft. One canonical
-  harness now packs `@skopos/cli`, runs a minimal external fixture and sanitized Billquest
-  copy outside both checkouts, proves six fixtures, exact binding and host projections,
+  harness now packs the CLI (now `@unisane/skopos`), runs a minimal external fixture
+  and sanitized Billquest copy outside both checkouts, proves six fixtures, exact
+  binding and host projections,
   relevant and irrelevant Task context, module-local capabilities, cache reuse and
   invalidation, and rejects observed source, link, environment, and Skopos-path
   containment leaks.

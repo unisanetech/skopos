@@ -34,7 +34,7 @@ pack unsafe or unpackageable.
 
 ## Decision
 
-1. Product Interface Design `0.5.0` is publishable in `@skopos/cli@0.1.0` under the
+1. Product Interface Design `0.5.0` is publishable in `@unisane/skopos@0.1.0` under the
    `next` dist tag.
 2. Certified efficacy is **no**. Release notes and product copy must not claim proven
    improvement, independent human validation, or superiority over an unassisted agent.

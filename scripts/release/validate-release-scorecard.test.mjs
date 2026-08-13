@@ -68,7 +68,7 @@ describe('public-release scorecard guard', () => {
     const receipt = buildCandidateCertificationReceipt({
       candidateCommit,
       releaseTag: 'v0.1.0',
-      tarballName: 'skopos-cli-0.1.0.tgz',
+      tarballName: 'unisane-skopos-0.1.0.tgz',
       tarballBytes: Buffer.from('reviewed tarball'),
       scorecardSource: source,
       reconstructionSource: JSON.stringify({
@@ -122,7 +122,7 @@ describe('public-release scorecard guard', () => {
     const finalReceipt = buildCandidateCertificationReceipt({
       candidateCommit,
       releaseTag: 'v0.1.0',
-      tarballName: 'skopos-cli-0.1.0.tgz',
+      tarballName: 'unisane-skopos-0.1.0.tgz',
       tarballBytes: Buffer.from('reviewed tarball'),
       scorecardSource: source,
       reconstructionSource: JSON.stringify({

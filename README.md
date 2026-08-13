@@ -346,9 +346,9 @@ a blocker for the first `next` release; broader Skill-catalog expansion remains 
 that release. See the [first public release scorecard](docs/operations/first-public-release-scorecard.md)
 and [Product Interface Design efficacy Finding](docs/findings/F-20260804-skill-selection-proof-and-portability-gap.md).
 
-Before publication, Skopos must also configure the external npm scope, manually
-approved GitHub release environment, one-time first-package bootstrap, OIDC trust, and
-final clean-clone/immutable-candidate gates in the
+Before publication, Skopos must also certify the company-owned `@unisane` npm scope,
+manually approved GitHub release environment, one-time first-package bootstrap, OIDC
+trust, and final clean-clone/immutable-candidate gates in the
 [first public release Plan](docs/work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md).
 
 The first release claims Codex support only. Claude Code, Cursor, and GitHub Copilot

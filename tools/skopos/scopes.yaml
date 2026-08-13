@@ -31,7 +31,7 @@ scopes:
     owners:
       - skopos-core
     aliases:
-      - "@skopos/cli"
+      - "@unisane/skopos"
 
   - id: skopos-config
     title: Skopos Config

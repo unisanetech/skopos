@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - 00-architecture.md
   - artifact-model.md
@@ -33,6 +33,9 @@ Host integrations vary; project truth and lifecycle semantics do not.
 
 ## Changelog
 
+- `2026-08-14`: Recorded `@unisane/skopos` as the first public npm identity while
+  preserving `skopos` as the executable and preserving the standalone, host-neutral
+  runtime contract.
 - `2026-08-13`: Separated host-neutral lifecycle projection from public support
   certification. Codex is the only real-host-certified first-release adapter; other
   projections remain unverified until their own real-host proof exists.

@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: declared
 view: current
-lastUpdated: 2026-08-12
+lastUpdated: 2026-08-14
 relatedDocs:
   - 00-architecture.md
   - docs-governance.md
@@ -26,6 +26,9 @@ Skopos distinguishes tracked project truth from rebuildable local projections.
 
 ## Changelog
 
+- `2026-08-14`: Clarified that the company-owned npm name `@unisane/skopos` identifies
+  the release artifact only; tracked project truth and local runtime ownership remain
+  Skopos-native and project-agnostic.
 - `2026-08-12`: Defined setup as resumable local workflow state whose accepted
   outcomes promote to existing tracked owners. Rejected and deferred recommendations
   remain subsystem-owned dispositions rather than an omnibus setup authority.

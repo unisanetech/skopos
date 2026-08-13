@@ -30,8 +30,15 @@ Skopos packages must remain narrow, explicit, and free from ownership drift.
   link contract. Kept the bundled CLI free from publish-time private workspace
   dependencies; workspace imports are build-time dependencies bundled into the CLI.
 
-- `2026-06-27`: Added the first-release versioning rule that all packages stay version-aligned at `0.1.0` while only `@skopos/cli@0.1.0` publishes on the `next` dist tag.
-- `2026-06-26`: Updated the release boundary contract so `@skopos/cli` is the first public bundled CLI candidate with Apache-2.0 license metadata while internal SDK and product packages remain private.
+- `2026-08-14`: Bound the clean pre-launch public package to `@unisane/skopos`; the
+  internal workspace package names remain implementation detail and the executable
+  remains `skopos`.
+- `2026-06-27`: Added the first-release versioning rule that all packages stay
+  version-aligned at `0.1.0` while only the bundled CLI publishes on the `next` dist
+  tag.
+- `2026-06-26`: Updated the release boundary contract so the CLI is the first public
+  bundled candidate with Apache-2.0 license metadata while internal SDK and product
+  packages remain private.
 - `2026-06-24`: Classified authored policy, stack, gate, and workflow pack roots as non-package product source roots so built-in intelligence packs do not leak into SDK package discovery.
 - `2026-06-24`: Removed the repo-specific Unisane adapter package from the active package family after moving Skopos to its standalone workspace.
 - `2026-04-10`: Updated the package-boundary contract to require machine-readable package surface metadata and a release-readiness check while all Skopos packages remain private during incubation.
@@ -89,11 +96,13 @@ Current release defaults are:
 
 1. public SDK core and tool surfaces use `releaseTarget: candidate`
 2. internal product surfaces use `releaseTarget: internal-only`
-3. `@skopos/cli` is the first public bundled CLI candidate and must not publish with `@skopos/*` runtime dependencies
+3. `@unisane/skopos` is the first public bundled CLI candidate and must not publish
+   with `@skopos/*` runtime dependencies
 4. all non-CLI packages remain `private: true` until they receive a separate SDK/package release contract
 5. public CLI package metadata must include Apache-2.0 license metadata, a package license file, a `files` whitelist, package README, binary mapping, and `publishConfig` tag/access policy
 6. the first release keeps all package versions aligned at `0.1.0`
-7. the first public CLI package publishes as `@skopos/cli@0.1.0` with npm dist tag `next`
+7. the first public CLI package publishes as `@unisane/skopos@0.1.0` with npm dist tag
+   `next`
 8. `latest` is reserved until the registry-published `next` package passes real install smoke
 
 The release-readiness gate must verify this metadata rather than relying on naming or memory alone.

@@ -22,7 +22,7 @@ describe("Documentation public journey", () => {
   it("provides conversation-first and exact-command setup paths", () => {
     for (const mode of Object.values(quickstartModes)) {
       expect(mode.prompt.length).toBeGreaterThan(100);
-      expect(mode.commands[0]).toBe("npm install --save-dev @skopos/cli@next");
+      expect(mode.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
       expect(mode.commands.some((command) => command.includes("skopos setup"))).toBe(true);
       expect(mode.commands.at(-1)).toBe("npx skopos setup resume . --actor <id>");
       expect(mode.commands.join(" ")).not.toContain("skopos adopt");

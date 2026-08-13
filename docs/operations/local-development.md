@@ -54,7 +54,7 @@ multi-Scope, or long-running work.
 
 ```bash
 pnpm --filter @skopos/<package> check-types
-pnpm --filter @skopos/cli exec vitest run <test-file>
+pnpm --filter @unisane/skopos exec vitest run <test-file>
 pnpm --filter @skopos/ui exec vitest run <test-file>
 ```
 

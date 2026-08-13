@@ -9,15 +9,16 @@ import {
 
 const version = '0.1.0';
 const metadata = {
-  name: '@skopos/cli',
+  name: '@unisane/skopos',
   version,
+  bin: { skopos: 'dist/cli.js' },
   repository: { url: 'git+https://github.com/unisanetech/skopos.git' },
   maintainers: [{ name: 'release-owner' }],
   dist: {
     integrity: 'sha512-fixture',
-    tarball: 'https://registry.npmjs.org/@skopos/cli/-/cli-0.1.0.tgz',
+    tarball: 'https://registry.npmjs.org/@unisane/skopos/-/skopos-0.1.0.tgz',
     attestations: {
-      url: 'https://registry.npmjs.org/-/npm/v1/attestations/@skopos%2fcli@0.1.0',
+      url: 'https://registry.npmjs.org/-/npm/v1/attestations/@unisane%2fskopos@0.1.0',
       provenance: { predicateType: 'https://slsa.dev/provenance/v1' },
     },
   },
@@ -57,6 +58,16 @@ describe('published release verification', () => {
     }));
     assert.throws(() => validatePublishedMetadata({
       metadata: { ...metadata, maintainers: [] },
+      distTags: { next: version },
+      version,
+    }));
+    assert.throws(() => validatePublishedMetadata({
+      metadata: { ...metadata, name: '@example/skopos' },
+      distTags: { next: version },
+      version,
+    }));
+    assert.throws(() => validatePublishedMetadata({
+      metadata: { ...metadata, bin: { other: 'dist/cli.js' } },
       distTags: { next: version },
       version,
     }));

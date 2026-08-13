@@ -58,7 +58,7 @@ assert.match(
   /\n\s+include-hidden-files: true/u,
   'The .release/** Evidence upload must explicitly include hidden paths.',
 );
-assert.match(workflow, /tar -xzf \.release\/packed\/skopos-cli-0\.1\.0\.tgz -C \.release\/package/u);
+assert.match(workflow, /tar -xzf \.release\/packed\/unisane-skopos-0\.1\.0\.tgz -C \.release\/package/u);
 validateGitleaksProof(workflow);
 assert.match(workflow, /find \.release\/package\/package -type f -print -quit/u);
 assert.match(workflow, /format: cyclonedx-json/u);
@@ -68,12 +68,12 @@ assert.match(workflow, /name: Build workspace packages\n\s+run: pnpm build/u);
 assert.match(workflow, /name: Exercise canonical lifecycle and snapshot portability\n\s+run: pnpm proof/u);
 assert.doesNotMatch(
   workflow,
-  /pnpm --filter @skopos\/cli test:e2e/u,
+  /pnpm --filter @unisane\/skopos test:e2e/u,
   'The runtime matrix must use the canonical proof lane, not a nonexistent package script.',
 );
 assert.match(
   workflow,
-  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/skopos-cli-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
+  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/unisane-skopos-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
 );
 assert.doesNotMatch(workflow, /pnpm --dir \.release\/install add/u);
 assert.doesNotMatch(workflow, /--package-lock=false/u);
@@ -84,6 +84,8 @@ for (const os of ['ubuntu-24.04', 'macos-15', 'windows-2025']) {
 for (const node of ["'22.13.0'", "'24'"]) assert.match(workflow, new RegExp(`node: ${node}`));
 
 assert.equal(rootPackage.packageManager, 'pnpm@10.26.0');
+assert.equal(cliPackage.name, '@unisane/skopos');
+assert.deepEqual(cliPackage.bin, { skopos: 'dist/cli.js' });
 assert.equal(cliPackage.engines?.node, '^22.13.0 || ^24.0.0');
 assert.match(copyUiApp, /process\.env\.npm_execpath/u);
 assert.match(copyUiApp, /execFileSync\(process\.execPath/u);

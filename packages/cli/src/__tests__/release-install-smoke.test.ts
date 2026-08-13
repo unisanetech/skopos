@@ -523,13 +523,17 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
 
       const installedPackage = JSON.parse(
         await readFile(
-          join(projectDirectory, 'node_modules', '@skopos', 'cli', 'package.json'),
+          join(projectDirectory, 'node_modules', '@unisane', 'skopos', 'package.json'),
           'utf8',
         ),
       ) as {
+        name?: string;
+        bin?: Record<string, string>;
         dependencies?: Record<string, string>;
         scripts?: Record<string, string>;
       };
+      expect(installedPackage.name).toBe('@unisane/skopos');
+      expect(installedPackage.bin).toEqual({ skopos: 'dist/cli.js' });
       expect(installedPackage.scripts).toBeUndefined();
       expect(
         Object.keys(installedPackage.dependencies ?? {}).filter((name) =>
