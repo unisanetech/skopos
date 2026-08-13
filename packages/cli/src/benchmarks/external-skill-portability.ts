@@ -23,6 +23,27 @@ const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..
 const cliPackageRoot = join(workspaceRoot, 'packages/cli');
 const actor = 'external-skill-portability';
 
+type PnpmInvocation = {
+  command: string;
+  argsPrefix: string[];
+};
+
+export const resolvePnpmInvocation = ({
+  platform = process.platform,
+  packageManagerEntrypoint = process.env.npm_execpath,
+  nodeExecutable = process.execPath,
+}: {
+  platform?: NodeJS.Platform;
+  packageManagerEntrypoint?: string | null;
+  nodeExecutable?: string;
+} = {}): PnpmInvocation =>
+  packageManagerEntrypoint
+    ? { command: nodeExecutable, argsPrefix: [packageManagerEntrypoint] }
+    : {
+        command: platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
+        argsPrefix: [],
+      };
+
 type CommandRecord = {
   command: string;
   cwd: string;
@@ -851,9 +872,17 @@ const installPackedCli = async ({
     );
   }
   try {
+    const pnpm = resolvePnpmInvocation();
     execFileSync(
-      'pnpm',
-      ['add', '--prefer-offline', '--ignore-scripts', '--lockfile=false', tarballPath],
+      pnpm.command,
+      [
+        ...pnpm.argsPrefix,
+        'add',
+        '--prefer-offline',
+        '--ignore-scripts',
+        '--lockfile=false',
+        tarballPath,
+      ],
       { cwd: installRoot, stdio: 'pipe', env: cleanEnvironment(projectRoot) },
     );
   } catch (error) {
@@ -970,9 +999,10 @@ const packCli = (packRoot: string): string => {
   if (process.env.SKOPOS_RELEASE_TARBALL) {
     return resolve(process.env.SKOPOS_RELEASE_TARBALL);
   }
+  const pnpm = resolvePnpmInvocation();
   const output = execFileSync(
-    'pnpm',
-    ['pack', '--pack-destination', packRoot],
+    pnpm.command,
+    [...pnpm.argsPrefix, 'pack', '--pack-destination', packRoot],
     { cwd: cliPackageRoot, encoding: 'utf8', env: cleanEnvironment(packRoot) },
   );
   const reported = output
