@@ -6,12 +6,56 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
-import { runExternalSkillPortability } from '../benchmarks/external-skill-portability.js';
+import {
+  resolvePnpmInvocation,
+  runExternalSkillPortability,
+} from '../benchmarks/external-skill-portability.js';
+import { normalizePortablePath } from '../../scripts/portable-path.mjs';
 
 const workspaceRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 const cliPackageRoot = fileURLToPath(new URL('../..', import.meta.url));
+const isDeferredDesignContextAsset = (path: string): boolean =>
+  normalizePortablePath(path).includes('/design-context/');
 
 describe('packed Skopos CLI', { timeout: 180_000 }, () => {
+  it('resolves pnpm through Node or the platform executable shim', () => {
+    expect(
+      resolvePnpmInvocation({
+        platform: 'win32',
+        packageManagerEntrypoint: String.raw`C:\pnpm\pnpm.cjs`,
+        nodeExecutable: String.raw`C:\node\node.exe`,
+      }),
+    ).toEqual({
+      command: String.raw`C:\node\node.exe`,
+      argsPrefix: [String.raw`C:\pnpm\pnpm.cjs`],
+    });
+    expect(
+      resolvePnpmInvocation({
+        platform: 'win32',
+        packageManagerEntrypoint: null,
+      }),
+    ).toEqual({ command: 'pnpm.cmd', argsPrefix: [] });
+    expect(
+      resolvePnpmInvocation({
+        platform: 'linux',
+        packageManagerEntrypoint: null,
+      }),
+    ).toEqual({ command: 'pnpm', argsPrefix: [] });
+  });
+
+  it('recognizes deferred design-context assets on Windows and POSIX', () => {
+    expect(
+      isDeferredDesignContextAsset(
+        String.raw`ui\product-interface-design\design-context\library.json`,
+      ),
+    ).toBe(true);
+    expect(
+      isDeferredDesignContextAsset(
+        'ui/product-interface-design/design-context/library.json',
+      ),
+    ).toBe(true);
+  });
+
   it('ships the reviewed Skill runtime assets without private data or internal brands', async () => {
     const tempRoot = await mkdtemp(join(tmpdir(), 'skopos-release-content-'));
     const packDirectory = join(tempRoot, 'pack');
@@ -37,12 +81,12 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       const packedSkillAssets = await listRelativeFiles(
         join(packedPackageRoot, 'dist', 'skill-packs'),
       );
-      const deferredDesignContextAssets = sourceSkillAssets.filter((path) =>
-        path.includes('/design-context/'),
+      const deferredDesignContextAssets = sourceSkillAssets.filter(
+        isDeferredDesignContextAsset,
       );
       expect(deferredDesignContextAssets).toHaveLength(4);
       expect(packedSkillAssets).toEqual(
-        sourceSkillAssets.filter((path) => !path.includes('/design-context/')),
+        sourceSkillAssets.filter((path) => !isDeferredDesignContextAsset(path)),
       );
       expect(packedSkillAssets).toHaveLength(38);
       expect(packedSkillAssets).toContain('ui/product-interface-design/pack.json');
@@ -114,7 +158,12 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       await writeFile(join(projectDirectory, 'src', 'index.ts'), 'export {};\n', 'utf8');
 
       const tarballPath = packCli(packDirectory);
-      runChecked('pnpm', ['add', '--prefer-offline', tarballPath], projectDirectory);
+      const pnpm = resolvePnpmInvocation();
+      runChecked(
+        pnpm.command,
+        [...pnpm.argsPrefix, 'add', '--prefer-offline', tarballPath],
+        projectDirectory,
+      );
 
       const help = run(projectDirectory, ['--help']);
       expect(help).toContain('skopos start <goal>');
@@ -769,10 +818,15 @@ const packCli = (packDirectory: string): string => {
   if (process.env.SKOPOS_RELEASE_TARBALL) {
     return resolve(process.env.SKOPOS_RELEASE_TARBALL);
   }
-  const output = execFileSync('pnpm', ['pack', '--pack-destination', packDirectory], {
-    cwd: cliPackageRoot,
-    encoding: 'utf8',
-  });
+  const pnpm = resolvePnpmInvocation();
+  const output = execFileSync(
+    pnpm.command,
+    [...pnpm.argsPrefix, 'pack', '--pack-destination', packDirectory],
+    {
+      cwd: cliPackageRoot,
+      encoding: 'utf8',
+    },
+  );
   const path = output
     .trim()
     .split('\n')
@@ -898,7 +952,7 @@ const listRelativeFiles = async (
     if (entry.isDirectory()) {
       files.push(...await listRelativeFiles(root, absolutePath));
     } else if (entry.isFile()) {
-      files.push(absolutePath.slice(root.length + 1));
+      files.push(normalizePortablePath(absolutePath.slice(root.length + 1)));
     }
   }
   return files.sort();
@@ -929,12 +983,18 @@ const run = (
   cwd: string,
   args: string[],
   environment: NodeJS.ProcessEnv = {},
-): string =>
-  execFileSync('pnpm', ['exec', 'skopos', ...args], {
-    cwd,
-    encoding: 'utf8',
-    env: { ...process.env, ...environment },
-  });
+): string => {
+  const pnpm = resolvePnpmInvocation();
+  return execFileSync(
+    pnpm.command,
+    [...pnpm.argsPrefix, 'exec', 'skopos', ...args],
+    {
+      cwd,
+      encoding: 'utf8',
+      env: { ...process.env, ...environment },
+    },
+  );
+};
 
 const runJson = <T>(
   cwd: string,
