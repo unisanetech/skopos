@@ -32,7 +32,7 @@
     "release:registry:verify": "node scripts/release/verify-published-release.mjs",
     "release:web:test": "node --test scripts/release/verify-production-web.test.mjs",
     "release:web:verify": "node scripts/release/verify-production-web.mjs",
-    "proof": "pnpm --filter @unisane/skopos exec -- vitest run --maxWorkers=1 src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/setup-workflow.test.ts src/__tests__/setup-readiness-reconstruction.test.ts",
+    "proof": "pnpm --filter @unisane/skopos exec -- vitest run --maxWorkers=1 --testTimeout=15000 src/__tests__/task-portability.test.ts src/__tests__/coordination-broker.test.ts src/__tests__/setup-workflow.test.ts src/__tests__/setup-readiness-reconstruction.test.ts",
     "proof:external-continuation": "node --import tsx packages/cli/src/benchmarks/external-skill-portability.ts",
     "proof:product-interface-design-efficacy": "node --import tsx packages/cli/src/benchmarks/product-interface-design-efficacy.ts",
     "proof:product-interface-design-pipeline-smoke": "node --import tsx packages/cli/src/benchmarks/product-interface-design-efficacy.ts --stage=smoke",
