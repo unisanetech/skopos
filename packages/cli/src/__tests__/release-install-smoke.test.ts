@@ -662,9 +662,15 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(artifactRun.outputPaths).toEqual([
         `${artifactRun.artifactRoot}/proof.json`,
       ]);
-      await expect(
-        readFile(join(projectDirectory, artifactRun.outputPaths?.[0] ?? ''), 'utf8'),
-      ).resolves.toContain(artifactRun.artifactRoot);
+      const artifactProof = JSON.parse(
+        await readFile(
+          join(projectDirectory, artifactRun.outputPaths?.[0] ?? ''),
+          'utf8',
+        ),
+      ) as { root?: string };
+      expect(normalizePortablePath(artifactProof.root ?? '')).toContain(
+        artifactRun.artifactRoot,
+      );
 
       const externalRun = runJson<{ status?: string; capabilityIssues?: string[] }>(
         projectDirectory,

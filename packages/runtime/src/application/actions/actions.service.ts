@@ -810,7 +810,8 @@ const preflightActionCapabilities = async (
       continue;
     }
     try {
-      await execFileAsync('/usr/bin/env', ['which', tool]);
+      const lookup = resolveSkoposActionToolLookupInvocation({ tool });
+      await execFileAsync(lookup.executable, lookup.args);
     } catch {
       issues.push(`Required tool ${tool} is unavailable.`);
     }
@@ -836,6 +837,20 @@ const preflightActionCapabilities = async (
   }
   return issues;
 };
+
+export const resolveSkoposActionToolLookupInvocation = ({
+  tool,
+  platform = process.platform,
+}: {
+  tool: string;
+  platform?: NodeJS.Platform;
+}): { executable: string; args: string[] } =>
+  platform === 'win32'
+    ? { executable: 'where.exe', args: [tool] }
+    : { executable: '/usr/bin/env', args: ['which', tool] };
+
+export const normalizeSkoposActionPath = (path: string): string =>
+  path.replaceAll('\\', '/');
 
 type WorkspaceEffectState = Map<string, string>;
 
@@ -1096,5 +1111,5 @@ const slugify = (value: string): string =>
 
 const relativeToWorkspace = (workspaceRoot: string, absolutePath: string): string => {
   const relativePath = relative(workspaceRoot, absolutePath);
-  return relativePath.length > 0 ? relativePath : '.';
+  return normalizeSkoposActionPath(relativePath.length > 0 ? relativePath : '.');
 };
