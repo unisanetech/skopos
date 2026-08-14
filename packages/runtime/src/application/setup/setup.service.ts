@@ -24,6 +24,7 @@ import type {
   SkoposSetupDispositionRuntimeResult,
   SkoposSetupHostDeliveryReceiptArtifact,
   SkoposSetupLane,
+  SkoposSetupMaterialQuestion,
   SkoposSetupRecommendation,
   SkoposSetupRuntimeResult,
   SkoposSetupStateArtifact,
@@ -498,6 +499,8 @@ export const buildSkoposSetupRuntime = async ({
     understanding,
     recommendations,
     dispositions,
+    materialQuestions,
+    actorId,
     setupAnalysis,
   });
   await writeJsonArtifact({
@@ -517,6 +520,11 @@ export const buildSkoposSetupRuntime = async ({
     workspaceRoot,
     stage,
     currentStep: resolveCurrentStep(stage),
+    conversation: buildSetupConversationState({
+      stage,
+      currentQuestion: materialQuestions[0],
+      actorId,
+    }),
     lanes,
     recommendations,
     dispositions,
@@ -531,7 +539,7 @@ export const buildSkoposSetupRuntime = async ({
     hostDeliveryReceiptPath,
     nextCommand: resolveNextCommand({
       stage,
-      agentBriefPath: understanding.agentAnalysisBriefPath,
+      currentQuestion: materialQuestions[0],
       actorId,
       host,
       sessionId,
@@ -569,6 +577,14 @@ export const recordSkoposSetupDispositionRuntime = async ({
 }: RecordSkoposSetupDispositionRuntimeOptions): Promise<SkoposSetupDispositionRuntimeResult> => {
   const actorId = requireSetupActor(options.actor, 'Recording a setup recommendation decision');
   const current = await buildSkoposSetupRuntime({ ...options, initialize: false });
+  if (current.state.openQuestionCount > 0) {
+    const question = current.state.materialQuestions[0];
+    throw new Error(
+      question
+        ? `Answer the current material setup question before reviewing recommendations: ${question.id}. ${question.answerCommand}`
+        : 'Refresh and answer the current material setup question before reviewing recommendations.',
+    );
+  }
   const recommendation = current.state.recommendations.find(
     (entry) => entry.id === recommendationId,
   );
@@ -1247,7 +1263,7 @@ const resolveCurrentStep = (stage: SkoposSetupStateArtifact['stage']): string =>
 
 const resolveNextCommand = ({
   stage,
-  agentBriefPath,
+  currentQuestion,
   actorId,
   host,
   sessionId,
@@ -1255,15 +1271,19 @@ const resolveNextCommand = ({
   certification,
 }: {
   stage: SkoposSetupStateArtifact['stage'];
-  agentBriefPath: string;
+  currentQuestion?: SkoposSetupMaterialQuestion;
   actorId?: string;
   host?: string;
   sessionId?: string;
   hostDelivered: boolean;
   certification?: SetupCertificationStatus;
 }): string => {
-  if (stage === 'inspection-required') return `Open ${agentBriefPath} and complete the bounded coding-agent analysis, then run skopos setup resume .`;
-  if (stage === 'questions-open') return 'skopos setup review .';
+  if (stage === 'inspection-required') {
+    return `skopos setup submit .skopos/setup/analysis-input.json . --actor ${actorId ?? '<id>'}`;
+  }
+  if (stage === 'questions-open') {
+    return currentQuestion?.answerCommand ?? 'skopos setup status .';
+  }
   if (stage === 'plan-ready') return 'skopos setup review .';
   if (stage === 'verification-blocked' && !hostDelivered) {
     return `After the host injects current Session context, run: skopos setup confirm-host-delivery . --actor ${actorId ?? '<id>'} --host ${host ?? '<host>'} --session-id ${sessionId ?? '<session-id>'} --context-marker <marker> --context-digest <digest>`;
@@ -1273,6 +1293,62 @@ const resolveNextCommand = ({
   }
   if (stage === 'verification-blocked') return `skopos setup resume . --actor ${actorId ?? '<id>'}`;
   return 'skopos session context . --json';
+};
+
+const buildSetupConversationState = ({
+  stage,
+  currentQuestion,
+  actorId,
+}: {
+  stage: SkoposSetupStateArtifact['stage'];
+  currentQuestion?: SkoposSetupMaterialQuestion;
+  actorId?: string;
+}): SkoposSetupStateArtifact['conversation'] => {
+  if (stage === 'questions-open') {
+    return {
+      mode: 'ask-and-wait',
+      instruction: currentQuestion
+        ? 'Ask exactly the current material question, explain the recommended default and alternatives in plain language, then wait. Do not infer the answer, batch later questions, present a consolidated plan, or request broad approval.'
+        : 'Material setup questions remain unresolved, but this local state does not contain the current question. Refresh setup state before review; do not infer answers or present a consolidated plan.',
+      finalPlanAllowed: false,
+      ...(currentQuestion ? { currentQuestion } : {}),
+    };
+  }
+  if (stage === 'inspection-required') {
+    return {
+      mode: 'inspect-and-submit',
+      instruction: 'Follow the generated agent packet, inspect current project evidence, write the required analysis file, and submit it to Skopos before review. Do not leave Scope or document proposals only in chat prose.',
+      finalPlanAllowed: false,
+      submissionPath: '.skopos/setup/analysis-input.json',
+      submissionCommand: `skopos setup submit .skopos/setup/analysis-input.json . --actor ${actorId ?? '<id>'}`,
+    };
+  }
+  if (stage === 'plan-ready') {
+    return {
+      mode: 'review',
+      instruction: 'Present the consolidated setup review. Keep every recommendation independently accept, edit, defer, or reject; do not treat blanket approval as permission for newly discovered work.',
+      finalPlanAllowed: true,
+    };
+  }
+  if (stage === 'applying') {
+    return {
+      mode: 'apply',
+      instruction: 'Apply only accepted recommendations through their existing authority and stop on invalidation or failure.',
+      finalPlanAllowed: false,
+    };
+  }
+  if (stage === 'verification-blocked') {
+    return {
+      mode: 'verify',
+      instruction: 'Explain the exact readiness blocker and the one bounded recovery step. Do not claim setup is ready.',
+      finalPlanAllowed: false,
+    };
+  }
+  return {
+    mode: 'complete',
+    instruction: 'Report the verified setup outcome, any deferred optional improvements, and the next normal project action.',
+    finalPlanAllowed: false,
+  };
 };
 
 const renderSetupSummary = (
@@ -1464,6 +1540,8 @@ const buildSetupAgentPacket = ({
   understanding,
   recommendations,
   dispositions,
+  materialQuestions,
+  actorId,
   setupAnalysis,
 }: {
   workspaceRoot: string;
@@ -1471,6 +1549,8 @@ const buildSetupAgentPacket = ({
   understanding: Awaited<ReturnType<typeof buildSkoposUnderstandingRuntime>>;
   recommendations: SkoposSetupRecommendation[];
   dispositions: SkoposSetupDisposition[];
+  materialQuestions: SkoposSetupMaterialQuestion[];
+  actorId?: string;
   setupAnalysis?: SkoposSetupAnalysisArtifact;
 }): SkoposSetupAgentPacketArtifact => {
   const dispositionById = new Map(
@@ -1551,6 +1631,8 @@ const buildSetupAgentPacket = ({
       approvalRequired: false,
     }));
   const now = new Date().toISOString();
+  const currentQuestion = materialQuestions[0];
+  const submissionCommand = `skopos setup submit .skopos/setup/analysis-input.json . --actor ${actorId ?? '<id>'}`;
   return {
     schemaVersion: 1,
     id: 'setup-agent-packet',
@@ -1563,7 +1645,11 @@ const buildSetupAgentPacket = ({
     workspaceRoot,
     stage,
     objective: 'Make future coding-agent work substantially more coherent by establishing reviewed project understanding, ownership, Memory, checks, rules, specialist guidance, and context delivery.',
-    responseObjective: 'Explain the project in simple language, recommend a clear default, ask only the one material decision needed now, and say what will happen next.',
+    responseObjective: currentQuestion
+      ? 'Ask exactly the current material question in simple language, explain the recommended default and alternatives, and wait for the answer. Do not present the consolidated setup plan yet.'
+      : stage === 'inspection-required'
+        ? 'Explain the project in simple language, distinguish facts from inference, write the required analysis file, and submit it to Skopos before presenting a consolidated plan.'
+        : 'Explain the current setup outcome in simple language, recommend a clear default where needed, and say what will happen next.',
     requiredReads: understanding.agentAnalysisBrief.requiredReads,
     workItems: [...memoryItems, ...scopeItems, ...approvedApplyItems],
     approvalBoundaries: [
@@ -1575,6 +1661,7 @@ const buildSetupAgentPacket = ({
       'Do not call scanner output reviewed project truth.',
       'Do not call generated adapter files proof of host delivery.',
       'Do not call setup ready while a required lane is blocked or unverified.',
+      'Do not present a consolidated review or request broad approval while a material question remains open.',
     ],
     responseSections: [
       'What I understand',
@@ -1583,13 +1670,19 @@ const buildSetupAgentPacket = ({
       'What happens next',
     ],
     submissionPath: '.skopos/setup/analysis-input.json',
+    submissionCommand,
     submissionSchema: {
       claims: 'fact | inference | contradiction | unknown, each with evidencePaths',
       materialQuestions: 'question, whyItMatters, evidencePaths, recommended option and alternatives',
       scopeProposals: 'id, title, kind, codeRoots, memoryRoot, evidencePaths and rationale',
       documentOperations: 'keep | move | merge | split | rewrite | archive | delete | create-from-evidence with source/target paths and retained truth',
     },
-    exactContinuation: 'skopos setup resume . --actor <id>',
+    ...(currentQuestion ? { currentQuestion } : {}),
+    finalPlanAllowed: stage === 'plan-ready',
+    exactContinuation: currentQuestion?.answerCommand ??
+      (stage === 'inspection-required'
+        ? submissionCommand
+        : `skopos setup resume . --actor ${actorId ?? '<id>'}`),
   };
 };
 

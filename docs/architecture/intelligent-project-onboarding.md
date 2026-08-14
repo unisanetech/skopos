@@ -9,13 +9,14 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: target
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - 00-architecture.md
   - agent-native-operating-model.md
   - artifact-model.md
   - docs-governance.md
   - ../decisions/D-20260812-intelligent-project-onboarding-contract.md
+  - ../decisions/D-20260814-clean-core-compatible-public-edge.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: when onboarding authority or sequencing changes
 ---
@@ -29,6 +30,11 @@ and Readiness truthful.
 
 ## Changelog
 
+- `2026-08-14`: Made setup conversation state explicit and fail-closed. While material
+  questions remain, the current question and answer command are the only continuation,
+  consolidated review is unavailable, and agent-authored Scope or document analysis
+  must be submitted into resumable setup state before review. Recorded the post-public
+  clean-core and compatible-edge boundary.
 - `2026-08-13`: Implemented one setup runtime behind setup, status, review, decide,
   answer, and resume. The implementation emits a bounded agent packet, creates
   evidence-bound Memory work items, checkpoints partial application, detects Node,
@@ -227,6 +233,17 @@ Every question provides evidence, recommendation, alternatives, trade-offs, resu
 the answer, and safe deferral behavior. The agent normally asks one material question
 at a time and batches only related, reversible, low-risk choices.
 
+`questions-open` is an ask-and-wait boundary, not an early review state. The setup
+result and Session context inline the exact current question, recommended default,
+alternatives, and answer command. They explicitly forbid inferred answers, queued
+question batching, a consolidated plan, and blanket approval. `setup review` does not
+render recommendations until every blocking material question is resolved.
+
+Agent-authored claims, Scope proposals, and document operations do not become setup
+state merely because they appeared in conversation. The generated packet names the
+analysis path, schema, and exact `setup submit` command. Review begins only from the
+submitted, source-bound analysis and deterministic project evidence.
+
 Progress reports use outcomes such as “comparing architecture claims” or “verifying
 agent context delivery.” They do not stream artifact paths or internal state changes.
 Completion explains what improved for future coding-agent work and lists deferred or
@@ -244,7 +261,7 @@ reads and evidence slices are retrieved by stage, accepted results are reference
 identity, and unchanged findings are summarized instead of replayed. Setup must not
 make the always-on communication contract larger for every future coding turn.
 
-Before public release, scenario evaluations cover at least undocumented, chaotic,
+Release and onboarding-change evaluations cover at least undocumented, chaotic,
 contradictory, minimal, and mixed-stack projects. They verify that the agent leads with
 a plain-language project understanding, translates internal terms, recommends a
 default, asks one material question, remembers the answer, distinguishes optional
@@ -326,4 +343,7 @@ slices. Diagnostic primitives remain only when they have a distinct advanced or
 recovery purpose and operate under the same authority.
 
 No versioned migration, alias, dual reader, compatibility shim, or legacy setup mode is
-part of the first release.
+part of the first release. After publication, clean refactoring remains the internal
+policy, while the package, executable, supported CLI/config contract, and adopter-owned
+tracked project truth form the compatible public edge defined by
+[D-20260814](../decisions/D-20260814-clean-core-compatible-public-edge.md).

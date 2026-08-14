@@ -14,10 +14,32 @@ describe("homepage workstream model", () => {
   it("explains each stage as a user outcome before naming the Skopos concept", () => {
     expect(workstreamStages.map((stage) => stage.label)).toEqual([
       "Load project context",
-      "Bound the change",
-      "Run project checks",
+      "Keep the change focused",
+      "Run the right checks",
       "Show why it is ready",
     ]);
+    expect(workstreamStages.map((stage) => stage.concept)).toEqual([
+      "Memory",
+      "Task",
+      "Actions + Guards",
+      "Evidence + Readiness",
+    ]);
+  });
+
+  it("keeps the primary story in plain language while product terms remain secondary", () => {
+    const primaryCopy = workstreamStages.flatMap((stage) => [
+      stage.label,
+      stage.taskSummary,
+      stage.reason,
+      stage.decisionBody,
+      stage.boundaryTitle,
+      stage.boundaryBody,
+      stage.nextAction,
+      stage.readinessBody,
+      ...stage.requirements.map((requirement) => requirement.label),
+    ]).join(" ");
+
+    expect(primaryCopy).not.toMatch(/source-bound|proof subjects|closure Guard|not idempotent|non-goals|owned paths/i);
     expect(workstreamStages.map((stage) => stage.concept)).toEqual([
       "Memory",
       "Task",

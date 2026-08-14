@@ -2,17 +2,18 @@ export type AgentLogoName = "codex" | "claude-code" | "cursor" | "github-copilot
 
 interface AgentLogoProps {
   name: AgentLogoName;
+  size?: number;
 }
 
-export function AgentLogo({ name }: AgentLogoProps) {
+export function AgentLogo({ name, size = 28 }: AgentLogoProps) {
   const commonProps = {
     "aria-hidden": true,
     className: "agent-logo",
     fill: "currentColor",
     focusable: "false",
-    height: 28,
+    height: size,
     viewBox: "0 0 24 24",
-    width: 28,
+    width: size,
   } as const;
 
   if (name === "codex") {

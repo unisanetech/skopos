@@ -1397,6 +1397,11 @@
   --skopos-night-muted: #a8a8a8;
   --skopos-amber: #f2a900;
   --skopos-green: #4eaf5d;
+  --skopos-status-active: #5b8cff;
+  --skopos-status-blocked: #ff7066;
+  --skopos-status-ready: #67c978;
+  --skopos-status-pending: #f2b84b;
+  --skopos-status-skipped: #8d8d8d;
   --skopos-rule-light: #d5d1c8;
   --skopos-rule-dark: #292929;
   --font-sans: var(--font-geist-sans, Arial), Helvetica, sans-serif;
@@ -1485,10 +1490,11 @@ code {
 }
 
 .workstream-demo {
-  width: auto;
+  --workstream-gutter: clamp(24px, 4vw, 52px);
+  width: 100%;
   margin-top: 0;
-  margin-right: calc(var(--section-frame-padding-x) * -1);
-  margin-left: calc(var(--section-frame-padding-x) * -1);
+  margin-right: 0;
+  margin-left: 0;
 }
 
 .stage-tabs {
@@ -1628,7 +1634,7 @@ code {
   align-items: center;
   gap: 32px;
   min-height: 108px;
-  padding: 22px var(--section-frame-padding-x);
+  padding: 22px var(--workstream-gutter);
   border-bottom: 1px solid var(--skopos-night-border);
 }
 
@@ -1765,7 +1771,7 @@ code {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 16px var(--section-frame-padding-x);
+  padding: 16px var(--workstream-gutter);
   cursor: pointer;
   list-style: none;
 }
@@ -1857,8 +1863,12 @@ code {
   background: currentColor;
 }
 
-.status-text--blue {
-  color: var(--skopos-signal) !important;
+.status-text--active {
+  color: var(--skopos-status-active) !important;
+}
+
+.status-text--verifying {
+  color: var(--skopos-status-pending) !important;
 }
 
 .readiness-badge {
@@ -1871,6 +1881,16 @@ code {
   border: 1px solid currentColor;
   border-radius: 5px;
   font-weight: 700;
+}
+
+.readiness-badge--blocked {
+  color: var(--skopos-status-blocked);
+  background: color-mix(in srgb, var(--skopos-status-blocked) 10%, transparent);
+}
+
+.readiness-badge--ready {
+  color: var(--skopos-status-ready);
+  background: color-mix(in srgb, var(--skopos-status-ready) 10%, transparent);
 }
 
 .requirements-list {
@@ -1888,8 +1908,20 @@ code {
   line-height: 1.4;
 }
 
+.requirement-icon--missing {
+  color: var(--skopos-status-blocked);
+}
+
+.requirement-icon--valid {
+  color: var(--skopos-status-ready);
+}
+
+.requirement-icon--skipped {
+  color: var(--skopos-status-skipped);
+}
+
 .evidence-ledger {
-  padding: 24px var(--section-frame-padding-x) 18px;
+  padding: 24px var(--workstream-gutter) 18px;
 }
 
 .ledger-table-wrap {
@@ -1949,6 +1981,18 @@ code {
   background: currentColor;
 }
 
+.ledger-status--blocked {
+  color: var(--skopos-status-blocked);
+}
+
+.ledger-status--passed {
+  color: var(--skopos-status-ready);
+}
+
+.ledger-status--updated {
+  color: var(--skopos-status-active);
+}
+
 @media (max-width: 1100px) {
   .stage-story-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2004,8 +2048,8 @@ code {
 
   .mobile-stage-control,
   .mobile-stage-cards {
-    padding-right: var(--section-frame-padding-x);
-    padding-left: var(--section-frame-padding-x);
+    padding-right: var(--workstream-gutter);
+    padding-left: var(--workstream-gutter);
   }
 
   .mobile-stage-control {
@@ -2095,7 +2139,7 @@ code {
   }
 
   .stage-story-cell {
-    padding: 24px var(--section-frame-padding-x) 26px;
+    padding: 24px var(--workstream-gutter) 26px;
     border-right: 0;
     border-bottom: 1px solid var(--skopos-night-border);
   }
@@ -2129,7 +2173,7 @@ code {
   }
 
   .evidence-ledger {
-    padding: 18px var(--section-frame-padding-x) 0;
+    padding: 18px var(--workstream-gutter) 0;
   }
 
   .mobile-ledger-list {
@@ -2185,7 +2229,9 @@ code {
 
 .memory-system-visual {
   position: relative;
+  width: 100%;
   min-height: 640px;
+  align-self: stretch;
   overflow: hidden;
   background:
     linear-gradient(var(--skopos-rule-light) 1px, transparent 1px),
@@ -2485,7 +2531,9 @@ code {
 
 .workflow-hero-visual {
   position: relative;
+  width: 100%;
   min-height: 620px;
+  align-self: stretch;
   overflow: hidden;
   background:
     linear-gradient(var(--skopos-rule-light) 1px, transparent 1px),

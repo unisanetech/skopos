@@ -16,7 +16,7 @@ export function WorkstreamStage({ stage }: { stage: WorkstreamStageModel }) {
         <dl>
           <div>
             <dt>Status</dt>
-            <dd className="status-text status-text--blue">{capitalize(stage.taskStatus)}</dd>
+            <dd className={`status-text status-text--${stage.taskStatus}`}>{capitalize(stage.taskStatus)}</dd>
           </div>
           <div>
             <dt>Scope</dt>
@@ -60,7 +60,7 @@ export function WorkstreamStage({ stage }: { stage: WorkstreamStageModel }) {
         </section>
 
         <section className="stage-story-cell" aria-labelledby="stage-proof-title">
-          <p className="stage-concept-label">Evidence + Readiness</p>
+          <p className="stage-concept-label">Proof · Evidence + Readiness</p>
           <h3 id="stage-proof-title">What proves completion</h3>
           <ReadinessBadge state={stage.readiness} />
           <p>{stage.readinessBody}</p>
@@ -84,7 +84,7 @@ export function WorkstreamStage({ stage }: { stage: WorkstreamStageModel }) {
         <summary>
           <span>
             <small>Supporting detail</small>
-            <strong>View project checks and source-bound proof</strong>
+            <strong>View technical checks and proof details</strong>
           </span>
           <Icon className="proof-chevron" symbol="expand_more" size="sm" />
         </summary>
@@ -155,7 +155,7 @@ function ReadinessBadge({ state }: { state: ReadinessState }) {
   return (
     <div className={`readiness-badge readiness-badge--${state}`}>
       <Icon symbol={ready ? "check_circle" : "error"} filled={ready} size="sm" />
-      {ready ? "Ready to close" : "Blocked"}
+      {ready ? "Ready to finish" : "Blocked"}
     </div>
   );
 }

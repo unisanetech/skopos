@@ -1,3 +1,5 @@
+import { publicSetupPrompts } from "../../lib/public-setup";
+
 export type UseCase = {
   id: string;
   number: string;
@@ -26,8 +28,7 @@ export const useCasesCopy = {
         "Your project already has code, docs, conventions, and commands. A tool that rewrites them before understanding the repository can destroy useful truth.",
       outcome:
         "Skopos discovers what exists, proposes how it should fit the Memory standard, and waits for approval before material documentation changes.",
-      prompt:
-        "Set up Skopos in this existing repository. Preserve its current docs and commands as project truth. Explain what you find, show me one consolidated recommendation, and ask before applying material changes.",
+      prompt: publicSetupPrompts.existing,
       guideLabel: "Set up an existing project",
       guideHref: "/docs",
     },

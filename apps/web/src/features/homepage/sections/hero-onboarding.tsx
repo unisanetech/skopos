@@ -152,7 +152,7 @@ export function HeroOnboarding() {
               ) : (
                 <div className="p-4">
                   <p className="max-w-[660px] text-xs leading-[1.5] text-[#d6d6d6] sm:text-sm">{heroOnboarding.agent.visibleBrief}</p>
-                  <ol className="mt-4 grid list-none grid-cols-3 border border-[var(--skopos-rule-dark)] p-0" aria-label="Agent setup sequence">
+                  <ol className="mt-4 grid list-none grid-cols-5 border border-[var(--skopos-rule-dark)] p-0" aria-label="Agent setup sequence">
                     {heroOnboarding.agent.steps.map((step) => (
                       <li className="flex min-h-12 items-center gap-2 border-r border-[var(--skopos-rule-dark)] px-2 text-[10px] font-bold last:border-r-0 sm:gap-3 sm:px-4 sm:text-xs" key={step.number}>
                         <span className="font-mono text-[#777]">{step.number}</span>

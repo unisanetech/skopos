@@ -1,4 +1,6 @@
-export const releaseStatusCopy = "First release targets npm @next";
+import { publicSetup, publicSetupPrompts } from "../../../lib/public-setup";
+
+export const releaseStatusCopy = "Available on npm";
 
 export const homepageDeepLinks = {
   workflow: "/how-it-works",
@@ -14,12 +16,12 @@ export const heroCopy = {
 
 export const heroOnboarding = {
   source: {
-    tabLabel: "npm @next on release",
-    label: "First public release install",
+    tabLabel: "npm · latest",
+    label: "npm install",
     commands: [
-      "npm install --save-dev @unisane/skopos@next",
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
+      "npm install --save-dev @unisane/skopos@latest",
+      "npx skopos setup . --actor <id> --json",
+      "npx skopos session context . --actor <id> --json",
     ],
     copyLabel: "Copy installation commands",
   },
@@ -27,27 +29,27 @@ export const heroOnboarding = {
     tabLabel: "Give to your agent",
     label: "Agent setup brief",
     visibleBrief:
-      "Set up Skopos without overwriting project truth. Explain what you find, recommend improvements, and ask before material changes.",
-    brief:
-      "Set up Skopos in this repository. Inspect the source, documentation, instructions, and working commands. Preserve current project truth, explain conflicts and gaps in simple language, and show me one consolidated recommendation before applying material changes.",
+      "Set up Skopos from the npm package @unisane/skopos@latest. Follow Skopos’s guidance one decision at a time, and stop whenever it asks for my input.",
+    brief: publicSetupPrompts.generic,
     steps: [
       { number: "01", label: "Understand" },
-      { number: "02", label: "Review" },
-      { number: "03", label: "Apply" },
+      { number: "02", label: "Clarify" },
+      { number: "03", label: "Review" },
+      { number: "04", label: "Apply" },
+      { number: "05", label: "Verify" },
     ],
     commands: [
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
-      "npx skopos setup resume . --actor <id>",
+      publicSetup.command,
+      "Follow the returned setup guidance in order.",
     ],
     copyLabel: "Copy agent brief",
   },
-  packageLabel: "planned · @unisane/skopos@next",
+  packageLabel: "npm · @unisane/skopos@latest",
 } as const;
 
 export const agentCompatibilityCopy = {
-  eyebrow: "First-release host support",
-  title: "Codex certified. Portable project truth everywhere else.",
+  eyebrow: "Coding agents",
+  title: "Give every coding agent the same project context.",
   agents: [
     { name: "Codex", icon: "codex", status: "Certified" },
     { name: "Claude Code", icon: "claude-code", status: "Adapter available · verification planned" },

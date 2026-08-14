@@ -11,7 +11,7 @@ provenance: declared
 view: current
 appliesTo:
   - workspace
-lastUpdated: 2026-08-13
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../00-start-here.md
   - ../architecture/config-model.md
@@ -20,6 +20,7 @@ relatedDocs:
   - ../patterns/PAT-23c981d4-mutation-before-admission-validation.md
   - ../decisions/D-8d32a27b-canonical-project-memory-task-and-coordination-contract.md
   - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
+  - ../decisions/D-20260814-clean-core-compatible-public-edge.md
   - ../work/plans/P-e7e888e6-canonical-product-convergence.md
 reviewCycle: per convergence phase
 ---
@@ -30,6 +31,10 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Changelog
 
+- `2026-08-14`: Made the public agent handoff self-contained and question-first. Setup
+  now exposes one exact ask-and-wait decision, withholds consolidated review until
+  clarification completes, and gives agent-authored analysis an explicit submission
+  path and command. Added the compatible reader expectation for valid `0.1.0` state.
 - `2026-08-13`: Clarified that first-release verified host binding uses Codex. Other
   host projections remain unverified and cannot satisfy a supported-host claim.
 - `2026-08-13`: Replaced the visible init and adoption ceremony with the unified
@@ -56,18 +61,26 @@ Use this workflow when setting up Skopos on itself or any future project.
 
 ## Workflow
 
-1. run `skopos setup <repo-root> --actor <id>`
-2. let the coding agent follow the generated setup packet and inspect real project
-   evidence
-3. answer only questions that change product truth, architecture, ownership,
-   authority, security, or public behavior
-4. review one consolidated plan with `skopos setup review <repo-root>`
-5. accept, edit, defer, or reject the recommendations you want
-6. run `skopos setup resume <repo-root> --actor <id>`
-7. bind a verified coding-agent Session, let the real host inject current context,
+1. install or invoke the intended public package version and run `skopos setup
+   <repo-root> --actor <id> --json`
+2. treat `state.conversation` and the generated agent packet as the setup authority
+3. while the mode is `ask-and-wait`, ask exactly the current material question and
+   wait; record the answer with its returned command before asking the next question
+4. when the mode is `inspect-and-submit`, inspect real project evidence, write the
+   packet's analysis file, and execute its exact submission command
+5. only when `finalPlanAllowed` is true, review one consolidated plan with `skopos
+   setup review <repo-root>`
+6. accept, edit, defer, or reject each recommendation independently
+7. run `skopos setup resume <repo-root> --actor <id>`
+8. bind a verified coding-agent Session, let the real host inject current context,
    then record the host's explicit delivery confirmation; the first release certifies
    this lane for Codex only
-8. continue normal work only after required setup lanes are ready
+9. continue normal work only after required setup lanes are ready
+
+The promoted agent brief must name the package source and version, prohibit local
+workspace substitution, and carry this ordering itself. A standalone copied brief may
+not depend on a separate installation tab or ask for a consolidated recommendation
+before Clarify and analysis submission are complete.
 
 After the user accepts the relevant Apply recommendations, existing-project setup may
 also create or update:

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   docsLandingCopy,
+  continueWorkCommands,
   quickstartDoneWhen,
   quickstartModes,
   quickstartProblems,
@@ -8,6 +9,7 @@ import {
 import { checkoutCustomizeExample, customizeGuides } from "../customize-content";
 import { featureWorkflowOutcome, featureWorkflowStages } from "../feature-workflow-content";
 import { agentWorkItems, freshSessionStages, hostDeliveryTruth } from "../agent-work-content";
+import { publicSetup } from "../../../lib/public-setup";
 
 describe("Documentation public journey", () => {
   it("routes every landing-page starting point to a real destination", () => {
@@ -22,13 +24,19 @@ describe("Documentation public journey", () => {
   it("provides conversation-first and exact-command setup paths", () => {
     for (const mode of Object.values(quickstartModes)) {
       expect(mode.prompt.length).toBeGreaterThan(100);
-      expect(mode.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
-      expect(mode.commands.some((command) => command.includes("skopos setup"))).toBe(true);
-      expect(mode.commands.at(-1)).toBe("npx skopos setup resume . --actor <id>");
+      expect(mode.prompt).toContain(publicSetup.package);
+      expect(mode.prompt).toContain(publicSetup.npmUrl);
+      expect(mode.prompt).toContain(publicSetup.command);
+      expect(mode.prompt).toContain("one decision at a time");
+      expect(mode.commands).toEqual([publicSetup.command]);
       expect(mode.commands.join(" ")).not.toContain("skopos adopt");
       expect(mode.commands.join(" ")).not.toContain("skopos init");
+      expect(mode.commands.join(" ")).not.toContain("@next");
       expect(mode.review.length).toBeGreaterThanOrEqual(4);
     }
+    expect(continueWorkCommands).toHaveLength(2);
+    expect(continueWorkCommands.every((command) => command.startsWith(`npm exec --package ${publicSetup.package} -- skopos `))).toBe(true);
+    expect(continueWorkCommands.join(" ")).not.toContain("npx skopos");
   });
 
   it("keeps setup completion and failure recovery observable", () => {

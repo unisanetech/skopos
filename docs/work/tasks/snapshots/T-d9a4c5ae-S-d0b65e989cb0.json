@@ -1,0 +1,64 @@
+{
+  "snapshotId": "S-d0b65e989cb0",
+  "taskId": "T-d9a4c5ae",
+  "sessionId": "onboarding-fix-20260814",
+  "actorId": "codex-onboarding-fix",
+  "baseRevision": "cbb22e290cf1147d3a4c974789bba0ad288aa48a",
+  "paths": [
+    {
+      "path": "apps/web/src/features/homepage/__tests__/hero-onboarding.test.ts",
+      "digest": "9ec6cc62c3101d19a4661069a7952195d1fa38742d2ac020993385a56c325c7b"
+    },
+    {
+      "path": "apps/web/src/features/homepage/content/homepage-copy.ts",
+      "digest": "49c0f37eb5eee4c9e1be0da410377737362378d2c0041c5a6ce002b5091c20a4"
+    },
+    {
+      "path": "apps/web/src/features/homepage/sections/hero-onboarding.tsx",
+      "digest": "168c560dc883a9f64e5b12f0d1591e34c0f4a7dc92ae8b8c40401953fb30383d"
+    },
+    {
+      "path": "docs/architecture/intelligent-project-onboarding.md",
+      "digest": "3831b241482087e3e4becc1708c9cbd6ffd08afa19e5133fc6a2674729371c25"
+    },
+    {
+      "path": "docs/decisions/D-20260814-clean-core-compatible-public-edge.md",
+      "digest": "21e08ccc9be0c4948af533fc5b9336ca29b5cb030fcd98236d0eb0b8201c9ae5"
+    },
+    {
+      "path": "docs/guides/bootstrap-a-project.md",
+      "digest": "27b61e9769a64a0bb18b2266ed21d89c75e43ddb1ad8c308ad7cce3ced2b7e40"
+    },
+    {
+      "path": "packages/cli/src/__tests__/session-context-contract.test.ts",
+      "digest": "a52feef8367684068bcad7e83a5864255eee1630c62d7be9a480749c85df7f3b"
+    },
+    {
+      "path": "packages/cli/src/__tests__/setup-workflow.test.ts",
+      "digest": "f8df06876d3b462896f6fcd244803ea7062ca4a7e7bc1bea8bbea69ed9dd2246"
+    },
+    {
+      "path": "packages/cli/src/cli/commands/setup.ts",
+      "digest": "35f099ace71014fe8e015a8eed932a5a942048e728cce27ebc2d5481c40fa1ce"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-session-context.ts",
+      "digest": "1d2942500dc0cb534935c378f49202ae951d7eeae79082f2e8499d53d5f7bf9c"
+    },
+    {
+      "path": "packages/model/src/contracts/skopos-setup.ts",
+      "digest": "71b850a3ebd5f402901e8b8ca9272f4cf2118f2e9c24878f6ff2afc333637c93"
+    },
+    {
+      "path": "packages/runtime/src/application/session/session-context.service.ts",
+      "digest": "d15c730250b91f2a93adae87ac7781d45c8787b4e97cbf3801d59fb457ee4360"
+    },
+    {
+      "path": "packages/runtime/src/application/setup/setup.service.ts",
+      "digest": "99a6cdb18e5109c59c73934bde728551ce1e1f0d5bd9d4a801518a7f14295206"
+    }
+  ],
+  "digest": "d0b65e989cb0765245b88721ba22b2b125b14d81b0c8322fead194de5cf0a865",
+  "createdAt": "2026-08-14T12:52:22.122Z",
+  "artifactPath": "docs/work/tasks/snapshots/T-d9a4c5ae-S-d0b65e989cb0.json"
+}

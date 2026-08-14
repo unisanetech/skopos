@@ -13,26 +13,30 @@ describe("homepage hero onboarding", () => {
     expect(heroCopy.title).toBe("Your agents write the code. Skopos keeps the work coherent.");
   });
 
-  it("presents the planned first-release npm path without claiming publication", () => {
-    expect(heroOnboarding.source.label).toBe("First public release install");
-    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
-    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@next");
-    expect(releaseStatusCopy).toBe("First release targets npm @next");
-    expect(releaseStatusCopy).not.toContain("Available");
+  it("presents the exact public npm release", () => {
+    expect(heroOnboarding.source.label).toBe("npm install");
+    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@latest");
+    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@latest");
+    expect(releaseStatusCopy).toBe("Available on npm");
   });
 
-  it("gives coding agents the unified guarded setup sequence", () => {
+  it("gives coding agents a concise public-package setup prompt", () => {
     expect(heroOnboarding.agent.commands).toEqual([
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
-      "npx skopos setup resume . --actor <id>",
+      "npm exec --package @unisane/skopos@latest -- skopos setup . --actor <stable-id> --json",
+      "Follow the returned setup guidance in order.",
     ]);
-    expect(heroOnboarding.agent.brief).toContain("show me one consolidated recommendation");
+    expect(heroOnboarding.agent.visibleBrief).toContain("@unisane/skopos@latest");
+    expect(heroOnboarding.agent.brief).toContain("https://www.npmjs.com/package/@unisane/skopos");
+    expect(heroOnboarding.agent.brief).toContain("one decision at a time");
+    expect(heroOnboarding.agent.brief).not.toMatch(/local Skopos|workspace link|agentPacketPath|currentQuestion|submissionPath|finalPlanAllowed/u);
     expect(heroOnboarding.agent.steps.map((step) => step.label)).toEqual([
       "Understand",
+      "Clarify",
       "Review",
       "Apply",
+      "Verify",
     ]);
+    expect(heroOnboardingSource).toContain("grid-cols-5");
   });
 
   it("keeps both tab bodies mounted inside one fixed geometry panel", () => {

@@ -71,6 +71,21 @@ describe('session communication contract', () => {
     expect(context.setup).toMatchObject({ stage: 'questions-open', currentStep: 'clarify' });
     expect(context.responseMode).toBe('decision');
     expect(context.additionalContext).toContain('Setup stage: questions-open');
+    expect(context.setup?.conversation).toMatchObject({
+      mode: 'ask-and-wait',
+      finalPlanAllowed: false,
+      currentQuestion: { id: 'understanding.lifecycle' },
+    });
+    expect(context.additionalContext).toContain(
+      'Setup response: Ask exactly the current material question and wait.',
+    );
+    expect(context.additionalContext).toContain('Consolidated setup plan allowed: no.');
+    expect(context.additionalContext).toContain(
+      'Question: Should Skopos treat this as an existing project or a new project?',
+    );
+    expect(context.additionalContext).toContain(
+      'After the answer: skopos setup answer understanding.lifecycle existing-project . --actor <id>',
+    );
   });
 
   it('keeps Session context usable when checkout-local setup state predates material questions', async () => {
@@ -91,6 +106,14 @@ describe('session communication contract', () => {
 
     expect(context.warnings).toEqual([]);
     expect(context.setup).toMatchObject({ stage: 'questions-open', currentStep: 'clarify' });
+    expect(context.setup?.conversation).toMatchObject({
+      mode: 'ask-and-wait',
+      finalPlanAllowed: false,
+    });
+    expect(context.additionalContext).toContain(
+      'this older local state does not contain the current question',
+    );
+    expect(context.additionalContext).toContain('Consolidated setup plan allowed: no.');
     expect(context.pendingDecision).toBeUndefined();
     expect(context.nextCommand).toBe('skopos setup review .');
   });

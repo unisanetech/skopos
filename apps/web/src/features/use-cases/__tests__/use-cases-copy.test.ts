@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { useCasesCopy } from "../content";
+import { publicSetup } from "../../../lib/public-setup";
 
 describe("Skopos use cases", () => {
   it("keeps the seven approved launch scenarios in order", () => {
@@ -27,5 +28,12 @@ describe("Skopos use cases", () => {
     expect(useCasesCopy.cases.find((useCase) => useCase.id === "split-independent-work")?.note).toContain(
       "host-dependent",
     );
+  });
+
+  it("uses the same npm-backed setup prompt as the quickstart", () => {
+    const setupPrompt = useCasesCopy.cases.find((useCase) => useCase.id === "set-up-existing-project")?.prompt;
+    expect(setupPrompt).toContain(publicSetup.package);
+    expect(setupPrompt).toContain(publicSetup.npmUrl);
+    expect(setupPrompt).toContain(publicSetup.command);
   });
 });
