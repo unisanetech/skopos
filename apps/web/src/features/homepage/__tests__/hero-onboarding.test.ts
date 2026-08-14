@@ -14,23 +14,21 @@ describe("homepage hero onboarding", () => {
   });
 
   it("presents the exact public npm release", () => {
-    expect(heroOnboarding.source.label).toBe("Public npm install");
-    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@0.1.0");
-    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@0.1.0");
+    expect(heroOnboarding.source.label).toBe("npm install");
+    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@latest");
+    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@latest");
     expect(releaseStatusCopy).toBe("Available on npm");
   });
 
-  it("gives coding agents the pinned question-first setup contract", () => {
+  it("gives coding agents a concise public-package setup prompt", () => {
     expect(heroOnboarding.agent.commands).toEqual([
-      "npm exec --package @unisane/skopos@0.1.0 -- skopos setup . --actor <stable-id> --json",
-      "Follow the returned question, submission, and continuation commands in order.",
+      "npm exec --package @unisane/skopos@latest -- skopos setup . --actor <stable-id> --json",
+      "Follow the returned setup guidance in order.",
     ]);
-    expect(heroOnboarding.agent.brief).toContain("https://www.npmjs.com/package/@unisane/skopos/v/0.1.0");
-    expect(heroOnboarding.agent.brief).toContain("ask exactly `currentQuestion`");
-    expect(heroOnboarding.agent.brief).toContain("Do not infer answers");
-    expect(heroOnboarding.agent.brief).toContain("run `submissionCommand`");
-    expect(heroOnboarding.agent.brief).toContain("Only when `finalPlanAllowed` is true");
-    expect(heroOnboarding.agent.brief).not.toContain("show me one consolidated recommendation");
+    expect(heroOnboarding.agent.visibleBrief).toContain("@unisane/skopos@latest");
+    expect(heroOnboarding.agent.brief).toContain("https://www.npmjs.com/package/@unisane/skopos");
+    expect(heroOnboarding.agent.brief).toContain("one decision at a time");
+    expect(heroOnboarding.agent.brief).not.toMatch(/local Skopos|workspace link|agentPacketPath|currentQuestion|submissionPath|finalPlanAllowed/u);
     expect(heroOnboarding.agent.steps.map((step) => step.label)).toEqual([
       "Understand",
       "Clarify",

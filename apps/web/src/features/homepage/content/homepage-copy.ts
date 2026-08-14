@@ -1,3 +1,5 @@
+import { publicSetup, publicSetupPrompts } from "../../../lib/public-setup";
+
 export const releaseStatusCopy = "Available on npm";
 
 export const homepageDeepLinks = {
@@ -14,10 +16,10 @@ export const heroCopy = {
 
 export const heroOnboarding = {
   source: {
-    tabLabel: "npm · 0.1.0",
-    label: "Public npm install",
+    tabLabel: "npm · latest",
+    label: "npm install",
     commands: [
-      "npm install --save-dev @unisane/skopos@0.1.0",
+      "npm install --save-dev @unisane/skopos@latest",
       "npx skopos setup . --actor <id> --json",
       "npx skopos session context . --actor <id> --json",
     ],
@@ -27,9 +29,8 @@ export const heroOnboarding = {
     tabLabel: "Give to your agent",
     label: "Agent setup brief",
     visibleBrief:
-      "Use the public Skopos release. Follow its current setup question, ask one decision at a time, and wait before review or changes.",
-    brief:
-      "Set up Skopos in this repository using only the public npm release @unisane/skopos@0.1.0 from https://www.npmjs.com/package/@unisane/skopos/v/0.1.0. Do not use a local Skopos checkout, workspace link, or unpublished build. Run `npm exec --package @unisane/skopos@0.1.0 -- skopos setup . --actor <stable-id> --json`, then treat the returned `state.conversation` and generated `agentPacketPath` as the setup authority. If the mode is `ask-and-wait` or the stage is `questions-open`, ask exactly `currentQuestion`, explain its recommended default and alternatives in simple language, and stop for my answer. Do not infer answers, batch later questions, run broad project checks, present the consolidated plan, or request blanket approval. After each answer, record it with the returned answer command through the same pinned package launcher and refresh setup. If the mode is `inspect-and-submit`, inspect only the authorized project evidence, write the required analysis to `submissionPath`, and run `submissionCommand`; do not leave Scope or document proposals only in chat prose. Only when `finalPlanAllowed` is true and the stage is `plan-ready` should you show one consolidated review, with every recommendation independently available to accept, edit, defer, or reject. Apply only accepted recommendations, verify the required lanes, and report setup as ready only when Skopos does.",
+      "Set up Skopos from the npm package @unisane/skopos@latest. Follow Skopos’s guidance one decision at a time, and stop whenever it asks for my input.",
+    brief: publicSetupPrompts.generic,
     steps: [
       { number: "01", label: "Understand" },
       { number: "02", label: "Clarify" },
@@ -38,17 +39,17 @@ export const heroOnboarding = {
       { number: "05", label: "Verify" },
     ],
     commands: [
-      "npm exec --package @unisane/skopos@0.1.0 -- skopos setup . --actor <stable-id> --json",
-      "Follow the returned question, submission, and continuation commands in order.",
+      publicSetup.command,
+      "Follow the returned setup guidance in order.",
     ],
     copyLabel: "Copy agent brief",
   },
-  packageLabel: "public · @unisane/skopos@0.1.0",
+  packageLabel: "npm · @unisane/skopos@latest",
 } as const;
 
 export const agentCompatibilityCopy = {
-  eyebrow: "First-release host support",
-  title: "Codex certified. Portable project truth everywhere else.",
+  eyebrow: "Coding agents",
+  title: "Give every coding agent the same project context.",
   agents: [
     { name: "Codex", icon: "codex", status: "Certified" },
     { name: "Claude Code", icon: "claude-code", status: "Adapter available · verification planned" },

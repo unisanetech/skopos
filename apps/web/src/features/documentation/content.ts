@@ -1,3 +1,5 @@
+import { publicSetup, publicSetupPrompts, publicSkoposCommand } from "../../lib/public-setup";
+
 export const docsLandingCopy = {
   title: "Set up Skopos once. Then talk to your coding agent normally.",
   description:
@@ -105,14 +107,8 @@ export const quickstartModes = {
     tabLabel: "Existing project",
     title: "Bring the project you already have.",
     description: "Skopos first learns the repository boundary and preserves current truth. Material documentation changes stay inside one review before anything is applied.",
-    prompt:
-      "Set up Skopos in this repository. First inspect the source, existing documentation, project instructions, and working commands. Do not restructure or overwrite anything yet. Show me what is canonical, what conflicts, what is missing, and the proposed Project Memory structure before applying changes.",
-    commands: [
-      "npm install --save-dev @unisane/skopos@next",
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
-      "npx skopos setup resume . --actor <id>",
-    ],
+    prompt: publicSetupPrompts.existing,
+    commands: [publicSetup.command],
     review: [
       "The repository root and inferred project boundary",
       "Generated project instructions, config, and ignore rules, plus any docs-router change proposed for your approval",
@@ -125,14 +121,8 @@ export const quickstartModes = {
     tabLabel: "New project",
     title: "Start with project truth from day one.",
     description: "Skopos can establish the initial repository-owned structure because there is less existing truth to reconcile.",
-    prompt:
-      "Set up Skopos for this new project. Help me define the project purpose, initial Scope, durable decisions, and working checks before implementation. Keep project truth in the repository and show me the proposed structure.",
-    commands: [
-      "npm install --save-dev @unisane/skopos@next",
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
-      "npx skopos setup resume . --actor <id>",
-    ],
+    prompt: publicSetupPrompts.newProject,
+    commands: [publicSetup.command],
     review: [
       "The project purpose and initial repository boundary",
       "The first Scopes and their Memory roots",
@@ -144,6 +134,11 @@ export const quickstartModes = {
 
 export const continueWorkPrompt =
   "Continue the current Skopos Task. Load the latest intent, decisions, relevant Project Memory, remaining checks, and handoff. Before editing, tell me what is already done, what remains, and the next safe action.";
+
+export const continueWorkCommands = [
+  publicSkoposCommand("session context . --actor <stable-id> --json"),
+  publicSkoposCommand("work next . --actor <stable-id> --json"),
+] as const;
 
 export const quickstartDoneWhen = [
   "The generated tracked files match the repository you intend to govern.",
@@ -167,6 +162,6 @@ export const quickstartProblems = [
   },
   {
     title: "The CLI is not available globally",
-    recovery: "Use the project-local executable through npx, as shown in this guide.",
+    recovery: "Use npm exec with @unisane/skopos@latest, as shown in this guide.",
   },
 ] as const;

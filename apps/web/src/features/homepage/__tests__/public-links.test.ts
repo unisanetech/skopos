@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { publicLinks } from "../content/public-links";
+import { readFileSync } from "node:fs";
+
+const siteFooterSource = readFileSync(
+  new URL("../../../patterns/site/site-footer.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("homepage public destinations", () => {
   it("uses real target destinations instead of placeholder page anchors", () => {
@@ -10,5 +16,10 @@ describe("homepage public destinations", () => {
     );
     expect(publicLinks.releaseProgress).toBe("https://github.com/unisanetech/skopos/releases");
     expect(Object.values(publicLinks).every((value) => value.startsWith("https://"))).toBe(true);
+  });
+
+  it("links the npm availability label to the npm package", () => {
+    expect(siteFooterSource).toContain("href={publicLinks.npm}");
+    expect(siteFooterSource).not.toContain("href={publicLinks.releaseProgress}");
   });
 });

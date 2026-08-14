@@ -625,3 +625,40 @@ No actionable P0, P1, or P2 differences remain. Earlier blocked entries are pres
 only as historical evidence of the state at those passes.
 
 final result: passed
+
+### Pass 16 — passed: agent compatibility strip clarity and balance
+
+Source visual truth:
+
+- `apps/web/.artifacts/design-qa/agent-strip-simplification/reference.png`
+  (`1988 × 326`) records the supplied reference state.
+
+Rendered implementation:
+
+- `apps/web/.artifacts/design-qa/agent-strip-simplification/desktop.png`
+  (`1269 × 714`) captures the homepage at the desktop viewport.
+- `apps/web/.artifacts/design-qa/agent-strip-simplification/mobile.png`
+  (`379 × 820`) captures the responsive two-column layout.
+- `apps/web/.artifacts/design-qa/agent-strip-simplification/comparison.png`
+  (`1200 × 429`) provides a focused reference/implementation comparison.
+
+Findings and fixes:
+
+- [P2] Per-agent support descriptions made the homepage strip read like a release
+  status table. The strip now keeps only each agent icon and name; detailed support
+  truth remains on the dedicated Agents page.
+- [P2] The first simplified sizing pass was too large and visually left weighted.
+  Icons now render at `32px`, names use a restrained responsive `16–18.4px` range,
+  and every icon/name group is centered in its card at desktop and mobile sizes.
+- [P2] The heading competed with the agent cards and described certification status
+  instead of the product benefit. It now uses the smaller `14.4–16.8px` range and
+  the plain-language message “Give every coding agent the same project context.”
+
+Typography, spacing, alignment, copy hierarchy, icon sizing, grid behavior, and
+responsive containment were checked against the supplied screenshot. Existing SVG
+agent marks and color tokens remain unchanged. No clipping or horizontal overflow was
+observed in the desktop or mobile browser captures.
+
+No actionable P0, P1, or P2 differences remain.
+
+final result: passed
