@@ -226,6 +226,10 @@ export const buildSkoposSessionContextRuntime = async ({
           currentStep: setupActive.currentStep,
           lanes: setupActive.lanes,
           agentPacketPath: setupActive.agentPacketPath,
+          conversation: setupActive.conversation ?? buildCompatibleSetupConversation({
+            setup: setupActive,
+            actorId,
+          }),
         }
       : undefined,
     setupReadiness,
@@ -259,6 +263,61 @@ const buildSetupPendingDecision = (
     defaultBehavior: 'wait-for-answer',
     whatHappensAfterAnswer: question.answerCommand,
     source: 'setup-question',
+  };
+};
+
+const buildCompatibleSetupConversation = ({
+  setup,
+  actorId,
+}: {
+  setup: SkoposSetupStateArtifact;
+  actorId?: string;
+}): NonNullable<SkoposSessionContextRunResult['setup']>['conversation'] => {
+  const currentQuestion = setup.materialQuestions?.[0];
+  if (setup.stage === 'questions-open') {
+    return {
+      mode: 'ask-and-wait',
+      instruction: currentQuestion
+        ? 'Ask exactly the current material question and wait. Do not infer the answer, batch later questions, or present the consolidated setup plan.'
+        : 'Material setup questions remain unresolved, but this older local state does not contain the current question. Refresh setup before review and do not infer an answer.',
+      finalPlanAllowed: false,
+      ...(currentQuestion ? { currentQuestion } : {}),
+    };
+  }
+  if (setup.stage === 'inspection-required') {
+    return {
+      mode: 'inspect-and-submit',
+      instruction: 'Follow the generated agent packet and submit the required analysis to Skopos before review.',
+      finalPlanAllowed: false,
+      submissionPath: '.skopos/setup/analysis-input.json',
+      submissionCommand: `skopos setup submit .skopos/setup/analysis-input.json . --actor ${actorId ?? '<id>'}`,
+    };
+  }
+  if (setup.stage === 'plan-ready') {
+    return {
+      mode: 'review',
+      instruction: 'Present the consolidated setup review with independent accept, edit, defer, or reject choices.',
+      finalPlanAllowed: true,
+    };
+  }
+  if (setup.stage === 'applying') {
+    return {
+      mode: 'apply',
+      instruction: 'Apply only accepted recommendations through their existing authority.',
+      finalPlanAllowed: false,
+    };
+  }
+  if (setup.stage === 'verification-blocked') {
+    return {
+      mode: 'verify',
+      instruction: 'Explain the exact readiness blocker and do not claim setup is ready.',
+      finalPlanAllowed: false,
+    };
+  }
+  return {
+    mode: 'complete',
+    instruction: 'Report the verified setup outcome and any deferred optional improvements.',
+    finalPlanAllowed: false,
   };
 };
 
@@ -427,8 +486,13 @@ export const renderSkoposSessionAdditionalContext = (
   if (context.setup) {
     lines.push(
       `Setup stage: ${context.setup.stage}; current step: ${context.setup.currentStep}.`,
+      `Setup response: ${context.setup.conversation.instruction}`,
+      `Consolidated setup plan allowed: ${context.setup.conversation.finalPlanAllowed ? 'yes' : 'no'}.`,
       `Setup brief: ${context.setup.agentPacketPath}`,
     );
+    if (context.setup.conversation.submissionCommand) {
+      lines.push(`Submit analyzed project evidence: ${context.setup.conversation.submissionCommand}`);
+    }
   }
   if (context.setupReadiness.state !== 'ready') {
     lines.push(`Setup readiness: ${context.setupReadiness.state}.`);

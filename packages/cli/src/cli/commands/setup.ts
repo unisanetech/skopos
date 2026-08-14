@@ -195,7 +195,12 @@ const runSetupDecisionCommand = async (args: string[]): Promise<void> => {
 const renderSetup = (
   result: SkoposSetupRuntimeResult,
   mode: 'status' | 'review',
-): void => {
+): void => writeLines(buildSetupOutputLines(result, mode));
+
+export const buildSetupOutputLines = (
+  result: SkoposSetupRuntimeResult,
+  mode: 'status' | 'review',
+): string[] => {
   const { state } = result;
   const readyLanes = state.lanes.filter((lane) => lane.status === 'ready').length;
   const openRecommendations = state.recommendations.filter(
@@ -213,6 +218,9 @@ const renderSetup = (
 
   if (state.openQuestionCount > 0) {
     const question = state.materialQuestions[0];
+    const recommended = question?.options.find(
+      (option) => option.id === question.recommendedOptionId,
+    );
     lines.push(
       '',
       'I need a project decision before continuing.',
@@ -220,14 +228,29 @@ const renderSetup = (
         ? [
             `Question: ${question.question}`,
             `Why it matters: ${question.whyItMatters}`,
-            `Recommended: ${question.options.find((option) => option.id === question.recommendedOptionId)?.label ?? question.recommendedOptionId}`,
+            `Recommended: ${recommended?.label ?? question.recommendedOptionId}`,
+            ...(recommended?.rationale
+              ? [`Why this is the default: ${recommended.rationale}`]
+              : []),
+            ...(question.options.length > 1
+              ? [
+                  'Alternatives:',
+                  ...question.options
+                    .filter((option) => option.id !== question.recommendedOptionId)
+                    .map((option) => `- ${option.label}: ${option.rationale}`),
+                ]
+              : []),
+            'Wait for the user answer. Do not infer it, batch later questions, present the consolidated setup plan, or request broad approval.',
+            ...(state.openQuestionCount > 1
+              ? [`${state.openQuestionCount - 1} additional material question${state.openQuestionCount === 2 ? '' : 's'} remain queued; ask them one at a time.`]
+              : []),
             `Next: ${question.answerCommand}`,
           ]
-        : ['Run `skopos setup review .` to see the recommendation and alternatives.']),
+        : ['The current question is missing from older local setup state. Run `skopos setup status .` to refresh it before review.']),
     );
   }
 
-  if (mode === 'review') {
+  if (mode === 'review' && state.openQuestionCount === 0) {
     lines.push('', 'Setup areas:');
     for (const lane of state.lanes) {
       lines.push(`- ${lane.title}: ${humanLaneStatus(lane.status)}`);
@@ -254,6 +277,11 @@ const renderSetup = (
         ...deferred.map((entry) => `- ${entry.recommendationId}`),
       );
     }
+  } else if (mode === 'review') {
+    lines.push(
+      '',
+      'Consolidated review is unavailable until the current material question is answered.',
+    );
   }
 
   if (state.invalidatedDispositionIds.length > 0) {
@@ -270,7 +298,7 @@ const renderSetup = (
       'Your coding agent should follow the generated setup brief, explain what it found in plain language, and ask only for decisions that change project truth.',
     );
   }
-  writeLines(lines);
+  return lines;
 };
 
 const parseSetupArgs = (args: string[]): ParsedSetupArgs => {

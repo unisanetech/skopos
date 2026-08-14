@@ -75,26 +75,44 @@ export interface SkoposSetupDisposition {
   actorId?: string;
 }
 
+export interface SkoposSetupMaterialQuestion {
+  id: string;
+  question: string;
+  whyItMatters: string;
+  evidencePaths: string[];
+  recommendedOptionId: string;
+  options: SkoposDecisionOption[];
+  answerCommand: string;
+  blocking: true;
+  interaction: 'must-ask-and-wait';
+}
+
+export interface SkoposSetupConversationState {
+  mode:
+    | 'inspect-and-submit'
+    | 'ask-and-wait'
+    | 'review'
+    | 'apply'
+    | 'verify'
+    | 'complete';
+  instruction: string;
+  finalPlanAllowed: boolean;
+  currentQuestion?: SkoposSetupMaterialQuestion;
+  submissionPath?: string;
+  submissionCommand?: string;
+}
+
 export interface SkoposSetupStateArtifact
   extends SkoposArtifactEnvelope<'setup-state'> {
   workspaceRoot: string;
   stage: SkoposSetupStage;
   currentStep: string;
+  conversation: SkoposSetupConversationState;
   lanes: SkoposSetupLane[];
   recommendations: SkoposSetupRecommendation[];
   dispositions: SkoposSetupDisposition[];
   openQuestionCount: number;
-  materialQuestions: Array<{
-    id: string;
-    question: string;
-    whyItMatters: string;
-    evidencePaths: string[];
-    recommendedOptionId: string;
-    options: SkoposDecisionOption[];
-    answerCommand: string;
-    blocking: true;
-    interaction: 'must-ask-and-wait';
-  }>;
+  materialQuestions: SkoposSetupMaterialQuestion[];
   deferredRecommendationCount: number;
   invalidatedDispositionIds: string[];
   completedApplyIds: string[];
@@ -165,12 +183,15 @@ export interface SkoposSetupAgentPacketArtifact
   prohibitedClaims: string[];
   responseSections: string[];
   submissionPath: string;
+  submissionCommand: string;
   submissionSchema: {
     claims: 'fact | inference | contradiction | unknown, each with evidencePaths';
     materialQuestions: 'question, whyItMatters, evidencePaths, recommended option and alternatives';
     scopeProposals: 'id, title, kind, codeRoots, memoryRoot, evidencePaths and rationale';
     documentOperations: 'keep | move | merge | split | rewrite | archive | delete | create-from-evidence with source/target paths and retained truth';
   };
+  currentQuestion?: SkoposSetupMaterialQuestion;
+  finalPlanAllowed: boolean;
   exactContinuation: string;
 }
 

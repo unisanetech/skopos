@@ -11,7 +11,11 @@ import type {
   SkoposTaskState,
   SkoposTaskStepKind,
 } from './skopos-task.js';
-import type { SkoposSetupLane, SkoposSetupStage } from './skopos-setup.js';
+import type {
+  SkoposSetupConversationState,
+  SkoposSetupLane,
+  SkoposSetupStage,
+} from './skopos-setup.js';
 
 export type SkoposAgentResponseMode =
   | 'direct-answer'
@@ -109,6 +113,7 @@ export interface SkoposSessionContextRunResult {
     currentStep: string;
     lanes: SkoposSetupLane[];
     agentPacketPath: string;
+    conversation: SkoposSetupConversationState;
   };
   setupReadiness: {
     state: 'ready' | 'stale' | 'uncertified';

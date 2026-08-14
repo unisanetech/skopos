@@ -13,26 +13,32 @@ describe("homepage hero onboarding", () => {
     expect(heroCopy.title).toBe("Your agents write the code. Skopos keeps the work coherent.");
   });
 
-  it("presents the planned first-release npm path without claiming publication", () => {
-    expect(heroOnboarding.source.label).toBe("First public release install");
-    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@next");
-    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@next");
-    expect(releaseStatusCopy).toBe("First release targets npm @next");
-    expect(releaseStatusCopy).not.toContain("Available");
+  it("presents the exact public npm release", () => {
+    expect(heroOnboarding.source.label).toBe("Public npm install");
+    expect(heroOnboarding.source.commands[0]).toBe("npm install --save-dev @unisane/skopos@0.1.0");
+    expect(heroOnboarding.packageLabel).toContain("@unisane/skopos@0.1.0");
+    expect(releaseStatusCopy).toBe("Available on npm");
   });
 
-  it("gives coding agents the unified guarded setup sequence", () => {
+  it("gives coding agents the pinned question-first setup contract", () => {
     expect(heroOnboarding.agent.commands).toEqual([
-      "npx skopos setup . --actor <id>",
-      "npx skopos setup review . --actor <id>",
-      "npx skopos setup resume . --actor <id>",
+      "npm exec --package @unisane/skopos@0.1.0 -- skopos setup . --actor <stable-id> --json",
+      "Follow the returned question, submission, and continuation commands in order.",
     ]);
-    expect(heroOnboarding.agent.brief).toContain("show me one consolidated recommendation");
+    expect(heroOnboarding.agent.brief).toContain("https://www.npmjs.com/package/@unisane/skopos/v/0.1.0");
+    expect(heroOnboarding.agent.brief).toContain("ask exactly `currentQuestion`");
+    expect(heroOnboarding.agent.brief).toContain("Do not infer answers");
+    expect(heroOnboarding.agent.brief).toContain("run `submissionCommand`");
+    expect(heroOnboarding.agent.brief).toContain("Only when `finalPlanAllowed` is true");
+    expect(heroOnboarding.agent.brief).not.toContain("show me one consolidated recommendation");
     expect(heroOnboarding.agent.steps.map((step) => step.label)).toEqual([
       "Understand",
+      "Clarify",
       "Review",
       "Apply",
+      "Verify",
     ]);
+    expect(heroOnboardingSource).toContain("grid-cols-5");
   });
 
   it("keeps both tab bodies mounted inside one fixed geometry panel", () => {

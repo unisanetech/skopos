@@ -16,6 +16,7 @@ import {
 } from '../../../runtime/src/application/setup/setup.service.js';
 import { reconstructTrackedSkoposAdoptionReadinessRuntime } from '../../../runtime/src/application/adoption/adoption.service.js';
 import { buildSkoposSetupAnswerRuntime } from '../../../runtime/src/application/understanding/understanding.service.js';
+import { buildSetupOutputLines } from '../cli/commands/setup.js';
 
 const temporaryRoots: string[] = [];
 
@@ -24,6 +25,21 @@ afterEach(async () => {
     temporaryRoots.splice(0).map((root) => rm(root, { recursive: true, force: true })),
   );
 });
+
+const answerRemainingMaterialQuestions = async (root: string) => {
+  let setup = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+  while (setup.state.materialQuestions.length > 0) {
+    const question = setup.state.materialQuestions[0]!;
+    await answerSkoposSetupQuestionRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      questionId: question.id,
+      optionId: question.recommendedOptionId,
+    });
+    setup = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+  }
+  return setup;
+};
 
 describe('unified intelligent project setup', () => {
   it('uses one resumable state for setup, review choices, source invalidation, and the agent packet', async () => {
@@ -34,7 +50,7 @@ describe('unified intelligent project setup', () => {
       initialize: true,
     });
 
-    expect(['inspection-required', 'questions-open']).toContain(initial.state.stage);
+    expect(initial.state.stage).toBe('questions-open');
     expect(initial.state.materialQuestions.map((question) => question.id)).toEqual(
       expect.arrayContaining(['bootstrap.project-archetype', 'bootstrap.docs-root']),
     );
@@ -57,14 +73,51 @@ describe('unified intelligent project setup', () => {
         expect.objectContaining({ id: 'host-delivery.verify', required: true }),
       ]),
     );
+    expect(initial.state.conversation).toMatchObject({
+      mode: 'ask-and-wait',
+      finalPlanAllowed: false,
+      currentQuestion: {
+        id: initial.state.materialQuestions[0]!.id,
+        interaction: 'must-ask-and-wait',
+      },
+    });
+    expect(initial.state.nextCommand).toBe(
+      initial.state.materialQuestions[0]!.answerCommand,
+    );
+    const reviewLines = buildSetupOutputLines(initial, 'review');
+    expect(reviewLines).toContain(
+      'Wait for the user answer. Do not infer it, batch later questions, present the consolidated setup plan, or request broad approval.',
+    );
+    expect(reviewLines).toContain(
+      'Consolidated review is unavailable until the current material question is answered.',
+    );
+    expect(reviewLines).not.toContain('Recommendations:');
     const packet = JSON.parse(await readFile(initial.state.agentPacketPath, 'utf8')) as {
       workItems: Array<{ operation: string }>;
       responseObjective: string;
+      submissionPath: string;
+      submissionCommand: string;
+      currentQuestion: { id: string };
+      finalPlanAllowed: boolean;
+      exactContinuation: string;
     };
     expect(Array.isArray(packet.workItems)).toBe(true);
-    expect(packet.responseObjective).toContain('simple language');
+    expect(packet.responseObjective).toContain('Ask exactly the current material question');
+    expect(packet.submissionPath).toBe('.skopos/setup/analysis-input.json');
+    expect(packet.submissionCommand).toContain('skopos setup submit .skopos/setup/analysis-input.json');
+    expect(packet.currentQuestion.id).toBe(initial.state.materialQuestions[0]!.id);
+    expect(packet.finalPlanAllowed).toBe(false);
+    expect(packet.exactContinuation).toBe(initial.state.materialQuestions[0]!.answerCommand);
+    await expect(recordSkoposSetupDispositionRuntime({
+      cwd: root,
+      actor: 'setup-test',
+      recommendationId: initial.state.recommendations[0]!.id,
+      disposition: 'accept',
+    })).rejects.toThrow('Answer the current material setup question before reviewing recommendations');
 
-    const optional = initial.state.recommendations.find(
+    const clarified = await answerRemainingMaterialQuestions(root);
+    expect(clarified.state.conversation.mode).not.toBe('ask-and-wait');
+    const optional = clarified.state.recommendations.find(
       (entry) => entry.applyKind === 'capability-candidate' && !entry.required,
     )!;
     const deferred = await recordSkoposSetupDispositionRuntime({
@@ -549,17 +602,7 @@ describe('unified intelligent project setup', () => {
       summary: expect.stringContaining('without changing project configuration'),
     }));
 
-    let review = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
-    for (const question of review.state.materialQuestions) {
-      if (question.id === 'bootstrap.instructions-source') continue;
-      await answerSkoposSetupQuestionRuntime({
-        cwd: root,
-        actor: 'setup-test',
-        questionId: question.id,
-        optionId: question.recommendedOptionId,
-      });
-    }
-    review = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
+    let review = await answerRemainingMaterialQuestions(root);
     const instructionSync = review.state.recommendations.find(
       (recommendation) => recommendation.id === 'instructions.sync',
     );
@@ -773,6 +816,7 @@ describe('unified intelligent project setup', () => {
       inputPath: analysisPath,
       actor: 'setup-test',
     });
+    initial = await answerRemainingMaterialQuestions(root);
     for (const recommendation of initial.state.recommendations) {
       await recordSkoposSetupDispositionRuntime({
         cwd: root,
@@ -877,6 +921,7 @@ describe('unified intelligent project setup', () => {
       }],
     }));
     let setup = await submitSkoposSetupAnalysisRuntime({ cwd: root, inputPath, actor: 'setup-test' });
+    setup = await answerRemainingMaterialQuestions(root);
     const recommendation = setup.state.recommendations.find((entry) => entry.id === 'memory.operation.create-overview')!;
     await recordSkoposSetupDispositionRuntime({ cwd: root, actor: 'setup-test', recommendationId: recommendation.id, disposition: 'accept' });
     setup = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test' });
@@ -918,6 +963,7 @@ describe('unified intelligent project setup', () => {
       documentOperations: [],
     }));
     let setup = await submitSkoposSetupAnalysisRuntime({ cwd: root, inputPath, actor: 'setup-test' });
+    setup = await answerRemainingMaterialQuestions(root);
     const recommendation = setup.state.recommendations.find((entry) => entry.id === 'scope.web')!;
     await recordSkoposSetupDispositionRuntime({
       cwd: root,
@@ -1030,8 +1076,9 @@ describe('unified intelligent project setup', () => {
 
   it('turns edit into a source-bound revised recommendation before approval', async () => {
     const root = await createNodeWorkspace(false);
-    const initial = await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
-    const memory = initial.state.recommendations.find((entry) => entry.id === 'memory.project-overview')!;
+    await buildSkoposSetupRuntime({ cwd: root, actor: 'setup-test', initialize: true });
+    const clarified = await answerRemainingMaterialQuestions(root);
+    const memory = clarified.state.recommendations.find((entry) => entry.id === 'memory.project-overview')!;
     const edited = await recordSkoposSetupDispositionRuntime({
       cwd: root,
       actor: 'setup-test',
@@ -1039,7 +1086,14 @@ describe('unified intelligent project setup', () => {
       disposition: 'edit',
       note: 'Use PRODUCT.md as the canonical overview instead.',
     });
-    expect(edited.state.nextCommand).toBe('skopos setup review .');
+    expect(edited.state.conversation).toMatchObject({
+      mode: 'inspect-and-submit',
+      finalPlanAllowed: false,
+      submissionPath: '.skopos/setup/analysis-input.json',
+    });
+    expect(edited.state.nextCommand).toBe(
+      'skopos setup submit .skopos/setup/analysis-input.json . --actor setup-test',
+    );
 
     const inputPath = join(root, '.skopos/setup/analysis-input.json');
     await writeFile(inputPath, JSON.stringify({
