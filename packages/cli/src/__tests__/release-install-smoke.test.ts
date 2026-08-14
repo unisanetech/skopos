@@ -782,7 +782,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
   it('proves Product Interface Design behavior from the packed CLI without source resolution', async () => {
     const report = await runExternalSkillPortability();
 
-    expect(report.result).toBe('pass');
+    expect(report.result, JSON.stringify(report.failure, null, 2)).toBe('pass');
     expect(report.projects).toHaveLength(1);
     expect(report.projects[0]).toMatchObject({
       label: 'minimal',

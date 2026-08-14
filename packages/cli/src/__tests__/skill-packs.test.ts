@@ -299,8 +299,8 @@ describe('Product Interface Design skill pack', () => {
       cacheMode: 'bypass',
       task,
       taskRisk: 'standard',
-      ownedPaths: ['packages/ui/src/app'],
-      changedPaths: ['packages/ui/src/app/page.tsx'],
+      ownedPaths: [String.raw`packages\ui\src\app`],
+      changedPaths: [String.raw`packages\ui\src\app\page.tsx`],
       affectedCapabilities: ['hydration'],
       selectedActionIds: ['quality.run-proof-phase'],
       applicableGuardIds: ['quality.typecheck'],
@@ -342,6 +342,9 @@ describe('Product Interface Design skill pack', () => {
         source: 'changed',
         kinds: expect.arrayContaining(['authored-source']),
       }),
+    );
+    expect(result.envelope.affectedCapabilities).toEqual(
+      expect.arrayContaining(['frontend', 'browser-rendering', 'client-rendering']),
     );
     expect(result.explanations).toContainEqual(
       expect.objectContaining({
