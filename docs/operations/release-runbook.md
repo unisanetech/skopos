@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-14
+lastUpdated: 2026-08-15
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../decisions/D-20260813-company-ownership-and-first-release-host-support-boundary.md
@@ -22,11 +22,14 @@ relatedDocs:
 
 This runbook turns the release Plan into a repeatable operator checklist. It does not
 authorize publication. The immutable first release was `@unisane/skopos@0.1.0`. The
-current patch candidate is `@unisane/skopos@0.1.1` under the npm `next` dist tag and
+current patch candidate is `@unisane/skopos@0.1.2` under the npm `next` dist tag and
 must use OIDC trusted publishing.
 
 ## Changelog
 
+- `2026-08-15`: Superseded the protected, unpublished `v0.1.1` candidate with
+  `0.1.2` after correcting the OIDC publication guard. The failed candidate tag
+  remains immutable; no `0.1.1` package was published.
 - `2026-08-14`: Added the `0.1.1` patch-release path. Later versions use OIDC trusted
   publishing, derive the reviewed tarball name from the public package manifest, and
   keep private internal packages unpublished.
@@ -116,7 +119,7 @@ After every gate is green, create a separate high-impact `project-integration` r
 Task. It must name:
 
 - candidate commit SHA
-- `@unisane/skopos@0.1.1`
+- `@unisane/skopos@0.1.2`
 - `next` dist tag
 - tarball SHA-256 and reviewed file manifest
 - protected trusted-publishing workflow and run
@@ -204,14 +207,14 @@ Never set `latest` during this sequence.
 Verify and record:
 
 ```bash
-npm view @unisane/skopos@0.1.1 version dist.integrity dist.tarball repository --json
+npm view @unisane/skopos@0.1.2 version dist.integrity dist.tarball repository --json
 npm view @unisane/skopos dist-tags --json
 npx @unisane/skopos@next --version
 npm exec --package @unisane/skopos@next -- skopos --version
 pnpm dlx @unisane/skopos@next --version
 ```
 
-The expected version is `0.1.1`; `next` must point to it and `latest` must not be moved
+The expected version is `0.1.2`; `next` must point to it and `latest` must not be moved
 by this candidate-publication workflow. The protected workflow runs
 `pnpm release:registry:verify` after publication; it validates the same fields and
 commands, compares the downloaded registry tarball to the final candidate receipt,
@@ -220,8 +223,9 @@ machine-readable Evidence. A version-only registry lookup is not sufficient.
 
 ## Rollback And Incident Response
 
-Published versions are immutable. Never rebuild or overwrite `0.1.0`, `0.1.1`, or any
-other registry version.
+Published versions are immutable. Never rebuild or overwrite `0.1.0`, `0.1.2`, or any
+other registry version. Never move or reuse the protected, unpublished `v0.1.1`
+candidate tag.
 
 For a functional defect without known compromise:
 
@@ -248,7 +252,7 @@ registry verification.
 
 ## Soak Before `latest`
 
-Keep `0.1.1` on `next` while monitoring install failures, initialization, data loss,
+Keep `0.1.2` on `next` while monitoring install failures, initialization, data loss,
 false closure, coordination safety, Product Interface Design outcomes, UI/runtime errors,
 platform compatibility, and documentation friction. Promotion to `latest` is a later,
 separate decision and requires a new approved Task.

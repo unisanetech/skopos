@@ -200,8 +200,8 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       expect(help).not.toContain('skopos trust');
       expect(help).not.toContain('skopos done');
 
-      expect(run(projectDirectory, ['--version']).trim()).toBe('0.1.1');
-      expect(run(projectDirectory, ['-v']).trim()).toBe('0.1.1');
+      expect(run(projectDirectory, ['--version']).trim()).toBe('0.1.2');
+      expect(run(projectDirectory, ['-v']).trim()).toBe('0.1.2');
 
       const setup = runJson<{
         statePath?: string;
