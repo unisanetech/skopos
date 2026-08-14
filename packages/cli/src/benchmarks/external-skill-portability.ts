@@ -32,17 +32,21 @@ export const resolvePnpmInvocation = ({
   platform = process.platform,
   packageManagerEntrypoint = process.env.npm_execpath,
   nodeExecutable = process.execPath,
+  commandInterpreter = process.env.ComSpec ?? process.env.COMSPEC,
 }: {
   platform?: NodeJS.Platform;
   packageManagerEntrypoint?: string | null;
   nodeExecutable?: string;
+  commandInterpreter?: string;
 } = {}): PnpmInvocation =>
   packageManagerEntrypoint
     ? { command: nodeExecutable, argsPrefix: [packageManagerEntrypoint] }
-    : {
-        command: platform === 'win32' ? 'pnpm.cmd' : 'pnpm',
-        argsPrefix: [],
-      };
+    : platform === 'win32'
+      ? {
+          command: commandInterpreter || 'cmd.exe',
+          argsPrefix: ['/d', '/s', '/c', 'pnpm'],
+        }
+      : { command: 'pnpm', argsPrefix: [] };
 
 export const isHandoffArtifactPath = (path: string): boolean =>
   normalize(path).endsWith('/handoff.json');

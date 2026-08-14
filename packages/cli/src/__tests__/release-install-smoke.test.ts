@@ -34,8 +34,12 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       resolvePnpmInvocation({
         platform: 'win32',
         packageManagerEntrypoint: null,
+        commandInterpreter: String.raw`C:\Windows\System32\cmd.exe`,
       }),
-    ).toEqual({ command: 'pnpm.cmd', argsPrefix: [] });
+    ).toEqual({
+      command: String.raw`C:\Windows\System32\cmd.exe`,
+      argsPrefix: ['/d', '/s', '/c', 'pnpm'],
+    });
     expect(
       resolvePnpmInvocation({
         platform: 'linux',
