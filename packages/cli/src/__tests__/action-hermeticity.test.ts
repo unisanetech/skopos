@@ -5,7 +5,11 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { runSkoposActionRuntime } from '../../../runtime/src/application/actions/actions.service.js';
+import {
+  normalizeSkoposActionPath,
+  resolveSkoposActionToolLookupInvocation,
+  runSkoposActionRuntime,
+} from '../../../runtime/src/application/actions/actions.service.js';
 import { initSkoposProject } from '../../../runtime/src/application/init/init.service.js';
 
 const temporaryRoots: string[] = [];
@@ -24,6 +28,29 @@ afterEach(async () => {
 });
 
 describe('Action effects and hermetic capability contract', () => {
+  it('uses the host-native executable lookup on Windows and POSIX', () => {
+    expect(
+      resolveSkoposActionToolLookupInvocation({
+        tool: 'node',
+        platform: 'win32',
+      }),
+    ).toEqual({ executable: 'where.exe', args: ['node'] });
+    expect(
+      resolveSkoposActionToolLookupInvocation({
+        tool: 'node',
+        platform: 'linux',
+      }),
+    ).toEqual({ executable: '/usr/bin/env', args: ['which', 'node'] });
+  });
+
+  it('stores Action artifact paths with portable separators', () => {
+    expect(
+      normalizeSkoposActionPath(
+        String.raw`.skopos\runs\run-fixture\artifacts\proof.json`,
+      ),
+    ).toBe('.skopos/runs/run-fixture/artifacts/proof.json');
+  });
+
   it('keeps capability assertions identical across unavailable and available hosts', async () => {
     const root = await createWorkspace(false);
     await writeManifest(root, 'host-capability-proof', {
