@@ -48,6 +48,9 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
     source.indexOf('\n  publish:\n'),
     source.indexOf('\n  verify-published-registry:\n'),
   );
+  const oidcPublishBlock = publishBlock.slice(
+    publishBlock.indexOf('      - name: Publish an existing package through npm trusted publishing\n'),
+  );
   const registryBlock = source.slice(source.indexOf('\n  verify-published-registry:\n'));
   const artifactUploadBlocks = source
     .split(/\n\s+- name:/u)
@@ -247,7 +250,11 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(publishBlock, /NODE_AUTH_TOKEN: \$\{\{ secrets\.NPM_BOOTSTRAP_TOKEN \}\}/u);
   assert.match(publishBlock, /--tag next --access public --provenance/u);
   assert.match(publishBlock, /if: inputs\.mode == 'oidc-publish'/u);
-  assert.match(publishBlock, /test -z "\$\{NODE_AUTH_TOKEN:-\}"/u);
+  assert.match(
+    oidcPublishBlock,
+    /npm publish "\.release\/packed\/unisane-skopos-\$\{PACKAGE_VERSION\}\.tgz" --tag next --access public/u,
+  );
+  assert.doesNotMatch(oidcPublishBlock, /NODE_AUTH_TOKEN/u);
   assert.match(registryBlock, /ref: \$\{\{ inputs\.tag \}\}/u);
   assert.match(registryBlock, /persist-credentials: false/u);
   assert.match(registryBlock, /pnpm install --frozen-lockfile/u);
@@ -287,6 +294,10 @@ for (const weakened of [
   ),
   workflow.replace('          - oidc-publish\n', ''),
   workflow.replace('${{ secrets.NPM_BOOTSTRAP_TOKEN }}', '${{ secrets.NPM_TOKEN }}'),
+  workflow.replace(
+    "        if: inputs.mode == 'oidc-publish'\n        shell: bash\n",
+    "        if: inputs.mode == 'oidc-publish'\n        shell: bash\n        env:\n          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}\n",
+  ),
   workflow.replace('          pnpm release:scorecard:validate\n', ''),
   workflow.replace('          include-hidden-files: true\n', ''),
   workflow.replace('          pnpm web:verify\n', '          echo skipped-web-verify\n'),

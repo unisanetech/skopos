@@ -510,7 +510,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -z "${NODE_AUTH_TOKEN:-}"
           npm publish ".release/packed/unisane-skopos-${PACKAGE_VERSION}.tgz" --tag next --access public
 
   verify-published-registry:
