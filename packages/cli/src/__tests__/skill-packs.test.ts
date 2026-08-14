@@ -8,6 +8,7 @@ import {
   loadSkoposGuardManifests,
   loadSkoposProjectSkillBindings,
   loadSkoposSkillPacks,
+  normalizeSkoposSkillCatalogPath,
 } from '../../../indexer/src/index.js';
 import type {
   SkoposAgentNativeOperatingModel,
@@ -28,6 +29,16 @@ import { describe, expect, it } from 'vitest';
 const skoposRoot = fileURLToPath(new URL('../../../..', import.meta.url));
 
 describe('Product Interface Design skill pack', () => {
+  it('normalizes installed Skill catalog paths across Windows and POSIX hosts', () => {
+    expect(
+      normalizeSkoposSkillCatalogPath(
+        String.raw`C:\project\node_modules\@unisane\skopos\dist\skill-packs\ui\product-interface-design\pack.json`,
+      ),
+    ).toBe(
+      'C:/project/node_modules/@unisane/skopos/dist/skill-packs/ui/product-interface-design/pack.json',
+    );
+  });
+
   it('loads exactly three bounded, component-library-neutral capabilities', async () => {
     const packs = await loadSkoposSkillPacks({ cwd: skoposRoot });
     const pack = packs.find((candidate) => candidate.packId === 'ui.product-interface-design');
@@ -299,8 +310,8 @@ describe('Product Interface Design skill pack', () => {
       cacheMode: 'bypass',
       task,
       taskRisk: 'standard',
-      ownedPaths: ['packages/ui/src/app'],
-      changedPaths: ['packages/ui/src/app/page.tsx'],
+      ownedPaths: [String.raw`packages\ui\src\app`],
+      changedPaths: [String.raw`packages\ui\src\app\page.tsx`],
       affectedCapabilities: ['hydration'],
       selectedActionIds: ['quality.run-proof-phase'],
       applicableGuardIds: ['quality.typecheck'],
@@ -342,6 +353,9 @@ describe('Product Interface Design skill pack', () => {
         source: 'changed',
         kinds: expect.arrayContaining(['authored-source']),
       }),
+    );
+    expect(result.envelope.affectedCapabilities).toEqual(
+      expect.arrayContaining(['frontend', 'browser-rendering', 'client-rendering']),
     );
     expect(result.explanations).toContainEqual(
       expect.objectContaining({

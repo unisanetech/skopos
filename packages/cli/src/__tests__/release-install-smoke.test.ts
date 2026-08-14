@@ -34,8 +34,12 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
       resolvePnpmInvocation({
         platform: 'win32',
         packageManagerEntrypoint: null,
+        commandInterpreter: String.raw`C:\Windows\System32\cmd.exe`,
       }),
-    ).toEqual({ command: 'pnpm.cmd', argsPrefix: [] });
+    ).toEqual({
+      command: String.raw`C:\Windows\System32\cmd.exe`,
+      argsPrefix: ['/d', '/s', '/c', 'pnpm'],
+    });
     expect(
       resolvePnpmInvocation({
         platform: 'linux',
@@ -782,7 +786,7 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
   it('proves Product Interface Design behavior from the packed CLI without source resolution', async () => {
     const report = await runExternalSkillPortability();
 
-    expect(report.result).toBe('pass');
+    expect(report.result, JSON.stringify(report.failure, null, 2)).toBe('pass');
     expect(report.projects).toHaveLength(1);
     expect(report.projects[0]).toMatchObject({
       label: 'minimal',

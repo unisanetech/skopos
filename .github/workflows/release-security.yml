@@ -64,6 +64,10 @@ jobs:
       - name: Exercise canonical lifecycle and snapshot portability
         run: pnpm proof
 
+      - name: Exercise packed Skill portability on Windows
+        if: runner.os == 'Windows' && matrix.node == '24'
+        run: pnpm --filter @unisane/skopos exec -- vitest run src/__tests__/release-install-smoke.test.ts --testNamePattern "proves Product Interface Design behavior from the packed CLI without source resolution"
+
   security-artifacts:
     name: Secrets, licenses, audit, and SBOM
     runs-on: ubuntu-24.04

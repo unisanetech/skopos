@@ -66,6 +66,10 @@ assert.match(workflow, /scan-installed-licenses\.mjs \.release\/install \.releas
 assert.match(workflow, /pnpm audit --prod --audit-level high/u);
 assert.match(workflow, /name: Build workspace packages\n\s+run: pnpm build/u);
 assert.match(workflow, /name: Exercise canonical lifecycle and snapshot portability\n\s+run: pnpm proof/u);
+assert.match(
+  workflow,
+  /name: Exercise packed Skill portability on Windows\n\s+if: runner\.os == 'Windows' && matrix\.node == '24'\n\s+run: pnpm --filter @unisane\/skopos exec -- vitest run src\/__tests__\/release-install-smoke\.test\.ts --testNamePattern "proves Product Interface Design behavior from the packed CLI without source resolution"/u,
+);
 assert.doesNotMatch(
   workflow,
   /pnpm --filter @unisane\/skopos test:e2e/u,

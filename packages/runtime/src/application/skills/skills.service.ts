@@ -1040,8 +1040,10 @@ const buildSkillTaskSignalEnvelope = ({
   projectLifecycle: SkoposProjectLifecycle;
 }): SkoposSkillTaskSignalEnvelope => {
   const scope = task.scope.scope;
-  const changedPathSet = new Set(changedPaths);
-  const paths = uniqueSorted([...ownedPaths, ...changedPaths]).map((path) => ({
+  const portableOwnedPaths = ownedPaths.map(normalizeSkillTaskPath);
+  const portableChangedPaths = changedPaths.map(normalizeSkillTaskPath);
+  const changedPathSet = new Set(portableChangedPaths);
+  const paths = uniqueSorted([...portableOwnedPaths, ...portableChangedPaths]).map((path) => ({
     path,
     kinds: classifySkillTaskPath(path),
     source: changedPathSet.has(path) ? 'changed' as const : 'owned' as const,
@@ -1284,6 +1286,8 @@ const toSkillModuleSelectionEvidence = (
 
 const skillSignalText = (signal: { id: string; summary: string; evidence: string[] }): string =>
   `${signal.id} ${signal.summary} ${signal.evidence.join(' ')}`;
+
+const normalizeSkillTaskPath = (path: string): string => path.replaceAll('\\', '/');
 
 const MINIMUM_POSITIVE_SIGNAL_TERM_OVERLAP = 3;
 const MINIMUM_NEGATIVE_SIGNAL_TERM_OVERLAP = 2;

@@ -504,7 +504,9 @@ export const loadSkoposSkillPacks = async ({
         fixtures,
         evaluationSuites,
         ...(loadedContextLibrary ? { loadedContextLibrary } : {}),
-        sourcePath: relative(cwd, manifestPath) || manifestPath,
+        sourcePath: normalizeSkoposSkillCatalogPath(
+          relative(cwd, manifestPath) || manifestPath,
+        ),
       });
     }
   }
@@ -564,7 +566,10 @@ const loadSkillEvaluationSuites = async ({
         );
       }
     }
-    suites.push({ ...suite, sourcePath: relative(cwd, suitePath) || suitePath });
+    suites.push({
+      ...suite,
+      sourcePath: normalizeSkoposSkillCatalogPath(relative(cwd, suitePath) || suitePath),
+    });
   }
   rejectDuplicateIds(suites.map((suite) => suite.suiteId), 'skill evaluation suite');
   const declared = [...pack.evaluationSuiteIds].sort();
@@ -603,7 +608,9 @@ const loadSkillFixtures = async ({
     }
     fixtures.push({
       ...fixture,
-      sourcePath: relative(cwd, fixturePath) || fixturePath,
+      sourcePath: normalizeSkoposSkillCatalogPath(
+        relative(cwd, fixturePath) || fixturePath,
+      ),
     });
   }
   rejectDuplicateIds(fixtures.map((fixture) => fixture.fixtureId), 'skill fixture');
@@ -645,7 +652,12 @@ export const loadSkoposProjectSkillBindings = async ({
     const contents = await readTextFile(bindingPath);
     if (!contents) continue;
     const binding = projectSkillBindingSchema.parse(JSON.parse(contents));
-    bindings.push({ ...binding, sourcePath: relative(cwd, bindingPath) || bindingPath });
+    bindings.push({
+      ...binding,
+      sourcePath: normalizeSkoposSkillCatalogPath(
+        relative(cwd, bindingPath) || bindingPath,
+      ),
+    });
   }
   rejectDuplicateIds(bindings.map((binding) => binding.bindingId), 'project skill binding');
   return bindings.sort((left, right) => left.bindingId.localeCompare(right.bindingId));
@@ -661,12 +673,17 @@ const listManifestPaths = async (
     const resolved = isAbsolute(root) ? root : join(cwd, root);
     paths.push(
       ...(await listFilesUnder(resolved, ['.json'])).filter((filePath) =>
-        filePath.endsWith(suffix),
+        normalizeSkoposSkillCatalogPath(filePath).endsWith(
+          normalizeSkoposSkillCatalogPath(suffix),
+        ),
       ),
     );
   }
   return paths.sort();
 };
+
+export const normalizeSkoposSkillCatalogPath = (path: string): string =>
+  path.replaceAll('\\', '/');
 
 const rejectDuplicateIds = (ids: string[], label: string): void => {
   const seen = new Set<string>();
