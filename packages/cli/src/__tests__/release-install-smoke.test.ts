@@ -607,33 +607,43 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         ),
       ).toEqual([]);
 
-      await mkdir(join(projectDirectory, 'tools', 'skopos', 'actions'), {
-        recursive: true,
-      });
+      const packedActionFixturePath = 'tools/skopos/fixtures/packed-action.cjs';
+      await Promise.all([
+        mkdir(join(projectDirectory, 'tools', 'skopos', 'actions'), {
+          recursive: true,
+        }),
+        mkdir(join(projectDirectory, 'tools', 'skopos', 'fixtures'), {
+          recursive: true,
+        }),
+      ]);
       await Promise.all([
         writeFile(join(projectDirectory, '.gitignore'), 'node_modules/\n', 'utf8'),
+        writeFile(
+          join(projectDirectory, packedActionFixturePath),
+          PACKED_ACTION_FIXTURE_SOURCE,
+          'utf8',
+        ),
         writePackedAction(projectDirectory, 'packed-artifact', {
-          command:
-            `node -e "const fs=require('node:fs');const p=require('node:path');fs.writeFileSync(p.join(process.env.SKOPOS_ARTIFACT_ROOT,'proof.json'),JSON.stringify({root:process.env.SKOPOS_ARTIFACT_ROOT}))"`,
+          command: `node ${packedActionFixturePath} artifact`,
           outputs: ['proof.json'],
           artifactEffect: 'isolated',
           safety: 'artifact-producing',
         }),
         writePackedAction(projectDirectory, 'packed-external', {
-          command: `node -e "require('node:fs').writeFileSync(process.env.SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH,JSON.stringify({schemaVersion:1,service:'packed-remote',operation:'packed.create',status:'succeeded',providerRequestId:'packed-request-1',occurredAt:new Date().toISOString()}))"`,
+          command: `node ${packedActionFixturePath} external`,
           services: ['packed-remote'],
           externalEffect: 'declared',
           safety: 'mutating',
           concurrency: 'exclusive',
         }),
         writePackedAction(projectDirectory, 'packed-host-capabilities', {
-          command: `node -e "process.exit(0)"`,
+          command: `node ${packedActionFixturePath} noop`,
           network: 'required',
           browser: 'required',
           secrets: ['PACKED_PROOF_SECRET'],
         }),
         writePackedAction(projectDirectory, 'packed-mutation', {
-          command: `node -e "require('node:fs').writeFileSync('undeclared.txt','changed')"`,
+          command: `node ${packedActionFixturePath} mutation`,
         }),
       ]);
       initializeGitBaseline(projectDirectory);
@@ -1046,6 +1056,43 @@ interface PackedActionOverrides {
   browser?: 'none' | 'required';
   secrets?: string[];
 }
+
+const PACKED_ACTION_FIXTURE_SOURCE = `const { writeFileSync } = require('node:fs');
+const { join } = require('node:path');
+
+const mode = process.argv[2];
+
+if (mode === 'artifact') {
+  const artifactRoot = process.env.SKOPOS_ARTIFACT_ROOT;
+  if (!artifactRoot) throw new Error('SKOPOS_ARTIFACT_ROOT is required.');
+  writeFileSync(
+    join(artifactRoot, 'proof.json'),
+    JSON.stringify({ root: artifactRoot }),
+  );
+} else if (mode === 'external') {
+  const receiptPath = process.env.SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH;
+  if (!receiptPath) {
+    throw new Error('SKOPOS_EXTERNAL_EFFECT_RECEIPT_PATH is required.');
+  }
+  writeFileSync(
+    receiptPath,
+    JSON.stringify({
+      schemaVersion: 1,
+      service: 'packed-remote',
+      operation: 'packed.create',
+      status: 'succeeded',
+      providerRequestId: 'packed-request-1',
+      occurredAt: new Date().toISOString(),
+    }),
+  );
+} else if (mode === 'noop') {
+  process.exitCode = 0;
+} else if (mode === 'mutation') {
+  writeFileSync('undeclared.txt', 'changed');
+} else {
+  throw new Error(\`Unknown packed Action fixture mode: \${mode ?? '<missing>'}\`);
+}
+`;
 
 const writePackedAction = async (
   projectDirectory: string,
