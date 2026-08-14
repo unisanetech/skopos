@@ -58,7 +58,13 @@ assert.match(
   /\n\s+include-hidden-files: true/u,
   'The .release/** Evidence upload must explicitly include hidden paths.',
 );
-assert.match(workflow, /tar -xzf \.release\/packed\/unisane-skopos-0\.1\.0\.tgz -C \.release\/package/u);
+assert.match(workflow, /package_version="\$\(node -p "require\('\.\/packages\/cli\/package\.json'\)\.version"\)"/u);
+assert.match(
+  workflow,
+  /candidate_tarball="\$GITHUB_WORKSPACE\/\.release\/packed\/unisane-skopos-\$\{package_version\}\.tgz"/u,
+);
+assert.match(workflow, /test -f "\$candidate_tarball"/u);
+assert.match(workflow, /tar -xzf "\$candidate_tarball" -C \.release\/package/u);
 validateGitleaksProof(workflow);
 assert.match(workflow, /find \.release\/package\/package -type f -print -quit/u);
 assert.match(workflow, /format: cyclonedx-json/u);
@@ -77,7 +83,7 @@ assert.doesNotMatch(
 );
 assert.match(
   workflow,
-  /npm install --prefix \.release\/install "\$GITHUB_WORKSPACE\/\.release\/packed\/unisane-skopos-0\.1\.0\.tgz" --omit=dev --ignore-scripts/u,
+  /npm install --prefix \.release\/install "\$candidate_tarball" --omit=dev --ignore-scripts/u,
 );
 assert.doesNotMatch(workflow, /pnpm --dir \.release\/install add/u);
 assert.doesNotMatch(workflow, /--package-lock=false/u);

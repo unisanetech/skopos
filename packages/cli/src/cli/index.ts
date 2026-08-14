@@ -6,7 +6,7 @@ import { skoposCliCommandRegistry } from './registry.js';
 import { writeLines } from './shared/output.js';
 
 const HELP_COMMANDS = new Set(['help', '--help', '-h']);
-export const SKOPOS_CLI_VERSION = '0.1.0';
+export const SKOPOS_CLI_VERSION = '0.1.1';
 
 export const runSkoposCli = async (argv: string[] = process.argv.slice(2)): Promise<void> => {
   const [command, ...rest] = argv;

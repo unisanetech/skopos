@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const workflowPath = new URL('../../.github/workflows/publish.yml', import.meta.url);
+const rootPackagePath = new URL('../../package.json', import.meta.url);
 const cliPackagePath = new URL('../../packages/cli/package.json', import.meta.url);
 
 const workflow = await readFile(workflowPath, 'utf8');
+const rootPackage = JSON.parse(await readFile(rootPackagePath, 'utf8'));
 const cliPackage = JSON.parse(await readFile(cliPackagePath, 'utf8'));
 
 const validateGitleaksProof = (source) => {
@@ -264,7 +266,8 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   }
 
   assert.equal(packageManifest.name, '@unisane/skopos');
-  assert.equal(packageManifest.version, '0.1.0');
+  assert.equal(packageManifest.version, rootPackage.version);
+  assert.match(packageManifest.version, /^0\.1\.\d+$/u);
   assert.deepEqual(packageManifest.bin, { skopos: 'dist/cli.js' });
   assert.equal(packageManifest.publishConfig?.access, 'public');
   assert.equal(packageManifest.publishConfig?.tag, 'next');

@@ -1,5 +1,5 @@
 ---
-title: First Public Release And Rollback Runbook
+title: Public Release And Rollback Runbook
 status: active
 owner: skopos-core
 id: SKOPOS-FIRST-PUBLIC-RELEASE-RUNBOOK
@@ -18,14 +18,18 @@ relatedDocs:
   - ../../SUPPORT.md
 ---
 
-# First Public Release And Rollback Runbook
+# Public Release And Rollback Runbook
 
 This runbook turns the release Plan into a repeatable operator checklist. It does not
-authorize publication. The first release is only `@unisane/skopos@0.1.0` under the npm
-`next` dist tag.
+authorize publication. The immutable first release was `@unisane/skopos@0.1.0`. The
+current patch candidate is `@unisane/skopos@0.1.1` under the npm `next` dist tag and
+must use OIDC trusted publishing.
 
 ## Changelog
 
+- `2026-08-14`: Added the `0.1.1` patch-release path. Later versions use OIDC trusted
+  publishing, derive the reviewed tarball name from the public package manifest, and
+  keep private internal packages unpublished.
 - `2026-08-14`: Replaced the unavailable third-party `@skopos` npm namespace with the
   company-owned publisher identity `@unisane/skopos`. The executable remains `skopos`,
   and the scope creates no Unisane runtime or product coupling.
@@ -58,10 +62,9 @@ Do not tag or publish when any of these is true:
    comes from more than one source identity.
 4. A release-blocking Finding, policy drift, Task question, missing Evidence, or failed
    runtime-matrix job remains.
-5. npm scope ownership, the protected GitHub environment, the exact one-time bootstrap
-   controls, or the post-bootstrap OIDC transition have not been verified. The trusted
-   publisher itself cannot exist until npm has created the first package; claiming it
-   is already configured would contradict npm's first-package constraint.
+5. npm scope ownership, the protected GitHub environment, or the post-bootstrap OIDC
+   trusted publisher has not been verified. Bootstrap mode is valid only for creating
+   the already-published immutable first package and must never be reused for a patch.
 6. The requested action would publish from a developer laptop or require a long-lived
    npm write token.
 7. A release, package, website, or documentation surface calls a host supported
@@ -113,7 +116,7 @@ After every gate is green, create a separate high-impact `project-integration` r
 Task. It must name:
 
 - candidate commit SHA
-- `@unisane/skopos@0.1.0`
+- `@unisane/skopos@0.1.1`
 - `next` dist tag
 - tarball SHA-256 and reviewed file manifest
 - protected trusted-publishing workflow and run
@@ -201,15 +204,15 @@ Never set `latest` during this sequence.
 Verify and record:
 
 ```bash
-npm view @unisane/skopos@0.1.0 version dist.integrity dist.tarball repository --json
+npm view @unisane/skopos@0.1.1 version dist.integrity dist.tarball repository --json
 npm view @unisane/skopos dist-tags --json
 npx @unisane/skopos@next --version
 npm exec --package @unisane/skopos@next -- skopos --version
 pnpm dlx @unisane/skopos@next --version
 ```
 
-The expected version is `0.1.0`; `next` must point to it and `latest` must not be
-created or moved by this release. The protected workflow runs
+The expected version is `0.1.1`; `next` must point to it and `latest` must not be moved
+by this candidate-publication workflow. The protected workflow runs
 `pnpm release:registry:verify` after publication; it validates the same fields and
 commands, compares the downloaded registry tarball to the final candidate receipt,
 exercises the complete packed lifecycle, builds the installed UI, and uploads its
@@ -217,7 +220,8 @@ machine-readable Evidence. A version-only registry lookup is not sufficient.
 
 ## Rollback And Incident Response
 
-Published versions are immutable. Never rebuild and overwrite `0.1.0`.
+Published versions are immutable. Never rebuild or overwrite `0.1.0`, `0.1.1`, or any
+other registry version.
 
 For a functional defect without known compromise:
 
@@ -244,7 +248,7 @@ registry verification.
 
 ## Soak Before `latest`
 
-Keep `0.1.0` on `next` while monitoring install failures, initialization, data loss,
+Keep `0.1.1` on `next` while monitoring install failures, initialization, data loss,
 false closure, coordination safety, Product Interface Design outcomes, UI/runtime errors,
 platform compatibility, and documentation friction. Promotion to `latest` is a later,
 separate decision and requires a new approved Task.

@@ -37,7 +37,8 @@ const CANDIDATE_PACKAGES = [
 ] as const;
 
 const PUBLIC_BUNDLED_CLI_PACKAGE = '@unisane/skopos';
-const FIRST_PUBLIC_CLI_VERSION = '0.1.0';
+const CURRENT_PUBLIC_CLI_VERSION = '0.1.1';
+const PRIVATE_PACKAGE_VERSION = '0.1.0';
 
 describe('skopos release surface contract', () => {
   it('uses one portable asset identity on Windows and POSIX hosts', () => {
@@ -90,24 +91,26 @@ describe('skopos release surface contract', () => {
     }
   });
 
-  it('uses synchronized 0.1.x package versions for the first bundled CLI candidate', async () => {
+  it('aligns the workspace release identity with the public CLI while internal packages remain private', async () => {
     const rootPackageJson = await loadRootPackageJson();
 
-    expect(rootPackageJson.version).toBe(FIRST_PUBLIC_CLI_VERSION);
+    expect(rootPackageJson.version).toBe(CURRENT_PUBLIC_CLI_VERSION);
 
     for (const packageName of PACKAGE_NAMES) {
       const packageJson = await loadPackageJson(packageName);
 
-      expect(packageJson.version, `${packageName} should stay version-aligned for the first release`).toBe(
-        FIRST_PUBLIC_CLI_VERSION,
+      expect(packageJson.version, `${packageName} must match its intended release boundary`).toBe(
+        packageName === PUBLIC_BUNDLED_CLI_PACKAGE
+          ? CURRENT_PUBLIC_CLI_VERSION
+          : PRIVATE_PACKAGE_VERSION,
       );
     }
   });
 
-  it('publishes the first public CLI as next instead of latest', async () => {
+  it('publishes the current public CLI patch as next instead of latest', async () => {
     const cliPackage = await loadPackageJson(PUBLIC_BUNDLED_CLI_PACKAGE);
 
-    expect(cliPackage.version).toBe(FIRST_PUBLIC_CLI_VERSION);
+    expect(cliPackage.version).toBe(CURRENT_PUBLIC_CLI_VERSION);
     expect(cliPackage.version.startsWith('0.')).toBe(true);
     expect(cliPackage.publishConfig).toEqual(
       expect.objectContaining({
