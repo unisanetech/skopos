@@ -59,6 +59,7 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   for (const action of [
     'actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd',
     'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e',
+    'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020',
     'pnpm/action-setup@d15e628ca66d93ee5f352c71671a7bc6a97af5c9',
     'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a',
     'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c',
@@ -71,6 +72,14 @@ const validatePublishWorkflowContract = (source, packageManifest) => {
   assert.match(source, /permissions:\n\s+contents: read/u);
   assert.doesNotMatch(certifyBlock, /id-token: write|NODE_AUTH_TOKEN|environment:/u);
   assert.match(publishBlock, /permissions:\n\s+contents: read\n\s+id-token: write/u);
+  assert.match(
+    publishBlock,
+    /actions\/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7\.0\.0/u,
+  );
+  assert.doesNotMatch(
+    publishBlock,
+    /actions\/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e/u,
+  );
   assert.equal(source.match(/id-token: write/gu)?.length, 1);
   assert.match(source, /cancel-in-progress: false/u);
   assert.equal(
@@ -294,6 +303,10 @@ for (const weakened of [
   ),
   workflow.replace('          - oidc-publish\n', ''),
   workflow.replace('${{ secrets.NPM_BOOTSTRAP_TOKEN }}', '${{ secrets.NPM_TOKEN }}'),
+  workflow.replace(
+    'actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0',
+    'actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0',
+  ),
   workflow.replace(
     "        if: inputs.mode == 'oidc-publish'\n        shell: bash\n",
     "        if: inputs.mode == 'oidc-publish'\n        shell: bash\n        env:\n          NODE_AUTH_TOKEN: ${{ secrets.NPM_BOOTSTRAP_TOKEN }}\n",

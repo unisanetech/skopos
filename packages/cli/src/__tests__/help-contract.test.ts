@@ -12,7 +12,7 @@ describe('public command help contract', () => {
   it.each([['--version'], ['-v']])('reports the installed CLI version for %s', async (flag) => {
     const output = await captureStdout(() => runSkoposCli([flag]));
     expect(output).toBe(`${SKOPOS_CLI_VERSION}\n`);
-    expect(output).toBe('0.1.2\n');
+    expect(output).toBe('0.1.3\n');
   });
 
   it.each([

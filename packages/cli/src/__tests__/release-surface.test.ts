@@ -37,7 +37,7 @@ const CANDIDATE_PACKAGES = [
 ] as const;
 
 const PUBLIC_BUNDLED_CLI_PACKAGE = '@unisane/skopos';
-const CURRENT_PUBLIC_CLI_VERSION = '0.1.2';
+const CURRENT_PUBLIC_CLI_VERSION = '0.1.3';
 const PRIVATE_PACKAGE_VERSION = '0.1.0';
 
 describe('skopos release surface contract', () => {
