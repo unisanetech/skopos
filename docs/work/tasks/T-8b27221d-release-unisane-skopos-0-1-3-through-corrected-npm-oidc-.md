@@ -1,8 +1,8 @@
 ---
-title: "Task: Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow"
+title: "Task: Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication"
 status: active
 owner: "codex-release"
-id: T-b7f7168c
+id: T-8b27221d
 scope: "skopos"
 role: task
 lifecycle: active
@@ -11,11 +11,11 @@ provenance: accepted
 view: current
 risk: high-impact
 proofSubject: project-integration
-proofBaseline: baseline-574f721878d1d902
+proofBaseline: baseline-ec6afdeb186c8304
 lastUpdated: 2026-08-14
 ---
 
-# Task: Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow
+# Task: Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication
 
 ## Changelog
 
@@ -23,21 +23,21 @@ lastUpdated: 2026-08-14
 
 ## Goal
 
-Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow
+Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication
 
 ## Acceptance
 
-- The root release identity, public package manifest, CLI version, and active release runbook identify 0.1.2 while private internal packages remain unpublished.
-- The protected publish workflow and release validators certify the exact 0.1.2 tag and reviewed tarball without an npm token in the OIDC step.
-- GitHub OIDC publishes @unisane/skopos@0.1.2 to next and the protected registry verifier proves metadata, provenance, integrity, launchers, lifecycle, and bundled UI.
+- The release workflow uses a checksum-pinned setup-node version that does not inject a dummy publish token, and the validator prevents regression.
+- The root package, public CLI manifest, CLI version, tests, and active runbook consistently identify 0.1.3.
+- The protected workflow certifies, publishes, and independently verifies @unisane/skopos@0.1.3 on npm next using trusted publishing.
 
 ## Non-Goals
 
-- Do not move latest, republish 0.1.1, move the protected v0.1.1 tag, publish private @skopos packages, or change product behavior.
+- None declared.
 
 ## Constraints
 
-- Publish only from the protected GitHub workflow after exact-candidate certification and npm-release approval.
+- None declared.
 
 ## Admission And Workflow
 
@@ -67,7 +67,7 @@ Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow
 
 - [x] **Record Task risk and detail before editing** (implementation, complete) — Confirm whether Task risk is light, standard, or high-impact. Keep the active Task current, use a Plan only for multi-Task direction, add a Decision for durable choices, and add or update a Finding for structural gaps.
 - [x] **Review the current pattern in Skopos Workspace** (implementation, complete) — Use the compact references to confirm the current scope, command surface, and docs entrypoints before editing code.
-- [x] **Implement the smallest scoped change** (implementation, complete) — Carry out "Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow" inside the resolved scope before widening impact to adjacent areas.
+- [x] **Implement the smallest scoped change** (implementation, complete) — Carry out "Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication" inside the resolved scope before widening impact to adjacent areas.
 - [x] **Sync docs and instruction surfaces if touched** (docs, complete) — Keep docs, instruction mirrors, and generated project knowledge aligned with the implementation.
 - [x] **Build affected project** (action, complete) — Required by Guard quality.build.
 - [x] **Test affected behavior** (action, complete) — Required by Guard quality.test.
@@ -85,9 +85,9 @@ Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow
 
 ## Evidence And Readiness
 
-- The root release identity, public package manifest, CLI version, and active release runbook identify 0.1.2 while private internal packages remain unpublished. (closure, agent-observation)
-- The protected publish workflow and release validators certify the exact 0.1.2 tag and reviewed tarball without an npm token in the OIDC step. (closure, agent-observation)
-- GitHub OIDC publishes @unisane/skopos@0.1.2 to next and the protected registry verifier proves metadata, provenance, integrity, launchers, lifecycle, and bundled UI. (closure, agent-observation)
+- The release workflow uses a checksum-pinned setup-node version that does not inject a dummy publish token, and the validator prevents regression. (closure, agent-observation)
+- The root package, public CLI manifest, CLI version, tests, and active runbook consistently identify 0.1.3. (closure, agent-observation)
+- The protected workflow certifies, publishes, and independently verifies @unisane/skopos@0.1.3 on npm next using trusted publishing. (closure, agent-observation)
 - Guard quality.build: Build affected project (closure, source-bound-action)
 - Guard quality.focused-behavior-proof: Behavior changes require focused proof (closure, agent-observation)
 - Guard quality.test: Test affected behavior (closure, source-bound-action)
@@ -105,17 +105,17 @@ This machine-readable block is the durable source used to rebuild local Skopos s
 ```json
 {
   "schemaVersion": 1,
-  "id": "T-b7f7168c",
+  "id": "T-8b27221d",
   "type": "task",
   "status": "active",
-  "generatedAt": "2026-08-14T18:53:49.246Z",
-  "updatedAt": "2026-08-14T18:59:23.479Z",
+  "generatedAt": "2026-08-14T19:32:21.975Z",
+  "updatedAt": "2026-08-14T19:38:54.325Z",
   "planIds": [],
   "childTasks": [],
   "state": "active",
   "detail": "detailed",
-  "title": "Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow",
-  "goal": "Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow",
+  "title": "Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication",
+  "goal": "Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication",
   "scope": {
     "query": "skopos",
     "matchedBy": "id",
@@ -143,16 +143,12 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   },
   "contract": {
     "acceptanceCriteria": [
-      "The root release identity, public package manifest, CLI version, and active release runbook identify 0.1.2 while private internal packages remain unpublished.",
-      "The protected publish workflow and release validators certify the exact 0.1.2 tag and reviewed tarball without an npm token in the OIDC step.",
-      "GitHub OIDC publishes @unisane/skopos@0.1.2 to next and the protected registry verifier proves metadata, provenance, integrity, launchers, lifecycle, and bundled UI."
+      "The release workflow uses a checksum-pinned setup-node version that does not inject a dummy publish token, and the validator prevents regression.",
+      "The root package, public CLI manifest, CLI version, tests, and active runbook consistently identify 0.1.3.",
+      "The protected workflow certifies, publishes, and independently verifies @unisane/skopos@0.1.3 on npm next using trusted publishing."
     ],
-    "nonGoals": [
-      "Do not move latest, republish 0.1.1, move the protected v0.1.1 tag, publish private @skopos packages, or change product behavior."
-    ],
-    "constraints": [
-      "Publish only from the protected GitHub workflow after exact-candidate certification and npm-release approval."
-    ]
+    "nonGoals": [],
+    "constraints": []
   },
   "risk": "high-impact",
   "admission": {
@@ -167,6 +163,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
     ],
     "signals": {
       "goalSignals": [
+        "authentication",
         "release"
       ],
       "ownedPathCount": 9,
@@ -185,7 +182,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   },
   "proofSubject": {
     "kind": "project-integration",
-    "baselineId": "baseline-574f721878d1d902"
+    "baselineId": "baseline-ec6afdeb186c8304"
   },
   "priority": 0,
   "dependencyTaskIds": [],
@@ -208,7 +205,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "id": "step-implement-scoped-change",
       "kind": "implementation",
       "title": "Implement the smallest scoped change",
-      "detail": "Carry out \"Release @unisane/skopos 0.1.2 through the corrected protected OIDC workflow\" inside the resolved scope before widening impact to adjacent areas.",
+      "detail": "Carry out \"Release @unisane/skopos 0.1.3 through corrected npm OIDC authentication\" inside the resolved scope before widening impact to adjacent areas.",
       "status": "complete"
     },
     {
@@ -249,14 +246,14 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "sourcePath": "tools/skopos/actions/quality-build.yaml",
       "reason": "Required by Guard quality.build.",
       "matchedPaths": [
+        ".github/workflows/publish.yml",
+        "scripts/release/validate-publish-workflow.mjs",
         "packages/cli/package.json",
         "packages/cli/src/cli/index.ts",
         "packages/cli/src/__tests__/help-contract.test.ts",
         "packages/cli/src/__tests__/release-surface.test.ts",
         "packages/cli/src/__tests__/release-install-smoke.test.ts",
-        "docs/operations/release-runbook.md",
-        ".github/workflows/publish.yml",
-        "scripts/release/validate-publish-workflow.mjs"
+        "docs/operations/release-runbook.md"
       ],
       "outputPaths": [],
       "requiresApproval": true
@@ -269,14 +266,14 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "sourcePath": "tools/skopos/actions/quality-test.yaml",
       "reason": "Required by Guard quality.test.",
       "matchedPaths": [
+        ".github/workflows/publish.yml",
+        "scripts/release/validate-publish-workflow.mjs",
         "packages/cli/package.json",
         "packages/cli/src/cli/index.ts",
         "packages/cli/src/__tests__/help-contract.test.ts",
         "packages/cli/src/__tests__/release-surface.test.ts",
         "packages/cli/src/__tests__/release-install-smoke.test.ts",
-        "docs/operations/release-runbook.md",
-        ".github/workflows/publish.yml",
-        "scripts/release/validate-publish-workflow.mjs"
+        "docs/operations/release-runbook.md"
       ],
       "outputPaths": [],
       "requiresApproval": false
@@ -309,7 +306,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
   "evidenceRequirements": [
     {
       "id": "acceptance-1",
-      "acceptanceCriterion": "The root release identity, public package manifest, CLI version, and active release runbook identify 0.1.2 while private internal packages remain unpublished.",
+      "acceptanceCriterion": "The release workflow uses a checksum-pinned setup-node version that does not inject a dummy publish token, and the validator prevents regression.",
       "phase": "closure",
       "actionIds": [],
       "guardIds": [],
@@ -317,7 +314,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
     },
     {
       "id": "acceptance-2",
-      "acceptanceCriterion": "The protected publish workflow and release validators certify the exact 0.1.2 tag and reviewed tarball without an npm token in the OIDC step.",
+      "acceptanceCriterion": "The root package, public CLI manifest, CLI version, tests, and active runbook consistently identify 0.1.3.",
       "phase": "closure",
       "actionIds": [],
       "guardIds": [],
@@ -325,7 +322,7 @@ This machine-readable block is the durable source used to rebuild local Skopos s
     },
     {
       "id": "acceptance-3",
-      "acceptanceCriterion": "GitHub OIDC publishes @unisane/skopos@0.1.2 to next and the protected registry verifier proves metadata, provenance, integrity, launchers, lifecycle, and bundled UI.",
+      "acceptanceCriterion": "The protected workflow certifies, publishes, and independently verifies @unisane/skopos@0.1.3 on npm next using trusted publishing.",
       "phase": "closure",
       "actionIds": [],
       "guardIds": [],
@@ -386,8 +383,8 @@ This machine-readable block is the durable source used to rebuild local Skopos s
       "status": "complete",
       "targetPath": "docs/architecture/00-architecture.md",
       "resolution": "reviewed-no-change",
-      "resolutionReason": "The architecture already defines @unisane/skopos as the public artifact and skopos as the executable; this patch changes only the candidate version and protected release operation, so no architecture contract changes.",
-      "resolvedAt": "2026-08-14T18:59:23.479Z",
+      "resolutionReason": "The architecture already separates public package identity and protected release governance; this patch changes only the trusted-publishing runtime and current release version.",
+      "resolvedAt": "2026-08-14T19:38:54.325Z",
       "resolvedByActorId": "codex-release"
     }
   ],
