@@ -9,7 +9,7 @@ lifecycle: durable
 authority: canonical
 provenance: accepted
 view: current
-lastUpdated: 2026-08-10
+lastUpdated: 2026-08-14
 relatedDocs:
   - ../work/plans/P-8c7f4a4c-prepare-and-certify-the-first-safe-public-release-of-sko.md
   - ../decisions/031-bundled-cli-release-contract.md
@@ -23,7 +23,7 @@ package.
 
 ## Supported Runtime
 
-The first release supports these exact runtime families:
+The `0.1.x` release line supports these exact runtime families:
 
 | Runtime | Linux | macOS | Windows |
 | --- | --- | --- | --- |
@@ -31,7 +31,7 @@ The first release supports these exact runtime families:
 | Node 24 LTS | Ubuntu 24.04 x64 | macOS 15 arm64 | Windows Server 2025 x64 |
 
 The package engine range is `^22.13.0 || ^24.0.0`. Node 20, odd-numbered Node lines,
-and operating-system versions outside this matrix are not certified for `0.1.0`.
+and operating-system versions outside this matrix are not certified for `0.1.x`.
 The minimum moved from Node 22.5 to 22.13 because Node 22.12 still requires the
 `--experimental-sqlite` flag for `node:sqlite`; Skopos does not require adopters to
 enable an experimental runtime flag.
@@ -48,9 +48,10 @@ commit. It:
 1. checks out the complete Git history without retaining credentials
 2. runs the release boundary and canonical lifecycle tests across all six runtime jobs
 3. fails on critical or high production dependency advisories
-4. builds and packs `@unisane/skopos@0.1.0`, then installs that tarball in a clean project
+4. builds and packs the exact `@unisane/skopos` manifest version, then installs that
+   version-derived tarball in a clean project
 5. scans full Git history and a physically extracted, nonempty CLI tarball with
-   Gitleaks 8.30.1
+   checksum-pinned Gitleaks 8.18.4
 6. scans installed package manifests and checks the production-license report
 7. independently generates a CycloneDX JSON SBOM from the installed candidate
 8. uploads only the license report and SBOM, never a secret finding payload
