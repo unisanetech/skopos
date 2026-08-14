@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import {
+  isHandoffArtifactPath,
   resolvePnpmInvocation,
   runExternalSkillPortability,
 } from '../benchmarks/external-skill-portability.js';
@@ -54,6 +55,20 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         'ui/product-interface-design/design-context/library.json',
       ),
     ).toBe(true);
+  });
+
+  it('recognizes continuation handoff artifacts on Windows and POSIX', () => {
+    expect(
+      isHandoffArtifactPath(
+        String.raw`C:\project\.skopos\handoffs\T-123\handoff.json`,
+      ),
+    ).toBe(true);
+    expect(
+      isHandoffArtifactPath('/project/.skopos/handoffs/T-123/handoff.json'),
+    ).toBe(true);
+    expect(
+      isHandoffArtifactPath('/project/.skopos/handoffs/T-123/validation.json'),
+    ).toBe(false);
   });
 
   it('ships the reviewed Skill runtime assets without private data or internal brands', async () => {
@@ -191,7 +206,9 @@ describe('packed Skopos CLI', { timeout: 180_000 }, () => {
         projectDirectory,
         ['setup', '.', '--actor', 'release-smoke', '--json'],
       );
-      expect(setup.statePath).toContain('.skopos/setup/state.json');
+      expect(normalizePortablePath(setup.statePath ?? '')).toContain(
+        '.skopos/setup/state.json',
+      );
       expect(setup.state?.stage).toMatch(
         /^(inspection-required|questions-open|plan-ready|verification-blocked|setup-ready(?:-with-deferred-options)?)$/u,
       );

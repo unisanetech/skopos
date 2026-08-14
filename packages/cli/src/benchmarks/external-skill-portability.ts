@@ -44,6 +44,9 @@ export const resolvePnpmInvocation = ({
         argsPrefix: [],
       };
 
+export const isHandoffArtifactPath = (path: string): boolean =>
+  normalize(path).endsWith('/handoff.json');
+
 type CommandRecord = {
   command: string;
   cwd: string;
@@ -635,7 +638,7 @@ const proveProjectBehavior = async ({
       ).length,
     },
     cache: {
-      artifactPath: relative(projectRoot, selectionArtifactPath),
+      artifactPath: normalize(relative(projectRoot, selectionArtifactPath)),
       exactReuse,
       invalidatedAfterCapabilityChange: true,
       invalidationDiagnostic,
@@ -723,7 +726,9 @@ const proveContinuationBehavior = async ({
   classifications.add(runJson<HandoffInspect>(cliPath, projectRoot, commands, ['discuss', 'handoff', 'verify', '.', '--task', taskId, '--json']).handoff.validation.freshness);
   runJson(cliPath, projectRoot, commands, ['discuss', 'handoff', 'refresh', '.', '--task', taskId, '--json']);
 
-  const handoffPath = (await walk(join(projectRoot, '.skopos/handoffs'))).find((path) => path.endsWith('/handoff.json'));
+  const handoffPath = (await walk(join(projectRoot, '.skopos/handoffs'))).find(
+    isHandoffArtifactPath,
+  );
   assert(handoffPath, 'External continuation handoff path was not generated.');
   const currentArtifact = await readFile(handoffPath, 'utf8');
   const invalidArtifact = JSON.parse(currentArtifact) as { compiledState: { workspaceIdentity: { repositoryId: string } } };
@@ -771,7 +776,12 @@ const proveContinuationBehavior = async ({
     manualPromptContains,
     actionRecovery: recovered.status,
     evidenceInvalidation,
-    cleanReconstruction: { taskRecovered: reconstructed.id === taskId, localHandoffAbsent: reconstructedHandoffs.every((path) => !path.endsWith('/handoff.json')) },
+    cleanReconstruction: {
+      taskRecovered: reconstructed.id === taskId,
+      localHandoffAbsent: reconstructedHandoffs.every(
+        (path) => !isHandoffArtifactPath(path),
+      ),
+    },
   };
 };
 
@@ -1334,7 +1344,9 @@ const inspectContainment = async ({
   for (const path of (await walk(join(installedCliRoot, 'dist'))).filter((entry) => /\.(js|json|map)$/.test(entry))) {
     const contents = await readFile(path, 'utf8');
     if (forbiddenRoots.some((root) => contents.includes(root))) {
-      installedSourceCheckoutReferences.push(relative(installedCliRoot, path));
+      installedSourceCheckoutReferences.push(
+        normalize(relative(installedCliRoot, path)),
+      );
     }
   }
   const installedPackage = JSON.parse(
