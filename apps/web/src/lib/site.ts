@@ -39,6 +39,13 @@ export const siteConfig = {
   url: resolveSiteUrl(process.env),
 } as const;
 
+export const siteSocialImage = {
+  url: "/brand/og-image.png",
+  width: 1200,
+  height: 630,
+  alt: "Skopos — Project memory for coding agents",
+} as const;
+
 export const publicRoutePaths = [
   "/",
   "/project-memory",
@@ -81,11 +88,13 @@ export function createPageMetadata({
       type: "website",
       url: path,
       siteName: siteConfig.name,
+      images: [siteSocialImage],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [siteSocialImage.url],
     },
   };
 }

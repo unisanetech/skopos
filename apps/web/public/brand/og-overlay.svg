@@ -1,0 +1,18 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="760" height="630" fill="#07101D" fill-opacity="0.82" />
+  <rect width="1200" height="630" stroke="#F8F7F3" stroke-opacity="0.12" stroke-width="2" />
+
+  <g transform="translate(72 62) scale(1.25)">
+    <path d="M48 4L17.3 29.21L16 28.15V36.15H26.54L23.12 33.28L48 12.83Z" fill="#2864FF" />
+    <path d="M47.91 28.53H37.55L40.79 31.17L16 51.32V60L46.24 35.32L48 36.6Z" fill="#F8F7F3" />
+  </g>
+  <text x="168" y="120" fill="#F8F7F3" font-family="Arial, Helvetica, sans-serif" font-size="46" font-weight="700" letter-spacing="-1.5">Skopos</text>
+
+  <text x="72" y="280" fill="#F8F7F3" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" letter-spacing="-2.6">Project memory</text>
+  <text x="72" y="356" fill="#F8F7F3" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="700" letter-spacing="-2.6">for coding agents.</text>
+
+  <text x="74" y="438" fill="#C9CDD5" font-family="Arial, Helvetica, sans-serif" font-size="25" font-weight="400">Keep context, task intent, and proof with the repository.</text>
+
+  <circle cx="79" cy="558" r="6" fill="#2864FF" />
+  <text x="100" y="566" fill="#F8F7F3" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600" letter-spacing="0.2">skopos.unisane.com</text>
+</svg>
